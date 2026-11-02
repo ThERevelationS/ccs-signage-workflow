@@ -466,7 +466,7 @@ async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntit
     'Corrected shifts awaiting approval',
   )).filter((entry: any) => !entry.archived_test_data && !entry.archived_admin && (
     String(entry.last_correction_request_id || '').trim() ||
-    String(entry.clock_source || '') === 'employee_attested_missed_clock_in'
+    ['employee_attested_missed_clock_in', 'employee_attested_missed_shift'].includes(String(entry.clock_source || ''))
   ));
   if (reviewEntries.length === 0) return null;
 
@@ -546,18 +546,25 @@ async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntit
     const punchExceptionId = String(entry.punch_exception_id || '').trim();
     const punchCase = punchExceptionId ? await punchExceptionEntity.get(punchExceptionId).catch(() => null) : null;
     const punchStatus = String(punchCase?.status || '');
+    const missedShiftCase = String(punchCase?.exception_type || '') === 'missed_shift';
     const linkageOk = Boolean(
       punchCase?.id &&
       asEmail(punchCase.user_email) === userEmail &&
       String(punchCase.time_entry_id || '') === String(entry.id) &&
       String(punchCase.id || '') === punchExceptionId &&
-      String(punchCase.exception_type || '') === 'late_clock_in' &&
-      String(punchCase.employee_response || '') === 'missed_clock_in' &&
-      String(punchCase.claimed_clock_in || '') === String(entry.clock_in || '') &&
+      (
+        (String(punchCase.exception_type || '') === 'late_clock_in' &&
+          String(punchCase.employee_response || '') === 'missed_clock_in' &&
+          String(punchCase.claimed_clock_in || '') === String(entry.clock_in || '')) ||
+        (missedShiftCase &&
+          String(punchCase.employee_response || '') === 'missed_shift' &&
+          String(punchCase.claimed_clock_in || '') === String(entry.clock_in || '') &&
+          String(punchCase.claimed_clock_out || '') === String(entry.clock_out || ''))
+      ) &&
       punchStatus === 'pending_manager_review'
     );
     items.push({
-      review_kind: 'missed_clock_in',
+      review_kind: missedShiftCase ? 'missed_shift' : 'missed_clock_in',
       time_entry_id: entry.id,
       clock_in: entry.clock_in || null,
       clock_out: entry.clock_out || null,
@@ -9773,7 +9780,7 @@ Deno.serve(async (req) => {
       const syncLateClockInPunchCase = async (record: any, approvalAuditId: string) => {
         if (!record?.punch_exception_id) return true;
         const punchCase = await punchExceptionEntity.get(record.punch_exception_id).catch(() => null);
-        if (!punchCase?.id || String(punchCase.exception_type || '') !== 'late_clock_in') return true;
+        if (!punchCase?.id || !['late_clock_in', 'missed_shift'].includes(String(punchCase.exception_type || ''))) return true;
         if (String(punchCase.time_entry_id || '') !== record.id || asEmail(punchCase.user_email) !== target.email) return false;
         const expectedCaseStatus = decision === 'approve' ? 'resolved' : 'pending_manager_review';
         if (String(punchCase.status || '') === expectedCaseStatus &&
@@ -9784,9 +9791,13 @@ Deno.serve(async (req) => {
             status: expectedCaseStatus,
             ...(decision === 'approve' ? {
               resolution_audit_id: approvalAuditId,
-              resolution_note: 'Manager approved the completed shift reconstructed from the employee-reported missed Clock In.',
+              resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
+                ? 'Manager approved the completed shift reported as entirely missed.'
+                : 'Manager approved the completed shift reconstructed from the employee-reported missed Clock In.',
             } : {
-              resolution_note: 'Manager returned the reconstructed missed Clock In shift to Needs Review.',
+              resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
+                ? 'Manager returned the reported missed shift to Needs Review.'
+                : 'Manager returned the reconstructed missed Clock In shift to Needs Review.',
             }),
           } },
         );
@@ -10532,6 +10543,186 @@ Deno.serve(async (req) => {
           throw new Error('Missed Clock In employee mutation gate could not be released safely. Retry this same recovery request.');
         }
       }
+    }
+
+    if (action === 'report_missed_shift') {
+      // Employee attests an entire shift that was never punched - both ends.
+      // Creates a COMPLETED entry flagged needs_review plus a missed_shift
+      // punch case, so a manager approves it exactly like other attested time.
+      const serverNowMs = Date.now();
+      const claimedIn = new Date(String(body?.claimed_clock_in || ''));
+      const claimedOut = new Date(String(body?.claimed_clock_out || ''));
+      const claimedLunch = Math.round(Number(body?.lunch_minutes ?? 0));
+      const shiftReason = String(body?.reason || '').trim();
+      if (!Number.isFinite(claimedIn.getTime()) || !Number.isFinite(claimedOut.getTime())) {
+        return Response.json({ success: false, error: 'Enter the start and end times you actually worked.' }, { status: 400 });
+      }
+      if (claimedOut.getTime() <= claimedIn.getTime()) {
+        return Response.json({ success: false, error: 'The reported Clock Out must be after the reported Clock In.' }, { status: 400 });
+      }
+      if (claimedOut.getTime() > serverNowMs) {
+        return Response.json({ success: false, error: 'The reported Clock Out cannot be in the future.' }, { status: 400 });
+      }
+      const claimedShiftMinutes = Math.floor((claimedOut.getTime() - claimedIn.getTime()) / 60000);
+      if (claimedShiftMinutes < 1 || claimedShiftMinutes > 24 * 60) {
+        return Response.json({ success: false, error: 'A reported shift must be between 1 minute and 24 hours.' }, { status: 400 });
+      }
+      if (!Number.isFinite(claimedLunch) || claimedLunch < 0 || claimedLunch > 240 || claimedLunch > claimedShiftMinutes) {
+        return Response.json({ success: false, error: 'Lunch minutes are invalid for this shift.' }, { status: 400 });
+      }
+      if (shiftReason.length < 3 || shiftReason.length > 500) {
+        return Response.json({ success: false, error: 'Explain why this shift was missed (3 to 500 characters).' }, { status: 400 });
+      }
+      const claimedInIso = claimedIn.toISOString();
+      const claimedOutIso = claimedOut.toISOString();
+      const claimedCompanyDate = dateKeyInCompanyTime(claimedInIso);
+      if (!claimedCompanyDate) {
+        return Response.json({ success: false, error: 'The reported shift date is invalid.' }, { status: 400 });
+      }
+      const shiftPayloadHash = await payloadHash({
+        action: 'report_missed_shift', user_email: target.email,
+        claimed_clock_in: claimedInIso, claimed_clock_out: claimedOutIso,
+        lunch_minutes: claimedLunch, company_date: claimedCompanyDate,
+      });
+
+      // Idempotent replay: the same request id returns the same completed entry.
+      let entry = await uniqueRow(
+        entryEntity,
+        { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        'Missed shift report',
+      );
+      if (entry?.id) {
+        const replayOk = entry.status === 'clocked_out' &&
+          entry.clock_source === 'employee_attested_missed_shift' &&
+          String(entry.clock_in || '') === claimedInIso &&
+          String(entry.clock_out || '') === claimedOutIso &&
+          Number(entry.lunch_minutes || 0) === claimedLunch;
+        if (!replayOk) {
+          return Response.json({ success: false, error: 'This missed-shift request id is already bound to different reported times.' }, { status: 409 });
+        }
+        return Response.json({ success: true, entry, reused: true, requires_manager_review: true, user: publicEmployee(target) });
+      }
+
+      // The claimed window may never overlap a real punched or reported shift.
+      const overlapRows = await entryEntity.filter({
+        user_email: target.email,
+        archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+      }, '-clock_in', 500).catch(() => null);
+      if (!Array.isArray(overlapRows)) throw new Error('TimeEntry overlap lookup did not return a record list.');
+      const overlapping = overlapRows.find((row: any) => {
+        const rowIn = new Date(String(row?.clock_in || '')).getTime();
+        const rowOut = new Date(String(row?.clock_out || '')).getTime();
+        if (!Number.isFinite(rowIn)) return false;
+        const rowEnd = Number.isFinite(rowOut) ? rowOut : serverNowMs;
+        return rowIn < claimedOut.getTime() && rowEnd > claimedIn.getTime();
+      });
+      if (overlapping?.id) {
+        return Response.json({ success: false, error: 'The reported times overlap an existing shift. Request a correction on that entry instead.' }, { status: 409 });
+      }
+
+      // A finalized pay period may not be re-opened by employee attestation.
+      const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' });
+      if (!Array.isArray(finalizedPeriods)) throw new Error('Finalized pay-period lookup did not return a record list.');
+      const closedPeriod = finalizedPeriods.find((period: any) =>
+        claimedCompanyDate >= period.start_date && claimedCompanyDate <= period.end_date);
+      if (closedPeriod) {
+        return Response.json({
+          success: false,
+          error: 'The reported shift belongs to a finalized pay period. An administrator must reopen that period before hours can be added.',
+          finalized_pay_period_id: closedPeriod.id,
+        }, { status: 409 });
+      }
+
+      const reportedAt = new Date().toISOString();
+      entry = await entryEntity.create({
+        user_email: target.email,
+        user_name: target.full_name || target.email,
+        clock_in: claimedInIso,
+        clock_out: claimedOutIso,
+        clock_in_request_id: requestId,
+        clock_source: 'employee_attested_missed_shift',
+        missed_shift_reported_at: reportedAt,
+        lunch_minutes: claimedLunch,
+        total_hours: (claimedShiftMinutes - claimedLunch) / 60,
+        notes: shiftReason,
+        status: 'clocked_out',
+        approval_status: 'needs_review',
+      });
+      if (!entry?.id) throw new Error('The reported shift could not be saved.');
+
+      const caseKey = 'missed_shift:' + entry.id;
+      let punchCase = await uniqueRow(punchExceptionEntity, { case_key: caseKey }, 'Missed shift case');
+      if (!punchCase?.id) {
+        punchCase = await punchExceptionEntity.create({
+          case_key: caseKey,
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          time_entry_id: entry.id,
+          exception_type: 'missed_shift',
+          status: 'pending_manager_review',
+          detected_at: reportedAt,
+          detected_clock_in: claimedInIso,
+          original_snapshot: {
+            missing_entire_shift: true,
+            detected_at: reportedAt,
+            company_date: claimedCompanyDate,
+          },
+          employee_response: 'missed_shift',
+          claimed_clock_in: claimedInIso,
+          claimed_clock_out: claimedOutIso,
+          submitted_at: reportedAt,
+          request_id: requestId,
+          resolution_note: 'Employee self-reported a fully missed shift; attested times require manager approval.',
+        });
+      }
+      if (!punchCase?.id ||
+          asEmail(punchCase.user_email) !== target.email ||
+          String(punchCase.time_entry_id || '') !== entry.id ||
+          String(punchCase.exception_type || '') !== 'missed_shift' ||
+          String(punchCase.claimed_clock_in || '') !== claimedInIso ||
+          String(punchCase.claimed_clock_out || '') !== claimedOutIso ||
+          String(punchCase.request_id || '') !== requestId) {
+        return Response.json({ success: false, error: 'The Missed Shift exception record does not match this reported shift.' }, { status: 409 });
+      }
+      if (String(entry.punch_exception_id || '') !== punchCase.id) {
+        await entryEntity.updateMany(
+          { id: entry.id, updated_date: entry.updated_date, user_email: target.email },
+          { $set: { punch_exception_id: punchCase.id } },
+        );
+        entry = await entryEntity.get(entry.id);
+      }
+
+      const shiftAudit = await ensureActionAudit(auditEntity, {
+        action: 'punch_exception', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: reportedAt, request_id: requestId, time_entry_id: entry.id,
+        reason: 'Employee reported an entirely missed shift',
+        details: {
+          payload_hash: shiftPayloadHash,
+          punch_exception_id: punchCase.id,
+          response: 'missed_shift',
+          claimed_clock_in: claimedInIso,
+          claimed_clock_out: claimedOutIso,
+          lunch_minutes: claimedLunch,
+          company_date: claimedCompanyDate,
+        },
+      }, 'Missed shift punch-exception audit');
+      if (String(punchCase.resolution_audit_id || '') !== shiftAudit.audit.id) {
+        await punchExceptionEntity.updateMany(
+          { id: punchCase.id, time_entry_id: entry.id, request_id: requestId },
+          { $set: { resolution_audit_id: shiftAudit.audit.id } },
+        );
+        punchCase = await punchExceptionEntity.get(punchCase.id);
+      }
+
+      return Response.json({
+        success: true,
+        requires_manager_review: true,
+        entry,
+        punch_exception: punchCase,
+        user: publicEmployee(target),
+      });
     }
 
     if (action === 'resolve_punch_exception') {
