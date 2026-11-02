@@ -265,7 +265,7 @@ export default function ProductChecklistDialog({
     try {
       const [freshWO, usersData, dropdownsSetting, productTypesSetting, taskDescriptionsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Product checklist authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
