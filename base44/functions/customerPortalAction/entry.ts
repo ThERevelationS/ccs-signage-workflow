@@ -25,7 +25,7 @@ const bad = (message: string, status = 400) => {
 };
 
 const LINK_TTL_MS = 90 * 24 * 60 * 60 * 1000;
-// Configurable link expiry ??? a `link_days` body param (7???365, default 90)
+// Configurable link expiry — a `link_days` body param (7–365, default 90)
 // overrides the static TTL so admins can shorten links for sensitive customers
 // or lengthen them for long-cycle B2B work without a code change.
 const linkDays = (body: any) => Math.min(365, Math.max(7, whole(body?.link_days, 90)));
@@ -47,7 +47,7 @@ async function resolveLink(PortalLink: any, token: string) {
 }
 
 function bumpOpen(PortalLink: any, link: any) {
-  // justified: best-effort open-tracking telemetry ??? callers fire-and-forget
+  // justified: best-effort open-tracking telemetry — callers fire-and-forget
   // this (never awaited), so a failed counter write must not block the view.
   replaceFoundationFieldsIfUnchanged({
     entity: PortalLink,
@@ -177,7 +177,7 @@ function logPortalOpportunityActivity(OpportunityActivity: any, input: {
     },
     readMatches: () => OpportunityActivity.filter({ creation_request_key: key }),
     label: "Portal opportunity activity",
-    // justified: auxiliary activity log ??? every call site fire-and-forgets
+    // justified: auxiliary activity log — every call site fire-and-forgets
     // this; a missing audit row must not fail the customer action itself.
   }).catch(() => null);
 }
@@ -225,7 +225,7 @@ async function loadCustomerThread(PortalMessage: any, customerId: string, markSt
 }
 
 // Client-supplied attachment links pass through only when they are plain
-// http(s) URLs ??? anything else (javascript:, data:, file:) is dropped.
+// http(s) URLs — anything else (javascript:, data:, file:) is dropped.
 const safeExternalUrl = (value: any) => {
   const raw = clean(value).slice(0, 4096);
   if (!raw) return "";
@@ -238,7 +238,7 @@ const safeExternalUrl = (value: any) => {
 };
 
 // ---- Portal customer file uploads (#244) -----------------------------------
-// Photos + PDF drawings only. Magic-byte sniffing decides the stored mime ???
+// Photos + PDF drawings only. Magic-byte sniffing decides the stored mime —
 // a caller-declared image/pdf type can never widen what actually gets stored.
 const PORTAL_UPLOAD_MAX_BYTES = 6 * 1024 * 1024;
 const PORTAL_UPLOAD_MAX_B64_CHARS = Math.ceil(PORTAL_UPLOAD_MAX_BYTES / 3) * 4 + 16;
@@ -250,7 +250,7 @@ function sniffPortalUpload(bytes: Uint8Array) {
   if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
   if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) return "image/gif";
   if (bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return "image/webp";
-  // Phone photos often arrive as HEIC/HEIF/AVIF ??? ISO BMFF "ftyp" box with a
+  // Phone photos often arrive as HEIC/HEIF/AVIF — ISO BMFF "ftyp" box with a
   // known brand at bytes 8-11.
   if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
     const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
@@ -265,7 +265,7 @@ function decodePortalUpload(body: any) {
   const nameRaw = clean(body?.file_name ?? body?.attachment_name).slice(0, 255);
   if (!nameRaw) return { error: "An attached file needs a filename." };
   const b64 = raw.startsWith("data:") ? clean(raw.split(",").slice(1).join(",")) : raw;
-  if (b64.length > PORTAL_UPLOAD_MAX_B64_CHARS) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded ??? this file is too large.` };
+  if (b64.length > PORTAL_UPLOAD_MAX_B64_CHARS) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded — this file is too large.` };
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return { error: "The attached file could not be decoded." };
   let bytes: Uint8Array;
   try {
@@ -274,7 +274,7 @@ function decodePortalUpload(body: any) {
     return { error: "The attached file could not be decoded." };
   }
   if (!bytes.byteLength) return { error: "The attached file is empty." };
-  if (bytes.byteLength > PORTAL_UPLOAD_MAX_BYTES) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded ??? this file is too large.` };
+  if (bytes.byteLength > PORTAL_UPLOAD_MAX_BYTES) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded — this file is too large.` };
   const detected = sniffPortalUpload(bytes);
   if (!detected) return { error: "Only photos (JPG, PNG, GIF, WebP, HEIC) or PDF drawings can be uploaded." };
   const declared = clean(body?.file_mime ?? body?.attachment_mime).toLowerCase();
@@ -328,7 +328,7 @@ const portalSmallHash = (value: string) => {
 const portalMoney = (value: any) => `$${num(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // Single-job threads: a work_order portal link sees only the messages tagged
-// to that job ??? never the rest of the customer's thread.
+// to that job — never the rest of the customer's thread.
 async function loadJobThread(PortalMessage: any, workOrderId: string, markRead = false, warnings?: string[]) {
   const rows = await loadAllEntityRows({ entity: PortalMessage, query: { related_kind: "work_order", related_id: workOrderId }, sort: "created_date", label: "Portal job thread" }).catch(() => []);
   const list = (Array.isArray(rows) ? rows : [])
@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
     const Announcement = base44.asServiceRole.entities.Announcement;
 
     // Announcements reach the portal only when staff explicitly targets the
-    // "customerportal" display page ??? empty display_pages means "all staff app
+    // "customerportal" display page — empty display_pages means "all staff app
     // pages", which must never leak into the customer-facing surface.
     const loadPortalAnnouncements = async (customerId = "") => {
       const rows = await loadAllEntityRows({ entity: Announcement, query: { is_active: true }, sort: "-created_date", label: "Portal announcements" }).catch(() => []);
@@ -429,7 +429,7 @@ Deno.serve(async (req) => {
       }
 
       // Single-quote link: an 'estimate' link opens exactly one quote's portal
-      // view ??? approve / request-changes / section responses work, scoped to
+      // view — approve / request-changes / section responses work, scoped to
       // this record in estimate_respond below. No invoices or other jobs.
       if (clean(link.kind) === "estimate") {
         const estimate = await Estimate.get(clean(link.record_id)).catch(() => null);
@@ -456,7 +456,7 @@ Deno.serve(async (req) => {
       }
 
       // Single-job status tracker: a 'work_order' link opens exactly one job's
-      // customer-safe status view ??? no invoices, payments, or other jobs.
+      // customer-safe status view — no invoices, payments, or other jobs.
       if (clean(link.kind) === "work_order") {
         const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
         if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
@@ -502,7 +502,7 @@ Deno.serve(async (req) => {
       }
 
       // Account-level link: one call returns the whole customer workspace.
-      // Only 'customer' links reach here ??? an estimate-scoped link must never
+      // Only 'customer' links reach here — an estimate-scoped link must never
       // escalate into the full customer workspace.
       if (clean(link.kind) !== "customer") throw bad("This portal link does not open the customer workspace.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
@@ -566,7 +566,7 @@ Deno.serve(async (req) => {
     if (action === "post_message") {
       const link = await resolveLink(PortalLink, clean(body?.token));
       const linkKind = clean(link.kind);
-      // work_order links may post too ??? every message is hard-scoped to the
+      // work_order links may post too — every message is hard-scoped to the
       // one job the link points at (related_* below is forced, never trusted).
       if (linkKind !== "customer" && linkKind !== "work_order") throw bad("This portal link cannot send messages.", 403);
       const scope = await portalMessageScope({ link, body, WorkOrder, Invoice, Estimate });
@@ -574,7 +574,7 @@ Deno.serve(async (req) => {
       const attachmentB64 = clean(body?.attachment_base64);
       let attachmentUrl = safeExternalUrl(body?.attachment_url);
       if (!text && !attachmentB64 && !attachmentUrl) throw bad("A message is required.");
-      // Optional file attachment ??? pass an http(s) URL for an already-hosted
+      // Optional file attachment — pass an http(s) URL for an already-hosted
       // file, or base64 bytes stored server-side via UploadFile so the staff
       // thread shows a download link. Inline base64 rides the same validated
       // path as upload_file (#244): photos + PDFs only inside the size cap.
@@ -626,7 +626,7 @@ Deno.serve(async (req) => {
     if (action === "upload_file") {
       const link = await resolveLink(PortalLink, clean(body?.token));
       const linkKind = clean(link.kind);
-      // Same token scope as post_message ??? the customer/job the file lands on
+      // Same token scope as post_message — the customer/job the file lands on
       // is always derived from the link, never trusted from the caller.
       if (linkKind !== "customer" && linkKind !== "work_order") throw bad("This portal link cannot upload files.", 403);
       const scope = await portalMessageScope({ link, body, WorkOrder, Invoice, Estimate });
@@ -640,7 +640,7 @@ Deno.serve(async (req) => {
       } catch (uploadError) {
         throw bad(`The file could not be uploaded: ${uploadError?.message || "upload failed"}`);
       }
-      if (!/^https?:\/\//.test(attachmentUrl)) throw bad("The file could not be uploaded ??? storage returned no download URL.", 503);
+      if (!/^https?:\/\//.test(attachmentUrl)) throw bad("The file could not be uploaded — storage returned no download URL.", 503);
       const caption = clean(body?.body).slice(0, MESSAGE_MAX);
       const key = `portal-upload:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
       const result = await createFoundationRecordWithRecovery({
@@ -674,7 +674,7 @@ Deno.serve(async (req) => {
       if (linkKind !== "customer" && linkKind !== "estimate") throw bad("This portal link cannot respond to quotes.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const estimateId = clean(body?.estimate_id);
-      // An estimate-scoped link may only respond to its own quote ??? never
+      // An estimate-scoped link may only respond to its own quote — never
       // any other estimate id the caller names.
       if (linkKind === "estimate" && clean(link.record_id) !== estimateId) throw bad("Quote not found.", 404);
       const decision = clean(body?.decision);
@@ -682,7 +682,7 @@ Deno.serve(async (req) => {
       const estimate = await Estimate.get(estimateId).catch(() => null);
       if (!estimate?.id || clean(estimate.customer_id) !== customerId) throw bad("Quote not found.", 404);
       if (sectionKey) {
-        if (clean(estimate.status) !== "sent") throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} ??? only sent quotes can receive section responses.`, 409);
+        if (clean(estimate.status) !== "sent") throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can receive section responses.`, 409);
         if (!["accepted", "rejected", "question"].includes(decision)) throw bad("section decision must be accepted, rejected, or question.");
         const sectionNote = clean(body?.note).slice(0, MESSAGE_MAX);
         const sectionLabel = clean(body?.section_label).slice(0, 200);
@@ -721,7 +721,7 @@ Deno.serve(async (req) => {
             portal_link_id: clean(link.id),
             author_side: "customer",
             kind: decision === "accepted" ? "estimate_approved" : decision === "rejected" ? "estimate_revision_requested" : "message",
-            body: sectionNote || `${decision === "accepted" ? "Accepted" : decision === "rejected" ? "Declined" : "Asked about"} section ???${sectionLabel || sectionKey}???.`,
+            body: sectionNote || `${decision === "accepted" ? "Accepted" : decision === "rejected" ? "Declined" : "Asked about"} section “${sectionLabel || sectionKey}”.`,
             related_kind: "estimate",
             related_id: estimateId,
             related_label: clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote",
@@ -740,19 +740,19 @@ Deno.serve(async (req) => {
 
       if (decision === "approve") {
         // Expired-quote gate: portal approval is disabled past the quote's
-        // validity window ??? the customer should request a revised quote.
+        // validity window — the customer should request a revised quote.
         const quoteExp = quoteValidUntil(estimate);
         if (quoteExp && quoteExp < new Date().toISOString().slice(0, 10)) {
-          throw bad("This quote has expired ??? please request an updated quote.", 409);
+          throw bad("This quote has expired — please request an updated quote.", 409);
         }
         if (clean(estimate.status) !== "sent") {
-          throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} ??? only sent quotes can be approved.`, 409);
+          throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can be approved.`, 409);
         }
         // Optional drawn signature (#251): the approval form sends a PNG data
         // URL / raw base64. Service-role UploadFile stores it so the acceptance
         // audit carries retrievable evidence; when the upload is unavailable
         // the data URL rides on the approval message itself instead of being
-        // dropped ??? the approval never fails over a signature image.
+        // dropped — the approval never fails over a signature image.
         let signatureUrl = "";
         let signatureDataUrl = "";
         const sigRaw = clean(body?.signature_image);
@@ -822,9 +822,9 @@ Deno.serve(async (req) => {
               accepted_by_email: clean(estimate?.contact_email),
               acceptance_method: "portal",
               evidence_reference: signatureUrl
-                ? `Portal approval ??? signature: ${signatureUrl}`
+                ? `Portal approval — signature: ${signatureUrl}`
                 : signatureDataUrl
-                  ? "Customer portal approval ??? drawn signature captured on the portal thread"
+                  ? "Customer portal approval — drawn signature captured on the portal thread"
                   : "Customer portal approval",
               notes: note || `Customer approved ${quoteLabel} via the customer portal.`,
               recorded_by_email: "customer_portal",
@@ -845,13 +845,13 @@ Deno.serve(async (req) => {
       }
 
       if (decision === "declined") {
-        // Customer declined the whole quote ??? CAS the estimate to cancelled
+        // Customer declined the whole quote — CAS the estimate to cancelled
         // and leave the decline reason + a staff follow-up task so the loss is
         // never silent. Staff can still reopen via a new revision.
         const declineReason = clean(body?.note).slice(0, MESSAGE_MAX);
         if (!declineReason) throw bad("Please tell us why the quote was declined.");
         if (clean(estimate.status) !== "sent") {
-          throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} ??? only sent quotes can be declined.`, 409);
+          throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can be declined.`, 409);
         }
         const saved = await replaceFoundationFieldsIfUnchanged({
           entity: Estimate,
@@ -886,7 +886,7 @@ Deno.serve(async (req) => {
               estimate_id: estimateId,
               opportunity_id: await opportunityIdForEstimate(estimateId) || `portal-decline:${estimateId}`,
               customer_id: customerId,
-              // "ready" is the queue-visible status ??? "open" is not in the
+              // "ready" is the queue-visible status — "open" is not in the
               // EstimatingRequest enum and never landed on the estimator queue.
               status: "ready",
               requested_at: new Date().toISOString(),
@@ -941,7 +941,7 @@ Deno.serve(async (req) => {
             estimate_id: estimateId,
             opportunity_id: await opportunityIdForEstimate(estimateId) || `portal-revision:${estimateId}`,
             customer_id: customerId,
-            // "ready" is the queue-visible status ??? "open" is not in the
+            // "ready" is the queue-visible status — "open" is not in the
             // EstimatingRequest enum and never landed on the estimator queue.
             status: "ready",
             requested_at: new Date().toISOString(),
@@ -969,7 +969,7 @@ Deno.serve(async (req) => {
     // Customer counter-offer (#257): a structured proposed_total + note
     // against a respondable quote. Same link/ownership guards as
     // estimate_respond; lands on the estimator queue as a "ready"
-    // EstimatingRequest plus the usual portal message + opportunity activity ???
+    // EstimatingRequest plus the usual portal message + opportunity activity —
     // all keyed off one attempt key so a retried submit can never double-log.
     if (action === "counter_offer") {
       const link = await resolveLink(PortalLink, clean(body?.token));
@@ -977,23 +977,23 @@ Deno.serve(async (req) => {
       if (linkKind !== "customer" && linkKind !== "estimate") throw bad("This portal link cannot send counter offers.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const estimateId = clean(body?.estimate_id);
-      // An estimate-scoped link may only counter its own quote ??? never any
+      // An estimate-scoped link may only counter its own quote — never any
       // other estimate id the caller names.
       if (linkKind === "estimate" && clean(link.record_id) !== estimateId) throw bad("Quote not found.", 404);
       const estimate = await Estimate.get(estimateId).catch(() => null);
       if (!estimate?.id || clean(estimate.customer_id) !== customerId) throw bad("Quote not found.", 404);
       // Same respondable gate as estimate_respond: sent, and not past the
-      // quote's validity window ??? an expired quote needs a fresh issue, not a
+      // quote's validity window — an expired quote needs a fresh issue, not a
       // counter on a dead number.
       if (clean(estimate.status) !== "sent") {
-        throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} ??? only sent quotes can receive counter offers.`, 409);
+        throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can receive counter offers.`, 409);
       }
       const quoteExp = quoteValidUntil(estimate);
       if (quoteExp && quoteExp < new Date().toISOString().slice(0, 10)) {
-        throw bad("This quote has expired ??? please request an updated quote.", 409);
+        throw bad("This quote has expired — please request an updated quote.", 409);
       }
       const proposedTotal = num(body?.proposed_total, NaN);
-      if (!Number.isFinite(proposedTotal) || proposedTotal <= 0) throw bad("Enter the total you'd like to pay ??? a number greater than zero.");
+      if (!Number.isFinite(proposedTotal) || proposedTotal <= 0) throw bad("Enter the total you'd like to pay — a number greater than zero.");
       if (proposedTotal > 100_000_000) throw bad("That counter offer doesn't look like a valid amount.");
       const note = clean(body?.note).slice(0, MESSAGE_MAX);
       const quoteLabel = clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote";
@@ -1011,7 +1011,7 @@ Deno.serve(async (req) => {
           portal_link_id: clean(link.id),
           author_side: "customer",
           author_name: clean(body?.author_name).slice(0, 120) || "Customer",
-          // estimate_revision_requested is the closest declared kind ??? a
+          // estimate_revision_requested is the closest declared kind — a
           // counter is a request to re-price the quote.
           kind: "estimate_revision_requested",
           body: offerText,
@@ -1138,7 +1138,7 @@ Deno.serve(async (req) => {
           creation_request_key: coKey,
           change_order_number: `CO-${seq}`,
           status: "proposed",
-          title: `Customer revision request ??? ${woLabel}`,
+          title: `Customer revision request — ${woLabel}`,
           description: note,
           reason: "Customer request via portal",
           customer_id: customerId,
@@ -1169,7 +1169,7 @@ Deno.serve(async (req) => {
           body: note,
           related_kind: "work_order",
           related_id: workOrderId,
-          related_label: `${woLabel} ?? ${coNumber}`,
+          related_label: `${woLabel} · ${coNumber}`,
           read_by_staff: false,
           read_by_customer: true,
         },
@@ -1188,7 +1188,7 @@ Deno.serve(async (req) => {
 
     // Customer-initiated reorder: "order something like this" hands a
     // job's product list to the estimator queue as an EstimatingRequest.
-    // Customer links only ??? scoped to a job the link's customer owns.
+    // Customer links only — scoped to a job the link's customer owns.
     if (action === "request_reorder") {
       const link = await resolveLink(PortalLink, clean(body?.token));
       if (clean(link.kind) !== "customer") throw bad("This portal link cannot request reorders.", 403);
@@ -1234,7 +1234,7 @@ Deno.serve(async (req) => {
             work_order_number: woNumber,
             customer_id: customerId,
             customer_display_name: clean(order.client_name) || clean(link.label),
-            title: `Reorder ??? ${clean(order.title) || woLabel}`,
+            title: `Reorder — ${clean(order.title) || woLabel}`,
             job_description: productSummary,
             products,
             install_location: clean(order.install_location),
@@ -1401,7 +1401,7 @@ Deno.serve(async (req) => {
             kind: clean(l?.kind),
             record_id: clean(l?.record_id),
             label: clean(l?.label),
-            token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '????????????' + clean(l?.token).slice(-6) : ''),
+            token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
             revoked: l?.revoked === true,
             usable: linkIsUsable(l),
             expires_at: clean(l?.expires_at),
@@ -1439,7 +1439,7 @@ Deno.serve(async (req) => {
         read_receipt_warning: readReceiptWarning || undefined,
         messages: thread.slice(-200).map(messageView),
         links: (Array.isArray(links) ? links : []).map((l: any) => ({
-          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '????????????' + clean(l?.token).slice(-6) : ''),
+          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
           usable: linkIsUsable(l), revoked: l?.revoked === true, open_count: num(l?.open_count),
           last_opened_at: clean(l?.last_opened_at), expires_at: clean(l?.expires_at),
         })),
@@ -1481,7 +1481,7 @@ Deno.serve(async (req) => {
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
       const to = clean(body?.email) || clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_contact_email) || clean(customer.billing_email);
-      if (!to.includes("@")) throw bad("This customer has no email address on file ??? add one to the customer record first.");
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
       if (!/^https?:\/\//.test(portalBase)) throw bad("portal_base is required.");
 
@@ -1514,22 +1514,22 @@ Deno.serve(async (req) => {
       const url = `${portalBase}/customerportal?token=${encodeURIComponent(portalToken)}`;
       const customerName = [clean(customer.contact_first_name), clean(customer.contact_last_name)].filter(Boolean).join(" ") || clean(customer.contact_name) || clean(customer.name) || clean(customer.company_name) || "there";
       const companyName = clean(body?.company_name) || "CCS Signage";
-      const subject = `${companyName} ??? your customer portal link`;
+      const subject = `${companyName} — your customer portal link`;
       const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
         <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName} Customer Portal</h2>
-        <p style="margin-top:0;color:#64748b;font-size:13px">Quotes ?? job tracking ?? invoices ?? messages</p>
+        <p style="margin-top:0;color:#64748b;font-size:13px">Quotes · job tracking · invoices · messages</p>
         <p>Hi ${customerName},</p>
         <p>You now have a secure portal where you can:</p>
         <ul style="line-height:1.7;padding-left:20px">
           <li>Review and <strong>approve quotes</strong>, or request changes</li>
           <li>Track your <strong>jobs</strong> and install dates</li>
           <li>View <strong>invoices</strong>, payments, and your open balance</li>
-          <li>Message our team ??? replies land right in the portal</li>
+          <li>Message our team — replies land right in the portal</li>
         </ul>
         <p style="text-align:center;margin:28px 0">
           <a href="${url}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open your portal</a>
         </p>
-        <p style="font-size:12px;color:#64748b">No account or password needed ??? this link is yours alone and works for ${linkDays(body)} days. Bookmark it or keep this email.</p>
+        <p style="font-size:12px;color:#64748b">No account or password needed — this link is yours alone and works for ${linkDays(body)} days. Bookmark it or keep this email.</p>
         <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${url}</span></p>
       </div>`;
       const sent = await base44.asServiceRole.functions
