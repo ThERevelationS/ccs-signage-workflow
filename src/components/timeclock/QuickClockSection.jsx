@@ -23,6 +23,7 @@ import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDia
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import MissedShiftDialog from "@/components/timeclock/MissedShiftDialog";
 import AdminNoteDialog from "@/components/timeclock/AdminNoteDialog";
+import WorkDayGroupDialog from "@/components/timeclock/WorkDayGroupDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import CrystalShiftButton from "@/components/timeclock/CrystalShiftButton";
 import {
@@ -210,11 +211,14 @@ export default function QuickClockSection({
   const [missedShiftError, setMissedShiftError] = useState("");
   const [adminNotePrompt, setAdminNotePrompt] = useState(false);
   const [adminNoteError, setAdminNoteError] = useState("");
+  const [workDayPrompt, setWorkDayPrompt] = useState(null);
+  const [workDayError, setWorkDayError] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
 
   const videoRef = useRef(null);
+  const workDayDismissedRef = useRef(new Set());
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
   const faceScanSessionRef = useRef(null);
@@ -631,6 +635,11 @@ export default function QuickClockSection({
       if (!isCurrentRefresh()) return null;
       const status = response?.data || response;
       if (!status?.success) throw new Error(status?.error || "Authoritative Time Clock status could not be restored.");
+      const liveWorkDayPrompt = status?.work_day_prompt?.signature ? status.work_day_prompt : null;
+      if (liveWorkDayPrompt && !workDayDismissedRef.current.has(liveWorkDayPrompt.signature)) {
+        setWorkDayError("");
+        setWorkDayPrompt(liveWorkDayPrompt);
+      }
       const restored = applyAuthoritativeStatus(status, authoritativeSessionUser, { sessionToken: authoritativeSessionToken });
       const unresolvedPunchCount = Number(status?.unresolved_punch_review?.count || 0);
       const hasUnresolvedPunchReview = Number.isFinite(unresolvedPunchCount) && unresolvedPunchCount > 0;
@@ -726,6 +735,8 @@ export default function QuickClockSection({
     setLateClockInReview(null);
     setLateClockInError("");
     setMissedClockInPrompt(false);
+    setWorkDayPrompt(null);
+    setWorkDayError("");
     identifyIntentRef.current = "clock_in";
     setUsernameInput("");
     setManualPassword("");
@@ -1676,6 +1687,47 @@ export default function QuickClockSection({
     }
   };
 
+  const handleResolveWorkDay = async (decision) => {
+    if (!selectedUser?.email || !credentialRef.current || !workDayPrompt?.signature) {
+      throw new Error("Work-day identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const signature = workDayPrompt.signature;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("resolve_work_day", email);
+    setWorkDayError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "resolve_work_day",
+        request_id: requestId,
+        decision,
+        signature,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      assertEmployeeAcknowledgement(result, email, "Work-day decision");
+      clearRequest("resolve_work_day", email, requestId);
+      if (!stillCurrent()) return null;
+      workDayDismissedRef.current.add(signature);
+      setWorkDayPrompt(null);
+      setWorkDayError("");
+      setRecognitionStatus(decision === "same_day"
+        ? "Work day confirmed - all listed shifts count toward it."
+        : "Got it - those shifts stay on separate days.");
+      if (!activeEntry?.id) scheduleDisplayReset(2000);
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("resolve_work_day", email, requestId);
+      if (stillCurrent()) {
+        setWorkDayError(err?.message || "The work-day answer was not confirmed by the server.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
   const handleLateClockInClockInNow = async () => {
     if (!selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock In identity is no longer verified. Identify again before continuing.");
@@ -1750,7 +1802,14 @@ export default function QuickClockSection({
         setShowClockOut(false);
         setActiveEntry(null);
         setRecognitionStatus("Clock-out confirmed by server.");
-        scheduleDisplayReset(2500);
+        if (result?.work_day_prompt?.signature) {
+          // Same-work-day question rides the clock-out response - keep the
+          // session open so the employee can answer it before the kiosk resets.
+          setWorkDayError("");
+          setWorkDayPrompt(result.work_day_prompt);
+        } else {
+          scheduleDisplayReset(2500);
+        }
       }
       return result;
     } catch (err) {
@@ -1820,6 +1879,22 @@ export default function QuickClockSection({
         error={adminNoteError}
         onSend={handleSendAdminNote}
         onCancel={() => { setAdminNotePrompt(false); setAdminNoteError(""); }}
+      />
+
+      <WorkDayGroupDialog
+        open={Boolean(workDayPrompt?.signature)}
+        prompt={workDayPrompt}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={workDayError}
+        onSameDay={() => handleResolveWorkDay("same_day")}
+        onSeparate={() => handleResolveWorkDay("separate")}
+        onLater={() => {
+          if (workDayPrompt?.signature) workDayDismissedRef.current.add(workDayPrompt.signature);
+          setWorkDayPrompt(null);
+          setWorkDayError("");
+          if (!activeEntry?.id) scheduleDisplayReset(1200);
+        }}
       />
 
       <WorkPauseOverlay
