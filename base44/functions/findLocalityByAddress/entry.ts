@@ -600,6 +600,11 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     if (!geocode.location_exact && !geocode.approximate_source) {
       const ar = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
       if (ar) return { ...base, status: "location_verified", reason: "Map position is approximate, but a confirmed review rule places this address in " + ar.pick.name + " \u2014 resolving to " + ar.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
+      const streetPart = norm(String(enteredAddress || "").split(",")[0]);
+      if (streetPart) {
+        if (!/[a-z]/.test(streetPart)) return { ...base, status: "invalid_input", reason: "This looks like a phone or ID number, not a street address. Enter a numbered street address." };
+        if (!/\d/.test(streetPart)) return { ...base, status: "invalid_input", reason: "This is missing a house or street number \u2014 enter a numbered street address." };
+      }
       return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
     }
     if (relevant.some((f) => f.distance_m <= edge)) {
@@ -691,7 +696,12 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
           try {
             return await value.apply(target, args);
           } catch (e) {
-            if (!isLimited(e) || attempt >= maxRetries) throw e;
+            if (!isLimited(e)) throw e;
+            if (attempt >= maxRetries) {
+              e.status = e.status ?? 429;
+              e.statusCode = e.statusCode ?? 429;
+              throw e;
+            }
             const delay = paceMs ? 15e3 * (attempt + 1) : 1500 * (attempt + 1);
             if (paceMs) nextRequestAt = Math.max(nextRequestAt, Date.now() + delay);
             const start = performance.now();
