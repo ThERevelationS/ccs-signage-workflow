@@ -26,6 +26,22 @@
       },
       "description": "Optional list of category keys (MarkupCategory.category_key) this level applies to. Empty = usable on every category."
     },
+    "rate_basis": {
+      "type": "string",
+      "enum": [
+        "sqft_per_hour",
+        "units_per_hour",
+        "hours_per_unit",
+        "flat_hours"
+      ],
+      "default": "units_per_hour",
+      "description": "Throughput basis for labor computation: sqft_per_hour = area/rate hrs; units_per_hour = qty/rate hrs; hours_per_unit = qty*rate hrs; flat_hours = rate hrs."
+    },
+    "rate_value": {
+      "type": "number",
+      "default": 1,
+      "description": "Throughput number for rate_basis (e.g. 125 for '125 sqft/hr')."
+    },
     "status": {
       "type": "string",
       "enum": [
