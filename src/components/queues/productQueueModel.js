@@ -100,6 +100,20 @@ export function flattenQueueRows(workOrders = [], { dueField = "product_due_date
         bp: p.builder_product_id || "",
         stage: wo.current_stage || "",
         woDue: wo.project_install_date || "",
+        // CoreBridge filter keys (QueueFilterBar emits machine/part/
+        // salesperson/enteredBy + duePreset "rush"). No dedicated fields exist
+        // on products yet — map the honest closest columns and accept explicit
+        // flags the moment they land. A "rush" quick-tag or substatus counts
+        // as the rush signal today.
+        machine: p.machine || p.machine_name || p.assigned_machine || "",
+        part: p.part || p.part_name || "",
+        salesperson: wo.sales_rep || wo.salesperson || wo.salesperson_email || "",
+        enteredBy: wo.created_by || wo.entered_by || "",
+        rush: p.is_rush === true || p.rush === true ||
+          wo.is_rush === true || wo.rush === true ||
+          norm(p.priority_label) === "rush" || norm(wo.order_priority) === "rush" ||
+          norm(p.operational_substatus).includes("rush") ||
+          (Array.isArray(p.quick_tags) && p.quick_tags.some((t) => norm(t).includes("rush"))),
       });
     });
   }
@@ -116,8 +130,16 @@ export function filterQueueRows(rows = [], filters = DEFAULT_QUEUE_FILTERS, now 
     if (f.assignedTo !== "all" && r.assignedTo !== f.assignedTo) return false;
     if (f.category !== "all" && r.category !== f.category) return false;
     if (f.moduleKey !== "all" && r.moduleKey !== f.moduleKey) return false;
+    // CB extensions — exact-match keys (absent key === "all", i.e. no-op).
+    if ((f.machine ?? "all") !== "all" && r.machine !== f.machine) return false;
+    if ((f.part ?? "all") !== "all" && r.part !== f.part) return false;
+    if ((f.salesperson ?? "all") !== "all" && r.salesperson !== f.salesperson) return false;
+    if ((f.enteredBy ?? "all") !== "all" && r.enteredBy !== f.enteredBy) return false;
     if (f.duePreset === "hard_due_only" && !r.hardDue) return false;
-    if (!duePresetMatch(r.due || r.woDue, f.duePreset, now)) return false;
+    // "rush" is a row flag, not a date window — an undated rush job still matches.
+    if (f.duePreset === "rush") {
+      if (!r.rush) return false;
+    } else if (!duePresetMatch(r.due || r.woDue, f.duePreset, now)) return false;
     const q = norm(f.search);
     if (q && ![r.ref, r.company, r.productName, r.substatus].some((field) => norm(field).includes(q))) return false;
     return true;
