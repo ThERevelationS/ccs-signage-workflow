@@ -91,8 +91,23 @@ export function defaultPrefs() {
     workflow: {
       stageFilter: "all",      // My Workflow stage dropdown — remembers last pick
     },
+    // K-03 account subtrees — owned semantically by
+    // account/userPrefsModel.js; mirrored here so migratePrefs keeps them
+    // normalized through every save and resetAll restores them.
+    locale: {
+      timezone: "",            // IANA name; "" = browser local (#488 userDateDisplay)
+    },
+    queues: {
+      defaultLens: "",         // "" = app default (design); else design|production|fulfillment|all
+      myQueueOnly: false,      // true → queue pages open filtered to "assigned to me"
+    },
   };
 }
+
+// Product Queues tab keys (src/pages/ProductQueues.jsx QUEUES) — duplicated
+// here because this model stays import-free; keep in sync with
+// userPrefsModel.ACCOUNT_QUEUE_LENSES.
+const QUEUE_LENS_KEYS = ["design", "production", "fulfillment", "all"];
 
 const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
 
@@ -131,6 +146,8 @@ export const SECTION_PATHS = {
   workspace: ["workspace"],
   pipeline: ["pipeline"],
   workflow: ["workflow"],
+  locale: ["locale"],
+  queues: ["queues"],
 };
 
 // Built-in profile presets — applied as one-shot blobs via patchPrefs.
@@ -189,6 +206,16 @@ export function migratePrefs(raw) {
   if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
   if (!isObj(merged.workflow)) merged.workflow = base.workflow;
   if (typeof merged.workflow.stageFilter !== "string" || !merged.workflow.stageFilter || merged.workflow.stageFilter.length > 80) merged.workflow.stageFilter = "all";
+  // K-03 account subtrees — IANA validity is enforced at read time
+  // (account/userPrefsModel.normalizeTimezone + userDateDisplay
+  // resolveUserTimeZone); the blob keeps the trimmed string so an unknown
+  // zone degrades to browser-local instead of vanishing.
+  if (!isObj(merged.locale)) merged.locale = base.locale;
+  if (typeof merged.locale.timezone !== "string") merged.locale.timezone = "";
+  merged.locale.timezone = merged.locale.timezone.trim().slice(0, 64);
+  if (!isObj(merged.queues)) merged.queues = base.queues;
+  if (!QUEUE_LENS_KEYS.includes(String(merged.queues.defaultLens || ""))) merged.queues.defaultLens = "";
+  merged.queues.myQueueOnly = merged.queues.myQueueOnly === true;
   return merged;
 }
 
