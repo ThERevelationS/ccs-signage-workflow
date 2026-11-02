@@ -1,0 +1,20 @@
+{
+  "name": "FileBridgeChunk",
+  "description": "In-flight chunk reassembly for >48MB deliveries. Rows expire quickly — TTL-swept.",
+  "properties": {
+    "schema_version": { "type": "number", "default": 1 },
+    "command_id": { "type": "string" },
+    "seq": { "type": "number" },
+    "file_url": { "type": "string" },
+    "bytes": { "type": "number" },
+    "sha256": { "type": "string" },
+    "received_at": { "type": "number" }
+  },
+  "required": ["command_id", "seq"],
+  "rls": {
+    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+  }
+}
