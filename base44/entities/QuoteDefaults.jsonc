@@ -159,15 +159,43 @@
     "round_prices_to_dollar": {
       "type": "boolean",
       "default": false
+    },
+    "custom_statuses": {
+      "type": "string",
+      "description": "JSON slug array of custom estimate statuses (K-11), e.g. [\"on_hold\",\"in_prod\"]. Empty string = none."
+    },
+    "status_transitions": {
+      "type": "string",
+      "description": "JSON {from:[to,...]} transition-override map \u2014 replaces a source row wholesale, never merges."
+    },
+    "custom_status_meta": {
+      "type": "string",
+      "description": "Optional JSON {key:{label,color,terminal,bucket,roles,allow_builtin_reentry}} rich status metadata (customStatusModel)."
     }
   },
   "required": [
     "config_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__quotedefaults_backend_only__" } },
-    "read": { "user_condition": { "role": "__quotedefaults_backend_only__" } },
-    "update": { "user_condition": { "role": "__quotedefaults_backend_only__" } },
-    "delete": { "user_condition": { "role": "__quotedefaults_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__quotedefaults_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__quotedefaults_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__quotedefaults_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__quotedefaults_backend_only__"
+      }
+    }
   }
 }
