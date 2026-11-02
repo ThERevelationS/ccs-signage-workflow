@@ -16,7 +16,7 @@ import {
 import { Search, Filter, X, Loader2, ChevronDown, GitBranch, Receipt, Package, FileDiff, Calculator } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
@@ -66,12 +66,9 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false },
-        sort: "created_date",
-        label: "Global Search Work Orders",
-      });
+      const allWorkOrders = (await fetchAllWorkOrders({ preferSnapshot: true }))
+        .filter((wo) => wo.completed !== true)
+        .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
       
       let filtered = allWorkOrders;
 
