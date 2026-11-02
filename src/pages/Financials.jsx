@@ -277,7 +277,7 @@ export default function Financials() {
           (rows || [])
             .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financials authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Financials authorized users" })
       ]);
       setWorkOrders(orders);
       setUsers(usersData);
