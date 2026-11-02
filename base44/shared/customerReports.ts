@@ -783,7 +783,9 @@ export function customersByCreatedRows(customers: any[] = [], opts: any = {}) {
       customer_status: lifecycleStatus(c),
       customer_type: clean(c.customer_type),
       salesperson: clean(c.salesperson),
-      customer_origination: firstText(c.customer_origination, c.origination_path),
+      // N-07.1: origination_path (structured) wins over the legacy flat label —
+      // canonical precedence, matching estimateReports.ts:516.
+      customer_origination: firstText(c.origination_path, c.customer_origination),
     });
   }
   rows.sort(
