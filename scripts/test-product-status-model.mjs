@@ -20,16 +20,17 @@ const {
 // B-01 — the locked vocabulary is exactly the CoreBridge WIP set + wrappers.
 const EXPECTED = [
   'order_review', 'site_survey', 'awaiting_customer_action',
-  'awaiting_proof_approval', 'permitting', 'proof_approved', 'in_production',
+  'awaiting_proof_approval', 'proof_changes_requested', 'permitting',
+  'proof_approved', 'in_production',
   'install_removal_only', 'quality_control', 'design_review', 'service_repair',
   'built', 'completed', 'voided',
 ];
-assert.deepEqual([...OPERATIONAL_STATUS_SET], EXPECTED, '14 locked statuses in order');
-assert.equal(new Set(OPERATIONAL_STATUS_SET).size, 14, 'no duplicates');
+assert.deepEqual([...OPERATIONAL_STATUS_SET], EXPECTED, '15 locked statuses in order');
+assert.equal(new Set(OPERATIONAL_STATUS_SET).size, 15, 'no duplicates');
 
 // WIP/terminal split covers the whole set with no overlap.
 assert.deepEqual([...TERMINAL_STATUSES], ['built', 'completed', 'voided'], 'terminal wrappers');
-assert.equal(WIP_STATUSES.length, 11, 'eleven WIP statuses');
+assert.equal(WIP_STATUSES.length, 12, 'twelve WIP statuses');
 assert.deepEqual(
   [...WIP_STATUSES, ...TERMINAL_STATUSES].sort(),
   [...OPERATIONAL_STATUS_SET].sort(),
@@ -82,6 +83,7 @@ const EXPECTED_LABELS = {
   site_survey: 'Site Survey Scheduled',
   awaiting_customer_action: 'Action Required',
   awaiting_proof_approval: 'Requires Proof Approval',
+  proof_changes_requested: 'Proof Changes Requested',
   permitting: 'Permitting',
   proof_approved: 'Proof Approved',
   design_review: 'Design Review',
