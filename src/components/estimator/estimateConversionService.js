@@ -14,6 +14,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
+  estimateConvertedAmount,
   mergeWorkOrderProducts,
   selectExistingEstimateWorkOrder,
 } from "./workOrderConversion";
@@ -553,7 +554,7 @@ export async function convertEstimatesToSharedWorkOrder({
   if (customerIds.size > 1) {
     return { status: "mixed_customers", reason: "Selected estimates resolve to different customers — combined conversion requires one shared customer.", rejected, results: [] };
   }
-  const combinedTotal = prepared.reduce((s, p) => s + num(p.estimateBefore?.quote_total), 0);
+  const combinedTotal = prepared.reduce((s, p) => s + estimateConvertedAmount(p.estimateBefore, {}), 0);
   const primary = prepared[0];
   const credit = await checkEstimateConversionCredit({
     resolvedCustomer: primary.resolvedCustomer,
