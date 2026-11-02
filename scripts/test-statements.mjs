@@ -119,7 +119,8 @@ const pay = (over = {}) => ({
   assert.equal(stmt.openItems[0].paid, 100);
   assert.equal(stmt.openItems[0].balance, 200);
 
-  // Void + refunded payments apply $0 and keep the invoice fully open.
+  // Void payments apply $0; refunded rows are real money movement (N-05.1 —
+  // the reversal rides a separate negative leg row).
   const stmt2 = buildStatement({
     customer: CUST,
     invoices: [inv({ id: 'i9', invoice_number: 'INV-9', total: 500 })],
@@ -129,10 +130,10 @@ const pay = (over = {}) => ({
     ],
     asOfDate: AS_OF,
   });
-  assert.equal(stmt2.totalPaid, 0);
-  assert.equal(stmt2.balance, 500);
-  assert.equal(stmt2.openItems[0].balance, 500);
-  assert.equal(stmt2.lines.filter((l) => l.void).length, 2);
+  assert.equal(stmt2.totalPaid, 100);
+  assert.equal(stmt2.balance, 400);
+  assert.equal(stmt2.openItems[0].balance, 400);
+  assert.equal(stmt2.lines.filter((l) => l.void).length, 1);
 }
 
 // --- As-of filtering --------------------------------------------------------
