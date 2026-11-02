@@ -1,0 +1,81 @@
+{
+  "name": "PricingTemplate",
+  "type": "object",
+  "description": "Named quantity-break x customer-tier margin chart scoped to a unit category (CoreBridge 'Pricing Templates' analog \u2014 17 seed reference shapes). A catalog part selects a template on its Pricing Tiers tab; the pricing engine resolves the matching qty bracket, then applies the customer's tier markup_pct \u2014 or the market-based retail/discount chart when market_based is set. Backend-only: all access goes through staffEntityWrite/admin functions.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display label for this margin chart, e.g. 'Banner SqFt \u2014 Standard' or 'Retail Parts qty chart'."
+    },
+    "unit_category": {
+      "type": "string",
+      "description": "Pricing-unit category this chart covers (SqFt, LinFt, Each, Hourly, Pixels, ...). Only parts whose pricing unit matches may select this template."
+    },
+    "breaks": {
+      "type": "array",
+      "description": "Quantity brackets in ascending qty order. When order qty >= bracket qty, that bracket's tier_markups chart applies.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "qty": {
+            "type": "number",
+            "description": "Minimum quantity that unlocks this bracket."
+          },
+          "tier_markups": {
+            "type": "object",
+            "description": "Markup percent per customer tier for this bracket, keyed by MarkupTier.tier_name (e.g. {\"General Public\": 50, \"Wholesale\": 30}). Values are markup_pct numbers where 50 = sell at cost x 1.50.",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "market_based": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, tier_markups values are interpreted as market-based retail/discount chart entries instead of cost-plus markup percents."
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional admin notes on when or where this chart should be used."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order in template pickers."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive templates are hidden from pickers and ignored by the pricing engine."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__pricingtemplate_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__pricingtemplate_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__pricingtemplate_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__pricingtemplate_backend_only__"
+      }
+    }
+  }
+}
