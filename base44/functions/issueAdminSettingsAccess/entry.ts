@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { issueAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
+import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
 
 const FACE_DIMENSIONS = 128;
 const CONFIDENCE_THRESHOLD = 0.38;
@@ -52,20 +53,41 @@ Deno.serve(async (req) => {
     let method = '';
 
     const sessionToken = String(body?.session_token || '').trim();
-    // An admin session is mandatory. A client-supplied face descriptor is a
-    // static, replayable template — it must never be the sole credential
-    // (any photo of an admin reproduces a matching vector). If one is sent
-    // alongside a session, it is checked only against THAT admin's
-    // stored descriptors as defense-in-depth.
-    if (!sessionToken) {
-      return Response.json({ error: 'A valid admin session is required.' }, { status: 401 });
+    const badgeCode = String(body?.badge_code || '').trim();
+    // QR badge arm — a valid TIMECLOCK2 badge is itself a verified credential
+    // (email|version|token checked against the active badge record's stored
+    // hash), so an admin's badge can unlock without a pre-existing session,
+    // matching how the same badge already identifies them on the kiosk.
+    if (badgeCode) {
+      const badgeAuth = await verifyBadgeCredential(
+        badgeCode,
+        base44.asServiceRole.entities.TimeClockBadge,
+        base44.asServiceRole.entities.AuthorizedEmail,
+      );
+      if (!badgeAuth?.target?.id) {
+        return Response.json({ error: 'Time Clock badge is invalid, expired, or has been replaced.' }, { status: 401 });
+      }
+      if (badgeAuth.target.role !== 'admin') {
+        return Response.json({ error: 'Admin access is required.' }, { status: 403 });
+      }
+      admin = badgeAuth.target;
+      method = 'admin_badge';
+    } else {
+      // An admin session is mandatory. A client-supplied face descriptor is a
+      // static, replayable template — it must never be the sole credential
+      // (any photo of an admin reproduces a matching vector). If one is sent
+      // alongside a session, it is checked only against THAT admin's
+      // stored descriptors as defense-in-depth.
+      if (!sessionToken) {
+        return Response.json({ error: 'A valid admin session is required.' }, { status: 401 });
+      }
+      const user = await authenticateSignShopSession(base44, sessionToken);
+      if (user?.role !== 'admin') {
+        return Response.json({ error: 'Admin access is required.' }, { status: 403 });
+      }
+      admin = user;
+      method = 'admin_session';
     }
-    const user = await authenticateSignShopSession(base44, sessionToken);
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access is required.' }, { status: 403 });
-    }
-    admin = user;
-    method = 'admin_session';
 
     const descriptor = validDescriptor(body?.face_descriptor);
     if (descriptor) {
