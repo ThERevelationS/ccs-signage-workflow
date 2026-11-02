@@ -118,7 +118,7 @@ const pad2 = (n: number): string => String(n).padStart(2, '0');
 const toCents = (v: any): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.\-]/g, ''));
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 const fromCents = (c: any): number => Math.round(num(c)) / 100;
 
@@ -388,7 +388,7 @@ const feeAmountCents = (fee: any): number => {
   const amount = num(fee?.amount, 0);
   const kind = norm(fee?.kind);
   const signed = kind === 'discount' && amount > 0 ? -amount : amount;
-  return Math.round(signed * 100);
+  return Math.sign(signed) * Math.round(Math.abs(signed) * 100 + 1e-9);
 };
 
 /**
@@ -447,7 +447,7 @@ const LINE_AMOUNT_KEYS = ['line_total', 'amount', 'total', 'extended_price'];
 const lineAmountCents = (line: any): number => {
   for (const key of LINE_AMOUNT_KEYS) {
     const n = Number(line?.[key]);
-    if (Number.isFinite(n)) return Math.round(n * 100);
+    if (Number.isFinite(n)) return Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9);
   }
   const qty = Number(line?.quantity);
   const unit = Number(line?.unit_price);
