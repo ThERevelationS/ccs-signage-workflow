@@ -191,9 +191,19 @@ Deno.serve(async req=>{
   if(hasServiceIssue)resolution.reason=geocodingService.message;
   await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
   const stateFilter=resolution.state?{state:resolution.state}:null;
-  const {localities,profiles}=await loadCatalogs(base44,stateFilter);
-  const matched=exactConfiguredLocality(localities,resolution,profiles);
-  await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`});
+  // The office-match read must never kill an otherwise-resolved address —
+  // retry it once, and if the entity service is still saturated, return the
+  // verified jurisdiction with the office match honestly deferred instead of
+  // a 500 that erases work the boundary services already proved.
+  let catalogs=null;
+  try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e1){
+    await new Promise(r=>setTimeout(r,2500));
+    try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e2){catalogs=null;}
+  }
+  const {localities,profiles}=catalogs||{localities:[],profiles:[]};
+  const officeCheckDeferred=!catalogs;
+  const matched=catalogs?exactConfiguredLocality(localities,resolution,profiles):null;
+  await reporter.emit({kind:'catalog_check',detail:catalogs?`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`:'The saved-office record service was busy — the office match is deferred to the next lookup, not lost.'});
   // Never ask an LLM to choose a locality ID; never write research into approved
   // profiles or a Work Order. Research starts even when location needs review.
   const authority=summarizeMatchedLocalityAuthority(matched);
@@ -205,7 +215,7 @@ Deno.serve(async req=>{
   const addressArchives=null;
   const reason=matched?resolution.reason:resolution.status==='location_verified'?`Location is ${resolution.target.name}, but we are not sure which office handles permits there yet. Someone on the team can look it up in the review tools.`:resolution.reason;
   await reporter.emit({kind:'address_findings',detail:reason},{stage:applyAllowed?'Ready to use':'Administrator review needed',processed:1,total:1,indeterminate:false});
-  return addressResponse({success:true,scan_run:await reporter.finish(hasServiceIssue?'completed_with_errors':'complete',hasServiceIssue?geocodingService.message:undefined),geocode,geocoding_service:geocodingService,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,research_deferred:true,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
+  return addressResponse({success:true,scan_run:await reporter.finish(hasServiceIssue?'completed_with_errors':'complete',hasServiceIssue?geocodingService.message:undefined),geocode,geocoding_service:geocodingService,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,research_deferred:true,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,office_check_deferred:officeCheckDeferred,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
  }catch(error){
   const errorStatus=Number(error?.status||error?.response?.status||0);
   // A platform rate limit is transient: hand it back as 429 so the browser
