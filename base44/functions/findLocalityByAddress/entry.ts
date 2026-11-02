@@ -421,8 +421,34 @@ function strictGeocode(results, address = "") {
   const cityMatches = !enteredCity || [part("locality"), part("postal_town"), formattedCity].some((value) => value && norm(value) === norm(enteredCity));
   return Boolean(address) && stateMatches && zipMatches && streetMatches && cityMatches && g.partial_match !== true && g.geometry?.location_type === "ROOFTOP" && g.types?.some((t) => ["street_address", "premise", "subpremise"].includes(t)) && ["street_number", "route", "administrative_area_level_1"].every((type) => parts.some((c) => c.types?.includes(type)));
 }
+var addrKey = (a) => norm(String(a || "").split(",")[0].replace(/\s+(apt|suite|unit|ste|#)\s*.*$/i, ""));
+function applyResolutionRules(rules, { enteredCity, enteredAddr, state, countyName, candidates = [], target = null }) {
+  if (!Array.isArray(rules) || !rules.length) return null;
+  for (const r of rules) {
+    if (!r || r.active === false) continue;
+    if (String(r.state || "").toUpperCase() !== state) continue;
+    const rt = String(r.rule_type || "");
+    if (rt === "postal_name_map") {
+      if (!enteredCity || !sameJ(r.entered_name, enteredCity)) continue;
+      if (r.county && !sameJ(r.county, countyName)) continue;
+    } else if (rt === "address_override") {
+      if (!enteredAddr || addrKey(r.address_key) !== addrKey(enteredAddr)) continue;
+    } else if (rt === "source_preference") {
+      if (r.county && !sameJ(r.county, countyName)) continue;
+      const prefState = /state/i.test(String(r.preferred_source || "state"));
+      const inside = candidates.filter((c) => c.inside && c.inside_sources?.some((s) => prefState ? /state/i.test(s) : /census/i.test(s)));
+      if (inside.length === 1) return { pick: inside[0], rule: r };
+      continue;
+    } else continue;
+    const hit = candidates.find((c) => sameJ(c.name, r.jurisdiction_name));
+    if (hit) return { pick: hit, rule: r };
+    if (target && sameJ(target.name, r.jurisdiction_name)) return { pick: target, rule: r };
+    if (/county/i.test(String(r.jurisdiction_type || "")) && sameJ(r.jurisdiction_name, countyName)) return { pick: { name: countyName, type: "county" }, rule: r };
+  }
+  return null;
+}
 async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async () => {
-} }) {
+}, rules = [], enteredAddress = "" }) {
   const state = normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(), point = { lat: geocode?.lat, lng: geocode?.lon };
   const base = { status: "unresolved", state, point, checked_at: (/* @__PURE__ */ new Date()).toISOString(), targets: [], boundaries: [], sources: [], reason: "We could not confirm the property location. An administrator needs to check it." };
   if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng) || !["OH", "KY"].includes(state)) return { ...base, reason: "Enter a complete street address in Ohio or Kentucky." };
@@ -451,6 +477,8 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     const [counties, places, statePlaces] = rows.map((r) => r.features);
     let townships = [], stateTownships = [];
     if (rows[1].failed && rows[2].failed) throw Error("Municipal boundary services are unavailable \u2014 retryable.");
+    const parts = geocode?.address_parts || {}, geoLocality = parts.locality || "", geoTwp = parts.administrative_area_level_3 || "", geoCounty = parts.administrative_area_level_2 || "";
+    const enteredCity = norm(String(enteredAddress || "").split(",")[1]?.replace(/\s+(OH|Ohio|KY|Kentucky|USA|United States)(?:\s+[0-9]{5}(?:-[0-9]{4})?)?\s*$/i, ""));
     let county = counties.filter((f) => f.inside);
     if (county.length > 1) {
       const merged = [...new Set(county.map((f) => loose(f.attributes.NAME)))];
@@ -462,8 +490,15 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     }
     if (county.length !== 1) {
       const countyCands = counties.filter((f) => String(f.attributes.STATE) === fips).map((f) => ({ name: f.attributes.NAME, state, type: "county", geoid: String(f.attributes.GEOID || ""), county: f.attributes.NAME, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Census county boundary"] }));
-      if (countyCands.length) return { ...base, status: "needs_review", reason: "This address sits on or near a county line \u2014 the map cannot decide between these counties. Pick the correct one.", candidates: countyCands, target: null };
-      throw Error("County/state location is missing or conflicting.");
+      const cr = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName: geoCounty, candidates: countyCands });
+      if (cr) {
+        const f = counties.find((x) => sameJ(x.attributes.NAME, cr.pick.name));
+        if (f) county = [f];
+      }
+      if (county.length !== 1) {
+        if (countyCands.length) return { ...base, status: "needs_review", reason: "This address sits on or near a county line \u2014 the map cannot decide between these counties. Pick the correct one.", candidates: countyCands, target: null };
+        throw Error("County/state location is missing or conflicting.");
+      }
     }
     if (String(county[0].attributes.STATE) !== fips || !new RegExp("^" + fips + "[0-9]{3}$").test(String(county[0].attributes.GEOID))) throw Error("County/state location is missing or conflicting.");
     const countyRow = county[0], countyName = countyRow.attributes.NAME, countyId = countyRow.attributes.GEOID;
@@ -485,7 +520,6 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     };
     places.forEach((f) => addMuni(f, "Census municipal boundary"));
     statePlaces.forEach((f) => addMuni(f, stateSrc));
-    const parts = geocode?.address_parts || {}, geoLocality = parts.locality || "", geoTwp = parts.administrative_area_level_3 || "", geoCounty = parts.administrative_area_level_2 || "";
     const insideMuni = muniCands.filter((c) => c.inside && c.inside_sources.length);
     let muniPick = null;
     if (muniCands.length === 1 && insideMuni.length) muniPick = muniCands[0];
@@ -498,11 +532,19 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
         if (hit) muniPick = hit;
       }
     }
+    let pickVia = "source_consensus";
+    if (!muniPick && (cities.length || stateCities.length)) {
+      const mr = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: muniCands });
+      if (mr) {
+        muniPick = mr.pick;
+        pickVia = "resolution_rule";
+      }
+    }
     if (muniPick) {
       const feat = [...places, ...statePlaces].find((f) => f.inside && sameJ(String(f.attributes.NAME || f.attributes.municipality || "").replace(/\s+(city|village|town)$/i, ""), muniPick.name));
       const censFeat = places.find((f) => sameJ(String(f.attributes.NAME || "").replace(/\s+(city|village|town)$/i, ""), muniPick.name));
       const best = feat || censFeat;
-      target = { name: muniPick.name, state, type: "municipality", geoid: String(censFeat?.attributes.GEOID || muniPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: best?.geometry, source_url: best?.source_url, resolved_by: "source_consensus" };
+      target = { name: muniPick.name, state, type: "municipality", geoid: String(censFeat?.attributes.GEOID || muniPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: best?.geometry, source_url: best?.source_url, resolved_by: pickVia };
     } else if (cities.length || stateCities.length) {
       if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
       throw Error("Official boundary sources disagree about the municipality.");
@@ -539,6 +581,10 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
         }
       }
       if (!twpPick) {
+        const tr = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: twpCands });
+        if (tr) twpPick = tr.pick;
+      }
+      if (!twpPick) {
         if (twpCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.", candidates: twpCands, target: null };
         throw Error("Township location is missing or conflicting.");
       }
@@ -550,14 +596,20 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     const featName = (f) => String(f.attributes.NAME || f.attributes.municipality || f.attributes.TOWNSHIP || "");
     const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []].filter((f) => !sameJ(featName(f), target.name));
     const edge = geocode.approximate_source ? 150 : 25;
-    if (!geocode.location_exact && !geocode.approximate_source) return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
+    if (!geocode.location_exact && !geocode.approximate_source) {
+      const ar = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
+      if (ar) return { ...base, status: "location_verified", reason: "Map position is approximate, but a confirmed review rule places this address in " + ar.pick.name + " \u2014 resolving to " + ar.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
+      return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
+    }
     if (relevant.some((f) => f.distance_m <= edge)) {
-      const enteredCity = norm(parts.locality || "");
+      const geoLocalityClaim = norm(parts.locality || "");
       const geoClaim = target.type === "municipality" ? geoLocality : target.type === "township" ? geoTwp : target.type === "county" ? geoCounty : "";
       if (target && geoClaim && sameJ(geoClaim, target.name))
         return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the geocoder independently places this address in " + target.name + " \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "geocoder_jurisdiction" };
       if (target && target.type === "municipality" && enteredCity && sameJ(enteredCity, target.name))
         return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the address's own city matches the " + target.name + " boundary containing it \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "entered_city_name" };
+      const er = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
+      if (er) return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but a confirmed review rule places this address in " + er.pick.name + " \u2014 resolving to " + er.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
       return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
     }
     if (!geocode.location_exact) return { ...base, status: "location_verified", reason: `Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`, target: base.targets[0] };
@@ -693,12 +745,13 @@ async function loadCatalogs(base44, stateFilter) {
   if (hit && Date.now() - hit.ts < CATALOG_TTL_MS) return hit.data;
   if (catalogInflight.has(key)) return catalogInflight.get(key);
   const p = (async () => {
-    const [localities, profiles] = await Promise.all([
+    const [localities, profiles, rules] = await Promise.all([
       loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: "created_date", label: "Location matching catalog" }),
-      loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, query: stateFilter, sort: "created_date", label: "Location county identities" })
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, query: stateFilter, sort: "created_date", label: "Location county identities" }),
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitResolutionRule, query: { active: true }, sort: "created_date", label: "Resolution rules" }).catch(() => [])
     ]);
-    catalogCache.set(key, { ts: Date.now(), data: { localities, profiles } });
-    return { localities, profiles };
+    catalogCache.set(key, { ts: Date.now(), data: { localities, profiles, rules } });
+    return { localities, profiles, rules };
   })().finally(() => catalogInflight.delete(key));
   catalogInflight.set(key, p);
   return p;
@@ -857,11 +910,8 @@ Deno.serve(async (req) => {
     }
     if (diagnostic) return addressResponse({ success: true, diagnostic_only: true, geocode, geocoding_service: geocodingService, authority_established: false, apply_allowed: false, llm_calls: 0, record_writes: 0 });
     await reporter.emit({ kind: "geocode_result", detail: geocode ? `Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact ? "Street and building coordinates matched." : "Approximate or corrected address; review required."}` : "No map location found." }, { stage: "Checking government boundaries", indeterminate: true });
-    const resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress });
-    const hasServiceIssue = Boolean(geocodingService?.issue && resolution.status !== "location_verified");
-    if (hasServiceIssue) resolution.reason = geocodingService.message;
-    await reporter.emit({ kind: "location_result", detail: resolution.reason }, { stage: "Checking saved jurisdictions", indeterminate: true });
-    const stateFilter = resolution.state ? { state: resolution.state } : null;
+    const geoState = normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase();
+    const stateFilter = geoState ? { state: geoState } : null;
     let catalogs = null;
     try {
       catalogs = await loadCatalogs(base44, stateFilter);
@@ -873,6 +923,10 @@ Deno.serve(async (req) => {
         catalogs = null;
       }
     }
+    const resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress, rules: catalogs?.rules || [], enteredAddress: address });
+    const hasServiceIssue = Boolean(geocodingService?.issue && resolution.status !== "location_verified");
+    if (hasServiceIssue) resolution.reason = geocodingService.message;
+    await reporter.emit({ kind: "location_result", detail: resolution.reason }, { stage: "Checking saved jurisdictions", indeterminate: true });
     const { localities, profiles } = catalogs || { localities: [], profiles: [] };
     const officeCheckDeferred = !catalogs;
     const matched = catalogs ? exactConfiguredLocality(localities, resolution, profiles) : null;
