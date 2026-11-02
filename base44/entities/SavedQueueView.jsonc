@@ -4,77 +4,67 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Display name of the saved queue view."
+      "description": "Display name of the saved filter view (unique per owner + queue lens, enforced client-side by findViewByName)"
     },
     "queue_lens": {
       "type": "string",
+      "description": "Which queue surface this view belongs to: design | production | fulfillment | all (QUEUE_LENSES in savedViewsModel.js)",
       "enum": [
         "design",
         "production",
         "fulfillment",
         "all"
-      ],
-      "description": "Which product-queue lens this view was saved for."
+      ]
     },
-    "filters": {
-      "type": "object",
-      "additionalProperties": true,
-      "properties": {
-        "status": {
-          "type": "string"
-        },
-        "substatus": {
-          "type": "string"
-        },
-        "designer": {
-          "type": "string"
-        },
-        "responsibility": {
-          "type": "string"
-        },
-        "assignedTo": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "moduleKey": {
-          "type": "string"
-        },
-        "duePreset": {
-          "type": "string"
-        },
-        "search": {
-          "type": "string"
-        },
-        "pageSize": {
-          "type": "number"
-        },
-        "includeFulfilled": {
-          "type": "boolean"
-        }
-      },
-      "description": "Serialized queue filter state. Every key is always present in a stable order so identical states serialize identically."
+    "page": {
+      "type": "string",
+      "description": "Queue page/surface identifier \u2014 forward-compatible alias for queue_lens so a view can be scoped to a page rather than a lens"
     },
     "owner_email": {
       "type": "string",
-      "description": "Email of the staff user who saved the view."
+      "description": "Sign-shop user email that owns the view; staff see their own views plus shared ones (isOwnView/isViewVisible in savedViewsModel.js)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Owner email alias matching the per-user-record convention (NotificationPreference.user_email); owner_email is the field the persistence layer writes today"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Serialized filter state \u2014 always emitted in SAVED_VIEW_FILTER_KEYS order by serializeViewFilters: status, substatus, designer, responsibility, assignedTo, category, moduleKey, duePreset, search, pageSize, includeFulfilled"
     },
     "is_shared": {
       "type": "boolean",
       "default": false,
-      "description": "Shared views are visible to every staff session; private views only to the owner."
+      "description": "Shared views are visible to every staff member; only the owner can overwrite or delete"
+    },
+    "shared": {
+      "type": "boolean",
+      "description": "Forward-compatible alias for is_shared"
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pinned views float to the top of the picker (C-03 server-saved views)"
+    },
+    "sort": {
+      "type": "number",
+      "description": "Explicit ordering weight for pinned/user-arranged views; unset rows fall back to name ordering in sortViews"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Auto-apply this view when the owner opens the queue surface"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle marker (e.g. active | archived) so views can be retired without deleting them"
     },
     "creation_request_key": {
       "type": "string",
-      "description": "Idempotent-create retry key; a retried save converges on one row."
+      "description": "Idempotent-create key written by ensureIdempotentEntityCreate (saved_queue_view:<ts>:<rand>) so a retried create dedupes instead of double-saving a view"
     }
   },
-  "required": [
-    "name",
-    "queue_lens",
-    "owner_email"
-  ],
+  "required": [],
   "rls": {
     "create": {
       "user_condition": {
