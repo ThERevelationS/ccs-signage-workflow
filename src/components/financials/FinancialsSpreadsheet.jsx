@@ -11,6 +11,7 @@ import { Loader2, Link as LinkIcon } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 // xlsx (~1MB) loads on demand inside the export handler — not at page load.
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -54,12 +55,8 @@ const FinancialsSpreadsheet = React.forwardRef(({
     setReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Financial spreadsheet Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || []).filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financial spreadsheet authorized users" })
       ]);
       setWorkOrders(orders.map((order) => ({
