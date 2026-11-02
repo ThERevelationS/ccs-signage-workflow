@@ -110,6 +110,11 @@
       "default": 0,
       "description": "Customer deposit credited against this invoice."
     },
+    "credit_applied": {
+      "type": "number",
+      "default": 0,
+      "description": "In-store credit applied against this invoice (G-09); maintained server-side by the credit application."
+    },
     "total": {
       "type": "number",
       "default": 0
