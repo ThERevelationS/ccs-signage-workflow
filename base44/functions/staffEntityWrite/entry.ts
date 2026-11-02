@@ -25,7 +25,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   LaborLevel: new Set(['create', 'updateMany', 'delete']),
   MachineRate: new Set(['create', 'updateMany', 'delete']),
   PermitLocality: new Set(['create', 'update']),
-  SourceCollectionQueue: new Set(['create']),
+  SourceCollectionQueue: new Set(['create', 'updateMany']),
   LegacyMigrationMap: new Set(['create']),
   // CRM event queue rows live on OpportunityActivity: staff create typed
   // contact events and close them out with the same single-record
