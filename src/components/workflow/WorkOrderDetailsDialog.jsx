@@ -73,7 +73,7 @@ import ProjectHealthBadge from "./ProjectHealthBadge";
 import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -206,12 +206,9 @@ export default function WorkOrderDetailsDialog({
     setRelatedDataReadError("");
     setRelatedDataVerified(false);
     try {
-      const all = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false, deleted: { $ne: true } },
-        sort: "created_date",
-        label: "Work Order Details related Work Orders"
-      });
+      const all = (await fetchAllWorkOrders())
+        .filter((wo) => wo.completed !== true && wo.deleted !== true)
+        .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
       setAllWorkOrders(all);
 
       // Find riders
