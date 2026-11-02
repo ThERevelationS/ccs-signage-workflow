@@ -101,8 +101,8 @@ const titleCase = (v) => {
 };
 
 const productStatus = (product) =>
-  PRINT_PRODUCT_STATUS_LABELS[clean(product?.operational_status)]
-    ?? titleCase(product?.operational_status)
+  (PRINT_PRODUCT_STATUS_LABELS[clean(product?.operational_status)]
+    ?? titleCase(product?.operational_status))
     || clean(product?.customer_facing_status);
 
 // Customer-facing product notes only. Estimator notes are INTERNAL and must
