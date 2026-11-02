@@ -280,6 +280,11 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     // only a Customer ID verified against the live Customer entity.
     customer_id: verifiedCustomerId || "",
     estimate_id: estimate.id || existing?.estimate_id || "",
+    // Upstream chain links: the Opportunity workspace and invoice creation
+    // aggregate Work Orders by opportunity_id/estimating_request_id — an
+    // existing WO keeps its original links when estimates merge into it.
+    opportunity_id: firstNonBlank(existing?.opportunity_id, estimate.opportunity_id),
+    estimating_request_id: firstNonBlank(existing?.estimating_request_id, estimate.estimating_request_id),
     // Preserve richer sales/production notes already entered on the pipeline lead.
     description: firstNonBlank(existing?.description, generatedDescription),
     current_stage: convertedWorkOrderStage(existing?.current_stage),
