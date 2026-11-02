@@ -133,6 +133,11 @@
       "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Existing Maintenance markup_percent remains the fallback until a tier is explicitly applied.",
       "additionalProperties": true
     },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23i: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, maintenancePricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string"
     }
