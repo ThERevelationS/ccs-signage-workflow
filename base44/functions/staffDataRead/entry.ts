@@ -111,6 +111,21 @@ const STAFF_READABLE = new Set([
   'QuickProductCategory',
   'SalesFilter',
   'UserCapacity',
+
+  // Estimator/queue registries + audit entities (masterplan A-29). Operational
+  // data staff screens need for queue filters, product editors and reporting.
+  'CatalogPartGroup',
+  'CrmEventType',
+  'GlobalPricingTier',
+  'Machine',
+  'ModifierOption',
+  'OriginationNode',
+  'PricingModifier',
+  'PricingTemplate',
+  'ProductActivity',
+  'ProductSubstatus',
+  'Responsibility',
+  'WorkOrderTimeEntry',
 ]);
 
 // Admin-settings data: readable by admins only. AuthorizedEmail is
@@ -129,6 +144,11 @@ const ADMIN_READABLE = new Set<string>([
   'SyncConflict',
   'TimeClockPunchException',
   'UserSession',
+
+  // GL/accounting configuration (masterplan A-29) — admin tier only.
+  'COGSAccount',
+  'IncomeAccount',
+  'TaxAgency',
 ]);
 
 // Fields that must never leave the backend regardless of role. These hold
