@@ -252,7 +252,7 @@ export default function SIPs() {
           (rows || [])
             .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIPs authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "SIPs authorized users" }),
         loadSingleGlobalSetting({
           entity: staffEntities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
