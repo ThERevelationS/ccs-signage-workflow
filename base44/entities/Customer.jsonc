@@ -46,6 +46,19 @@
       "type": "string",
       "description": "Set when this Customer was merged into another canonical Customer \u2014 linked records were relinked and this row is kept for audit."
     },
+    "merged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this Customer was merged (tombstoned) into merged_into_customer_id. Written by manageCustomerLifecycle merge_customers (G-14)."
+    },
+    "merged_by": {
+      "type": "string",
+      "description": "Staff email/id who performed the customer merge."
+    },
+    "merge_run": {
+      "type": "object",
+      "description": "Durable merge progress for an in-flight/partial merge_customers run: {run_key, keep_id, status, started_at, updated_at, finished_at, actor, entities{<Entity>: {status, scanned, relinked, skipped, failed_count, failures[]}}}. A run_key matching a retried call resumes instead of restarting (G-14 D6)."
+    },
     "customer_status": {
       "type": "string",
       "enum": [
