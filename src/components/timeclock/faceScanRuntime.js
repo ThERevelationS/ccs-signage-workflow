@@ -260,3 +260,21 @@ export function descriptorDistance(a, b) {
   if (!a || !b || a.length !== b.length) return Infinity;
   return faceapi.euclideanDistance(a, b);
 }
+
+// Cached one-shot capability probe - some browsers expose BarcodeDetector
+// with a constructor that throws (or no qr_code support), so
+// "BarcodeDetector" in window alone is not a safe capability check and can
+// crash callers that construct it unguarded.
+let _inlineQrSupported;
+export function supportsInlineQrDetection() {
+  if (_inlineQrSupported === undefined) {
+    try {
+      _inlineQrSupported = typeof window !== "undefined"
+        && typeof window.BarcodeDetector === "function"
+        && !!new window.BarcodeDetector({ formats: ["qr_code"] });
+    } catch {
+      _inlineQrSupported = false;
+    }
+  }
+  return _inlineQrSupported;
+}
