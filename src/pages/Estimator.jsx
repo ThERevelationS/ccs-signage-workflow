@@ -114,7 +114,19 @@ export default function Estimator() {
 
   // Trashed estimates never appear in queue counts or lists — they are only
   // reachable through the Trash chip on Estimate Queues.
-  const liveEstimates = useMemo(() => estimates.filter((e) => e?.deleted !== true), [estimates]);
+  // K-05 (item 485): admin sees every estimate; non-admin sales sees only
+  // their own (`salesperson` stores full_name || email — the same value the
+  // Step-1 dropdown writes).
+  const scopedEstimates = useMemo(() => {
+    const visible = estimates.filter((e) => e?.deleted !== true);
+    if (!currentUser || currentUser.role === "admin") return visible;
+    const mine = new Set(
+      [String(currentUser.full_name || "").trim().toLowerCase(),
+       String(currentUser.email || "").trim().toLowerCase()].filter(Boolean)
+    );
+    return visible.filter((e) => mine.has(String(e?.salesperson || "").trim().toLowerCase()));
+  }, [estimates, currentUser]);
+  const liveEstimates = scopedEstimates;
 
   const buckets = useMemo(() => {
     const by = {};
@@ -217,6 +229,11 @@ export default function Estimator() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-5">
+          {currentUser && currentUser.role !== "admin" && (
+            <span className="rounded-full bg-red-50 border border-red-200 px-3 py-1 text-xs font-semibold text-red-700" title="Item 485: non-admin sales staff see only their own estimates. Admins see all.">
+              My estimates
+            </span>
+          )}
           <div className="relative flex-1 min-w-48">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <Input
