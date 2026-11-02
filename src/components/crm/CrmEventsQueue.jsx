@@ -32,6 +32,7 @@ import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 export const CRM_EVENTS_QUERY_KEY = ["crm-events", "all"];
 const PAGE_SIZES = [25, 50, 100, 200];
+const EMPTY_ACTIVITIES = [];
 
 const sel = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
 const lab = "text-[11px] font-semibold uppercase tracking-wide text-gray-500";
@@ -136,7 +137,7 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
   const [errors, setErrors] = useState({});
   const now = useMemo(() => new Date(), []);
 
-  const { data: activities = [], isFetched } = useQuery({
+  const { data: activities = EMPTY_ACTIVITIES, isFetched } = useQuery({
     queryKey: CRM_EVENTS_QUERY_KEY,
     queryFn: () => loadAllEntityRows({
       entity: OpportunityActivity,
