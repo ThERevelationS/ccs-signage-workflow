@@ -1560,7 +1560,10 @@ Deno.serve(async (req) => {
         const ageDays = Math.floor((Date.now() - issuedMs) / 86400000);
         if (ageDays < 7) continue;
         const validDays = num(est?.quote_valid_days, 30);
-        const expired = ageDays >= validDays;
+        // K-10 D2: a quote is valid THROUGH issue+validDays — ageDays ===
+        // validDays is the last valid day, not expired. Matches
+        // quoteDefaultsModel.quoteExpiryFrom + the portal/PDF consumers.
+        const expired = ageDays > validDays;
         items.push({
           id: clean(o?.id),
           title: clean(o?.title),
