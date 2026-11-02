@@ -7,6 +7,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { getSessionToken, getSessionUser } from "@/components/auth/EmailGate";
 import { listAuthorizedUsersAdmin, updateAuthorizedUserAdmin } from "@/components/admin/authorizedUserAdminPersistence";
 import EstimatorAuditPanel from "@/components/estimator/EstimatorAuditPanel";
+import PricingRegistriesPanel from "@/components/estimator/settings/PricingAdminTabs";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { isValidTimeZone, resolveUserTimeZone } from "@/components/estimator/userDateDisplay";
 
@@ -24,6 +25,7 @@ const LINKS = [
   { label: "Vinyl Settings", desc: "Printers, cutters, laminators, geometry, ink, blade and machine rates", to: "/VinylSettings" },
   { label: "Quote Defaults", desc: "Company branding, quote content, validity and default customer-facing display settings for new estimates", to: "/QuoteSettings" },
   { label: "Pricing Admin", desc: "Markup tiers, tier matrices, labor levels, machine rates and the quote simulator", to: "/PricingAdmin" },
+  { label: "Pricing Registries", desc: "Admin-only CRUD for the shared pricing registries — tiers, templates, variables, modifiers, machines, labor, part groups, import history", to: "/EstimatorSettings?tab=pricing_registries" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "Audit Log", desc: "Admin-only who-changed-what timeline (estimate revisions, opportunity activity, admin actions)", to: "/EstimatorSettings?tab=audit_log" },
   { label: "Tools", desc: "Quick price, walk-in sale, exports and estimator utilities", to: "/EstimatorTools" },
@@ -32,15 +34,17 @@ const LINKS = [
 
 export default function EstimatorSettings() {
   // #316 — ?tab=<section> deep-link. This hub page has no tab UI; the
-  // tab-addressable sections are the Quote Approval card (?tab=quote_approval)
-  // and the admin Audit Log card (?tab=audit_log) — both scroll + flash.
+  // tab-addressable sections are the Quote Approval card (?tab=quote_approval),
+  // the admin Pricing Registries card (?tab=pricing_registries, F-24) and the
+  // admin Audit Log card (?tab=audit_log) — all scroll + flash.
   // Nothing writes the param back since there is no tab control to change.
   const approvalRef = useRef(null);
   const auditRef = useRef(null);
+  const pricingRef = useRef(null);
   const isAdmin = getSessionUser()?.role === "admin";
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab") || "";
-    const ref = tab === "quote_approval" ? approvalRef : tab === "audit_log" ? auditRef : null;
+    const ref = tab === "quote_approval" ? approvalRef : tab === "audit_log" ? auditRef : tab === "pricing_registries" ? pricingRef : null;
     const el = ref?.current;
     if (!el) return;
     const t = window.setTimeout(() => {
@@ -75,6 +79,12 @@ export default function EstimatorSettings() {
         <div ref={approvalRef}>
           <QuoteApprovalCard />
         </div>
+
+        {isAdmin && (
+          <div ref={pricingRef}>
+            <PricingRegistriesPanel />
+          </div>
+        )}
 
         {isAdmin && (
           <div ref={auditRef}>
