@@ -49,6 +49,10 @@
         "Visit: Site Survey"
       ]
     },
+    "event_type_id": {
+      "type": "string",
+      "description": "FK to CrmEventType \u2014 the typed taxonomy row backing event_type for CRM queue events."
+    },
     "summary": {
       "type": "string"
     },
@@ -98,6 +102,10 @@
     "completed_at": {
       "type": "string",
       "description": "ISO timestamp the CRM event was marked complete. Blank while open."
+    },
+    "completed_by": {
+      "type": "string",
+      "description": "Staff user (email or screen name) who marked the CRM event complete. Blank while open."
     },
     "outcome": {
       "type": "string",
