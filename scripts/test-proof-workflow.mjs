@@ -76,7 +76,7 @@ assert.equal(PROOF_TRANSITIONS.draft.includes('approved'), false, 'draft cannot 
   assert.equal(next.proof_status, 'approved');
   assert.equal(next.operational_status, 'proof_approved');
   assert.equal(next.proof_approved_version, 2, 'approval is stamped to the exact version');
-  assert.equal(next.product_due_date.startsWith('2026-11-04'), true, 'soft due date rolls forward by lead days');
+  assert.equal(next.product_due_date.startsWith('2026-11-20'), true, 'soft due date is forward-only: computed 11-04 is earlier than existing 11-20, holds');
   assert.equal(isProofStale(next), false);
   assert.equal(proofBadge(next).label, 'Approved v2');
 }
