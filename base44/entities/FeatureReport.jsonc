@@ -57,6 +57,42 @@
     "admin_notes": {
       "type": "string",
       "description": "Notes from admin"
+    },
+    "report_key": {
+      "type": "string",
+      "description": "Stable catalog key identifying the report definition (uniqueness enforced by callers, not schema)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Report grouping (e.g. sales, production, financial, queue)"
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Entity or query source the report reads from"
+    },
+    "parameters_schema": {
+      "type": "object",
+      "description": "JSON-schema-ish definition of the report's runtime parameters"
+    },
+    "default_filters": {
+      "type": "object",
+      "description": "Default filter values applied when the report runs"
+    },
+    "export_formats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Supported export formats (e.g. csv, pdf, xlsx)"
+    },
+    "is_system": {
+      "type": "boolean",
+      "default": false,
+      "description": "Built-in/system report definition vs user-created"
+    },
+    "sort": {
+      "type": "number",
+      "description": "Catalog display ordering"
     }
   },
   "required": [
