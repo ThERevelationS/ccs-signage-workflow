@@ -285,17 +285,7 @@ async function authenticateSignShopSession(base44, token) {
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
   if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
-  let users;
-  for (let a = 0; a < 4; a++) {
-    try {
-      users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
-      break;
-    } catch (error) {
-      const s = Number(error?.status || error?.response?.status || 0);
-      if (s !== 429 && s < 500 || a === 3) throw error;
-      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
-    }
-  }
+  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
   }
@@ -303,23 +293,13 @@ async function authenticateSignShopSession(base44, token) {
   if (users.length !== 1) {
     throw Object.assign(new Error("Authenticated user identity is ambiguous"), { status: 409 });
   }
-  let revoked = null;
-  for (let a = 0; a < 4; a++) {
-    try {
-      revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
-      break;
-    } catch (e) {
-      if (e?.status === 401) throw e;
-      const s = Number(e?.status || e?.response?.status || 0);
-      if (s !== 429 && s < 500 || a === 3) {
-        revoked = null;
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
+  try {
+    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+    if (Array.isArray(revoked) && revoked.length > 0) {
+      throw Object.assign(new Error("Authentication required"), { status: 401 });
     }
-  }
-  if (Array.isArray(revoked) && revoked.length > 0) {
-    throw Object.assign(new Error("Authentication required"), { status: 401 });
+  } catch (e) {
+    if (e?.status === 401) throw e;
   }
   const user = stripExpiredGrant(users[0]);
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
@@ -403,6 +383,11 @@ function summarizeMatchedLocalityAuthority(locality) {
 var CENSUS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb";
 var LOCATION_SOURCES = { county: `${CENSUS}/State_County/MapServer/1`, place: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/4`, township: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/1`, oh_city: "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0", oh_township: "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3", ky_city: "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0" };
 var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
+var loose = (value) => norm(value).replace(/\bst\.?\b/g, "saint").replace(/\bft\.?\b/g, "fort").replace(/\bmt\.?\b/g, "mount").replace(/[^a-z0-9]/g, "");
+var sameJ = (a, b) => {
+  const x = norm(a), y = norm(b);
+  return Boolean(x && y && (x === y || loose(a) === loose(b)));
+};
 function boundaryPosition(rings, point) {
   if (!Array.isArray(rings) || !rings.length || !Number.isFinite(point?.lat) || !Number.isFinite(point?.lng)) throw Error("Invalid boundary geometry.");
   let inside = false, distance = Infinity, count = 0;
@@ -466,7 +451,15 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     const [counties, places, statePlaces] = rows.map((r) => r.features);
     let townships = [], stateTownships = [];
     if (rows[1].failed && rows[2].failed) throw Error("Municipal boundary services are unavailable \u2014 retryable.");
-    const county = counties.filter((f) => f.inside);
+    let county = counties.filter((f) => f.inside);
+    if (county.length > 1) {
+      const merged = [...new Set(county.map((f) => loose(f.attributes.NAME)))];
+      if (merged.length === 1) county = [county[0]];
+    }
+    if (county.length === 0) {
+      const near = counties.filter((f) => String(f.attributes.STATE) === fips).sort((a, b) => (a.distance_m || 0) - (b.distance_m || 0));
+      if (near.length && near[0].distance_m <= (geocode.approximate_source ? 150 : 25) && (near.length === 1 || near[0].distance_m < near[1].distance_m)) county = [near[0]];
+    }
     if (county.length !== 1) {
       const countyCands = counties.filter((f) => String(f.attributes.STATE) === fips).map((f) => ({ name: f.attributes.NAME, state, type: "county", geoid: String(f.attributes.GEOID || ""), county: f.attributes.NAME, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Census county boundary"] }));
       if (countyCands.length) return { ...base, status: "needs_review", reason: "This address sits on or near a county line \u2014 the map cannot decide between these counties. Pick the correct one.", candidates: countyCands, target: null };
@@ -481,7 +474,7 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     const addMuni = (f, src) => {
       const name = String(f.attributes.NAME || f.attributes.municipality || "").replace(/\s+(city|village|town)$/i, "").trim();
       if (!name) return;
-      const ex = muniCands.find((c) => norm(c.name) === norm(name));
+      const ex = muniCands.find((c) => sameJ(c.name, name));
       if (ex) {
         if (!ex.supported_by.includes(src)) ex.supported_by.push(src);
         if (f.inside && !ex.inside_sources.includes(src)) ex.inside_sources.push(src);
@@ -492,50 +485,79 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     };
     places.forEach((f) => addMuni(f, "Census municipal boundary"));
     statePlaces.forEach((f) => addMuni(f, stateSrc));
-    let coverageGap = false;
-    if (cities.length > 1 || stateCities.length > 1) {
+    const parts = geocode?.address_parts || {}, geoLocality = parts.locality || "", geoTwp = parts.administrative_area_level_3 || "", geoCounty = parts.administrative_area_level_2 || "";
+    const insideMuni = muniCands.filter((c) => c.inside && c.inside_sources.length);
+    let muniPick = null;
+    if (muniCands.length === 1 && insideMuni.length) muniPick = muniCands[0];
+    else if (insideMuni.length === 1) muniPick = insideMuni[0];
+    else if (insideMuni.length > 1) {
+      const stOnly = insideMuni.filter((c) => c.inside_sources.includes(stateSrc));
+      if (stOnly.length === 1) muniPick = stOnly[0];
+      else {
+        const hit = insideMuni.find((c) => sameJ(c.name, geoLocality));
+        if (hit) muniPick = hit;
+      }
+    }
+    if (muniPick) {
+      const feat = [...places, ...statePlaces].find((f) => f.inside && sameJ(String(f.attributes.NAME || f.attributes.municipality || "").replace(/\s+(city|village|town)$/i, ""), muniPick.name));
+      const censFeat = places.find((f) => sameJ(String(f.attributes.NAME || "").replace(/\s+(city|village|town)$/i, ""), muniPick.name));
+      const best = feat || censFeat;
+      target = { name: muniPick.name, state, type: "municipality", geoid: String(censFeat?.attributes.GEOID || muniPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: best?.geometry, source_url: best?.source_url, resolved_by: "source_consensus" };
+    } else if (cities.length || stateCities.length) {
       if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
       throw Error("Official boundary sources disagree about the municipality.");
-    }
-    if (cities.length !== stateCities.length) {
-      if (muniCands.length === 1) {
-        const s = stateCities[0] || cities[0];
-        const nm = String(s.attributes.NAME || s.attributes.municipality || "").replace(/\s+(city|village|town)$/i, "").trim();
-        const sameNameCensus = cities[0] || places.find((f) => norm(String(f.attributes.NAME || "").replace(/\s+(city|village|town)$/i, "")) === norm(nm));
-        target = { name: nm, state, type: "municipality", geoid: String(sameNameCensus?.attributes.GEOID || ""), county: countyName, county_geoid: countyId, geometry: s.geometry, source_url: s.source_url, coverage_note: "One boundary source does not yet cover this spot \u2014 the state municipal boundary was used." };
-        coverageGap = true;
-      } else if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
-      else throw Error("Official boundary sources disagree about the municipality.");
-    } else if (cities.length === 1) {
-      const c = cities[0], s = stateCities[0], sName = s.attributes.municipality || s.attributes.NAME;
-      if (String(c.attributes.STATE) !== fips || !new RegExp("^" + fips + "[0-9]{5}$").test(String(c.attributes.GEOID)) || norm(c.attributes.NAME) !== norm(sName)) {
-        if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
-        throw Error("Official municipal identities disagree.");
-      }
-      target = { name: c.attributes.NAME.replace(/\s+(city|village|town)$/i, ""), state, type: "municipality", geoid: c.attributes.GEOID, county: countyName, county_geoid: countyId, geometry: c.geometry, source_url: s.source_url };
     } else if (state === "OH") {
       const twpRows = await Promise.all([query("township", LOCATION_SOURCES.township), query("state township", LOCATION_SOURCES.oh_township)]);
       townships = twpRows[0].features;
       stateTownships = twpRows[1].features;
       if (twpRows[0].failed && twpRows[1].failed) throw Error("Township boundary services are unavailable \u2014 retryable.");
-      const t = townships.filter((f) => f.inside && /\btownship$/i.test(f.attributes.NAME)), s = stateTownships.filter((f) => f.inside);
-      if (t.length !== 1 || s.length !== 1 || String(t[0].attributes.STATE) !== fips || !new RegExp("^" + countyId + "[0-9]{5}$").test(String(t[0].attributes.GEOID)) || norm(t[0].attributes.NAME) !== norm(s[0].attributes.TOWNSHIP) || norm(countyName) !== norm(s[0].attributes.COUNTY)) {
-        const twpCands = [...townships.filter((f) => /\btownship$/i.test(f.attributes.NAME)).map((f) => ({ name: f.attributes.NAME, state, type: "township", geoid: String(f.attributes.GEOID || ""), county: countyName, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Census township boundary"], inside_sources: f.inside ? ["Census township boundary"] : [] })), ...stateTownships.map((f) => ({ name: String(f.attributes.TOWNSHIP || "").trim(), state, type: "township", geoid: "", county: countyName, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Ohio state township boundary"], inside_sources: f.inside ? ["Ohio state township boundary"] : [] }))].filter((c) => c.name);
+      const twpCands = [];
+      const addTwp = (f, nm, src) => {
+        const name = String(nm || "").trim();
+        if (!name) return;
+        const ex = twpCands.find((c) => sameJ(c.name, name));
+        if (ex) {
+          if (!ex.supported_by.includes(src)) ex.supported_by.push(src);
+          if (f.inside && !ex.inside_sources.includes(src)) ex.inside_sources.push(src);
+          ex.inside = ex.inside || !!f.inside;
+          ex.geoid = ex.geoid || String(f.attributes.GEOID || "");
+          ex.distance_m = Math.min(ex.distance_m, Math.round(f.distance_m || 0));
+        } else twpCands.push({ name, state, type: "township", geoid: String(f.attributes.GEOID || ""), county: countyName, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: [src], inside_sources: f.inside ? [src] : [] });
+      };
+      townships.filter((f) => /\btownship$/i.test(f.attributes.NAME)).forEach((f) => addTwp(f, f.attributes.NAME, "Census township boundary"));
+      stateTownships.forEach((f) => addTwp(f, f.attributes.TOWNSHIP, "Ohio state township boundary"));
+      const insideTwp = twpCands.filter((c) => c.inside && c.inside_sources.length);
+      let twpPick = null;
+      if (twpCands.length === 1 && insideTwp.length) twpPick = twpCands[0];
+      else if (insideTwp.length === 1) twpPick = insideTwp[0];
+      else if (insideTwp.length > 1) {
+        const stOnly = insideTwp.filter((c) => c.inside_sources.includes("Ohio state township boundary"));
+        if (stOnly.length === 1) twpPick = stOnly[0];
+        else {
+          const hit = insideTwp.find((c) => sameJ(c.name, geoTwp));
+          if (hit) twpPick = hit;
+        }
+      }
+      if (!twpPick) {
         if (twpCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.", candidates: twpCands, target: null };
         throw Error("Township location is missing or conflicting.");
       }
-      target = { name: t[0].attributes.NAME, state, type: "township", geoid: t[0].attributes.GEOID, county: countyName, county_geoid: countyId, geometry: t[0].geometry, source_url: s[0].source_url };
+      const tf = [...townships, ...stateTownships].find((f) => f.inside && sameJ(String(f.attributes.NAME || f.attributes.TOWNSHIP || ""), twpPick.name)), censT = townships.find((f) => sameJ(String(f.attributes.NAME || ""), twpPick.name));
+      target = { name: twpPick.name, state, type: "township", geoid: String(censT?.attributes.GEOID || twpPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: (tf || censT)?.geometry, source_url: (tf || censT)?.source_url, resolved_by: "source_consensus" };
     } else target = { name: countyName, state, type: "county", geoid: countyId, county: countyName, county_geoid: countyId, geometry: countyRow.geometry, source_url: countyRow.source_url };
     base.targets = [{ ...target, geometry: void 0 }, { name: countyName, state, type: "county", geoid: countyId, county: countyName }].filter((t, i, all) => all.findIndex((other) => other.geoid === t.geoid) === i);
     base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
-    const muniRelevant = coverageGap ? [...places, ...statePlaces].filter((f) => f.inside) : [...places, ...statePlaces];
-    const relevant = [...counties, ...muniRelevant, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []];
+    const featName = (f) => String(f.attributes.NAME || f.attributes.municipality || f.attributes.TOWNSHIP || "");
+    const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []].filter((f) => !sameJ(featName(f), target.name));
     const edge = geocode.approximate_source ? 150 : 25;
     if (!geocode.location_exact && !geocode.approximate_source) return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
     if (relevant.some((f) => f.distance_m <= edge)) {
-      const enteredCity = norm(geocode?.address_parts?.locality || geocode?.address_parts?.postal_town || "");
-      if (target && target.type === "municipality" && enteredCity && enteredCity === norm(target.name))
-        return { ...base, status: "location_verified", reason: `The map pin sits close to a boundary, but the address's own city matches the ${target.name} boundary containing it \u2014 resolving to ${target.name}. Spot-check the pin on the map.`, target: base.targets[0], corroborated_by: "entered_city_name" };
+      const enteredCity = norm(parts.locality || "");
+      const geoClaim = target.type === "municipality" ? geoLocality : target.type === "township" ? geoTwp : target.type === "county" ? geoCounty : "";
+      if (target && geoClaim && sameJ(geoClaim, target.name))
+        return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the geocoder independently places this address in " + target.name + " \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "geocoder_jurisdiction" };
+      if (target && target.type === "municipality" && enteredCity && sameJ(enteredCity, target.name))
+        return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the address's own city matches the " + target.name + " boundary containing it \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "entered_city_name" };
       return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
     }
     if (!geocode.location_exact) return { ...base, status: "location_verified", reason: `Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`, target: base.targets[0] };
