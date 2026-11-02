@@ -48,16 +48,24 @@ async function warmSettingsTable(entity, bucket, label) {
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     const complete = rows.length <= TABLE_WARM_LIMIT;
     const seen = new Set();
+    const dupKeys = new Set();
     const rowsByKey = new Map();
     for (const row of rows) {
       const key = String(row?.setting_key || "").trim();
-      if (!key || seen.has(key)) continue; // first row per key wins, matching rows[0]
+      if (!key) continue;
+      if (seen.has(key)) {
+        dupKeys.add(key);
+        // The first row was optimistically cached above — evict it so loads
+        // fall through to the dupKeys throw instead of answering from one row.
+        bucket.delete(key);
+        continue; // first row per key wins, matching rows[0]
+      }
       seen.add(key);
       rowsByKey.set(key, row);
       const prev = bucket.get(key);
       if (!prev?.promise) bucket.set(key, { at: Date.now(), value: row });
     }
-    bucket.set(TABLE_WARM_KEY, { at: Date.now(), complete, seen, rowsByKey });
+    bucket.set(TABLE_WARM_KEY, { at: Date.now(), complete, seen, rowsByKey, dupKeys });
     return complete;
   })();
   bucket.set(TABLE_WARM_KEY, { ...(existing || {}), promise });
@@ -114,8 +122,15 @@ export async function loadSingleGlobalSetting({ entity, settingKey, label = "Glo
       }
       if (warm?.seen && Date.now() - warm.at < SETTING_READ_TTL_MS) {
         // A warm that saw the key answers from its rows; absence is only
-        // conclusive when the table scan was complete (not truncated).
-        if (warm.seen.has(key)) return warm.rowsByKey.get(key) || null;
+        // conclusive when the table scan was complete (not truncated). The
+        // targeted path throws on duplicate keys — match that here so callers
+        // relying on the duplicate alarm behave identically on warm hits.
+        if (warm.seen.has(key)) {
+          if (warm.dupKeys?.has(key)) {
+            throw new Error(`${label} has multiple records for setting key ${key}. No value was changed; review the duplicate settings first.`);
+          }
+          return warm.rowsByKey.get(key) || null;
+        }
         if (warm.complete) return null;
       }
     }
