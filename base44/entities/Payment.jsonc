@@ -89,6 +89,26 @@
       "type": "string",
       "description": "Event-class marker on portal-originated payment rows, e.g. \"added from Customer Portal\". Empty = staff-entered."
     },
+    "portal_link_kind": {
+      "type": "string",
+      "description": "CustomerPortalLink.kind that originated a portal payment."
+    },
+    "portal_actor": {
+      "type": "string",
+      "description": "Link label / contact name recorded as the portal-side actor."
+    },
+    "recorded_via": {
+      "type": "string",
+      "description": "'portal' for portal-originated payments; empty for staff entry."
+    },
+    "portal_recorded_at": {
+      "type": "string",
+      "description": "ISO timestamp the portal payment was recorded."
+    },
+    "estimating_request_id": {
+      "type": "string",
+      "description": "Denormalized EstimatingRequest id for intake-chain reporting."
+    },
     "deposit_applied_to_invoice_id": {
       "type": "string",
       "description": "On deposit rows: id of the Invoice this deposit was later applied to."
