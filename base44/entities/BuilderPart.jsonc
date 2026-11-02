@@ -266,6 +266,26 @@
       "type": "string",
       "description": "Vendor record supplying this part or its primary material."
     },
+    "vendor_name": {
+      "type": "string",
+      "description": "Display name of the supplying vendor (denormalized; catalog import lane already stores it)."
+    },
+    "vendor_cost": {
+      "type": "number",
+      "description": "Vendor-quoted unit cost for this part \u2014 outranks vendor default_cost and generic cost in vendorCostModel retail resolution."
+    },
+    "vendor_markup_percent": {
+      "type": "number",
+      "description": "Retail markup percent applied to the resolved vendor cost for this part; outranks vendor defaults and generic markup_* fields."
+    },
+    "vendor_markup_flat": {
+      "type": "number",
+      "description": "Flat markup added after the percent markup for this part's vended retail."
+    },
+    "is_vended": {
+      "type": "boolean",
+      "description": "Explicit vended flag \u2014 one of the vendorCostModel vended-part signals (flag | vendor_id | vendor_name | vendor_cost)."
+    },
     "mfg_part_number": {
       "type": "string",
       "description": "Manufacturer/vendor part number used for ordering."
