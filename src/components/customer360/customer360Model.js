@@ -9,6 +9,8 @@
 //            work_order_count, invoiced, paid, balance, open_po_count,
 //            open_activity_count }
 
+import { deriveWorkOrderStage } from "../jobs/productStageModel";
+
 export const clean = (v) => String(v ?? "").trim();
 export const num = (v) => {
   const n = Number(v);
@@ -195,8 +197,11 @@ export const estimateValidUntil = (e) =>
 
 export const workOrderLabel = (w) =>
   clean(w?.title) || clean(w?.client_name) || "Work order";
+// Stage chip: stored current_stage → sales_status → product-derived rollup
+// (B-13) — a WO whose products carry status signal shows the same worst-first
+// stage the board derives, even before a sync writes current_stage.
 export const workOrderStage = (w) =>
-  clean(w?.current_stage) || clean(w?.sales_status) || "—";
+  clean(w?.current_stage) || clean(w?.sales_status) || deriveWorkOrderStage(w?.products) || "—";
 
 export const invoiceNumber = (i) => clean(i?.invoice_number) || "Invoice";
 export const daysOverdue = (i, asOf) => {
