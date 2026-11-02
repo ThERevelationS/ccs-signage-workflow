@@ -168,7 +168,28 @@ Deno.serve(async (req) => {
       return Response.json(out);
     }
 
-    return Response.json({ error: 'unknown probe', known: ['body_size', 'entity_write_speed', 'bulk_api', 'upload', 'sse', 'actor_wake', 'env'] }, { status: 400 });
+    if (body.probe === 'mk_cmd') {
+      const row = await sr.entities.FileBridgeCommand.create({
+        command_id: String(body.command_id || 'cmd_spike_' + Date.now()),
+        type: String(body.cmd_type || 'log_tail'),
+        agent_id: String(body.agent_id || 'dev-primary'),
+        status: 'queued', args: body.args || { lines: 10 },
+        dedupe_key: 'spike', request_key: 'spike',
+        created_ts: Date.now(), updated_ts: Date.now(),
+      });
+      out.created_command = row?.id;
+      return Response.json(out);
+    }
+
+    if (body.probe === 'list_cmds') {
+      const rows = await sr.entities.FileBridgeCommand.filter(
+        { agent_id: String(body.agent_id || 'dev-primary') }, '-created_ts', 10,
+      ).catch((e: any) => ({ err: String(e?.message || e) }));
+      out.commands = rows;
+      return Response.json(out);
+    }
+
+    return Response.json({ error: 'unknown probe', known: ['body_size', 'entity_write_speed', 'bulk_api', 'upload', 'sse', 'actor_wake', 'env', 'set_fb_settings', 'mk_cmd', 'list_cmds'] }, { status: 400 });
   } catch (error: any) {
     return Response.json({ error: String(error?.message || error).slice(0, 500) }, { status: 500 });
   }
