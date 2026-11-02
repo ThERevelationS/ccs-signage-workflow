@@ -39,6 +39,7 @@ import {
   listFeatureReports,
   updateFeatureReportFields,
 } from "@/components/reports/featureReportPersistence";
+import ReportCatalogPanel from "@/components/reports/ReportCatalogPanel";
 import {
   Plus,
   Bug,
@@ -83,6 +84,9 @@ export default function FeatureReports() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [mutationError, setMutationError] = useState("");
+  // J-02: the page hosts the report catalog alongside the feedback list —
+  // "catalog" renders the registry-driven run/preview/export panel.
+  const [view, setView] = useState("catalog");
   const actionRef = useRef(new Set());
 
   const [formData, setFormData] = useState({
@@ -250,7 +254,7 @@ export default function FeatureReports() {
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6 pt-6 sm:pt-8">
-      <div className="max-w-4xl mx-auto pb-8">
+      <div className={`${view === "catalog" ? "max-w-7xl" : "max-w-4xl"} mx-auto pb-8`}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 pt-2">
           <div className="flex items-center gap-3">
@@ -258,8 +262,12 @@ export default function FeatureReports() {
               <Lightbulb className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Feature & Bug Reports</h1>
-              <p className="text-gray-600 text-sm">Submit ideas and report issues</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+                {view === "catalog" ? "Report Catalog" : "Feature & Bug Reports"}
+              </h1>
+              <p className="text-gray-600 text-sm">
+                {view === "catalog" ? "Run, preview and export shop reports" : "Submit ideas and report issues"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -270,7 +278,7 @@ export default function FeatureReports() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </Link>
-            {isRegistered && (
+            {isRegistered && view === "feedback" && (
               <Button
                 onClick={openNewReport}
                 className="clay-button border-none text-gray-800 text-sm"
@@ -284,6 +292,29 @@ export default function FeatureReports() {
           </div>
         </div>
 
+        {/* View switcher — same button-tab pattern the type filter uses below */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <Button
+            variant={view === "catalog" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("catalog")}
+          >
+            Report Catalog
+          </Button>
+          <Button
+            variant={view === "feedback" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("feedback")}
+          >
+            Feature & Bug Reports
+          </Button>
+        </div>
+
+        {view === "catalog" && (
+          <ReportCatalogPanel sessionToken={sessionToken} isAdmin={isAdmin} />
+        )}
+
+        {view === "feedback" && (<>
         {mutationError && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             <div className="font-semibold">Report update blocked</div>
@@ -545,6 +576,7 @@ export default function FeatureReports() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </>)}
       </div>
     </div>
   );
