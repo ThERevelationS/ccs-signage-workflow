@@ -125,6 +125,7 @@ const STAFF_READABLE = new Set([
   'ProductActivity',
   'ProductSubstatus',
   'Responsibility',
+  'StoreCreditLedger',
   'WorkOrderTimeEntry',
 ]);
 
