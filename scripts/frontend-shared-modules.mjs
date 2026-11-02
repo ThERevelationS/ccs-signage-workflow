@@ -10,7 +10,7 @@ const names = new Set([
   'salesTaskStatusAudit.mjs', 'salesTaskStageCatalog.mjs',
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
-  'dueDateEngine.ts',
+  'dueDateEngine.ts', 'customerLifecycleRules.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
