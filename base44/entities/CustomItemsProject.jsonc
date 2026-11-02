@@ -65,14 +65,35 @@
       "type": "number",
       "description": "Section grand total \u2014 sum of items[].item_total_cost."
     },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23j: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge, items: {<idx-key|index>: line descriptor}}. When present, customItemsPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string"
     }
   },
   "rls": {
-    "create": { "user_condition": { "role": "__customitemsproject_backend_only__" } },
-    "read": { "user_condition": { "role": "__customitemsproject_backend_only__" } },
-    "update": { "user_condition": { "role": "__customitemsproject_backend_only__" } },
-    "delete": { "user_condition": { "role": "__customitemsproject_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__customitemsproject_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__customitemsproject_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__customitemsproject_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__customitemsproject_backend_only__"
+      }
+    }
   }
 }
