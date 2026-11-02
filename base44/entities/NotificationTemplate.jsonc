@@ -1,0 +1,127 @@
+{
+  "name": "NotificationTemplate",
+  "type": "object",
+  "description": "CoreBridge-style customer notification template registry. Each row is one templated message (subject + body with {{path}} placeholders resolved by shared/templateRender) keyed by a stable machine name and typed by kind (estimate_ready, new_order, proof follow-ups, monthly statement, etc.). From-source toggle picks whether the message is sent from the location, the salesperson, or the company; cc_billing adds the billing contact; attach_pdf rides the related document PDF. The seedNotificationTemplates function installs the 15 CoreBridge defaults idempotently via stable creation_request_key receipts (seed-tpl-<key>). Backend-only \u2014 read/written via service-role functions.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one seeded/managed template row (e.g. 'seed-tpl-estimate_ready')."
+    },
+    "key": {
+      "type": "string",
+      "description": "Unique machine name for this template (e.g. 'estimate_ready'). Seeded rows key = kind; staff-authored rows carry their own key."
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name shown in the notification template manager (e.g. 'Estimate Ready')."
+    },
+    "subject": {
+      "type": "string",
+      "description": "Message subject line; may contain {{path}} placeholders resolved at render time."
+    },
+    "body": {
+      "type": "string",
+      "description": "Message body template text with {{path}} placeholders (e.g. {{customer.company_name}}, {{order.title}}, {{estimate.number}}, {{user.display_name}}, {{location.name}}) resolved against the notification context by shared/templateRender."
+    },
+    "from_source": {
+      "type": "string",
+      "enum": [
+        "location",
+        "salesperson",
+        "company"
+      ],
+      "default": "location",
+      "description": "Who the message is sent from \u2014 the store location, the assigned salesperson, or the company."
+    },
+    "cc_billing": {
+      "type": "boolean",
+      "default": false,
+      "description": "CC the customer's billing contact on this notification."
+    },
+    "attach_pdf": {
+      "type": "boolean",
+      "default": false,
+      "description": "Attach the related document PDF (estimate, order confirmation, invoice, statement, credit memo) to the message."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "estimate_ready",
+        "new_order",
+        "action_needed",
+        "proof_ready",
+        "built",
+        "completed",
+        "payment_due_5day",
+        "monthly_statement",
+        "estimate_follow_up_1",
+        "estimate_follow_up_2",
+        "proof_follow_up_1",
+        "proof_follow_up_2",
+        "credit_memo",
+        "multi_invoice",
+        "login_info",
+        "custom"
+      ],
+      "description": "CoreBridge notification slot this template fills; 'custom' marks staff-authored templates outside the seeded set."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive templates stay on record but are skipped by the notification scheduler."
+    },
+    "placeholder_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "placeholder": {
+            "type": "string",
+            "description": "Placeholder expression usable in subject/body (e.g. 'customer.company_name')."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human description of what the placeholder resolves to."
+          }
+        }
+      },
+      "default": [],
+      "description": "Documented placeholder vocabulary for this template, shown as insert-buttons in the template editor."
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of the staff user who last saved this row (audit)."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__notification_template_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__notification_template_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__notification_template_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__notification_template_backend_only__"
+      }
+    }
+  }
+}
