@@ -678,7 +678,10 @@ const BASELINE = 5487.5; // 4390 x 1.25
   const rec = { subtotal: 100, markup_amount: 20, total_cost: 120, items: [{ id: 'a', item_total_cost: 50, fixed_price: 1 }] };
   eq(sourceProjectEconomics('foundation', rec, 100).customerPrice, 100, 'items[] never configures foundation (and fallback total flows)');
   eq(sourceProjectEconomics('vinyl', { subtotal: 100, markup_amount: 20, total_cost: 120 }).customerPrice, 120, 'vinyl branch math preserved');
-  eq(sourceProjectEconomics('maintenance', rec).customerPrice, 120, 'maintenance untouched');
+  // F-23i: maintenance now scans items[] like vinyl/metal — the fixed_price
+  // line legitimately reprices there, so the "untouched" check uses a
+  // config-free item.
+  eq(sourceProjectEconomics('maintenance', { ...rec, items: [{ id: 'a', item_total_cost: 50 }] }).customerPrice, 120, 'maintenance passthrough on unconfigured record');
   eq(sourceProjectEconomics('brick_stone', rec).customerPrice, 120, 'brick untouched');
   const ch = { total_letters_cost: 140, letters_subtotal: 100, subtotal: 120, total_cost: 120 };
   const econCh = sourceProjectEconomics('channel_letters', ch);
