@@ -12,9 +12,25 @@
   },
   "required": [],
   "rls": {
-    "read": "__filebridge_spike_backend_only__",
-    "write": "__filebridge_spike_backend_only__",
-    "update": "__filebridge_spike_backend_only__",
-    "delete": "__filebridge_spike_backend_only__"
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_spike_backend_only__"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_spike_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_spike_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_spike_backend_only__"
+      }
+    }
   }
 }
