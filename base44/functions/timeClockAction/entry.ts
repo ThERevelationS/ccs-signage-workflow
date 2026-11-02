@@ -586,6 +586,62 @@ async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntit
   };
 }
 
+const WORK_DAY_WINDOW_MS = 12 * 60 * 60 * 1000;
+const WORK_DAY_LOOKBACK_MS = 60 * 60 * 60 * 1000; // 60h covers split clusters
+
+function workDayClusterSignature(members: any[]) {
+  return members.map((m: any) => String(m.id)).sort().join('|');
+}
+
+// Detects a cluster of completed shifts that all fit inside one 12-hour
+// window (earliest Clock In to latest Clock Out). The employee decides
+// whether they are one work day; the decision is never guessed server-side.
+async function workDayPromptSummary({ entryEntity, userEmail, nowMs }: any) {
+  const rows = await entryEntity.filter({
+    user_email: userEmail,
+    status: 'clocked_out',
+    archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+  }, '-clock_in', 40).catch(() => null);
+  if (!Array.isArray(rows)) throw new Error('Work-day prompt lookup did not return a record list.');
+  const cutoffMs = nowMs - WORK_DAY_LOOKBACK_MS;
+  const candidates = rows
+    .filter((row: any) => {
+      const inMs = new Date(String(row?.clock_in || '')).getTime();
+      const outMs = new Date(String(row?.clock_out || '')).getTime();
+      return Number.isFinite(inMs) && Number.isFinite(outMs) && inMs >= cutoffMs;
+    })
+    .sort((a: any, b: any) => new Date(String(a.clock_in)).getTime() - new Date(String(b.clock_in)).getTime());
+  let best: any[] = [];
+  let cluster: any[] = [];
+  const flush = () => {
+    if (cluster.length >= 2) {
+      const inMs = new Date(String(cluster[0].clock_in)).getTime();
+      const outMs = new Date(String(cluster[cluster.length - 1].clock_out)).getTime();
+      const signature = workDayClusterSignature(cluster);
+      const declined = cluster.some((row: any) => String(row.work_day_declined_signature || '') === signature);
+      const ungrouped = cluster.every((row: any) => !row.work_day_group_id && !row.pay_period_id);
+      if (outMs - inMs <= WORK_DAY_WINDOW_MS && ungrouped && !declined) best = cluster.slice();
+    }
+    cluster = [];
+  };
+  for (const row of candidates) {
+    if (!cluster.length) { cluster = [row]; continue; }
+    const inMs = new Date(String(row.clock_in)).getTime();
+    const anchorMs = new Date(String(cluster[0].clock_in)).getTime();
+    const prevOutMs = new Date(String(cluster[cluster.length - 1].clock_out)).getTime();
+    if (inMs - anchorMs > WORK_DAY_WINDOW_MS || inMs < prevOutMs) { flush(); cluster = [row]; }
+    else cluster.push(row);
+  }
+  flush();
+  if (!best.length) return null;
+  return {
+    signature: workDayClusterSignature(best),
+    anchor_date: dateKeyInCompanyTime(best[0].clock_in),
+    span_minutes: Math.round((new Date(String(best[best.length - 1].clock_out)).getTime() - new Date(String(best[0].clock_in)).getTime()) / 60000),
+    entries: best.map((row: any) => ({ id: row.id, clock_in: row.clock_in, clock_out: row.clock_out, total_hours: row.total_hours ?? null })),
+  };
+}
+
 async function audit(auditEntity: any, data: any) {
   try {
     await auditEntity.create(data);
@@ -3597,7 +3653,7 @@ Deno.serve(async (req) => {
         if (!Array.isArray(recent)) throw new Error('Time Tracker weekly entry lookup did not return a record list.');
         for (const row of recent) {
           if (!row?.id || row.archived_test_data || row.archived_admin) continue;
-          const dayKey = dateKeyInCompanyTime(row.clock_in);
+          const dayKey = String(row.work_day_anchor_date || '').trim() || dateKeyInCompanyTime(row.clock_in);
           if (!dayKey) continue;
           if (dayKey < todayKey) workedDayKeys.add(dayKey);
           if (dayKey === todayKey && todayKey) workedDayKeys.add(todayKey);
@@ -3765,9 +3821,11 @@ Deno.serve(async (req) => {
       const correctedShiftReview = isManagerSession ? await correctedShiftReviewSummary({
         entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
       }) : null;
+      const workDayPrompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() });
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
         ...(correctedShiftReview ? { pending_shift_review: correctedShiftReview } : {}),
+        ...(workDayPrompt ? { work_day_prompt: workDayPrompt } : {}),
       };
       if (state.status === 'clocked_in' && state.active_entry_id) {
         const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
@@ -8177,6 +8235,53 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, note: verifiedNote });
     }
 
+    if (action === 'resolve_work_day') {
+      // Employee (or admin acting on a target) answers the same-work-day
+      // prompt. Grouping only changes Time Tracker day attribution - punches,
+      // totals and approval state stay exactly as recorded.
+      const decision = String(body?.decision || '').trim();
+      if (!['same_day', 'separate'].includes(decision)) {
+        return Response.json({ success: false, error: 'A same-day or separate decision is required.' }, { status: 400 });
+      }
+      const expectedSignature = String(body?.signature || '').trim();
+      if (!expectedSignature) return Response.json({ success: false, error: 'The loaded work-day signature is required.' }, { status: 400 });
+      const promptNow = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() });
+      if (!promptNow?.signature || promptNow.signature !== expectedSignature) {
+        return Response.json({ success: false, error: 'The reported work-day grouping changed. Reload and try again.' }, { status: 409 });
+      }
+      const decidedAt = new Date().toISOString();
+      const groupId = 'wdg:' + promptNow.entries[0].id;
+      const writeSet = decision === 'same_day'
+        ? { work_day_group_id: groupId, work_day_anchor_date: promptNow.anchor_date, work_day_confirmed_at: decidedAt, work_day_confirmed_by: actorEmail, work_day_declined_signature: '' }
+        : { work_day_group_id: '', work_day_anchor_date: '', work_day_confirmed_at: '', work_day_confirmed_by: '', work_day_declined_signature: expectedSignature };
+      for (const member of promptNow.entries) {
+        const fresh = await entryEntity.get(member.id).catch(() => null);
+        if (!fresh?.id || fresh.status !== 'clocked_out' || asEmail(fresh.user_email) !== target.email) {
+          return Response.json({ success: false, error: 'The work-day group changed while deciding. Reload and try again.' }, { status: 409 });
+        }
+        const already = writeSet.work_day_group_id
+          ? String(fresh.work_day_group_id || '') === groupId && String(fresh.work_day_anchor_date || '') === promptNow.anchor_date
+          : String(fresh.work_day_declined_signature || '') === expectedSignature && !fresh.work_day_group_id;
+        if (already) continue;
+        const upd = await entryEntity.updateMany(
+          { id: fresh.id, updated_date: fresh.updated_date, user_email: target.email, status: 'clocked_out' },
+          { $set: writeSet },
+        );
+        if (!upd || typeof upd.updated !== 'number') {
+          return Response.json({ success: false, retry_same_request: true, error: 'The work-day group changed while deciding. Retry this request.' }, { status: 409 });
+        }
+      }
+      await audit(auditEntity, {
+        action: 'work_day_decision', outcome: decision === 'same_day' ? 'confirmed' : 'declined',
+        user_email: target.email, user_name: target.full_name || target.email,
+        actor_email: actorEmail, actor_role: actor.role, authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: decidedAt, request_id: requestId,
+        reason: decision === 'same_day' ? 'Employee confirmed a multi-segment work day' : 'Employee declined a work-day grouping',
+        details: { signature: expectedSignature, group_id: decision === 'same_day' ? groupId : null, anchor_date: promptNow.anchor_date, entry_ids: promptNow.entries.map((row: any) => row.id), span_minutes: promptNow.span_minutes },
+      });
+      return Response.json({ success: true, decision, group_id: decision === 'same_day' ? groupId : null, anchor_date: promptNow.anchor_date, user: publicEmployee(target) });
+    }
+
     if (action === 'update_notes') {
       if (actor.role === 'badge' || actorEmail !== target.email) {
         return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to edit notes.' }, { status: 403 });
@@ -11361,7 +11466,7 @@ Deno.serve(async (req) => {
           labor_pending_activity_type: '', labor_pending_work_order_id: '',
         });
         if (!finalizedRecovery) return Response.json({ success: false, retry_same_request: true, error: 'Clock-out and audit are saved but state finalization was interrupted. Retry the same request.' }, { status: 409 });
-        return Response.json({ success: true, status: 'clocked_out', entry, reused: true, recovered: true, user: publicEmployee(target), audit_saved: Boolean(existingAudit) });
+        return Response.json({ success: true, status: 'clocked_out', entry, reused: true, recovered: true, user: publicEmployee(target), audit_saved: Boolean(existingAudit), work_day_prompt: await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() }) || undefined });
       }
 
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
@@ -11496,7 +11601,7 @@ Deno.serve(async (req) => {
         await emitTimeClockEvent(base44, 'time_entry_long_shift', savedEntry.id, actorEmail);
       }
 
-      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
+      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true, work_day_prompt: await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() }) || undefined });
     }
 
     if (action === 'punch_webhook') {
