@@ -1,0 +1,24 @@
+{
+  "name": "FileBridgeEvent",
+  "description": "Audit log — every mutation, auth event, failover, error. 'audit EVERYTHING' requirement. TTL-swept (e.g. 90d).",
+  "properties": {
+    "schema_version": { "type": "number", "default": 1 },
+    "event_type": { "type": "string", "description": "e.g. command_enqueued, upload_applied, delete_tombstoned, auth_failed, role_change, restore." },
+    "agent_id": { "type": "string" },
+    "actor": { "type": "string", "description": "Staff email, agent_id, or 'system'." },
+    "severity": { "type": "string", "enum": ["info", "warn", "error"], "default": "info" },
+    "root_key": { "type": "string" },
+    "path": { "type": "string", "description": "Root-relative only." },
+    "command_id": { "type": "string" },
+    "customer_id": { "type": "string" },
+    "details": { "type": "object", "additionalProperties": true },
+    "ts": { "type": "number" }
+  },
+  "required": ["event_type", "ts"],
+  "rls": {
+    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
+    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+  }
+}
