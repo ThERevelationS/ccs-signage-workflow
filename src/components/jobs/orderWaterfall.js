@@ -21,7 +21,7 @@
 
 const num = (v, fallback = 0) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
 const clean = (v) => String(v ?? "").trim();
-const toCents = (v) => Math.round(num(v) * 100);
+const toCents = (v) => Math.sign(num(v)) * Math.round(Math.abs(num(v)) * 100 + 1e-9);
 const fromCents = (c) => c / 100;
 
 // Canonical OrderFee kinds (Invoice.jsonc / AllInOneEstimate.jsonc fee_lines).
