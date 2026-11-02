@@ -100,7 +100,7 @@ Deno.serve(async req=>{
   }
   const address=typeof body.address==='string'?body.address.trim():'';
   if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
-  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
+  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`}).catch(()=>silentScanReporter); // telemetry setup must never kill the lookup — degrade to silent on entity-cap pressure
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
   await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
   let geocode:any=null,geocodingService:any=null,googleVague:any=null;
