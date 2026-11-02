@@ -891,6 +891,13 @@ Deno.serve(async (req) => {
           status: "recorded",
           notes: clean(body?.notes),
           created_by: actor,
+          // I-06 passthrough: staff entering a payment the customer reported
+          // through the portal stamps the A-15 attribution fields.
+          portal_source: clean(body?.portal_source),
+          portal_link_kind: clean(body?.portal_link_kind),
+          portal_actor: clean(body?.portal_actor),
+          recorded_via: clean(body?.recorded_via),
+          portal_recorded_at: clean(body?.portal_recorded_at),
         },
         readMatches: () => findByCreationKey(Payment, paymentKey),
         label: "Payment",
