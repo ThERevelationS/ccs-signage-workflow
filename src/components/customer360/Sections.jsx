@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Briefcase,
@@ -9,6 +9,8 @@ import {
   ShoppingCart,
   User,
 } from "lucide-react";
+import { Customer } from "@/api/gatedEntities";
+import ContactRoleBadges from "./ContactRoleBadges";
 import { Section, DataList, BackendRequired } from "./DataList";
 import { EmptyState, RecordLink, StatusChip as KitStatusChip } from "@/components/kit";
 import {
@@ -520,7 +522,7 @@ export function ActivityTab({ data, backendReady, truncatedNotice }) {
 
 // --- Contacts & locations ------------------------------------------------------
 
-function ContactCard({ icon, name, meta, lines }) {
+function ContactCard({ icon, name, meta, lines, children }) {
   return (
     <div className="rounded-xl border border-slate-100 px-3 py-2.5 dark:border-slate-800">
       <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -531,6 +533,7 @@ function ContactCard({ icon, name, meta, lines }) {
       {(lines || []).filter(Boolean).map((l, i) => (
         <div key={i} className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{l}</div>
       ))}
+      {children}
     </div>
   );
 }
@@ -539,6 +542,64 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
   const c = customer || data.customer || {};
   const contacts = data.contacts || [];
   const locations = data.locations || [];
+
+  // G-04 role assignment. plan.customer_patch mirrors billing/primary picks
+  // onto the Customer row — the only staff-writeable surface carrying contact
+  // roles today (Customer.updateMany is allowlisted in staffEntityWrite;
+  // CustomerContact flag writes are backend-only — see gap note below).
+  // Statement + invoice emails resolve billing_contact_* first, so "Set as
+  // billing" reroutes AR mail immediately. plan.updates (per-contact flag
+  // writes) are mirrored into roleOverrides so badges reflect the pick this
+  // session; persisting them needs a backend update_contact_roles action.
+  const [roleNotice, setRoleNotice] = useState("");
+  const [roleBusy, setRoleBusy] = useState(false);
+  const [roleOverrides, setRoleOverrides] = useState({});
+  const [customerVersion, setCustomerVersion] = useState("");
+  const viewContacts = contacts.map((p) => (roleOverrides[p.id] ? { ...p, ...roleOverrides[p.id] } : p));
+
+  const applyRolePlan = async (contact, role, plan) => {
+    setRoleBusy(true);
+    setRoleNotice("");
+    try {
+      const patch = plan?.customer_patch && Object.keys(plan.customer_patch).length ? plan.customer_patch : null;
+      let persisted = false;
+      if (patch && clean(c.id)) {
+        // Single-record CAS like customerPersistence: verify updated===1, and
+        // on a stale version refetch + retry exactly once before failing loud.
+        let version = customerVersion || clean(c.updated_date);
+        if (!version) {
+          const fresh = await Customer.get(clean(c.id)).catch(() => null);
+          version = clean(fresh?.updated_date);
+        }
+        for (let attempt = 0; attempt < 2 && version; attempt++) {
+          const result = await Customer.updateMany({ id: clean(c.id), updated_date: version }, { $set: patch });
+          if (result?.updated === 1) { persisted = true; break; }
+          const fresh = await Customer.get(clean(c.id)).catch(() => null);
+          version = clean(fresh?.updated_date);
+          if (fresh?.updated_date) setCustomerVersion(clean(fresh.updated_date));
+        }
+        if (persisted) {
+          const fresh = await Customer.get(clean(c.id)).catch(() => null);
+          if (fresh?.updated_date) setCustomerVersion(clean(fresh.updated_date));
+        } else if (version) {
+          throw new Error("The customer record changed in another session. Reload before assigning roles.");
+        }
+      }
+      const next = { ...roleOverrides };
+      for (const u of plan?.updates || []) next[u.contact_id] = { ...(next[u.contact_id] || {}), ...u.patch };
+      setRoleOverrides(next);
+      const label = `${contactDisplayName(contact)} — ${role} contact`;
+      setRoleNotice(
+        persisted
+          ? `${label} saved to the customer record.`
+          : `${label} shown for this session — persisting the contact flag needs the backend role action (G-04 gap).`,
+      );
+    } catch (err) {
+      setRoleNotice(err?.message || "The role assignment could not be saved.");
+    } finally {
+      setRoleBusy(false);
+    }
+  };
 
   // Degraded-mode fallbacks: the Customer record itself carries a primary
   // contact, a billing contact and an additional_contacts array — plus the
@@ -610,7 +671,12 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
           <EmptyState compact title="No contacts recorded." actionLabel="Edit customer" actionTo={c.id ? `/EstimatorCustomers?customer=${c.id}` : "/EstimatorCustomers"} />
         ) : (
           <div className="space-y-2 px-4 py-3">
-            {contacts.map((p) => (
+            {roleNotice && (
+              <div className="rounded-lg bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {roleNotice}
+              </div>
+            )}
+            {viewContacts.map((p) => (
               <ContactCard
                 key={p.id}
                 icon={<User className="h-3.5 w-3.5 text-slate-400" />}
@@ -622,7 +688,9 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
                   clean(p.mobile_phone),
                   clean(p.notes),
                 ]}
-              />
+              >
+                <ContactRoleBadges contact={p} contacts={viewContacts} onAssignRole={applyRolePlan} busy={roleBusy} />
+              </ContactCard>
             ))}
             {builtin.map((p) => (
               <ContactCard
@@ -669,4 +737,3 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
     </div>
   );
 }
-
