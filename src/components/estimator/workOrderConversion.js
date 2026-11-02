@@ -501,6 +501,20 @@ export function mergeConversionEvents(existing = [], incoming = []) {
   return merged;
 }
 
+// L-10: converted WO estimate_amount falls back quoteTotal → estimate.quote_total
+// → accepted line-item sum (same math as the conversion credit check), so a WO
+// never lands at $0 just because the caller omitted pricing.quoteTotal.
+export function estimateConvertedAmount(estimate = {}, pricing = {}) {
+  const priced = num(pricing?.quoteTotal, NaN);
+  if (Number.isFinite(priced)) return priced;
+  const quoted = num(estimate?.quote_total, NaN);
+  if (Number.isFinite(quoted) && quoted > 0) return quoted;
+  return (estimate?.line_items || []).reduce(
+    (sum, l) => sum + acceptedCustomerUnitPrice(l) * Math.max(1, Number(l?.customer_quantity) || 1),
+    0,
+  );
+}
+
 export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "", conversionDate = "", verifiedCustomerId = "", actor = "", now = "" } = {}) {
   return {
     title: firstNonBlank(estimate.project_name, existing?.title),
@@ -525,7 +539,7 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     representative: firstNonBlank(estimate.order_contact, existing?.representative),
     sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
-    estimate_amount: num(pricing.quoteTotal),
+    estimate_amount: estimateConvertedAmount(estimate, pricing),
     date_order_created: firstNonBlank(existing?.date_order_created, conversionDate),
     corbridge_invoice_number: firstNonBlank(estimate.estimate_number, existing?.corbridge_invoice_number),
     project_install_date: firstNonBlank(estimate.target_install_date, existing?.project_install_date),
