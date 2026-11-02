@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export default function MovePartGroupModal({ open, group, sourceBuilderProductId, products = [], onClose, onMove }) {
+const EMPTY_PRODUCTS = [];
+
+export default function MovePartGroupModal({ open, group, sourceBuilderProductId, products = EMPTY_PRODUCTS, onClose, onMove }) {
   const targets = useMemo(
     () => (products || []).filter((line) => line.builder_product_id && line.builder_product_id !== sourceBuilderProductId),
     [products, sourceBuilderProductId]
