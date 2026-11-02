@@ -26,6 +26,7 @@ const LINKS = [
   { label: "Pricing Admin", desc: "Markup tiers, tier matrices, labor levels, machine rates and the quote simulator", to: "/PricingAdmin" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "Audit Log", desc: "Admin-only who-changed-what timeline (estimate revisions, opportunity activity, admin actions)", to: "/EstimatorSettings?tab=audit_log" },
+  { label: "Tools", desc: "Quick price, walk-in sale, exports and estimator utilities", to: "/EstimatorTools" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
 
