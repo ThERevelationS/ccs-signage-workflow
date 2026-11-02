@@ -47,6 +47,7 @@ function applyResolutionRules(rules,{enteredCity,enteredAddr,state,countyName,ca
    if(r.county&&!sameJ(r.county,countyName))continue;
   }else if(rt==='address_override'){
    if(!enteredAddr||addrKey(r.address_key)!==addrKey(enteredAddr))continue;
+   if(r.county&&!sameJ(r.county,countyName))continue;
   }else if(rt==='source_preference'){
    if(r.county&&!sameJ(r.county,countyName))continue;
    const prefState=/state/i.test(String(r.preferred_source||'state'));
