@@ -1,16 +1,15 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { format } from "date-fns";
 import { ListFilter, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers } from "lucide-react";
 import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from "@/components/estimator/estimateConversionService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, softDeleteEstimateFromLoadedSnapshot, expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { ensureEstimateLifecycleRevision, getOpenEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStatuses } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { fetchEstimateQueueBundle, loadFullEstimateRow } from "@/components/queues/queueFeedClient";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
@@ -156,20 +155,22 @@ export default function EstimatorQueues() {
   };
   useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
   // Company timezone (#488): QuoteDefaults.display_timezone drives the date
-  // displays; blank falls back to the browser's zone.
-  useEffect(() => {
+  // displays; blank falls back to the browser's zone. The row rides the
+  // composed queueFeed bundle (M-03) — this helper is the single point the
+  // legacy fallback read converges on too.
+  const applyQuoteDefaults = (d) => {
+    const row = d || {};
+    setCompanyTz(row.display_timezone || "");
+    let cs = [], tr = {};
+    try { cs = JSON.parse(row.custom_statuses || "[]") || []; } catch {}
+    try { tr = JSON.parse(row.status_transitions || "{}") || {}; } catch {}
+    setCustomStatuses(Array.isArray(cs) ? cs : []);
+    setStatusMap(statusTransitionMap(cs, tr));
+  };
+  const loadQuoteDefaultsLegacy = () =>
     staffEntities.QuoteDefaults.filter({ config_name: "default" }, undefined, 1)
-      .then((rows) => {
-        const d = (Array.isArray(rows) ? rows[0] : null) || {};
-        setCompanyTz(d.display_timezone || "");
-        let cs = [], tr = {};
-        try { cs = JSON.parse(d.custom_statuses || "[]") || []; } catch {}
-        try { tr = JSON.parse(d.status_transitions || "{}") || {}; } catch {}
-        setCustomStatuses(Array.isArray(cs) ? cs : []);
-        setStatusMap(statusTransitionMap(cs, tr));
-      })
+      .then((rows) => applyQuoteDefaults(Array.isArray(rows) ? rows[0] : null))
       .catch(() => {});
-  }, []);
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
     const next = new Set(prev);
@@ -200,7 +201,9 @@ export default function EstimatorQueues() {
     if (skipped.length) notes.push(`${skipped.length} skipped — status change not allowed: ${skipped.slice(0, 3).join(" · ")}${skipped.length > 3 ? ` (+${skipped.length - 3} more)` : ""}`);
     if (failures.length) notes.push(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
     if (notes.length) setBulkError(notes.join(" "));
-    try { const reloaded = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+    // Delta refetch — the feed store merges the touched rows onto the cached
+    // set instead of re-paging the whole table (same path as the mount load).
+    try { const b = await fetchEstimateQueueBundle(); setEstimates(b.estimates || []); } catch {}
   };
 
   // (#192 / #180) Queue-level conversion through the same shared pipeline as
@@ -235,9 +238,11 @@ export default function EstimatorQueues() {
     try {
       const sessionToken = queueSessionToken();
       const ents = { Estimate: staffEntities.AllInOneEstimate, WorkOrder: staffEntities.WorkOrder };
+      // Feed rows are projected — the shared conversion consumes full docs.
+      const eligibleFull = await Promise.all(eligible.map(loadFullEstimateRow));
       if (combine) {
         const res = await convertEstimatesToSharedWorkOrder({
-          estimates: eligible,
+          estimates: eligibleFull,
           sessionToken,
           currentUser: me || user,
           entities: ents,
@@ -252,8 +257,11 @@ export default function EstimatorQueues() {
         const out = [];
         for (const e of eligible) {
           try {
+            // Feed rows are projected — conversion reads the full document
+            // (line items drive the WO products), so re-fetch it first.
+            const fullEstimate = await loadFullEstimateRow(e);
             const r = await convertEstimateToWorkOrder({
-              estimate: e,
+              estimate: fullEstimate,
               pricing: { quoteTotal: Number.isFinite(Number(e.quote_total)) ? Number(e.quote_total) : undefined },
               sessionToken,
               currentUser: me || user,
@@ -278,7 +286,8 @@ export default function EstimatorQueues() {
         setConvertResults({ rows: out, skipped: ineligible });
       }
       setSelectedIds(new Set());
-      try { const reloaded = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+      // Delta refetch merges the touched rows instead of re-paging the table.
+      try { const b = await fetchEstimateQueueBundle(); setEstimates(b.estimates || []); } catch {}
     } catch (err) {
       setConvertResults({ errors: [err?.message || "Conversion failed."], rows: [], skipped: ineligible });
     } finally {
@@ -304,16 +313,19 @@ export default function EstimatorQueues() {
   useEffect(() => {
     const load = async () => {
       try {
-        const rows = await loadAllEntityRows({
-          entity: staffEntities.AllInOneEstimate,
-          sort: "-created_date",
-          label: "Estimate queues",
-        });
-        setEstimates(rows);
-        syncExpiredFlags(rows);
+        // M-03 — one composed queueFeed call returns the projected estimate
+        // rows plus QuoteDefaults; on failure the fetch falls back internally
+        // to the paged gateway read + the legacy defaults read.
+        const bundle = await fetchEstimateQueueBundle();
+        setEstimates(bundle.estimates || []);
+        syncExpiredFlags(bundle.estimates || []);
+        applyQuoteDefaults(bundle.quoteDefaults);
       } catch (err) {
         console.error("Estimate queues could not be loaded:", err);
         setLoadError(err?.message || "Estimates could not be loaded.");
+        // Defaults are independent of the estimate rows — the timezone must
+        // not stay blank just because the table read failed.
+        loadQuoteDefaultsLegacy();
       } finally {
         setLoading(false);
       }
@@ -326,12 +338,15 @@ export default function EstimatorQueues() {
     setTrashBusyId(e.id);
     setTrashError("");
     try {
+      // The feed row is projected — re-fetch the full doc so the CAS baseline
+      // and the record restored into state are complete.
+      const fullEstimate = await loadFullEstimateRow(e);
       const saved = await restoreEstimateFromLoadedTrashSnapshot({
         entity: staffEntities.AllInOneEstimate,
-        estimate: e,
+        estimate: fullEstimate,
         label: "Estimate Trash recovery",
       });
-      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? { ...e, ...saved } : row)));
     } catch (err) {
       setTrashError(err?.message || "The estimate could not be restored. Reload Trash before retrying.");
     } finally {
@@ -356,9 +371,10 @@ export default function EstimatorQueues() {
     setTrashBusyId(e.id);
     setTrashError("");
     try {
+      const fullEstimate = await loadFullEstimateRow(e);
       await permanentlyDeleteTrashedEstimate({
         entity: staffEntities.AllInOneEstimate,
-        estimate: e,
+        estimate: fullEstimate,
         label: "Estimate Trash permanent delete",
       });
       setEstimates((prev) => prev.filter((row) => row.id !== e.id));
@@ -381,8 +397,10 @@ export default function EstimatorQueues() {
     try {
       const key = `duplicate:${e.id}`;
       quickKeysRef.current[key] = quickKeysRef.current[key] || newEstimateCreationKey();
+      // The feed row is projected — duplicate copies the whole document.
+      const fullEstimate = await loadFullEstimateRow(e);
       const created = await duplicateEstimate({
-        source: e,
+        source: fullEstimate,
         sessionToken: queueSessionToken(),
         creationKey: quickKeysRef.current[key],
         keepEstimateNumber: false,
@@ -406,6 +424,9 @@ export default function EstimatorQueues() {
     setTrashBusyId(e.id);
     setTrashError("");
     try {
+      // The feed row is projected — the CAS baseline and the restorable
+      // lifecycle snapshot both need the full document.
+      const fullEstimate = await loadFullEstimateRow(e);
       const nextFields = {
         status: "archived",
         archived_at: new Date().toISOString(),
@@ -414,20 +435,20 @@ export default function EstimatorQueues() {
       const saved = await replaceEstimateFieldsIfUnchanged({
         entity: staffEntities.AllInOneEstimate,
         estimateId: e.id,
-        expectedFields: expectedEstimateFields(e, nextFields),
-        guardFields: { updated_date: e.updated_date },
+        expectedFields: expectedEstimateFields(fullEstimate, nextFields),
+        guardFields: { updated_date: fullEstimate.updated_date },
         nextFields,
         label: "Estimate archive",
       });
-      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? { ...e, ...saved } : row)));
       // Best-effort lifecycle audit row — same shape the merge path records,
       // never blocks the archive itself.
       try {
         await ensureEstimateLifecycleRevision({
           idempotencyKey: `queue_archive:${e.id}:${e.updated_date || "unknown"}`,
           sessionToken: queueSessionToken(),
-          estimateBefore: e,
-          estimateAfter: { ...e, ...(saved || {}), ...nextFields },
+          estimateBefore: fullEstimate,
+          estimateAfter: { ...fullEstimate, ...(saved || {}), ...nextFields },
           reason: "Archived from estimate queue",
           revisionType: "status_transition",
           quoteTotalBefore: e.quote_total,
@@ -461,13 +482,15 @@ export default function EstimatorQueues() {
         return;
       }
       if (!window.confirm(`Move "${e.project_name || "this estimate"}" to Trash? It will be hidden from all estimate lists until it is restored.`)) return;
+      // The feed row is projected — the CAS baseline needs the full doc.
+      const fullEstimate = await loadFullEstimateRow(e);
       const saved = await softDeleteEstimateFromLoadedSnapshot({
         entity: staffEntities.AllInOneEstimate,
-        estimate: e,
+        estimate: fullEstimate,
         deletedBy: myEmail || me?.email || "unknown",
         label: "Estimate trash",
       });
-      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? { ...e, ...saved } : row)));
     } catch (err) {
       setTrashError(err?.message || "The estimate could not be moved to Trash.");
     } finally {
