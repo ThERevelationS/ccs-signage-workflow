@@ -8,6 +8,7 @@ import {
 import { startOrderBatchReview, appendOrderBatchReviewPage } from './orderBatchReviewSummary.mjs';
 import { usePolling } from '@/lib/usePolling';
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
@@ -51,12 +52,16 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
       if (inFlight) return;
       inFlight = true;
       try {
-        const rows = await staffEntities.GlobalSettings.filter({
-          setting_key: ORDER_PULL_EVIDENCE_KEY,
+        const row = await loadSingleGlobalSetting({
+          entity: staffEntities.GlobalSettings,
+          settingKey: ORDER_PULL_EVIDENCE_KEY,
+          label: "Order pull evidence",
+          fresh: true,
         });
         if (active) {
+          const rows = row ? [row] : [];
           const nextView = orderIndependentPullEvidenceModel(rows);
-          const version = JSON.stringify(rows?.[0]?.setting_value ?? null);
+          const version = JSON.stringify(rows[0]?.setting_value ?? null);
           if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) {
             reviewEpoch.current++;
             batchReviewInFlight.current = false;
