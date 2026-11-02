@@ -21,7 +21,11 @@ const names = new Set([
   'accountingExportModel.ts', 'customerTierModel.ts', 'catalogImportModel.ts',
   'customerImportModel.ts', 'vendorNotifyModel.ts', 'readyTriggerModel.ts',
   'alertSubscriptionsModel.ts', 'salesReports.ts', 'productionReports.ts',
-  'estimateReports.ts', 'financialReports.ts',
+  'estimateReports.ts', 'financialReports.ts', 'customerAnalyticsModel.ts',
+  'customerWarningModel.ts', 'deliveryTelemetryModel.ts', 'digestBatchModel.ts',
+  'glAccountAdminModel.ts', 'portalPaymentModel.ts', 'accountingAlertsModel.ts',
+  'savedReportRunsModel.ts', 'reportDrilldownModel.ts', 'salesFunnelModel.ts',
+  'crmSuggestionModel.ts', 'auditLogModel.ts', 'dataExportModel.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
