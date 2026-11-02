@@ -88,7 +88,7 @@ EVIDENCE: final message = {files_touched, verify_output, deviations, open_questi
 4. Worker crash/timeout → claim released → item back to `[OPEN]`.
 
 #### Concurrency policy
-- Cap **5 concurrent workers** (operator directive 2026-11-02 — machine lockups under the old 8-wide waves; recorded in `.masterplan-claims/README.md` as `MAX_WORKERS = 5`); orchestrator lowers further on repeated worker timeouts or local-resource symptoms; never exceeds cap. Seats refill only as completions free them.
+- Cap **2 concurrent workers** (operator directive 2026-11-02 — machine lockups persisted at 5; recorded in `.masterplan-claims/README.md` as `MAX_WORKERS = 2`; permanent until Brett raises it — do not re-expand on session resume); orchestrator lowers further on repeated worker timeouts or local-resource symptoms; never exceeds cap. Seats refill only as completions free them.
 - Background subagents preferred; orchestrator spends idle dispatch time on L3 work (deploys, live verification of already-integrated items) rather than idling.
 - If >half the pool fails on **2 consecutive batches** → orchestrator pauses dispatch, checkpoints, writes an incident note to PROGRESS_LOG.
 
@@ -337,7 +337,7 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 - [ ] `H-12` **[DONE]** Per-user alert subscriptions — extend `NotificationPreference` with `subscriptions[]` (event type + criteria → delivery: feed/digest) for: Client Change Request, Client Uploaded Files, Customer Notes, Portal Payment, Estimate Converted, Payment Received, Proof Approved, Sales Notes. `evaluate_triggers` fans out per subscription. | Verify: two users w/ different subscriptions get different feeds on same event.
 - [ ] `H-13` **[DONE]** Digest batching — `daily_digest` (exists) composes per-user digest from subscriptions; dedupe vs individual sends (an event either feeds digest or immediate, per pref). | Verify: digest contains queued events, no doubles.
 - [ ] `H-14` **[DONE]** Notification delivery telemetry — per-notification `delivery_channel`, `delivered_at`, `delivery_error` on the Notification row (prepared for real mail telemetry; unblocks backlog 242/246/296 when email re-enabled). | Verify: fields populate via adapter in both modes.
-- [ ] `H-15` **[OPEN]** Convert BLOCKED items — port the three sendEmail-blocked backlog items (portal reply notifications, two bounce-tracking items) into adapter-based implementations; keep true bounce/webhook parts `[BLOCKED-EXTERNAL]` pending mail telemetry. | Verify: backlog items referenced + resolved or re-marked.
+- [ ] `H-15` **[DONE]** (orchestrator — #242 portal reply notifications PORTED to delivery adapter in customerPortalAction.post_message (internal Notification to record salesperson + channel lane, non-fatal notify_warning, deployed); #246/#296 bounce tracking re-marked BLOCKED-EXTERNAL — need mail-provider webhook telemetry, no code path exists) Convert BLOCKED items — port the three sendEmail-blocked backlog items (portal reply notifications, two bounce-tracking items) into adapter-based implementations; keep true bounce/webhook parts `[BLOCKED-EXTERNAL]` pending mail telemetry. | Verify: backlog items referenced + resolved or re-marked.
 
 ## WS-I — ACCOUNTING
 *§10: GL accounts, reconciliation batches (entity exists), export files, QBO adapter, statements, in-store credit (G-09), portal-payment flag.*
