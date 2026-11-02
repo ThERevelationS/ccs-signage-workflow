@@ -41,7 +41,7 @@ const norm = (v) => clean(v).toLowerCase();
 // balance. Math.round is round-half-up (toward +∞), matching the brief.
 const toCents = (v) => {
   const n = Number(v);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 const fromCents = (c) => c / 100;
 
