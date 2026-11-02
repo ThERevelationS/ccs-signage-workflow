@@ -155,7 +155,10 @@ function stripTelemetryPii(text: any): string {
   if (!s) return '';
   s = s.replace(URL_RE, '[url]');
   s = s.replace(BEARER_RE, 'Bearer [token]');
-  s = s.replace(SECRET_KV_RE, (_m: string, key: string, sep: string) => `${key}${sep}[redacted]`);
+  s = s.replace(SECRET_KV_RE, (m: string, key: string, sep: string, val: string) =>
+    // 'Authorization: Bearer <jwt>' — the Bearer arm already redacted the
+    // token; 'Bearer' is the scheme word, not the secret value.
+    /^Bearer$/i.test(val) ? m : `${key}${sep}[redacted]`);
   s = s.replace(EMAIL_RE, '[email]');
   s = s.replace(JWT_RE, '[token]');
   s = s.replace(LONG_TOKEN_RE, '[token]');
