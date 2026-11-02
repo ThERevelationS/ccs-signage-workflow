@@ -1,0 +1,44 @@
+{
+  "description": "Runs the daily estimate follow-up sweep (H-05): advances sent estimates through their follow-up sequences, sends due follow-ups via the delivery adapter, and closes terminal rows",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_estimate_follow_up_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "followUpSweepAction",
+            "args": {
+              "action": "run_follow_up_sweep",
+              "_workflow_capability": "ccs-wf-cap-ebcf0ff4e9762a5533d6a858f24f45c9"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "name": "Daily Estimate Follow-up Sweep",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "30 13 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
