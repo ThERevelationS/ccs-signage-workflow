@@ -26,6 +26,7 @@ import {
   parseLocalDate,
 } from "./productQueueModel";
 import { proofBadge } from "@/components/proofs/proofModel";
+import { isMyQueueFilters, filterMyQueueRows } from "./myQueueModel";
 import { chipStyle, DEFAULT_RESPONSIBILITY_COLOR } from "./tagResponsibilityModel";
 import {
   loadSavedQueueViews,
@@ -480,10 +481,14 @@ export default function ProductQueue({
   const distinct = useCallback((key) =>
     [...new Set(allRows.map((r) => r[key]).filter(Boolean))].sort(), [allRows]);
 
-  const filtered = useMemo(
-    () => sortQueueRows(filterQueueRows(allRows, filters, now), filters.sort),
-    [allRows, filters, now]
-  );
+  const filtered = useMemo(() => {
+    const rows = filterQueueRows(allRows, filters, now);
+    // C-10/K-03 — ?assigned=me is the "only my work" marker (seeded by the
+    // user's queue pref or a saved view); it resolves against the signed-in
+    // user here, never against a stored identity.
+    const scoped = isMyQueueFilters(filters) ? filterMyQueueRows(rows, currentUser) : rows;
+    return sortQueueRows(scoped, filters.sort);
+  }, [allRows, filters, now, currentUser]);
 
   useEffect(() => { setPage(0); }, [filters]);
 
@@ -573,6 +578,15 @@ export default function ProductQueue({
         <FilterField label="Assigned To">
           <FilterSelect value={filters.assignedTo} onChange={(e) => set("assignedTo", e.target.value)}>
             <option value="all">All</option>{distinct("assignedTo").map((d) => <option key={d} value={d}>{d}</option>)}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Scope">
+          <FilterSelect
+            value={isMyQueueFilters(filters) ? "me" : "all"}
+            onChange={(e) => set("assigned", e.target.value === "me" ? "me" : "")}
+          >
+            <option value="all">All work</option>
+            <option value="me">Assigned to me</option>
           </FilterSelect>
         </FilterField>
         <FilterField label="Category">
