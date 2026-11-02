@@ -3732,9 +3732,10 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:(state,dataset)=>claimInvocationRun(state,dataset),finish:(state,start,dataset)=>saveSyncStatusForRun(base44,state,start,dataset),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:(start,dataset)=>assertSyncRunOwnership(base44,start,dataset)}));
     }
     if (action === 'status') {
+      const statusWarnings: string[] = [];
       const [orderStatusRecord, salesStatusRecord] = await Promise.all([
-        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.orders).catch(() => null),
-        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales).catch(() => null),
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.orders).catch((e: any) => { statusWarnings.push(`orders: ${String(e?.message || e)}`); return null; }),
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales).catch((e: any) => { statusWarnings.push(`sales: ${String(e?.message || e)}`); return null; }),
       ]);
       return Response.json({
         success: true,
@@ -3744,6 +3745,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         dataset_coordinators: 'per-dataset-v1',
         status_orders: orderStatusRecord?.setting_value || null,
         status_sales: salesStatusRecord?.setting_value || null,
+        status_warning: statusWarnings.length ? statusWarnings.join("; ") : undefined,
         configured,
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
