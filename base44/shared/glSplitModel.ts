@@ -179,9 +179,13 @@ const toFinite = (value: unknown, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-/** Dollars → integer cents (round-half-away at the penny via Math.round). */
-export const toCents = (dollars: unknown): number =>
-  Math.round(toFinite(dollars, 0) * 100);
+/** Dollars → integer cents (round-half-away at the penny). Sign-normalized so
+ *  negative halves round away from zero too, and a 1e-9 nudge corrects the
+ *  IEEE754 half-cent shortfall (1.005*100 = 100.4999… must still round to 101 — N-05.2). */
+export const toCents = (dollars: unknown): number => {
+  const v = toFinite(dollars, 0);
+  return Math.sign(v) * Math.round(Math.abs(v) * 100 + 1e-9);
+};
 
 /** Integer cents → dollars. */
 export const fromCents = (cents: unknown): number =>
