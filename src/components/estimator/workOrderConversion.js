@@ -1,4 +1,5 @@
 import { getModuleLabel } from "./moduleRegistry";
+import { recalcOnProofApproval } from "../../../base44/shared/dueDateEngine.ts";
 import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -327,16 +328,35 @@ export async function transitionProductOperationalStatus({ workOrderId, productI
 }
 
 // CoreBridge due-date rule mirrored: when a product reaches proof approval its
-// due date may be recalculated from part lead times, but a hard due date is
-// never moved. Returns the next due-date ISO string, or the existing one when
-// no recalculation is permitted.
-export function recalculateProductDueDateOnProofApproval({ product = {}, leadTimeDays = 0, fromDate = new Date() } = {}) {
-  if (product.hard_due_date === true) return product.product_due_date || "";
-  const days = Math.max(0, num(leadTimeDays, 0));
-  const base = new Date(fromDate);
-  if (Number.isNaN(base.getTime())) return product.product_due_date || "";
-  base.setDate(base.getDate() + days);
-  return base.toISOString();
+// due date is recalculated from part lead times, a hard due date is never
+// moved, and the recalculation only pushes the date forward — all enforced by
+// the shared engine in base44/shared/dueDateEngine.ts. This wrapper keeps the
+// legacy name/signature and returns the "YYYY-MM-DD" date string the
+// operational patch consumes.
+//
+// Lead-day precedence: an explicit positive `leadTimeDays` (ProofPanel's
+// "Lead days" input) becomes a numeric tier override applied per part — each
+// part keeps its own min-days floor. When the product carries no parts at all
+// the explicit days form a synthesized single-part lead so the manual override
+// still lands on unlinked products. With no override the engine's per-part
+// min/std/add resolution decides; no parts and no override leaves the existing
+// due date unchanged. An explicit `tier` ("standard"|"minimum"|"additional"|
+// number) outranks `leadTimeDays`. `parts` defaults to the product's embedded
+// part_list/builder_parts/parts when the caller didn't load BuilderPart rows.
+export function recalculateProductDueDateOnProofApproval({ product = {}, leadTimeDays = 0, parts, tier, fromDate = new Date() } = {}) {
+  const explicit = num(leadTimeDays, 0);
+  const hasOverride = explicit > 0;
+  const embedded = parts !== undefined
+    ? parts
+    : product?.parts ?? product?.part_list ?? product?.builder_parts;
+  const hasParts = Array.isArray(embedded) && embedded.length > 0;
+  const result = recalcOnProofApproval({
+    product,
+    approval_date: fromDate,
+    parts: hasParts ? embedded : (hasOverride ? [{ product_lead_days: explicit }] : []),
+    tier: tier !== undefined ? tier : (hasOverride && hasParts ? explicit : "standard"),
+  });
+  return result.due_date || product?.product_due_date || "";
 }
 
 // Sync an operational-status patch back to the linked BuilderProduct so the
