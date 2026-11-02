@@ -1,0 +1,133 @@
+{
+  "name": "CrmSuggestion",
+  "display_name": "CRM Suggestion",
+  "description": "Backend-only suggestion rows (e.g. estimate follow-up nudges) that materialize into real OpportunityActivity events on user confirm. Suggestion lifecycle (pending/confirmed/dismissed) stays off OpportunityActivity so the G-05 queue never renders a suggestion as a real event.",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "description": "Suggestion kind \u2014 'estimate_follow_up_suggestion' (crmSuggestionModel SUGGESTION_KIND); extensible."
+    },
+    "suggestion_key": {
+      "type": "string",
+      "description": "Unique dedupe key 'sug:<estimate_id>:<stage>'."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "dismissed"
+      ],
+      "default": "pending"
+    },
+    "estimate_id": {
+      "type": "string"
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "due_stage": {
+      "type": "string",
+      "enum": [
+        "first",
+        "second",
+        "stale"
+      ],
+      "description": "first=3d heads-up, second=7d (FU1 window), stale=14d (sequence exhausted -> escalate)."
+    },
+    "days_since_sent": {
+      "type": "number"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "ISO anchor the age was computed from."
+    },
+    "due_at": {
+      "type": "string",
+      "description": "ISO due timestamp for queue ordering."
+    },
+    "deep_link": {
+      "type": "string"
+    },
+    "assignee": {
+      "type": "string",
+      "description": "Suggestee \u2014 estimate.salesperson / queue owner."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable why."
+    },
+    "actor": {
+      "type": "string",
+      "description": "Creating actor (system/agent)."
+    },
+    "suggested_at": {
+      "type": "string"
+    },
+    "event_type_id": {
+      "type": "string",
+      "description": "CrmEventType id when resolved."
+    },
+    "confirmed_by": {
+      "type": "string"
+    },
+    "confirmed_at": {
+      "type": "string"
+    },
+    "confirmed_event_id": {
+      "type": "string",
+      "description": "OpportunityActivity id materialized on confirm."
+    },
+    "dismissed_by": {
+      "type": "string"
+    },
+    "dismissed_at": {
+      "type": "string"
+    },
+    "dismiss_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "kind",
+    "suggestion_key",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__crm_suggestion_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__crm_suggestion_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__crm_suggestion_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__crm_suggestion_backend_only__"
+      }
+    }
+  }
+}
