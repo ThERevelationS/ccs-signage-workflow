@@ -1,0 +1,55 @@
+{
+  "name": "ProductSubstatus",
+  "type": "object",
+  "description": "Registry of persistent custom substatus tags for products (CoreBridge-style operational substatus picklist). Products carry applied tags on products[].quick_tags[]; each registry row is one managed picklist option \u2014 a display label, chip color, the module keys the tag applies to, and picklist ordering. Backend-only \u2014 read/written via service-role functions.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Tag label as stored on products[].quick_tags[] (e.g. 'Rush', 'Waiting on Customer')."
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex display color for the tag chip (e.g. '#f59e0b')."
+    },
+    "applies_to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Module keys this tag is offered in (e.g. design, production, installation); empty means the tag is offered in every module."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display ordering of this tag in the picklist."
+    },
+    "status": {
+      "type": "string",
+      "default": "active",
+      "description": "Lifecycle state \u2014 active | archived."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__productsubstatus_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__productsubstatus_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__productsubstatus_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__productsubstatus_backend_only__"
+      }
+    }
+  }
+}
