@@ -70,6 +70,17 @@
       "type": "boolean",
       "default": false
     },
+    "role": {
+      "type": "string",
+      "description": "Contact role on the account \u2014 primary | billing | site (CoreBridge contact role). Complements the is_primary / is_billing_contact / is_site_contact flags and authority_role."
+    },
+    "email_groups": {
+      "type": "array",
+      "description": "Email distribution groups this contact belongs to (e.g. invoices, proofs, statements, marketing).",
+      "items": {
+        "type": "string"
+      }
+    },
     "preferred_contact_method": {
       "type": "string",
       "enum": [
@@ -88,6 +99,10 @@
     },
     "notes": {
       "type": "string"
+    },
+    "contact_status": {
+      "type": "string",
+      "description": "Contact lifecycle status \u2014 active | deactivated | do_not_mail | hot_prospect | referral (CoreBridge contact status)."
     },
     "is_active": {
       "type": "boolean",
