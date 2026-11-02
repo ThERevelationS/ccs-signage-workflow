@@ -174,7 +174,7 @@ export default function PTOManagement() {
       const [policiesData, balancesData, usersData] = await Promise.all([
         loadAllEntityRows({ entity: PTOPolicy, sort: null, label: "PTO policies" }),
         loadAllEntityRows({ entity: UserPTOBalance, sort: null, label: "PTO balances" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "PTO authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "PTO authorized users" })
       ]);
       setPolicies(policiesData);
       setUserBalances(balancesData);
