@@ -207,6 +207,76 @@
     },
     "notes": {
       "type": "string"
+    },
+    "income_account_code": {
+      "type": "string",
+      "description": "GL income account code this part's sales post to on accounting export."
+    },
+    "cogs_account_code": {
+      "type": "string",
+      "description": "GL cost-of-goods-sold account code this part's material cost posts to on accounting export."
+    },
+    "pricing_template_id": {
+      "type": "string",
+      "description": "PricingTemplate record applied to this part's pricing."
+    },
+    "design_lead_days": {
+      "type": "number",
+      "description": "Lead-time days attributed to design work for this part."
+    },
+    "product_lead_days": {
+      "type": "number",
+      "description": "Lead-time days attributed to production for this part."
+    },
+    "labor_level_id": {
+      "type": "string",
+      "description": "Labor level/skill tier used to price this part's labor."
+    },
+    "machine_ids": {
+      "type": "array",
+      "description": "Machine records this part routes through in production.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "taxable": {
+      "type": "boolean",
+      "description": "Whether this part's charges are taxable."
+    },
+    "separate_on_invoice": {
+      "type": "boolean",
+      "description": "Whether this part is broken out as its own invoice line."
+    },
+    "double_sided": {
+      "type": "boolean",
+      "description": "Whether this part is produced double-sided."
+    },
+    "min_charge": {
+      "type": "number",
+      "description": "Minimum charge floor applied to this part."
+    },
+    "parent_sizes": {
+      "type": "array",
+      "description": "Parent sheet/stock size labels this part can be cut from.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "vendor_id": {
+      "type": "string",
+      "description": "Vendor record supplying this part or its primary material."
+    },
+    "mfg_part_number": {
+      "type": "string",
+      "description": "Manufacturer/vendor part number used for ordering."
+    },
+    "size_discounts": {
+      "type": "array",
+      "description": "Per-size discount rows applied to this part; row shape is module-defined.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
     }
   },
   "required": [
