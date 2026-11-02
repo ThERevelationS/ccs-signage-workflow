@@ -50,6 +50,10 @@
     "vendor_name": {
       "type": "string"
     },
+    "vendor_id": {
+      "type": "string",
+      "description": "Links to a Vendor registry record. vendor_name is kept for display."
+    },
     "vendor_contact": {
       "type": "string"
     },
