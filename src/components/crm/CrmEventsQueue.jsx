@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { OpportunityActivity, Customer } from "@/api/gatedEntities";
+import { fetchCrmEventsBundle } from "@/components/queues/queueFeedClient";
 import {
   EmptyState,
   FilterBar,
@@ -33,6 +32,8 @@ import { CcsDateField } from "@/components/ui/ccs-date-field";
 export const CRM_EVENTS_QUERY_KEY = ["crm-events", "all"];
 const PAGE_SIZES = [25, 50, 100, 200];
 const EMPTY_ACTIVITIES = [];
+const EMPTY_CUSTOMERS = [];
+const EMPTY_BUNDLE = { activities: EMPTY_ACTIVITIES, customers: EMPTY_CUSTOMERS };
 
 const sel = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
 const lab = "text-[11px] font-semibold uppercase tracking-wide text-gray-500";
@@ -137,23 +138,15 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
   const [errors, setErrors] = useState({});
   const now = useMemo(() => new Date(), []);
 
-  const { data: activities = EMPTY_ACTIVITIES, isFetched } = useQuery({
+  // M-03 — one composed queueFeed call returns the CRM-taxonomy activity rows
+  // plus the customer datalist (both server-projected); on failure it falls
+  // back inside the fetch to the two paged gateway reads this used to be.
+  const { data: bundle = EMPTY_BUNDLE, isFetched } = useQuery({
     queryKey: CRM_EVENTS_QUERY_KEY,
-    queryFn: () => loadAllEntityRows({
-      entity: OpportunityActivity,
-      sort: "-updated_date",
-      label: "CRM events",
-    }),
+    queryFn: fetchCrmEventsBundle,
   });
-  const { data: customers = [] } = useQuery({
-    queryKey: ["crm-events", "customers"],
-    queryFn: () => loadAllEntityRows({
-      entity: Customer,
-      sort: "company_name",
-      label: "CRM event customers",
-      cacheTtlMs: 30000,
-    }),
-  });
+  const activities = bundle.activities || EMPTY_ACTIVITIES;
+  const customers = bundle.customers || EMPTY_CUSTOMERS;
 
   // Filters live in the URL so a queue view can be shared or bookmarked.
   const filters = useMemo(() => ({
