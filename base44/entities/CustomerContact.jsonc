@@ -74,6 +74,22 @@
       "type": "string",
       "description": "Contact role on the account \u2014 primary | billing | site (CoreBridge contact role). Complements the is_primary / is_billing_contact / is_site_contact flags and authority_role."
     },
+    "contact_roles": {
+      "type": "array",
+      "description": "Canonical multi-role list from contactRolesModel.CONTACT_ROLES (primary | billing | jobsite | decision_maker | ap) \u2014 one contact can hold several roles that the single 'role' field cannot express.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "roles_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the contact's role assignments changed (G-04 audit)."
+    },
+    "roles_updated_by": {
+      "type": "string",
+      "description": "Staff email that last changed the contact's role assignments (G-04 audit)."
+    },
     "email_groups": {
       "type": "array",
       "description": "Email distribution groups this contact belongs to (e.g. invoices, proofs, statements, marketing).",
