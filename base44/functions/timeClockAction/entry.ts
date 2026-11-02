@@ -4,6 +4,7 @@ import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -203,40 +204,6 @@ function publicEmployee(target: any) {
     full_name: target?.full_name || asEmail(target?.email),
     username: target?.username || '',
   };
-}
-
-async function verifyBadgeCredential(code: string, badgeEntity: any, authorized: any) {
-  const parts = String(code || '').trim().split(':');
-  if (parts.length !== 4 || parts[0] !== 'TIMECLOCK2') return null;
-
-  let email = '';
-  try {
-    email = asEmail(b64urlDecode(parts[1]));
-  } catch {
-    return null;
-  }
-  const version = Number(parts[2]);
-  const rawToken = String(parts[3] || '').trim().toLowerCase();
-  if (!email || !Number.isInteger(version) || version < 1 || !/^[a-f0-9]{64}$/.test(rawToken)) return null;
-
-  const targetRows = await authorized.filter({ email });
-  if (!Array.isArray(targetRows) || targetRows.length !== 1) return null;
-  const badgeRows = await badgeEntity.filter({ user_email: email });
-  if (!Array.isArray(badgeRows)) return null;
-  const activeBadges = badgeRows.filter((row: any) => !row?.revoked_at);
-  if (activeBadges.length !== 1) return null;
-  const badge = activeBadges[0];
-  if (Number(badge.badge_version) !== version) return null;
-
-  const expectedHash = await sha256Hex(`${email}|${version}|${rawToken}`);
-  if (!constantTimeEqual(String(badge.token_hash || ''), expectedHash)) return null;
-
-  badgeEntity.updateMany(
-    { id: badge.id, updated_date: badge.updated_date, user_email: email, badge_version: version },
-    { $set: { last_used_at: new Date().toISOString() } },
-  ).catch((error: any) => console.error('Time Clock badge last-used update failed:', error?.message || error));
-
-  return { target: targetRows[0], badge };
 }
 
 function validRequestId(value: unknown) {
