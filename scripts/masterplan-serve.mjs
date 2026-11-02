@@ -11,7 +11,11 @@ const CLAIMS_DIR = '.masterplan-claims';
 const rd = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
 const lines = (p) => rd(p).split('\n').filter(Boolean);
 const jlines = (p) => lines(p).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-const wsOfItem = (item) => (item && /^[A-Z]-\d/.test(item) ? item[0] : null);
+const wsOfItem = (item) => {
+  const first = Array.isArray(item) ? item[0] : item;
+  return (first && /^[A-Z]-\d/.test(first) ? first[0] : null);
+};
+const wsLetters = (item) => (Array.isArray(item) ? item : [item]).map(wsOfItem).filter(Boolean);
 const hhmmss = (iso) => { try { return new Date(iso).toTimeString().slice(0, 8); } catch { return '—'; } };
 
 function parseLedger() {
@@ -40,14 +44,30 @@ function workersFromClaims(claims) {
     if (!c.worker) continue;
     w[c.worker] = w[c.worker] || { id: c.worker, status: 'idle', item: null, owned_files: [], started: null };
     const r = w[c.worker];
-    if (c.status === 'claimed') { r.status = 'running'; r.item = c.item; r.owned_files = c.owned_files || []; r.started = c.ts; }
-    else if (['integrated', 'failed', 'released'].includes(c.status) && r.item === c.item) { r.status = 'idle'; r.item = null; r.owned_files = []; r.started = null; }
+    if (c.status === 'claimed') { r.status = 'running'; r.items = new Set(Array.isArray(c.item) ? c.item : [c.item]); r.item = c.item; r.owned_files = c.owned_files || []; r.started = c.ts; }
+    else if (['integrated', 'failed', 'released'].includes(c.status)) {
+      if (r.items) r.items.delete(c.item);
+      if (!r.items || r.items.size === 0) { r.status = 'idle'; r.item = null; r.items = null; r.owned_files = []; r.started = null; }
+    }
   }
   for (const r of Object.values(w)) {
     r.elapsed = r.started ? Math.round((Date.now() - Date.parse(r.started)) / 1000) : null;
     try { r.last_line = lines(`${CLAIMS_DIR}/worker-${r.id}.log`).slice(-1)[0] || null; } catch { r.last_line = null; }
   }
   return Object.values(w);
+}
+
+// Max simultaneously-claimed workers ever observed — the orchestrator's real
+// concurrency ceiling (worker ids are sequential per dispatch, so the ledger
+// total is lifetime count, NOT the pool size).
+function peakConcurrency(claims) {
+  let live = 0, peak = 0;
+  for (const c of claims) {
+    if (c.status === 'claimed') live++;
+    else if (['integrated', 'failed', 'released'].includes(c.status)) live = Math.max(0, live - 1);
+    if (live > peak) peak = live;
+  }
+  return peak;
 }
 
 // Build per-workstream activity: last-N real text lines, oldest→newest (terminal style)
@@ -59,7 +79,7 @@ function activityByWs(claims, events) {
     push(ws, e.ts, 'orch', `${e.type}${e.item ? ' ' + e.item : ''}${e.detail ? ' — ' + e.detail : ''}${e.note ? ' (' + e.note + ')' : ''}`);
   }
   for (const c of claims) {
-    push(wsOfItem(c.item), c.ts, c.worker, `${c.status} ${c.item}`);
+    for (const ws of wsLetters(c.item)) push(ws, c.ts, c.worker, `${c.status} ${Array.isArray(c.item) ? c.item.join('+') : c.item}`);
   }
   try {
     for (const f of readdirSync(CLAIMS_DIR).filter((f) => /^worker-.+\.log$/.test(f))) {
@@ -74,7 +94,7 @@ function activityByWs(claims, events) {
       }
     }
   } catch {}
-  for (const ws of Object.keys(act)) act[ws] = act[ws].sort((a, b) => a.ts - b.ts).slice(-4);
+  for (const ws of Object.keys(act)) act[ws] = act[ws].sort((a, b) => a.ts - b.ts).slice(-12);
   return act;
 }
 
@@ -90,11 +110,17 @@ function status() {
   const { ws, titles, totals } = parseLedger();
   const workers = workersFromClaims(claims);
   const total = totals.open + totals.done + totals.doing + totals.blocked + totals.deferred;
+  // Operator-set worker cap — single source of truth is the ledger README
+  // (`MAX_WORKERS = N` line appended by the orchestrator). Defaults to 8
+  // (the original §0.6 cap) when unset.
+  const capMatch = rd(`${CLAIMS_DIR}/README.md`).match(/MAX_WORKERS\s*=\s*(\d+)/);
+  const maxWorkers = capMatch ? Number(capMatch[1]) : 8;
   const json = JSON.stringify({
     updated: new Date().toISOString(),
     flags: { active: existsSync('.devin/MASTERPLAN_SESSION_ACTIVE'), done: existsSync('.devin/MASTERPLAN_DONE') },
     totals, pct: total ? Math.round(totals.done / total * 100) : 0,
     workstreams: ws, ws_titles: titles, workers,
+    peak_workers: peakConcurrency(claims), max_workers: maxWorkers,
     activity: activityByWs(claims, events),
     events: events.slice(-14).reverse(),
     churn,
@@ -117,7 +143,7 @@ h1{font-size:14px;margin:0 0 2px} .dim{color:#6b7d8f}
 .wshead{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
 .wshead b{color:#9fd0ff}.bar{height:5px;background:#1d2a38;border-radius:3px;overflow:hidden;margin:3px 0 4px}
 .bar>div{height:100%;background:#4ade80;transition:width .4s}
-.console{background:#070b10;border-radius:4px;padding:4px 6px;min-height:64px;font-size:11px}
+.console{background:#070b10;border-radius:4px;padding:4px 6px;height:84px;max-height:84px;overflow-y:auto;font-size:11px}
 .console div{white-space:pre-wrap;word-break:break-all;color:#a9bfd4}
 .console .lt{color:#54687e}.console .who{color:#7dd3fc}
 .feed{max-height:150px;overflow:auto;margin-top:6px}.ev{padding:1px 0;white-space:pre-wrap;word-break:break-all;border-bottom:1px solid #141d28}
@@ -125,8 +151,8 @@ h1{font-size:14px;margin:0 0 2px} .dim{color:#6b7d8f}
 <h1>Estimator Masterplan — live</h1>
 <div class="dim" id="t"></div>
 <div class="strip" id="stats"></div>
-<div class="dim">WORKERS</div><div class="wgrid" id="workers"></div>
-<div class="dim">WORKSTREAMS — last 4 live lines each</div><div class="wsgrid" id="ws"></div>
+<div class="dim">WORKERS (running only)</div><div class="wgrid" id="workers"></div>
+<div class="dim">WORKSTREAMS — live scroll</div><div class="wsgrid" id="ws"></div>
 <div class="dim">ORCHESTRATOR EVENTS</div><div class="feed" id="feed"></div>
 <script>
 const fmt=s=>s==null?'':s>=3600?Math.floor(s/3600)+'h'+Math.floor(s%3600/60)+'m':s>=60?Math.floor(s/60)+'m'+s%60+'s':s+'s';
@@ -136,17 +162,21 @@ function render(s){
  document.getElementById('stats').innerHTML=[
   ['DONE','<b class="okc">'+t.done+'</b>'],['DOING','<b class="runc">'+t.doing+'</b>'],['OPEN','<b>'+t.open+'</b>'],
   ['BLOCKED','<b class="warnc">'+t.blocked+'</b>'],['PROGRESS','<b>'+s.pct+'%</b>'],
-  ['WORKERS','<b class="runc">'+s.workers.filter(w=>w.status==='running').length+'</b>/'+s.workers.length]]
+  ['ACTIVE','<b class="runc">'+s.workers.filter(w=>w.status==='running').length+'</b>'],
+  ['CAP','<b>'+(s.max_workers||'—')+'</b>'],
+  ['DISPATCHED','<b>'+s.workers.length+'</b>']]
   .map(([k,v])=>'<div class="stat">'+v+'<span class="dim">'+k+'</span></div>').join('');
- document.getElementById('workers').innerHTML=s.workers.length?s.workers.map(w=>
+ const running=s.workers.filter(w=>w.status==='running');
+ document.getElementById('workers').innerHTML=running.length?running.map(w=>
   '<div class="wcard"><span class="who">'+w.id+'</span> '+(w.status==='running'?'<span class="pill runc" style="background:#0d2a4a">RUNNING</span>':'<span class="pill dim">idle</span>')
   +' <b>'+(w.item||'—')+'</b> <span class="dim">'+fmt(w.elapsed)+'</span><div class="dim" style="font-size:10px">'+(w.last_line||'')
-  +'</div></div>').join(''):'<div class="wcard dim">no workers dispatched yet</div>';
+  +'</div></div>').join(''):'<div class="wcard dim">all workers idle</div>';
  document.getElementById('ws').innerHTML=Object.entries(s.workstreams).sort().map(([k,v])=>{
   const tot=v.open+v.done+v.doing+v.blocked+v.deferred,p=tot?Math.round(v.done/tot*100):0;
   const lines=(s.activity[k]||[]).map(a=>'<div><span class="lt">'+a.when+'</span> <span class="who">'+a.who+'</span> '+a.text+'</div>').join('')||'<div class="dim">— idle —</div>';
   return '<div class="ws"><div class="wshead"><b>WS-'+k+'</b><span class="dim">'+(s.ws_titles[k]||'')+'</span><span class="dim">'+v.done+'/'+tot+(v.doing?' · '+v.doing+' doing':'')+(v.blocked?' · '+v.blocked+' blk':'')+'</span></div><div class="bar"><div style="width:'+p+'%"></div></div><div class="console">'+lines+'</div></div>';
  }).join('');
+ document.querySelectorAll('.console').forEach(c=>{c.scrollTop=c.scrollHeight});
  document.getElementById('feed').innerHTML=s.events.map(e=>{
   const bad=/fail|error|violation/i.test(JSON.stringify(e)),good=/checkpoint|integrated/i.test(e.type||'');
   return '<div class="ev '+(bad?'badc':good?'okc':'')+'"><span class="lt">'+(e.ts||'').slice(11,19)+'</span> <b>'+(e.type||'?')+'</b> '+(e.item||'')+' '+(e.detail||'')+' '+(e.note||'')+'</div>';
