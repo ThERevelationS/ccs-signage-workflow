@@ -6,6 +6,10 @@ import { brickEngineEconomics } from "./brick/brickSellPricing";
 
 import { cncEngineEconomics } from "./cnc/cncSellPricing";
 
+import { metalEngineEconomics } from "./metal/metalSellPricing";
+
+import { laserEngineEconomics } from "./laser/laserSellPricing";
+
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 export function hasNumericValue(value) {
@@ -129,6 +133,48 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0, pri
       };
     }
     return withSavedTier({ internalCost: total, customerPrice: total });
+  }
+
+  if (moduleKey === "laser") {
+    // F-23e pricing-engine wire: when the saved laser record explicitly
+    // carries engine config (engine_pricing-style context block or per-line
+    // tier/template descriptors on items[]), the shared engine owns the sell
+    // side and wins over a legacy saved customer_pricing snapshot. Laser
+    // total_cost is a pure cost total (no module markup), so the internal
+    // cost and the sell baseline are the same number. With no config the
+    // wire returns null and the record keeps today's numbers
+    // byte-identically — the saved Markup-Tier snapshot still applies.
+    const wired = laserEngineEconomics(record, { baselineSell: total, internalCost: total, pricingContext });
+    if (wired) {
+      return {
+        internalCost: wired.internalCost,
+        customerPrice: wired.customerPrice,
+        pricing_engine: wired.resolution,
+      };
+    }
+    return withSavedTier({ internalCost: total, customerPrice: total });
+  }
+
+  if (moduleKey === "metal") {
+    const internalCost = hasNumericValue(record.subtotal)
+      ? num(record.subtotal)
+      : total - num(record.markup_amount);
+    // F-23f pricing-engine wire: when the saved metal record explicitly
+    // carries engine config (engine_pricing-style context block or per-line
+    // tier/template descriptors on items[]), the shared engine owns the sell
+    // side and wins over a legacy saved customer_pricing snapshot. The
+    // module cost math above stays authoritative; with no config the wire
+    // returns null and the record keeps today's numbers byte-identically —
+    // the saved Markup-Tier snapshot still applies.
+    const wired = metalEngineEconomics(record, { baselineSell: total, internalCost, pricingContext });
+    if (wired) {
+      return {
+        internalCost: wired.internalCost,
+        customerPrice: wired.customerPrice,
+        pricing_engine: wired.resolution,
+      };
+    }
+    return withSavedTier({ internalCost, customerPrice: total });
   }
 
   return withSavedTier({ internalCost: fallback, customerPrice: fallback });
