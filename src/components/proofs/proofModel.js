@@ -103,7 +103,11 @@ export function proofHistory(product) {
 // Build the operational patch for a proof action. The returned object uses the
 // camelCase input keys of buildProductOperationalPatch so it can be passed
 // straight to transitionProductAndBuilderStatus({ patch }).
-export function nextProofPatch(product, action, { fileVersion, fileUrl, fileName, leadTimeDays, now } = {}) {
+// `parts` = the product's BuilderPart rows when the caller loaded them (the
+// B-07 due-date engine resolves lead days from them on approve); `leadTimeDays`
+// is the manual override ProofPanel passes — see the precedence note inside
+// recalculateProductDueDateOnProofApproval.
+export function nextProofPatch(product, action, { fileVersion, fileUrl, fileName, leadTimeDays, parts, now } = {}) {
   const status = norm(product?.proof_status) || "none";
   const name = norm(action);
 
@@ -140,10 +144,14 @@ export function nextProofPatch(product, action, { fileVersion, fileUrl, fileName
     return {
       proofStatus: "approved",
       operationalStatus: "proof_approved",
-      // Due-date recalc honors hard_due_date inside the helper.
+      // Due-date recalc runs through the B-07 shared engine inside the
+      // conversion helper: loaded `parts` drive the max-of-leads candidate, an
+      // explicit positive `leadTimeDays` overrides per-part leads, a hard due
+      // date holds, and the result only pushes forward.
       productDueDate: recalculateProductDueDateOnProofApproval({
         product: product || {},
         leadTimeDays,
+        parts,
         fromDate: now || new Date(),
       }),
       proofApprovedVersion: version,
