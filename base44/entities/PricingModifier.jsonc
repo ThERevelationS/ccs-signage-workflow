@@ -1,0 +1,105 @@
+{
+  "name": "PricingModifier",
+  "type": "object",
+  "description": "CoreBridge-style custom property / variable-rate modifier attachable to catalog parts and estimate lines. A modifier captures extra input (text, number, select, checkbox, or formula) and can adjust price via rate tables, a formula, setup fees, minimum charges, and waste factors.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Internal modifier name (unique key used in formulas and part configuration)."
+    },
+    "label": {
+      "type": "string",
+      "description": "Customer/operator-facing label shown on the estimate input form."
+    },
+    "input_type": {
+      "type": "string",
+      "description": "Input widget type: text | number | select | checkbox | formula. 'select' options come from ModifierOption rows; 'formula' derives its value from formula_text instead of user input."
+    },
+    "can_use_in_pricing": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true this modifier's value/rates may feed the pricing waterfall."
+    },
+    "rates": {
+      "type": "array",
+      "description": "Variable rate table rows: {label:string, retail:number, cost:number, per_unit:string}. Selected/matched row supplies the retail and cost rates and the unit basis the rate applies to.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "retail": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "per_unit": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "formula_text": {
+      "type": "string",
+      "description": "Formula expression (CoreBridge variable-rate syntax) evaluated when input_type is formula or when pricing derives from modifier inputs."
+    },
+    "include_setup_fee": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true the modifier contributes a flat setup fee in addition to its unit-rate price."
+    },
+    "min_charge": {
+      "type": "number",
+      "default": 0,
+      "description": "Floor for this modifier's total price contribution; 0 = no minimum."
+    },
+    "affects_waste": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true the modifier value scales the part's waste/overage factor."
+    },
+    "inventoried_part_type": {
+      "type": "string",
+      "description": "Optional part-type key limiting which inventoried catalog parts this modifier may attach to."
+    },
+    "pricing_tier_id": {
+      "type": "string",
+      "description": "Optional PricingTierMatrix/tier row scoping this modifier's rates to a customer pricing tier."
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Order the modifier input renders within its part's modifier list."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status (e.g. active, archived). Free-form string; treated as active when unset."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__pricingmodifier_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__pricingmodifier_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__pricingmodifier_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__pricingmodifier_backend_only__"
+      }
+    }
+  }
+}
