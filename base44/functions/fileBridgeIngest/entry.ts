@@ -53,8 +53,8 @@ async function verifyAgent(req: Request, rawBody: string, sr: any) {
 let settingsCache: { v: any; at: number } = { v: null, at: 0 };
 async function getSettings(sr: any) {
   if (settingsCache.v && now() - settingsCache.at < 60_000) return settingsCache.v;
-  const rows = await sr.entities.GlobalSettings.filter({ key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
-  const v = rows?.[0]?.value ?? null;
+  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+  const v = rows?.[0]?.setting_value ?? null;
   settingsCache = { v, at: now() };
   return v;
 }
@@ -93,10 +93,28 @@ Deno.serve(async (req) => {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
   const settings = auth.settings;
-  if (!settings.enabled) return Response.json({ error: 'fileBridge disabled' }, { status: 503 });
-
   const action = String(body.action || '');
   const agentId = auth.agentId || String(body.agent_id || '');
+
+  // ---------- bootstrap_settings: first-run setup (HMAC-gated). Creates the
+  // settings row if absent so the bridge can come up without manual UI steps.
+  if (action === 'bootstrap_settings') {
+    if (settings && Object.keys(settings).length) {
+      return Response.json({ ok: true, existed: true, settings });
+    }
+    const next = normalizeFileBridgeSettings({
+      enabled: true, primary_agent_id: agentId, key_id: String(body.key_id || 'fbk1'),
+      ...(body.settings && typeof body.settings === 'object' ? body.settings : {}),
+    });
+    const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+    if (rows?.[0]?.id) await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: next });
+    else await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next });
+    settingsCache = { v: null, at: 0 };
+    await ev(sr, { event_type: 'bootstrap_settings', agent_id: agentId, actor: agentId, details: { settings: next } });
+    return Response.json({ ok: true, existed: false, settings: next });
+  }
+
+  if (!settings.enabled) return Response.json({ error: 'fileBridge disabled' }, { status: 503 });
 
   // ---------- handshake ----------
   if (action === 'handshake') {
