@@ -116,6 +116,36 @@
         },
         "additionalProperties": true
       }
+    },
+    "status_override_reasons": {
+      "type": "array",
+      "description": "Status-override required-reason list (B-11). Reasons staff must pick from when forcing a manual override (e.g. cancel-estimate, forced status move); when an active reason applies to the override type the override dialog cannot submit without one, and the pick lands in the ProductActivity 'override' audit row. Normalized via src/components/jobs/overrideReasonModel.js.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Operator-facing reason label shown in the override dialog (e.g. 'Customer cancelled', 'Other')"
+          },
+          "applies_to": {
+            "type": "string",
+            "description": "Override type this reason applies to (e.g. 'status', 'cancel_estimate', 'due_date'); blank/'all'/'*' means it applies to every override type"
+          },
+          "requires_text": {
+            "type": "boolean",
+            "description": "When true the picker must also type free-form detail (the stock 'Other' entry is always treated as requiring text even if unset)"
+          },
+          "sort": {
+            "type": "number",
+            "description": "Display ordering in the override dialog (ascending, then label)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status \u2014 'active' (or unset) participates in validation; 'archived'/'inactive' rows are inert"
+          }
+        },
+        "additionalProperties": true
+      }
     }
   },
   "required": [
