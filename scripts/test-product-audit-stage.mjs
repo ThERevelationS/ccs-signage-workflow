@@ -45,8 +45,10 @@ for (const f of [
   assert.ok(entity.properties[f], `entity missing ${f}`);
 }
 assert.deepEqual(entity.properties.event_type.enum, [
-  'status_change', 'substatus_change', 'proof_event', 'due_date_change',
+  'status_change', 'substatus_change', 'proof_event', 'proof_approved',
+  'proof_changes_requested', 'proof_superseded', 'due_date_change',
   'assignment_change', 'priority_change', 'note', 'conversion', 'override',
+  'price_override',
 ]);
 assert.deepEqual(entity.properties.event_type.enum, [...PRODUCT_AUDIT_EVENT_TYPES],
   'entity enum matches model event types');
