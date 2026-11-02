@@ -1044,6 +1044,20 @@
             "type": "number",
             "description": "Proof version the current approval applies to. 0 means no versioned approval; approvals do not carry to newer versions."
           },
+          "proof_sent_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO timestamp when the current proof was sent to the customer (A-33); anchors H-06 proof follow-ups."
+          },
+          "proof_submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO timestamp when the proof was submitted/uploaded for review (A-33)."
+          },
+          "proof_follow_up_state": {
+            "type": "object",
+            "description": "Per-product follow-up machine snapshot (H-06): {stage, last_sent_at, next_due_at, ...}."
+          },
           "operational_status_changed_at": {
             "type": "string",
             "description": "ISO timestamp of the last operational_status change on this product."
