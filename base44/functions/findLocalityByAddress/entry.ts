@@ -361,11 +361,21 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     };
     places.forEach((f) => addMuni(f, "Census municipal boundary"));
     statePlaces.forEach((f) => addMuni(f, stateSrc));
-    if (cities.length > 1 || stateCities.length > 1 || cities.length !== stateCities.length) {
+    let coverageGap = false;
+    if (cities.length > 1 || stateCities.length > 1) {
       if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
       throw Error("Official boundary sources disagree about the municipality.");
     }
-    if (cities.length === 1) {
+    if (cities.length !== stateCities.length) {
+      if (muniCands.length === 1) {
+        const s = stateCities[0] || cities[0];
+        const nm = String(s.attributes.NAME || s.attributes.municipality || "").replace(/\s+(city|village|town)$/i, "").trim();
+        const sameNameCensus = cities[0] || places.find((f) => norm(String(f.attributes.NAME || "").replace(/\s+(city|village|town)$/i, "")) === norm(nm));
+        target = { name: nm, state, type: "municipality", geoid: String(sameNameCensus?.attributes.GEOID || ""), county: countyName, county_geoid: countyId, geometry: s.geometry, source_url: s.source_url, coverage_note: "One boundary source does not yet cover this spot \u2014 the state municipal boundary was used." };
+        coverageGap = true;
+      } else if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
+      else throw Error("Official boundary sources disagree about the municipality.");
+    } else if (cities.length === 1) {
       const c = cities[0], s = stateCities[0], sName = s.attributes.municipality || s.attributes.NAME;
       if (String(c.attributes.STATE) !== fips || !new RegExp("^" + fips + "[0-9]{5}$").test(String(c.attributes.GEOID)) || norm(c.attributes.NAME) !== norm(sName)) {
         if (muniCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources name different municipalities here. Pick the correct jurisdiction below.", candidates: muniCands, target: null };
@@ -384,7 +394,8 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     } else target = { name: countyName, state, type: "county", geoid: countyId, county: countyName, county_geoid: countyId, geometry: countyRow.geometry, source_url: countyRow.source_url };
     base.targets = [{ ...target, geometry: void 0 }, { name: countyName, state, type: "county", geoid: countyId, county: countyName }].filter((t, i, all) => all.findIndex((other) => other.geoid === t.geoid) === i);
     base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
-    const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 ? [...townships, ...stateTownships] : []];
+    const muniRelevant = coverageGap ? [...places, ...statePlaces].filter((f) => f.inside) : [...places, ...statePlaces];
+    const relevant = [...counties, ...muniRelevant, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []];
     const edge = geocode.approximate_source ? 150 : 25;
     if (!geocode.location_exact && !geocode.approximate_source) return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
     if (relevant.some((f) => f.distance_m <= edge)) return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
