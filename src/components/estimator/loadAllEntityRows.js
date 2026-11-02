@@ -76,11 +76,16 @@ export async function withRateLimitRetry(fn) {
 // the whole catalog and burning the shared rate-limit budget.
 const readCache = new Map();
 const CACHE_MAX_AGE_MS = 30000;
+// Identical reads issued at the same instant (mount bursts, StrictMode double
+// mounts, sibling components) share one network pass. Keyed per entity object
+// so different gateways never share rows; every caller receives a copy so an
+// in-place sort/splice by one consumer cannot corrupt another's result.
+const inFlightReads = new WeakMap(); // entity -> Map<key, Promise<rows>>
 
 // Seed the short-TTL cache with rows fetched through a batch read so the
 // per-entity loaders skip their own network call on the next mount.
 export const primeEntityRowsCache = (label, query, sort, rows) => {
-  readCache.set(JSON.stringify([label, query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
+  readCache.set(JSON.stringify([query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
 };
 
 export async function loadAllEntityRows({
@@ -99,10 +104,10 @@ export async function loadAllEntityRows({
 } = {}) {
   const parsedLimit = limit == null ? null : Math.floor(Number(limit));
   const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
-  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, safeLimit ?? maxRows]) : null;
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([query, sort, pageSize, safeLimit ?? maxRows]) : null;
   if (cacheKey) {
     const hit = readCache.get(cacheKey);
-    if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
+    if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return [...hit.rows];
   }
   const hasFilter = query && typeof query === "object";
   const reader = hasFilter ? entity?.filter : entity?.list;
@@ -114,40 +119,66 @@ export async function loadAllEntityRows({
   // A bounded read never fetches a page larger than the rows still wanted —
   // `limit: 50` costs exactly one 50-row request, not a 500-row page.
   const safeMaxRows = safeLimit ?? Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
-  const collected = [];
-  const seen = new Set();
-  let skip = 0;
 
-  while (skip < safeMaxRows) {
-    const pageLimit = Math.min(safePageSize, safeMaxRows - skip);
-    const page = await withRateLimitRetry(() =>
-      hasFilter
-        ? entity.filter(query, sort || undefined, pageLimit, skip)
-        : entity.list(sort || undefined, pageLimit, skip)
-    );
+  // Join an identical read already in flight instead of starting a second
+  // paged scan for the same data. Non-object entities skip sharing.
+  const canShare = entity !== null && (typeof entity === "object" || typeof entity === "function");
+  const flightKey = JSON.stringify([hasFilter ? "filter" : "list", query ?? null, sort ?? null, safePageSize, safeMaxRows]);
+  if (canShare) {
+    const existing = inFlightReads.get(entity)?.get(flightKey);
+    if (existing) return existing.then((rows) => [...rows]);
+  }
 
-    if (!Array.isArray(page)) {
-      throw new Error(`${label} could not be verified completely. Estimating was blocked rather than using a partial catalog.`);
+  const readPromise = (async () => {
+    const collected = [];
+    const seen = new Set();
+    let skip = 0;
+
+    while (skip < safeMaxRows) {
+      const pageLimit = Math.min(safePageSize, safeMaxRows - skip);
+      const page = await withRateLimitRetry(() =>
+        hasFilter
+          ? entity.filter(query, sort || undefined, pageLimit, skip)
+          : entity.list(sort || undefined, pageLimit, skip)
+      );
+
+      if (!Array.isArray(page)) {
+        throw new Error(`${label} could not be verified completely. Estimating was blocked rather than using a partial catalog.`);
+      }
+
+      for (let index = 0; index < page.length; index += 1) {
+        const row = page[index];
+        const key = rowIdentity(row, skip + index);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        collected.push(row);
+      }
+
+      if (page.length < pageLimit) {
+        if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+        return collected;
+      }
+      skip += pageLimit;
     }
 
-    for (let index = 0; index < page.length; index += 1) {
-      const row = page[index];
-      const key = rowIdentity(row, skip + index);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      collected.push(row);
-    }
-
-    if (page.length < pageLimit) {
+    if (safeLimit != null) {
       if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
       return collected;
     }
-    skip += pageLimit;
-  }
+    throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
+  })();
 
-  if (safeLimit != null) {
-    if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
-    return collected;
+  if (!canShare) return readPromise;
+  let flightBucket = inFlightReads.get(entity);
+  if (!flightBucket) {
+    flightBucket = new Map();
+    inFlightReads.set(entity, flightBucket);
   }
-  throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
+  flightBucket.set(flightKey, readPromise);
+  try {
+    const rows = await readPromise;
+    return [...rows];
+  } finally {
+    if (flightBucket.get(flightKey) === readPromise) flightBucket.delete(flightKey);
+  }
 }
