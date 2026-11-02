@@ -1047,6 +1047,11 @@ export default function TimeClockAdmin() {
   }
   const fewestDays = Object.values(workedDaysByEmp).sort((a, b) => a.days - b.days).slice(0, 4);
 
+  const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
+    const entry = timeEntries.find(e => e.user_email === email);
+    return { email, name: entry?.user_name || email };
+  });
+
   // Missing punch today - rostered employees with no entry today.
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const punchedToday = new Set(filteredEntries.filter((e) => e.clock_in && safeFormat(e.clock_in, "yyyy-MM-dd") === todayKey).map((e) => e.user_email));
@@ -1064,11 +1069,6 @@ export default function TimeClockAdmin() {
       punchPairs.push({ a, b, gap: Math.round(gap) });
     }
   }
-
-  const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
-    const entry = timeEntries.find(e => e.user_email === email);
-    return { email, name: entry?.user_name || email };
-  });
 
   if (isLoading) {
     return (
