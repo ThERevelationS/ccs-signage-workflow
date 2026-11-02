@@ -1,6 +1,11 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
+import {
+  useQueueWorkOrders,
+  useQueueExtras,
+  refreshQueueWorkOrders,
+  invalidateQueueExtras,
+} from "./queueFeedClient";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
   OPERATIONAL_STATUS_CUSTOMER_LABELS,
@@ -29,7 +34,6 @@ import { proofBadge } from "@/components/proofs/proofModel";
 import { isMyQueueFilters, filterMyQueueRows } from "./myQueueModel";
 import { chipStyle, DEFAULT_RESPONSIBILITY_COLOR } from "./tagResponsibilityModel";
 import {
-  loadSavedQueueViews,
   saveSavedQueueView,
   deleteSavedQueueView,
   isSavedViewsUnavailableError,
@@ -65,11 +69,8 @@ import {
   loadCustomerById,
   sendCustomerNotification,
 } from "@/components/comms/notifySend";
-import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { staffEntities } from "@/components/staff/staffEntities";
 import { transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import {
-  PRODUCT_STAGE_MODE_SETTING_KEY,
   STAGE_LABELS,
   productStageModeFromSetting,
   suggestStageForProducts,
@@ -253,7 +254,7 @@ function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
         patch: { ...form, queuePriority: Number(form.queuePriority) },
         label: "Queue product edit",
       });
-      refreshAllWorkOrders();
+      refreshQueueWorkOrders();
       onSaved?.();
     } catch (e) {
       setError(e?.message || "Save failed.");
@@ -316,7 +317,9 @@ export default function ProductQueue({
   queueLens = "all",
   onOpenWorkOrder = null,
 }) {
-  const { data: workOrders = [], isFetched } = useAllWorkOrders();
+  // M-03 — one composed queueFeed pull (projected WOs + scoped extras in a
+  // single call); fails open to the shared board feed when unavailable.
+  const { data: workOrders = [], isFetched } = useQueueWorkOrders();
   const { currentUser, sessionToken } = useAuth();
   const actor = String(currentUser?.email || "").trim();
   const workOrderById = useMemo(
@@ -358,48 +361,41 @@ export default function ProductQueue({
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
   const clearFilters = () => setFilters(() => ({ ...DEFAULT_QUEUE_FILTERS }));
 
-  // Saved queue views ("pins") — own + shared views for this lens via the
-  // staff gateways. When SavedQueueView is not wired into the gateways the
-  // control collapses into a quiet "saved views unavailable" note.
-  const [savedViews, setSavedViews] = useState([]);
-  const [viewsStatus, setViewsStatus] = useState({ available: true, error: "" });
-  const [viewsReload, setViewsReload] = useState(0);
-
-  useEffect(() => {
-    if (!actor) {
-      setSavedViews([]);
-      return undefined;
-    }
-    let cancelled = false;
-    loadSavedQueueViews({ lens: queueLens, ownerEmail: actor }).then(
-      ({ views, available }) => {
-        if (cancelled) return;
-        setSavedViews(sortViews(views, actor));
-        setViewsStatus({ available, error: available ? "" : SAVED_VIEWS_UNAVAILABLE });
-      },
-      () => {
-        if (!cancelled) setViewsStatus({ available: true, error: "Saved views could not be loaded." });
-      }
-    );
-    return () => { cancelled = true; };
-  }, [queueLens, actor, viewsReload]);
+  // Saved queue views ("pins") + the product→stage sync mode ride the same
+  // composed queueFeed extras call (M-03); each slice fails open to its own
+  // gateway read so a missing function changes nothing user-visible.
+  // Fires even before the session user resolves — the stage-mode setting is
+  // a global read; the saved-views slice stays empty until actor is known.
+  const extrasQuery = useQueueExtras({ lens: queueLens, ownerEmail: actor });
+  const extras = extrasQuery.data || null;
+  const savedViews = useMemo(
+    () => sortViews(extras?.savedViews || [], actor),
+    [extras?.savedViews, actor]
+  );
+  // Action-level view errors (save/delete failures) layer over the
+  // load-derived status — the extras slice reports mount-read health only.
+  const [viewsStatusError, setViewsStatusError] = useState(null);
+  const viewsStatus = useMemo(() => {
+    const base = {
+      available: extras?.viewsAvailable !== false,
+      error: extras?.viewsError || "",
+    };
+    if (!viewsStatusError) return base;
+    return {
+      available: viewsStatusError.available === false ? false : base.available,
+      error: viewsStatusError.error || base.error,
+    };
+  }, [extras?.viewsAvailable, extras?.viewsError, viewsStatusError]);
 
   // Product → stage sync mode (GlobalSettings.productStatusDrivesStage):
   // "off" hides the hints, "suggest" renders a quiet → stage chip on each
   // row whose WO could move forward, "auto" applies the suggestion
   // immediately after a product write lands (always announced, never silent).
+  const stageModeRecord = extras?.stageModeRecord ?? null;
   useEffect(() => {
-    let cancelled = false;
-    loadSingleGlobalSetting({
-      entity: staffEntities.GlobalSettings,
-      settingKey: PRODUCT_STAGE_MODE_SETTING_KEY,
-      label: "Product status stage sync",
-    }).then(
-      (record) => { if (!cancelled) setStageSyncMode(productStageModeFromSetting(record)); },
-      () => { if (!cancelled) setStageSyncMode("suggest"); }
-    );
-    return () => { cancelled = true; };
-  }, []);
+    if (!extrasQuery.isFetched) return;
+    setStageSyncMode(productStageModeFromSetting(stageModeRecord));
+  }, [extrasQuery.isFetched, stageModeRecord]);
 
   const applyStageForWorkOrder = async (woSnapshot, suggestion, refLabel = "") => {
     if (!woSnapshot?.id || !suggestion?.suggested) return;
@@ -413,7 +409,7 @@ export default function ProductQueue({
         label: "Queue product-stage sync",
       });
       setStageSyncNotice(`${refLabel || woSnapshot.corbridge_invoice_number || woSnapshot.title || woSnapshot.id} moved to ${STAGE_LABELS[suggestion.suggested] || suggestion.suggested} — ${suggestion.reason}.`);
-      refreshAllWorkOrders();
+      refreshQueueWorkOrders();
     } catch (e) {
       setStageSyncNotice(e?.message || "The suggested stage move could not be applied.");
     } finally {
@@ -423,9 +419,9 @@ export default function ProductQueue({
 
   const noteViewsError = (e) => {
     if (isSavedViewsUnavailableError(e)) {
-      setViewsStatus({ available: false, error: SAVED_VIEWS_UNAVAILABLE });
+      setViewsStatusError({ available: false, error: SAVED_VIEWS_UNAVAILABLE });
     } else {
-      setViewsStatus((s) => ({ ...s, error: e?.message || "The saved view could not be updated." }));
+      setViewsStatusError({ error: e?.message || "The saved view could not be updated." });
     }
   };
 
@@ -443,7 +439,8 @@ export default function ProductQueue({
     if (existing && !window.confirm(`A saved view named "${existing.name}" already exists — overwrite it?`)) return;
     try {
       await saveSavedQueueView({ name: trimmed, lens: queueLens, filters, ownerEmail: actor, existing });
-      setViewsReload((n) => n + 1);
+      setViewsStatusError(null);
+      invalidateQueueExtras(queueLens, actor);
     } catch (e) {
       noteViewsError(e);
     }
@@ -454,7 +451,8 @@ export default function ProductQueue({
     if (!window.confirm(`Delete saved view "${view.name}"?`)) return;
     try {
       await deleteSavedQueueView(view);
-      setViewsReload((n) => n + 1);
+      setViewsStatusError(null);
+      invalidateQueueExtras(queueLens, actor);
     } catch (e) {
       noteViewsError(e);
     }
@@ -518,7 +516,7 @@ export default function ProductQueue({
         // Pass the cached WO snapshot so the deposit gate does not re-read it.
         workOrder: workOrderById.get(row.workOrderId) || null,
       });
-      refreshAllWorkOrders();
+      refreshQueueWorkOrders();
       // Auto mode: the product write just landed — re-roll the saved
       // snapshot and move the board stage when products imply a later one.
       if (stageSyncMode === "auto" && res?.workOrder) {
@@ -748,7 +746,7 @@ export default function ProductQueue({
                     actor={actor}
                     disabled={!r.editable}
                     onSaved={() => setExpanded((x) => ({ ...x, [key]: false }))}
-                    onChanged={refreshAllWorkOrders}
+                    onChanged={refreshQueueWorkOrders}
                   />
                 )}
                 </React.Fragment>
