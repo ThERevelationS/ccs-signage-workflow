@@ -4,17 +4,17 @@ import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 // Persisted-notification layer for the unified attention feed
-// (ESTIMATOR_BACKLOG §14: #326-#350). The live `attention_feed` payload still
+// (ESTIMATOR_BACKLOG ??14: #326-#350). The live `attention_feed` payload still
 // answers "what needs attention right now"; this action persists discrete
-// EVENTS — quote approved, estimator assigned, quote expiring, invoice went
+// EVENTS ??? quote approved, estimator assigned, quote expiring, invoice went
 // overdue, request unassigned >2d, stale pipeline sync, needs_recalc, watch
-// hits, daily digest — as per-recipient Notification rows, plus the
+// hits, daily digest ??? as per-recipient Notification rows, plus the
 // per-user NotificationPreference row that backs section toggles, sound,
 // digest opt-in, and the feed-item handled/snooze overlays.
 //
 // Everything is staff-session authenticated; both entities are backend-only
 // RLS, so ALL access flows through this action with service-role entities.
-// No email is ever sent — sendEmail stays disabled by design.
+// No email is ever sent ??? sendEmail stays disabled by design.
 
 const clean = (v: any) => String(v ?? "").trim();
 const num = (v: any, fb = 0) => {
@@ -45,7 +45,7 @@ const MAX_CREATES_PER_EVAL = 40;
 const DEDUPE_INDEX_ROWS = 800;
 const DISMISSED_ITEMS_CAP = 300;
 
-// Module-scope scan cache — evaluate_triggers reads the same tables the
+// Module-scope scan cache ??? evaluate_triggers reads the same tables the
 // attention feed does, and every signed-in tab asks for an evaluation. The
 // scans are recipient-agnostic, so a 5-minute cache lets one warm isolate
 // serve every caller without multiplying entity reads. (Same pattern as
@@ -72,8 +72,8 @@ function activeNotification(n: any, nowMs: number) {
   return true;
 }
 
-// Resolve a stored "assigned_estimator"/"salesperson" string — it may be an
-// email or a display name — to a recipient email using the staff directory.
+// Resolve a stored "assigned_estimator"/"salesperson" string ??? it may be an
+// email or a display name ??? to a recipient email using the staff directory.
 function resolveStaffEmail(raw: any, directory: any[]) {
   const needle = clean(raw).toLowerCase();
   if (!needle) return "";
@@ -106,7 +106,7 @@ async function ensureOwnPrefRow(Pref: any, me: string) {
   try {
     return await Pref.create(payload);
   } catch {
-    // Concurrent first-write — re-read the winner.
+    // Concurrent first-write ??? re-read the winner.
     const raced = await getOwnPrefRow(Pref, me).catch(() => null);
     return raced || null;
   }
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "history") {
-      // Notification history log (#350): the entity IS the log — this is a
+      // Notification history log (#350): the entity IS the log ??? this is a
       // filtered read over the caller's rows, including read/snoozed/handled.
       const limit = Math.min(Math.max(num(body?.limit, 200) || 200, 1), 400);
       const rows = await Notification.filter({ recipient_email: me }, "-created_date", Math.min(limit * 2, 400)).catch(() => []);
@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
 
     // ---- Writes ---------------------------------------------------------------
 
-    // record — for internal/system event writes from staff sessions (#329,
+    // record ??? for internal/system event writes from staff sessions (#329,
     // #335, #346, #347 supplement paths). dedupe_key makes each logical event
     // notify at most once per recipient.
     if (action === "record") {
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
       if (!NOTIF_CATEGORIES.has(category)) throw bad(`category must be one of ${[...NOTIF_CATEGORIES].join(", ")}.`);
       if (!title) throw bad("A title is required.");
       if (recipient !== me) {
-        // Cross-recipient writes must target a real staff account — keeps a
+        // Cross-recipient writes must target a real staff account ??? keeps a
         // mistyped address from silently dropping the notification.
         const dir = await cachedScan("staff_directory", () =>
           loadAllEntityRows({ entity: base44.asServiceRole.entities.AuthorizedEmail, label: "Notification staff directory" }));
@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- Daily digest (#333) ---------------------------------------------------
-    // In-app only — no email. The caller already holds the attention_feed
+    // In-app only ??? no email. The caller already holds the attention_feed
     // payload, so it passes the section counts; we persist one deduped digest
     // Notification per user per local day.
     if (action === "daily_digest") {
@@ -413,9 +413,9 @@ Deno.serve(async (req) => {
           recipient_email: me,
           category: "digest",
           severity: total > 0 ? "info" : "info",
-          title: `Daily digest — ${today}`,
+          title: `Daily digest ??? ${today}`,
           body: total
-            ? `${total} item${total === 1 ? "" : "s"} need attention: ${entries.slice(0, 8).map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`).join(" · ")}${entries.length > 8 ? ` · +${entries.length - 8} more sections` : ""}`
+            ? `${total} item${total === 1 ? "" : "s"} need attention: ${entries.slice(0, 8).map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`).join(" ?? ")}${entries.length > 8 ? ` ?? +${entries.length - 8} more sections` : ""}`
             : "Nothing needs attention right now.",
           deep_link: "/MainWorkflow",
           source_event: "daily_digest",
@@ -461,7 +461,7 @@ Deno.serve(async (req) => {
         .map((u: any) => clean(u.email).toLowerCase())
         .slice(0, 10);
 
-      // Recent-source scans (module-cached — recipient-agnostic).
+      // Recent-source scans (module-cached ??? recipient-agnostic).
       const [assignedActivity, approvedEstimates, sentEstimates, openRequests, syncPending, recalcParts, openInvoices] = await Promise.all([
         cachedScan("act_assigned", () => Activity.filter({ event_type: "estimator_assigned" }, "-created_date", 60)),
         cachedScan("est_approved", () => Estimate.filter({ status: "approved" }, "-updated_date", 60)),
@@ -505,7 +505,7 @@ Deno.serve(async (req) => {
         return fallbackAdmins ? adminEmails : [];
       };
 
-      // #335 — estimator_assigned activity → notify the assignee. The
+      // #335 ??? estimator_assigned activity ??? notify the assignee. The
       // activity id is the dedupe anchor so each assignment notifies once.
       for (const a of list(assignedActivity)) {
         const createdMs = Date.parse(clean(a?.created_date));
@@ -516,7 +516,7 @@ Deno.serve(async (req) => {
         push({
           recipient, category: "estimate_assigned", severity: "info",
           title: `Estimate request assigned to you`,
-          body: `${clean(a?.summary) || `Request ${clean(a?.details?.estimating_request_id)}`} — assigned by ${clean(a?.actor) || "system"}`,
+          body: `${clean(a?.summary) || `Request ${clean(a?.details?.estimating_request_id)}`} ??? assigned by ${clean(a?.actor) || "system"}`,
           deep_link: a?.opportunity_id ? `/Opportunities?open=${clean(a.opportunity_id)}` : "/EstimatorQueues",
           source_event: "estimator_assigned", source_id: clean(a?.details?.estimating_request_id) || clean(a?.id),
           dedupe: `est_assigned:${clean(a?.id)}`,
@@ -524,7 +524,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // #329/#336 — estimate status transitions → the salesperson. Approved
+      // #329/#336 ??? estimate status transitions ??? the salesperson. Approved
       // quotes get the celebration treatment the EstimatorQueues toast reads.
       for (const e of list(approvedEstimates)) {
         const updMs = Date.parse(clean(e?.updated_date));
@@ -533,8 +533,8 @@ Deno.serve(async (req) => {
         for (const recipient of recipients(e?.salesperson_email || e?.salesperson, true)) {
           push({
             recipient, category: "quote_approved", severity: "celebration",
-            title: `Quote approved — ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
-            body: `${clean(e?.client_name)}${num(e?.quote_total) ? ` · $${num(e.quote_total).toLocaleString()}` : ""}`,
+            title: `Quote approved ??? ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
+            body: `${clean(e?.client_name)}${num(e?.quote_total) ? ` ?? $${num(e.quote_total).toLocaleString()}` : ""}`,
             deep_link: `/EstimateDetail?id=${clean(e?.id)}`,
             source_event: "estimate_status_approved", source_id: clean(e?.id),
             dedupe: `est_status:${clean(e?.id)}:approved`,
@@ -549,8 +549,8 @@ Deno.serve(async (req) => {
         for (const recipient of recipients(e?.salesperson_email || e?.salesperson, false)) {
           push({
             recipient, category: "estimate_sent", severity: "info",
-            title: `Quote sent — ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
-            body: `${clean(e?.client_name)}${num(e?.quote_total) ? ` · $${num(e.quote_total).toLocaleString()}` : ""}`,
+            title: `Quote sent ??? ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
+            body: `${clean(e?.client_name)}${num(e?.quote_total) ? ` ?? $${num(e.quote_total).toLocaleString()}` : ""}`,
             deep_link: `/EstimateDetail?id=${clean(e?.id)}`,
             source_event: "estimate_status_sent", source_id: clean(e?.id),
             dedupe: `est_status:${clean(e?.id)}:sent`,
@@ -559,7 +559,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #346 — quotes expiring inside 7 days → the salesperson, once.
+      // #346 ??? quotes expiring inside 7 days ??? the salesperson, once.
       const expiryWindowEnd = nowMs + QUOTE_EXPIRY_WINDOW_MS;
       for (const e of list(sentEstimates)) {
         if (e?.deleted === true) continue;
@@ -569,8 +569,8 @@ Deno.serve(async (req) => {
           const days = Math.max(0, Math.round((expMs - nowMs) / 86400000));
           push({
             recipient, category: "quote_expiring", severity: "warning",
-            title: `Quote expires in ${days}d — ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
-            body: `${clean(e?.client_name)} · expires ${clean(e?.quote_expiration_date)}`,
+            title: `Quote expires in ${days}d ??? ${clean(e?.project_name) || clean(e?.client_name) || "Estimate"}${clean(e?.estimate_number) ? ` #${clean(e.estimate_number)}` : ""}`,
+            body: `${clean(e?.client_name)} ?? expires ${clean(e?.quote_expiration_date)}`,
             deep_link: `/EstimateDetail?id=${clean(e?.id)}`,
             source_event: "quote_expiring_7d", source_id: clean(e?.id),
             dedupe: `qexp7:${clean(e?.id)}`,
@@ -579,7 +579,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #347 — overdue invoices → the salesperson (admins when none is
+      // #347 ??? overdue invoices ??? the salesperson (admins when none is
       // recorded, which is the closest thing to a customer-service queue).
       for (const i of [...list(openInvoices), ...list(partialInvoices)]) {
         if (!(num(i?.balance_due) > 0)) continue;
@@ -588,8 +588,8 @@ Deno.serve(async (req) => {
         for (const recipient of recipients(i?.salesperson_email || i?.salesperson, true)) {
           push({
             recipient, category: "invoice_overdue", severity: "critical",
-            title: `Invoice overdue — ${clean(i?.invoice_number) || "Invoice"}${clean(i?.customer_display_name || i?.customer_name) ? ` · ${clean(i?.customer_display_name || i?.customer_name)}` : ""}`,
-            body: `due ${due} · $${num(i?.balance_due).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} open`,
+            title: `Invoice overdue ??? ${clean(i?.invoice_number) || "Invoice"}${clean(i?.customer_display_name || i?.customer_name) ? ` ?? ${clean(i?.customer_display_name || i?.customer_name)}` : ""}`,
+            body: `due ${due} ?? $${num(i?.balance_due).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} open`,
             deep_link: `/Invoices?invoice=${clean(i?.id)}`,
             source_event: "invoice_overdue", source_id: clean(i?.id),
             dedupe: `invod:${clean(i?.id)}`,
@@ -598,7 +598,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #342 — unassigned >2d escalation → every admin/manager, once per request.
+      // #342 ??? unassigned >2d escalation ??? every admin/manager, once per request.
       for (const r of list(openRequests)) {
         if (!["draft", "ready", "in_progress"].includes(clean(r?.status))) continue;
         if (clean(r?.assigned_estimator) || clean(r?.estimator)) continue;
@@ -608,7 +608,7 @@ Deno.serve(async (req) => {
         for (const admin of adminEmails) {
           push({
             recipient: admin, category: "unassigned_escalation", severity: "critical",
-            title: `Unassigned estimate request — ${clean(r?.request_number) || "Request"}${clean(r?.opportunity_title) ? ` · ${clean(r.opportunity_title)}` : ""}`,
+            title: `Unassigned estimate request ??? ${clean(r?.request_number) || "Request"}${clean(r?.opportunity_title) ? ` ?? ${clean(r.opportunity_title)}` : ""}`,
             body: `Open ${Math.floor((nowMs - createdMs) / 86400000)}d with no estimator`,
             deep_link: "/EstimatingQueues",
             source_event: "unassigned_escalation", source_id: clean(r?.id),
@@ -618,7 +618,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #343 — pipeline_sync_pending unresolved >24h.
+      // #343 ??? pipeline_sync_pending unresolved >24h.
       for (const e of list(syncPending)) {
         const updMs = Date.parse(clean(e?.updated_date));
         if (!Number.isFinite(updMs) || nowMs - updMs < SYNC_PENDING_STALE_MS) continue;
@@ -626,8 +626,8 @@ Deno.serve(async (req) => {
         for (const recipient of recipients(e?.salesperson_email || e?.salesperson, true)) {
           push({
             recipient, category: "sync_pending", severity: "warning",
-            title: `Pipeline sync pending >24h — ${clean(e?.project_name) || clean(e?.estimate_number) || "Estimate"}`,
-            body: `${clean(e?.estimate_number) ? `#${clean(e.estimate_number)} · ` : ""}status ${clean(e?.status) || "unknown"} · flagged ${clean(e?.updated_date).slice(0, 10)}`,
+            title: `Pipeline sync pending >24h ??? ${clean(e?.project_name) || clean(e?.estimate_number) || "Estimate"}`,
+            body: `${clean(e?.estimate_number) ? `#${clean(e.estimate_number)} ?? ` : ""}status ${clean(e?.status) || "unknown"} ?? flagged ${clean(e?.updated_date).slice(0, 10)}`,
             deep_link: `/EstimateDetail?id=${clean(e?.id)}`,
             source_event: "sync_pending_stale", source_id: clean(e?.id),
             dedupe: `syncpend:${clean(e?.id)}`,
@@ -636,7 +636,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #344 — BuilderPart needs_recalc → the owning estimate's salesperson.
+      // #344 ??? BuilderPart needs_recalc ??? the owning estimate's salesperson.
       const recalcEstimateIds = [...new Set(list(recalcParts).map((p: any) => clean(p?.estimate_id)).filter(Boolean))].slice(0, 8);
       const recalcEstimateOwners = new Map<string, any>();
       for (const estId of recalcEstimateIds) {
@@ -650,8 +650,8 @@ Deno.serve(async (req) => {
         for (const recipient of partsTargets.slice(0, 5)) {
           push({
             recipient, category: "needs_recalc", severity: "warning",
-            title: `Part needs recalc — ${clean(p?.part_name) || clean(p?.part_key) || "Part"}`,
-            body: `${est?.project_name ? `${clean(est.project_name)} · ` : ""}flagged needs_recalc — price may be stale`,
+            title: `Part needs recalc ??? ${clean(p?.part_name) || clean(p?.part_key) || "Part"}`,
+            body: `${est?.project_name ? `${clean(est.project_name)} ?? ` : ""}flagged needs_recalc ??? price may be stale`,
             deep_link: p?.estimate_id ? `/EstimateDetail?id=${clean(p.estimate_id)}` : "/EstimatorQueues",
             source_event: "needs_recalc", source_id: clean(p?.id),
             dedupe: `recalc:${clean(p?.id)}`,
@@ -660,7 +660,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // #349 — custom watch rules → persisted hit notifications for the
+      // #349 ??? custom watch rules ??? persisted hit notifications for the
       // caller (the live check_watches banner stays the instant surface).
       const watchRows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
       let watchMap: Record<string, any[]> = {};
@@ -673,14 +673,14 @@ Deno.serve(async (req) => {
           if (cur == null || (w.equals != null && cur !== w.equals)) continue;
           push({
             recipient: me, category: "watch_hit", severity: "info",
-            title: `Watch hit — ${clean(w?.label) || clean(w?.record_id)}`,
+            title: `Watch hit ??? ${clean(w?.label) || clean(w?.record_id)}`,
             body: `${clean(w?.entity)} ${clean(w?.field)} is now "${cur}"`,
             deep_link: "/MainWorkflow",
             source_event: "watch_hit", source_id: clean(w?.record_id),
             dedupe: `watch:${clean(w?.entity)}:${clean(w?.record_id)}:${clean(w?.field)}:${cur}`,
             meta: { watch: w, current: cur },
           });
-        } catch { /* unreadable entity — skip */ }
+        } catch { /* unreadable entity ??? skip */ }
       }
 
       let created = 0;
