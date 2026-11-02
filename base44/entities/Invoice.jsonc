@@ -236,6 +236,19 @@
       "type": "string",
       "description": "Statement batch this invoice was included in, when customer statements are generated in bulk."
     },
+    "statement_period_start": {
+      "type": "string",
+      "description": "Statement period start (YYYY-MM-DD) covered by the batch stamp (I-11)."
+    },
+    "statement_period_end": {
+      "type": "string",
+      "description": "Statement period end (YYYY-MM-DD) covered by the batch stamp (I-11)."
+    },
+    "statement_generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the statement batch stamped this invoice (I-11)."
+    },
     "splits_override": {
       "type": "boolean",
       "description": "Manual GL-split override flag (I-02): when true, income_account_splits was hand-entered rather than auto-computed from line parts."
