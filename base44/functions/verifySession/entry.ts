@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     } catch (authError) {
       const status = Number(authError?.status || 500);
       if (status === 503) console.error('verifySession session authentication service is unavailable');
-      const safeStatus = [401, 409].includes(status) ? status : 500;
+      const safeStatus = [401, 409, 429].includes(status) ? status : 500;
       return Response.json({
         valid: false,
         error: safeStatus === 409 ? 'User identity could not be verified uniquely' :

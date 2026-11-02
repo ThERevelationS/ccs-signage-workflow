@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     throw new Error('Capacity create outcome could not be verified.');
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageUserCapacity error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Capacity could not be saved safely.' : error?.message,

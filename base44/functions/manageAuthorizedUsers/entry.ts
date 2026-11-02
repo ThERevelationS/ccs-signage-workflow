@@ -709,7 +709,7 @@ Deno.serve(async (req) => {
     // Surface only this exact deadline failure to coordinate safe UI retries.
     const impactTimedOut = error?.message === 'Deletion impact scan deadline exceeded; no report was verified.';
     const status = Number(error?.status || 500);
-    const safeStatus = impactTimedOut ? 503 : [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = impactTimedOut ? 503 : [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageAuthorizedUsers error:', error?.message || error);
     return Response.json({
       error: impactTimedOut

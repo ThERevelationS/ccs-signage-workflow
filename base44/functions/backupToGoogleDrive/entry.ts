@@ -638,7 +638,7 @@ Deno.serve(async (req) => {
     
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     console.error('backupToGoogleDrive error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Google Drive backup could not be completed safely' : error.message,

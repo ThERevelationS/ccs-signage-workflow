@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid calendar event action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageCalendarEvents error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Calendar event could not be changed safely.' : error?.message,

@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
         admin = await authenticateSignShopSession(base44, session_token);
       } catch (authError) {
         const status = Number(authError?.status || 401);
-        const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+        const safeStatus = [401, 409, 429, 503].includes(status) ? status : 401;
         const error = safeStatus === 503
           ? 'Session authentication is unavailable'
           : safeStatus === 409

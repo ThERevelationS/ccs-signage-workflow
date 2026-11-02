@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 409, 429, 503].includes(status) ? status : 500;
     console.error('googleDriveCustomCallback error:', error?.message || error);
     return new Response(safeStatus === 500 ? 'OAuth connection failed safely' : error.message, { status: safeStatus });
   }

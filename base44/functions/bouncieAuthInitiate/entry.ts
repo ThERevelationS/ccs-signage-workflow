@@ -54,7 +54,7 @@ export default async function(req) {
     return Response.json({ authUrl: authUrl.toString(), redirectUri });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
     return Response.json({ error: safeStatus === 401 ? 'Authentication required' : error.message }, { status: safeStatus });
   }
 }

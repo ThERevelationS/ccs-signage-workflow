@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       actor = await authenticateSignShopSession(base44, body?.session_token);
     } catch (error: any) {
       const status = Number(error?.status || error?.statusCode || 500);
-      const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+      const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
       console.error('detectSalesDuplicates sign-shop auth error:', error?.message || error);
       return Response.json({
         error: safeStatus === 500 ? 'Sales duplicate detection could not authenticate safely' : error.message,

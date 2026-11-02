@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     if (status === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
       return Response.json({ error: 'Fleet data is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
     }
-    if ([400, 401, 403].includes(status)) {
+    if ([400, 401, 403, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Fleet read failed.' }, { status });
     }
     console.error('fleetDataRead error:', error);

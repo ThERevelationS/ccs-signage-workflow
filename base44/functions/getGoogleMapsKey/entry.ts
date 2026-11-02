@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         { status: 429, headers: { 'Retry-After': '3' } },
       );
     }
-    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
     return Response.json({ error: safeStatus === 401 ? 'Authentication required' : 'Google Maps configuration could not be loaded safely' }, { status: safeStatus });
   }
 });

@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number((error as any)?.status || 500);
-    const safeStatus = [400, 401, 403, 405, 409, 410, 502].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 405, 409, 410, 502, 429].includes(status) ? status : 500;
     console.error('CCS offline job register failed:', (error as any)?.message || error);
     return Response.json({
       error: safeStatus === 500

@@ -483,7 +483,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 413, 429].includes(status) ? status : 500;
     console.error('importWipSheet error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'WIP import could not be completed safely' : error.message,

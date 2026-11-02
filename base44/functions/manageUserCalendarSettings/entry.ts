@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     throw new Error('Calendar settings create outcome could not be verified.');
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageUserCalendarSettings error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Calendar settings could not be handled safely.' : error?.message,

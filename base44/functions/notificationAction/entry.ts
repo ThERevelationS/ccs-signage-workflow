@@ -705,7 +705,7 @@ Deno.serve(async (req) => {
     throw bad(`Unsupported notification action: ${action}`);
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 423, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 423, 429, 503].includes(status) ? status : 500;
     console.error("notificationAction error:", error?.message || error);
     return Response.json({
       success: false,

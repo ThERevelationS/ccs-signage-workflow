@@ -11,7 +11,7 @@ async function authorizeFleetUser(base44: any, sessionToken: unknown) {
     return { user };
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
     return { error: Response.json({ error: safeStatus === 401 ? 'Authentication required' : error?.message || 'Fleet authentication failed.' }, { status: safeStatus }) };
   }
 }

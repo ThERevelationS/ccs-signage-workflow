@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
     const message = String(error?.message || error || '');
     const throttled = Number(error?.status) === 429 || /rate limit|traffic volume|too many requests|throttl/i.test(message);
     const status = throttled ? 503 : Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
     console.error('manageSalesFilters error:', message || error);
     const safeMessage = throttled
       ? 'The app is busy right now. Wait a moment and try again.'
