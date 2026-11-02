@@ -2,6 +2,8 @@ import React, { useRef, useState } from "react";
 import { FileCheck2, ExternalLink, History, Loader2, Upload } from "lucide-react";
 import { UploadFile } from "@/integrations/Core";
 import { transitionProductAndBuilderStatus } from "@/components/estimator/workOrderConversion";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import {
@@ -56,7 +58,24 @@ export default function ProofPanel({ workOrderId, product, actor = "", disabled 
     setBusy(true);
     setError("");
     try {
-      const patch = nextProofPatch(p, action, { leadTimeDays, ...extra });
+      // B-07 due-date engine: the proof-approval recalc resolves lead days
+      // from the product's BuilderPart rows. The patch builder stays pure/sync,
+      // so the rows are loaded here (approve only) — best-effort: an
+      // unreadable catalog degrades to the manual "Lead days" override, or to
+      // the existing due date when no override is set.
+      let parts = extra.parts;
+      if (parts === undefined && action === "approve") {
+        const builderProductId = String(p.builder_product_id || "").trim();
+        if (builderProductId) {
+          parts = await loadAllEntityRows({
+            entity: staffEntities.BuilderPart,
+            query: { builder_product_id: builderProductId },
+            sort: "sort_order",
+            label: "Builder Parts",
+          }).catch(() => undefined);
+        }
+      }
+      const patch = nextProofPatch(p, action, { leadTimeDays, parts, ...extra });
       const res = await transitionProductAndBuilderStatus({
         workOrderId,
         product: p,
@@ -172,7 +191,7 @@ export default function ProofPanel({ workOrderId, product, actor = "", disabled 
           accept="image/*,.pdf"
           onChange={handleUpload}
         />
-        <label className="flex items-center gap-1 text-[10px] text-gray-500" title="Part lead time used to recalculate the product due date on approval">
+        <label className="flex items-center gap-1 text-[10px] text-gray-500" title="Due-date recalc on approval runs the B-07 engine — 0 = auto (max of the product's part lead times, pushes forward only); a positive value overrides every part's lead (each part's own minimum still wins)">
           Lead days
           <input
             className={`${inp} w-12`}
