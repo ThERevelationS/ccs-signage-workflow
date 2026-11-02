@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { buildStatement } from "@/components/statements/statementModel";
 import StatementView from "@/components/statements/StatementView";
+import ProductStatusPanel from "@/components/portal/ProductStatusPanel";
 import {
   Receipt,
   ShieldCheck,
@@ -449,6 +450,11 @@ function JobCard({ job, onRequestChange, onReorder, busy }) {
         {job.install_location && <span>Site: <span className="font-medium text-slate-700">{job.install_location}</span></span>}
         {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
       </div>
+      {Array.isArray(job.products) && job.products.length > 0 && (
+        <div className="mt-3">
+          <ProductStatusPanel workOrder={job} />
+        </div>
+      )}
       {depositDue && (
         <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-800">
           Deposit required{depositAmount > 0 ? `: ${money(depositAmount)}` : depositPercent > 0 ? `: ${depositPercent}%` : ""}
