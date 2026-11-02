@@ -272,9 +272,30 @@
     },
     "size_discounts": {
       "type": "array",
-      "description": "Per-size discount rows applied to this part; row shape is module-defined.",
+      "description": "F-14: Volume/size discount threshold rows applied post-tier. Each row grants discount_pct off the tier-priced base when the part's measure on threshold_basis (sqft|width_in|height_in|area_sqin|perimeter_in) reaches threshold_value; the largest qualifying threshold wins (ties \u2192 highest pct). Resolution lives in base44/shared/sizeDiscounts.ts.",
       "items": {
         "type": "object",
+        "properties": {
+          "threshold_basis": {
+            "type": "string",
+            "enum": [
+              "sqft",
+              "width_in",
+              "height_in",
+              "area_sqin",
+              "perimeter_in"
+            ]
+          },
+          "threshold_value": {
+            "type": "number"
+          },
+          "discount_pct": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
         "additionalProperties": true
       }
     }
