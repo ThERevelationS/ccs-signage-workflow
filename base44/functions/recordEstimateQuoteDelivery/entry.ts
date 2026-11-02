@@ -45,11 +45,11 @@ function sameDelivery(row: any, data: any) {
 // outcome only (accepted by transport vs send attempt failed). Neither the
 // Gmail API transport nor the SMTP transport exposes a webhook/bounce channel
 // to this app, so post-send delivery/bounce data is genuinely unavailable.
-const DELIVERY_TELEMETRY_NOTE = 'Send-time outcome only ??? provider webhook/bounce telemetry is unavailable on this transport.';
+const DELIVERY_TELEMETRY_NOTE = 'Send-time outcome only — provider webhook/bounce telemetry is unavailable on this transport.';
 
 const QUOTE_APPROVAL_THRESHOLD_KEY = 'quote_approval_threshold';
 const DEFAULT_QUOTE_APPROVAL_THRESHOLD = 5000;
-const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold ???????? a manager must approve it before sending.';
+const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold â€” a manager must approve it before sending.';
 
 const money = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified for quote delivery history.' }, { status: 404 });
     }
-    // The recorded delivery must describe the estimate's current issued quote ????????
+    // The recorded delivery must describe the estimate's current issued quote â€”
     // an arbitrary version or foreign work order would let a session forge the
     // immutable delivery/audit trail.
     const issuedVersion = Math.max(0, whole(estimate.quote_version));
@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
 
     // Failed send attempts are immutable audit rows too (#246/#296): no
     // Gmail message id exists, so attempts dedupe on attempt_key/sent_at and
-    // skip the send-authorization backstop (the send already failed ??? this
+    // skip the send-authorization backstop (the send already failed — this
     // write only records that outcome; it never marks anything sent).
     if (deliveryOutcome === 'failed') {
       const attemptKey = `quote_delivery_attempt:${estimateId}:${quoteVersion}:${cleanText(input.attempt_key, 120) || `${recipientEmail}:${sentAt}`}`;
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
       telemetry_note: DELIVERY_TELEMETRY_NOTE,
     };
 
-    // Per-version delivery counter ???????? 1 for the first send of this quote issue,
+    // Per-version delivery counter â€” 1 for the first send of this quote issue,
     // then 2, 3... on resends so the audit reads 'sent 3 times' not just 'resent'.
     const prior = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
     normalized.delivery_n = (Array.isArray(prior) ? prior.filter((r: any) => r?.deleted !== true).length : 0) + 1;
@@ -345,7 +345,7 @@ Deno.serve(async (req) => {
     }
 
     // Internal approval gate: a quote above the configured threshold cannot be
-    // recorded as sent until a manager approves it ???????? either live (the session
+    // recorded as sent until a manager approves it â€” either live (the session
     // user carries can_approve_quotes) or through a recorded internal_approval.
     // The pre-send authorize_send action runs the same check before Gmail is
     // invoked, so this write is the enforcement backstop.
