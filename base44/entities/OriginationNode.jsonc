@@ -1,0 +1,53 @@
+{
+  "name": "OriginationNode",
+  "type": "object",
+  "description": "Hierarchical origination taxonomy tree (CoreBridge 'Origination' picker): each row is one node in a parent/child tree \u2014 e.g. root 'Networking Group' -> child 'BNI - Carl' -> leaf 'Tier 1'. Customer.origination_path stores the denormalized 'Root : Child : Leaf' string; this entity is the canonical tree the picker is built from and the string is resolved against. Backend-only \u2014 read/written via service-role functions.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display label for this node \u2014 a single path segment (e.g. 'BNI - Carl'), never a full path."
+    },
+    "parent_id": {
+      "type": "string",
+      "default": "",
+      "description": "Parent OriginationNode id; empty string marks a root node."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display ordering among siblings in the picker."
+    },
+    "status": {
+      "type": "string",
+      "default": "active",
+      "description": "Lifecycle state \u2014 active | archived."
+    },
+    "full_path": {
+      "type": "string",
+      "description": "Denormalized 'Root : Child : Leaf' path to this node, kept in sync on writes so reports can group/filter without walking the tree."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__originationnode_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__originationnode_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__originationnode_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__originationnode_backend_only__"
+      }
+    }
+  }
+}
