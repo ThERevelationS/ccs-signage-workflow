@@ -1,0 +1,69 @@
+{
+  "name": "GlobalPricingTier",
+  "type": "object",
+  "description": "Named shared pricing rule set applied across many catalog parts (CoreBridge 'Global Pricing Tiers' analog \u2014 e.g. 'Standard Tier', 'Painting', 'Retail Parts for Modifiers'). A part links to one of these rule sets instead of declaring its own chart; the rules list supplies the tier -> markup/market entries the pricing engine resolves for that part. Backend-only: all access goes through staffEntityWrite/admin functions.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display label for this shared rule set, e.g. 'Standard Tier', 'Painting', 'Retail Parts for Modifiers'."
+    },
+    "rules": {
+      "type": "array",
+      "description": "Ordered rule entries resolving each customer tier to a markup percent or a market-based pricing mode.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "tier": {
+            "type": "string",
+            "description": "Customer tier this rule applies to \u2014 MarkupTier.tier_name, tier_number, or record id."
+          },
+          "markup_pct": {
+            "type": "number",
+            "description": "Markup percent over unit cost. 50 = sell at cost x 1.50. Ignored when market_based is true."
+          },
+          "market_based": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true this rule participates in the market-based retail/discount chart rather than cost-plus markup."
+          }
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional admin notes on the coverage or intent of this rule set."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive rule sets are ignored by the pricing engine and hidden from part pickers."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__globalpricingtier_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__globalpricingtier_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__globalpricingtier_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__globalpricingtier_backend_only__"
+      }
+    }
+  }
+}
