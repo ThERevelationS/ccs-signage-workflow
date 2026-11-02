@@ -214,4 +214,246 @@ const projBytes = JSON.stringify(projected).length;
 assert.ok(projBytes < rawBytes * 0.4, `projection shrinks payload (${projBytes} < ${rawBytes})`);
 
 rmSync(outModel);
+
+// ===========================================================================
+// M-03 — composed feeds: queue_lens/owner extras, per-feed projections,
+// keyed isolate cache, fail-open parity with the N-pull reads they replace.
+// ===========================================================================
+
+// --- entry.ts wires the composed surface -------------------------------------
+
+for (const needle of [
+  "body?.feed", "body?.queue_lens", "body?.owner_email", "body?.items",
+  "body?.include",
+  "'crm_events'", "'estimate_queue'",
+  "entities.SavedQueueView", "entities.GlobalSettings",
+  "entities.Customer", "entities.QuoteDefaults",
+  "entities.OpportunityActivity", "entities.AllInOneEstimate",
+  "scopeSavedViewsForLens", "queueFeedCacheKey",
+  "projectCrmActivity", "projectEstimate", "projectSettingRecord",
+  "projectCrmCustomer", "projectQuoteDefaults",
+  "queueFeedModel.mjs",
+]) {
+  assert.ok(src.includes(needle), `entry.ts wires composed feed: ${needle}`);
+}
+
+// Session-scoped view ownership — the authenticated user's email scopes own
+// views; the request's owner_email is validated but never trusted.
+assert.ok(src.includes("sessionUser?.email"), "view scope uses the session email");
+assert.ok(!/isOwnView\([^)]*body\?\.owner_email/.test(src), "owner_email never scopes views directly");
+
+// Keyed cache (per feed+lens+owner+include) replaces the single-slot cache —
+// a per-user saved-views payload must never cross owners.
+assert.ok(src.includes("new Map"), "cache is a keyed Map");
+assert.ok(/feedCacheGet\(cacheKey\)/.test(src), "cache lookup is keyed");
+assert.ok(src.includes("FEED_CACHE_MAX_KEYS"), "cache growth is bounded");
+
+// Write-path parity fields must ride the WO projection: the deposit gate
+// reads deposit_* off the cached snapshot; notify context reads estimator /
+// total / balance_due.
+for (const field of [
+  "deposit_required", "deposit_invoiced", "deposit_amount",
+  "estimator", "total", "balance_due",
+]) {
+  assert.ok(woFields.includes(field), `WO projection covers write-path field ${field}`);
+}
+
+// --- shared model: zero imports, canonical shapes ------------------------------
+
+const modelFile = resolve(here, '../base44/shared/queueFeedModel.mjs');
+const feedModelSrc = readFileSync(modelFile, 'utf8');
+assert.ok(!/^\s*import[\s({]/m.test(feedModelSrc), 'queueFeedModel has zero imports');
+assert.ok(!/require\(/.test(feedModelSrc), 'queueFeedModel has zero requires');
+
+const FM = await import(pathToFileURL(modelFile).href);
+const {
+  SAVED_VIEW_FIELDS,
+  CRM_EVENT_TYPES: SHARED_CRM_TYPES,
+  CRM_ACTIVITY_FIELDS,
+  CRM_CUSTOMER_FIELDS,
+  ESTIMATE_QUEUE_FIELDS,
+  ESTIMATE_LINE_ITEM_FIELDS,
+  QUOTE_DEFAULTS_FIELDS,
+  projectCrmActivity,
+  projectCrmCustomer,
+  projectEstimate,
+  projectSavedView,
+  projectSettingRecord,
+  scopeSavedViewsForLens,
+  scopeSavedViewsForPage,
+  sortSavedViews,
+  queueFeedCacheKey,
+} = FM;
+
+// --- cache-key isolation -------------------------------------------------------
+
+const key = (over = {}) =>
+  queueFeedCacheKey({ feed: 'product_queue', lens: 'design', owner: 'sam@x.test', include: ['saved_views', 'settings'], ...over });
+assert.equal(key(), key(), 'same scope produces the same cache key');
+assert.notEqual(key({ lens: 'design' }), key({ lens: 'production' }), 'per-queue isolation: lens');
+assert.notEqual(key({ owner: 'sam@x.test' }), key({ owner: 'dee@x.test' }), 'per-user isolation: owner');
+assert.notEqual(key({ feed: 'product_queue' }), key({ feed: 'crm_events' }), 'per-feed isolation');
+assert.notEqual(key({ include: ['saved_views'] }), key({ include: ['settings'] }), 'include set isolates');
+assert.notEqual(key({ include: [] }), key({ include: ['saved_views', 'settings'] }), 'items-only vs composed isolate');
+assert.equal(
+  key({ include: ['settings', 'saved_views'] }),
+  key({ include: ['saved_views', 'settings'] }),
+  'include order does not fragment the cache'
+);
+// The function appends an items flag — items:true vs items:false must differ.
+const kItems = key() + '|items:1';
+const kExtras = key() + '|items:0';
+assert.notEqual(kItems, kExtras, 'extras-only calls never hit items payloads');
+
+// --- saved views: composed result == N-pull result ------------------------------
+
+// Bundle the frontend view model — the store's listScoped filter is rebuilt
+// here from its own exports so the parity check uses the REAL semantics.
+const outViews = resolve(here, '.tmp-qfeed-views.mjs');
+const outCrm = resolve(here, '.tmp-qfeed-crm.mjs');
+const outLinks = resolve(here, '.tmp-qfeed-links.mjs');
+buildSync({ entryPoints: [resolve(here, '../src/components/queues/savedViewsModel.js')], bundle: true, format: 'esm', outfile: outViews, logLevel: 'silent', alias: { '@': resolve(here, '../src') } });
+buildSync({ entryPoints: [resolve(here, '../src/components/crm/crmEventsModel.js')], bundle: true, format: 'esm', outfile: outCrm, logLevel: 'silent', alias: { '@': resolve(here, '../src') } });
+buildSync({ entryPoints: [resolve(here, '../src/components/estimator/deepLinks.js')], bundle: true, format: 'esm', outfile: outLinks, logLevel: 'silent', alias: { '@': resolve(here, '../src') } });
+const VIEWS = await import(pathToFileURL(outViews).href);
+const CRM = await import(pathToFileURL(outCrm).href);
+const LINKS = await import(pathToFileURL(outLinks).href);
+
+// Fixture views across both axes, owners, share flags and dead rows.
+const viewRows = [
+  { id: 'v1', name: 'B view', queue_lens: 'design', owner_email: 'sam@x.test', is_shared: false, status: 'active', pinned: true, sort: 2, created_date: '2026-01-01', updated_date: 'u1' },
+  { id: 'v2', name: 'A view', queue_lens: 'design', owner_email: 'sam@x.test', is_shared: false, status: 'active', pinned: true, sort: 1, created_date: '2026-01-02', updated_date: 'u2' },
+  { id: 'v3', name: 'shared z', queue_lens: 'design', owner_email: 'dee@x.test', shared: true, status: 'active', created_date: '2026-01-03', updated_date: 'u3' },
+  { id: 'v4', name: 'dee private', queue_lens: 'design', owner_email: 'dee@x.test', is_shared: false, status: 'active', created_date: '2026-01-04', updated_date: 'u4' },
+  { id: 'v5', name: 'prod view', queue_lens: 'production', owner_email: 'sam@x.test', status: 'active', created_date: '2026-01-05', updated_date: 'u5' },
+  { id: 'v6', name: 'archived', queue_lens: 'design', owner_email: 'sam@x.test', is_shared: true, status: 'archived', created_date: '2026-01-06', updated_date: 'u6' },
+  { id: 'v7', name: 'page view', page: 'estimator_queues', owner_email: 'sam@x.test', status: 'active', created_date: '2026-01-07', updated_date: 'u7' },
+  { id: 'v8', name: 'heavy blob', queue_lens: 'design', owner_email: 'sam@x.test', status: 'active', junk_field: 'x'.repeat(4000), created_date: '2026-01-08', updated_date: 'u8' },
+];
+
+// The legacy N-pull result (loadLensViews): query {queue_lens: lens} then the
+// store's client-side scope filter + sortViews.
+function legacyLensViews(rows, { lens = 'all', ownerEmail = '' }) {
+  const me = ownerEmail.trim().toLowerCase();
+  const kept = rows.filter(
+    (r) =>
+      String(r?.queue_lens || '') === lens &&
+      VIEWS.isLiveView(r) &&
+      ((me !== '' && VIEWS.viewOwnerEmail(r) === me) || VIEWS.isViewShared(r))
+  );
+  return VIEWS.sortViews(kept, ownerEmail);
+}
+const composedViews = scopeSavedViewsForLens(viewRows, { lens: 'design', ownerEmail: 'sam@x.test' });
+const legacyViews = legacyLensViews(viewRows.filter((r) => r.queue_lens === 'design'), { lens: 'design', ownerEmail: 'sam@x.test' });
+assert.deepEqual(
+  composedViews.map((v) => v.id),
+  legacyViews.map((v) => v.id),
+  'composed saved_views === the N-pull result (same set, same order)'
+);
+assert.deepEqual(composedViews.map((v) => v.id), ['v2', 'v1', 'v8', 'v3'], 'own pinned first (sort asc), then shared');
+assert.ok(!composedViews.some((v) => v.id === 'v4'), "another owner's private view never leaks");
+assert.ok(!composedViews.some((v) => v.id === 'v6'), 'archived views are hidden');
+assert.ok(!composedViews.some((v) => 'junk_field' in v), 'view projection strips undeclared fields');
+for (const f of SAVED_VIEW_FIELDS) {
+  assert.ok(f in composedViews[0] || composedViews.every((v) => f in v), `view projection carries ${f}`);
+}
+
+// Page axis parity (page-scoped rows only — lens rows must not cross-list).
+const pageViews = scopeSavedViewsForPage(viewRows, { pageKey: 'estimator_queues', ownerEmail: 'sam@x.test' });
+assert.deepEqual(pageViews.map((v) => v.id), ['v7'], 'page axis returns only page-scoped rows');
+
+// Per-owner isolation of the scoped set itself.
+const deeViews = scopeSavedViewsForLens(viewRows, { lens: 'design', ownerEmail: 'dee@x.test' });
+assert.deepEqual(deeViews.map((v) => v.id), ['v4', 'v3'], 'dee sees own + shared, not sam private rows');
+
+// Sort parity vs the frontend model on a shuffled input.
+assert.deepEqual(
+  sortSavedViews(viewRows.filter((r) => ['v1', 'v2', 'v3', 'v8'].includes(r.id)), 'sam@x.test').map((v) => v.id),
+  VIEWS.sortViews(viewRows.filter((r) => ['v1', 'v2', 'v3', 'v8'].includes(r.id)), 'sam@x.test').map((v) => v.id),
+  'sortSavedViews === savedViewsModel.sortViews'
+);
+
+// --- CRM events: taxonomy parity + projection coverage -------------------------
+
+assert.deepEqual([...SHARED_CRM_TYPES].sort(), [...CRM.CRM_EVENT_TYPES].sort(), 'shared taxonomy === crmEventsModel.CRM_EVENT_TYPES');
+
+// Every field the queue reads (row chrome, filters, CAS anchor, datalist).
+for (const field of [
+  'id', 'created_date', 'updated_date', 'event_type', 'subject', 'summary',
+  'notes', 'contact_name', 'contact_id', 'company_name', 'customer_id',
+  'opportunity_id', 'work_order_id', 'assigned_to', 'due_at', 'completed_at',
+  'outcome', 'source', 'actor', 'created_by', 'deleted', 'details',
+]) {
+  assert.ok(CRM_ACTIVITY_FIELDS.includes(field), `CRM projection covers ${field}`);
+}
+assert.ok(CRM_CUSTOMER_FIELDS.includes('id') && CRM_CUSTOMER_FIELDS.includes('company_name'),
+  'customer projection covers the datalist fields');
+
+const activityRows = [
+  { id: 'a1', event_type: 'Call: Sales Follow Up', subject: 's', company_name: 'Acme', due_at: '2026-11-01', updated_date: 'u1', notes: 'n', junk: 'x'.repeat(3000) },
+  { id: 'a2', event_type: 'stage_changed', summary: 'audit', updated_date: 'u2' }, // audit row — not a CRM event
+  { id: 'a3', event_type: 'Visit: Site Survey', assigned_to: 'sam', due_at: '', completed_at: '2026-10-01', outcome: 'completed', updated_date: 'u3' },
+];
+// Composed feed applies the $in server-side; the N-pull loaded everything and
+// let eventsForQueue/isCrmEvent filter client-side. Same visible set either way.
+const composedActs = activityRows
+  .filter((r) => SHARED_CRM_TYPES.includes(r.event_type))
+  .map(projectCrmActivity);
+const legacyActs = activityRows; // the gateway returned the whole table
+assert.deepEqual(
+  CRM.eventsForQueue(composedActs, { type: 'all', assignedTo: 'all', search: '', includeCompleted: true }).map((r) => r.id),
+  CRM.eventsForQueue(legacyActs, { type: 'all', assignedTo: 'all', search: '', includeCompleted: true }).map((r) => r.id),
+  'composed CRM feed === the N-pull result after the queue model'
+);
+assert.ok(!('junk' in composedActs[0]), 'activity projection strips undeclared fields');
+
+const cust = projectCrmCustomer({ id: 'c1', company_name: 'Acme', name: 'A', phone: '555', big_blob: 'z'.repeat(2000) });
+assert.equal(cust.company_name, 'Acme');
+assert.ok(!('phone' in cust) && !('big_blob' in cust), 'customer projection is id/company_name/name only');
+
+// --- estimate queue: search parity on projected rows ----------------------------
+
+const estimate = {
+  id: 'e1', estimate_number: 'EST-1', project_name: 'Acme Pylon', client_name: 'Acme',
+  job_name: 'PJ', contact_name: 'Bob', salesperson_email: 'sam@x.test', created_by: 'sam',
+  status: 'sent', quote_total: 5000, total_cost: 3000, cost_total: 3000,
+  quote_issue_date: '2026-10-01', quote_valid_days: 30, quote_expiration_date: '2026-11-01',
+  due_date: '2026-11-15', target_install_date: '2026-11-20', priority: 'rush',
+  deleted: false, pipeline_sync_pending: false, source_module: 'channel_letters',
+  personal_tags: { 'sam@x.test': { color: 'red' } },
+  notes: 'site call notes', estimate_notes: 'internal',
+  line_items: [
+    { title: 'Channel letters', description: 'LED lit', module_key: 'channel_letters', qty: 2, unit_price: 100, secret_cost_blob: 'c'.repeat(3000) },
+    { product_name: 'Vinyl print', product_category: 'print', internal_blob: 'd'.repeat(3000) },
+  ],
+  fee_lines: [{ label: 'permit', amount: 200, heavy: 'f'.repeat(2000) }],
+  attachment_refs: ['a'.repeat(5000)],
+  notes_log: ['n'.repeat(5000)],
+};
+const projectedEst = projectEstimate(estimate);
+for (const term of ['acme', 'pylon', 'channel', 'led lit', 'vinyl', 'internal', 'site call', 'bob']) {
+  assert.equal(
+    LINKS.estimateMatchesSearch(projectedEst, term),
+    LINKS.estimateMatchesSearch(estimate, term),
+    `search parity on projected estimate: "${term}"`
+  );
+}
+assert.ok(!('fee_lines' in projectedEst) && !('attachment_refs' in projectedEst) && !('notes_log' in projectedEst),
+  'estimate projection strips non-queue blobs');
+assert.ok(!('secret_cost_blob' in projectedEst.line_items[0]) && !('internal_blob' in projectedEst.line_items[1]),
+  'line_items are projected to the search subfields');
+assert.equal(projectedEst.line_items[0].title, 'Channel letters', 'line search fields survive');
+// CAS/write-path fields the queue's quick actions anchor on.
+for (const field of ['deleted', 'deleted_at', 'deleted_by', 'status', 'archived_at', 'archived_reason', 'updated_date', 'work_order_id']) {
+  assert.ok(ESTIMATE_QUEUE_FIELDS.includes(field), `estimate projection covers CAS/render field ${field}`);
+}
+for (const field of QUOTE_DEFAULTS_FIELDS) {
+  assert.ok(['id', 'config_name', 'display_timezone', 'custom_statuses', 'status_transitions'].includes(field));
+}
+assert.equal(typeof projectSettingRecord({ a: 1 }).setting_value, 'undefined', 'setting projection is the record shape');
+assert.deepEqual(projectSettingRecord({ id: 's1', setting_key: 'k', setting_value: 'v', junk: 1 }), { id: 's1', setting_key: 'k', setting_value: 'v' });
+
+rmSync(outViews);
+rmSync(outCrm);
+rmSync(outLinks);
 console.log('PASS queue-feed');
