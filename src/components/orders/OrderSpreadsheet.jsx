@@ -21,7 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { fetchAllWorkOrders, fetchAllOrders } from "@/lib/workOrderCache";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -427,14 +427,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // succeeds. Starting a retry must not make the toolbar Sync actionable.
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: Order,
-          query: workOrderFilter
-            ? { work_order_id: workOrderFilter, deleted: { $ne: true } }
-            : { deleted: { $ne: true } },
-          sort: "row_number",
-          label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
-        }),
+        fetchAllOrders().then((rows) =>
+          (rows || [])
+            .filter((o) => o.deleted !== true &&
+              (!workOrderFilter || String(o.work_order_id) === String(workOrderFilter)))
+            .sort((a, b) => (a?.row_number ?? 0) - (b?.row_number ?? 0))),
         reloadAux
           ? fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
             (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true))
