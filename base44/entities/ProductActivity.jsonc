@@ -1,0 +1,105 @@
+{
+  "name": "ProductActivity",
+  "type": "object",
+  "description": "Append-only per-product audit trail: operational_status/substatus changes, proof events, due-date moves, assignment and priority edits, notes, estimate\u2192WO conversions, and manual overrides \u2014 one row per product change, written by service-role backends (product history tab / order history feeds read it). Rows are immutable; corrections are new rows, never edits.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one audit row so a lost create response never double-writes history."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Parent WorkOrder id \u2014 the primary filter/grouping key for a job's product history (queries always filter on this first)."
+    },
+    "product_id": {
+      "type": "string",
+      "description": "id inside WorkOrder.products[] (or the linked BuilderProduct id) the event concerns."
+    },
+    "product_label": {
+      "type": "string",
+      "description": "Display name of the product captured at write time so history stays readable after renames."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "status_change",
+        "substatus_change",
+        "proof_event",
+        "due_date_change",
+        "assignment_change",
+        "priority_change",
+        "note",
+        "conversion",
+        "override"
+      ]
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "customer",
+        "vendor",
+        "system"
+      ],
+      "default": "staff",
+      "description": "Actor class \u2014 drives order-history coloring (staff black / customer green / vendor blue / system grey)."
+    },
+    "actor_label": {
+      "type": "string",
+      "description": "Display name or email of who caused the event; system rows name the function/sync that wrote them."
+    },
+    "from_value": {
+      "type": "string",
+      "description": "Value before the change, string-rendered (empty when not applicable, e.g. notes/conversions)."
+    },
+    "to_value": {
+      "type": "string",
+      "description": "Value after the change, string-rendered."
+    },
+    "note": {
+      "type": "string",
+      "description": "Free-form context \u2014 note text for note events, override reason, or extra detail."
+    },
+    "occurred_at": {
+      "type": "string",
+      "description": "ISO timestamp the change happened; history sorts on this (chronological)."
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Structured extras: which product field changed, patch keys, proof version, source module."
+    }
+  },
+  "required": [
+    "work_order_id",
+    "product_id",
+    "event_type",
+    "occurred_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__product_activity_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__product_activity_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__product_activity_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__product_activity_backend_only__"
+      }
+    }
+  }
+}
