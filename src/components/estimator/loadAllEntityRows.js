@@ -73,8 +73,11 @@ export async function withRateLimitRetry(fn) {
  */
 // Short-TTL in-memory cache for slow-changing catalogs (jurisdiction/locality
 // lists). Opt-in per call — repeated mounts of the same page stop re-reading
-// the whole catalog and burning the shared rate-limit budget.
-const readCache = new Map();
+// the whole catalog and burning the shared rate-limit budget. Keyed per
+// entity object (like inFlightReads): the query/sort/limits tuple alone is
+// not unique — two entities with identical reads would otherwise share a
+// cache slot and serve each other's rows.
+const readCache = new WeakMap(); // entity -> Map<key, {at, rows}>
 const CACHE_MAX_AGE_MS = 30000;
 // Identical reads issued at the same instant (mount bursts, StrictMode double
 // mounts, sibling components) share one network pass. Keyed per entity object
@@ -82,10 +85,20 @@ const CACHE_MAX_AGE_MS = 30000;
 // in-place sort/splice by one consumer cannot corrupt another's result.
 const inFlightReads = new WeakMap(); // entity -> Map<key, Promise<rows>>
 
+const readCacheBucket = (entity) => {
+  let bucket = readCache.get(entity);
+  if (!bucket) {
+    bucket = new Map();
+    readCache.set(entity, bucket);
+  }
+  return bucket;
+};
+
 // Seed the short-TTL cache with rows fetched through a batch read so the
 // per-entity loaders skip their own network call on the next mount.
-export const primeEntityRowsCache = (label, query, sort, rows) => {
-  readCache.set(JSON.stringify([query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
+export const primeEntityRowsCache = (entity, query, sort, rows) => {
+  if (entity === null || (typeof entity !== "object" && typeof entity !== "function")) return;
+  readCacheBucket(entity).set(JSON.stringify([query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
 };
 
 export async function loadAllEntityRows({
@@ -104,9 +117,10 @@ export async function loadAllEntityRows({
 } = {}) {
   const parsedLimit = limit == null ? null : Math.floor(Number(limit));
   const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
-  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([query, sort, pageSize, safeLimit ?? maxRows]) : null;
+  const canShare = entity !== null && (typeof entity === "object" || typeof entity === "function");
+  const cacheKey = cacheTtlMs > 0 && canShare ? JSON.stringify([query, sort, pageSize, safeLimit ?? maxRows]) : null;
   if (cacheKey) {
-    const hit = readCache.get(cacheKey);
+    const hit = readCache.get(entity)?.get(cacheKey);
     if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return [...hit.rows];
   }
   const hasFilter = query && typeof query === "object";
@@ -122,7 +136,6 @@ export async function loadAllEntityRows({
 
   // Join an identical read already in flight instead of starting a second
   // paged scan for the same data. Non-object entities skip sharing.
-  const canShare = entity !== null && (typeof entity === "object" || typeof entity === "function");
   const flightKey = JSON.stringify([hasFilter ? "filter" : "list", query ?? null, sort ?? null, safePageSize, safeMaxRows]);
   if (canShare) {
     const existing = inFlightReads.get(entity)?.get(flightKey);
@@ -155,14 +168,14 @@ export async function loadAllEntityRows({
       }
 
       if (page.length < pageLimit) {
-        if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+        if (cacheKey) readCacheBucket(entity).set(cacheKey, { at: Date.now(), rows: collected });
         return collected;
       }
       skip += pageLimit;
     }
 
     if (safeLimit != null) {
-      if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+      if (cacheKey) readCacheBucket(entity).set(cacheKey, { at: Date.now(), rows: collected });
       return collected;
     }
     throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
