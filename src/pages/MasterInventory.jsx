@@ -21,6 +21,8 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { staffEntities } from "@/components/staff/staffEntities";
 
+const EMPTY_ITEMS = [];
+
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
   const [activeKey, setActiveKey] = useState(() => {
@@ -133,7 +135,7 @@ export default function MasterInventory() {
     loadActive();
   }, [loadActive]);
 
-  const items = itemsBySource[activeKey] || [];
+  const items = itemsBySource[activeKey] || EMPTY_ITEMS;
 
   const filteredItems = useMemo(() => {
     let list = items;
