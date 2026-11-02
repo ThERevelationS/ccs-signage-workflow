@@ -86,6 +86,36 @@
     "autoInactiveMonths": {
       "type": "number",
       "description": "Months without activity before a record is auto-marked inactive"
+    },
+    "pricing_variables": {
+      "type": "array",
+      "description": "Global pricing-formula variable registry (F-07). Custom variables usable in pricing formulas alongside the builtins (Quantity, Width, Height, Depth, PartBaseCost, PartRetail, StitchCount); normalized via shared/pricingVariables.normalizePricingVariables.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Formula identifier \u2014 must match ^[A-Za-z_][A-Za-z0-9_]*$ and must not collide with a builtin name or formula literal (case-insensitive)"
+          },
+          "label": {
+            "type": "string",
+            "description": "Operator-facing label shown in pricing admin"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the variable feeds / where it is used"
+          },
+          "default_value": {
+            "type": "number",
+            "description": "Numeric fallback injected into the formula env when no explicit override supplies a value"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status ('active' resolves in formula envs; 'error' marks failed validation; other values e.g. 'archived' pass through but do not resolve)"
+          }
+        },
+        "additionalProperties": true
+      }
     }
   },
   "required": [
