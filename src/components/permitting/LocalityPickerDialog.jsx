@@ -80,6 +80,33 @@ async function geocodeInBrowser(address){
   if(!hit?.lat||!hit?.lon||!/ohio|kentucky/i.test(st))return null;
   return {lat:Number(hit.lat),lng:Number(hit.lon),matched_address:hit.display_name,address_parts:{state:st,city:hit.address?.city||hit.address?.town||hit.address?.village||'',zip:hit.address?.postcode||''}};
 }
+// When staff resolves a flagged address, mint a PermitResolutionRule so the
+// decision becomes reusable logic for every future lookup — reviews kill the
+// flag class instead of fixing one address. Best-effort: a failed write must
+// never break the apply the staff member just did. Default scope is this
+// parcel only (safe); the city checkbox broadens it to the postal-city pattern.
+const ruleNameNorm=(v)=>String(v||"").trim().toLowerCase().replace(/\s+(city|village|town|county|township)$/,"").replace(/\s+/g," ");
+function mintResolutionRule({address, resolution, pickedName, pickedType, forCity}){
+  if(!address||!pickedName||resolution?.status!=='needs_review')return;
+  const state=String(resolution?.state||'').toUpperCase();
+  if(!state)return;
+  const parts=String(address).split(",").map(s=>s.trim());
+  const enteredCity=parts.length>1?parts[1]:"";
+  const county=String(resolution?.target?.county||resolution?.candidates?.[0]?.county||"");
+  const data={
+    rule_type: forCity&&enteredCity ? "postal_name_map" : "address_override",
+    entered_name: forCity&&enteredCity ? ruleNameNorm(enteredCity) : "",
+    address_key: forCity&&enteredCity ? "" : ruleNameNorm(parts[0]),
+    state, county: ruleNameNorm(county),
+    jurisdiction_name: ruleNameNorm(pickedName),
+    jurisdiction_type: /township|twp/i.test(String(pickedType)) ? "township" : /county/i.test(String(pickedType)) ? "county" : /village/i.test(String(pickedType)) ? "village" : "municipality",
+    source: "staff_review",
+    evidence: `Staff resolved flagged address "${address}" -> ${pickedName}. ${String(resolution?.reason||'').slice(0,400)}`,
+    created_from_address: String(address).slice(0,300),
+    active: true,
+  };
+  staffEntities.PermitResolutionRule.create(data).catch(()=>{});
+}
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
   if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
@@ -124,6 +151,7 @@ function LocalityPickerSession({
   // instead of a target — the user picks one, which then behaves exactly like
   // a detected target for office matching and admin drafts.
   const [pickedCandidate, setPickedCandidate] = useState(null);
+  const [rememberForCity, setRememberForCity] = useState(false);
   useEffect(() => { setPickedCandidate(null); }, [result]);
   const [repositoryDraftId,setRepositoryDraftId]=useState("");
   const [draftCreateError, setDraftCreateError] = useState("");
@@ -440,6 +468,13 @@ function LocalityPickerSession({
         }),
         label: `Permit locality draft ${payload.name}`,
       }),apply:locality=>{
+      // Staff resolved a flagged address — mint a reusable resolution rule so
+      // this pick fixes the whole pattern for future lookups, not just this one.
+      mintResolutionRule({
+        address, resolution: result?.location_resolution, pickedName: draftCandidate?.name || pickedCandidate?.name || locality?.name,
+        pickedType: draftCandidate?.type || pickedCandidate?.type || locality?.jurisdiction_type || 'municipality',
+        forCity: rememberForCity,
+      });
       setSelectedLocalityId(locality.id);
       setDraftCandidate(null);
       onApply(locality.id, { excludeElectrical, locality });
@@ -985,6 +1020,13 @@ function LocalityPickerSession({
                         </Button>
                       </div>
                     ))}
+                    <label className="flex items-start gap-2 text-[11px] text-sky-900 cursor-pointer pt-1">
+                      <input type="checkbox" checked={rememberForCity} onChange={(e) => setRememberForCity(e.target.checked)} className="mt-0.5" />
+                      <span>
+                        Remember this for every address that says "{String(address).split(",")[1]?.trim() || "this city"}" in this county.
+                        <span className="block text-[10px] text-sky-700">Unchecked = just this one address. Only check if every address with that city name really belongs to the picked place.</span>
+                      </span>
+                    </label>
                   </div>
                 )}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
