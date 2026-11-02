@@ -31,7 +31,37 @@ export function strictGeocode(results,address=''){
  const cityMatches=!enteredCity||[part('locality'),part('postal_town'),formattedCity].some(value=>value&&norm(value)===norm(enteredCity));
  return Boolean(address)&&stateMatches&&zipMatches&&streetMatches&&cityMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
 }
-export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async()=>{}}){
+// Staff-review rules (PermitResolutionRule): every confirmed review mints a
+// reusable rule — postal names that map to a jurisdiction, parcel-confirmed
+// address overrides, per-county source preferences. A matching rule resolves
+// the flag class permanently instead of per address.
+const addrKey=a=>norm(String(a||'').split(',')[0].replace(/\s+(apt|suite|unit|ste|#)\s*.*$/i,''));
+function applyResolutionRules(rules,{enteredCity,enteredAddr,state,countyName,candidates=[],target=null}){
+ if(!Array.isArray(rules)||!rules.length)return null;
+ for(const r of rules){
+  if(!r||r.active===false)continue;
+  if(String(r.state||'').toUpperCase()!==state)continue;
+  const rt=String(r.rule_type||'');
+  if(rt==='postal_name_map'){
+   if(!enteredCity||!sameJ(r.entered_name,enteredCity))continue;
+   if(r.county&&!sameJ(r.county,countyName))continue;
+  }else if(rt==='address_override'){
+   if(!enteredAddr||addrKey(r.address_key)!==addrKey(enteredAddr))continue;
+  }else if(rt==='source_preference'){
+   if(r.county&&!sameJ(r.county,countyName))continue;
+   const prefState=/state/i.test(String(r.preferred_source||'state'));
+   const inside=candidates.filter(c=>c.inside&&c.inside_sources?.some(s=>prefState?/state/i.test(s):/census/i.test(s)));
+   if(inside.length===1)return{pick:inside[0],rule:r};
+   continue;
+  }else continue;
+  const hit=candidates.find(c=>sameJ(c.name,r.jurisdiction_name));
+  if(hit)return{pick:hit,rule:r};
+  if(target&&sameJ(target.name,r.jurisdiction_name))return{pick:target,rule:r};
+  if(/county/i.test(String(r.jurisdiction_type||''))&&sameJ(r.jurisdiction_name,countyName))return{pick:{name:countyName,type:'county'},rule:r};
+ }
+ return null;
+}
+export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async()=>{},rules=[],enteredAddress=''}){
  const state=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(),point={lat:geocode?.lat,lng:geocode?.lon};
  const base={status:'unresolved',state,point,checked_at:new Date().toISOString(),targets:[],boundaries:[],sources:[],reason:'We could not confirm the property location. An administrator needs to check it.'};
  if(!Number.isFinite(point.lat)||!Number.isFinite(point.lng)||!['OH','KY'].includes(state))return {...base,reason:'Enter a complete street address in Ohio or Kentucky.'};
@@ -49,6 +79,14 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   // and the address must NOT fall through to the county fallback. Fail loudly so
   // the caller retries instead of silently dropping a real municipality.
   if(rows[1].failed&&rows[2].failed)throw Error('Municipal boundary services are unavailable — retryable.');
+ // The geocoder's own jurisdiction claims are independent corroboration:
+ // locality = the city/village the provider assigns this address, level_3 =
+ // county subdivision (township in Ohio), level_2 = county. postal_town is
+ // the USPS city name — it is NOT a jurisdiction claim and never picks one.
+ const parts=geocode?.address_parts||{},geoLocality=parts.locality||'',geoTwp=parts.administrative_area_level_3||'',geoCounty=parts.administrative_area_level_2||'';
+ // The city as the user TYPED it — postal names are normal (USPS city ≠
+ // jurisdiction); a staff postal_name_map rule can still resolve them.
+ const enteredCity=norm(String(enteredAddress||'').split(',')[1]?.replace(/\s+(OH|Ohio|KY|Kentucky|USA|United States)(?:\s+[0-9]{5}(?:-[0-9]{4})?)?\s*$/i,''));
  let county=counties.filter(f=>f.inside);
  // County gates before flagging: same-name sliver duplicates merge to one
  // county; a zero-hit gap adopts its single clearly-nearest county inside the
@@ -58,8 +96,14 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  if(county.length===0){const near=counties.filter(f=>String(f.attributes.STATE)===fips).sort((a,b)=>(a.distance_m||0)-(b.distance_m||0));if(near.length&&near[0].distance_m<=(geocode.approximate_source?150:25)&&(near.length===1||near[0].distance_m<near[1].distance_m))county=[near[0]];}
  if(county.length!==1){
   const countyCands=counties.filter(f=>String(f.attributes.STATE)===fips).map(f=>({name:f.attributes.NAME,state,type:'county',geoid:String(f.attributes.GEOID||''),county:f.attributes.NAME,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:['Census county boundary']}));
-  if(countyCands.length)return {...base,status:'needs_review',reason:'This address sits on or near a county line — the map cannot decide between these counties. Pick the correct one.',candidates:countyCands,target:null};
-  throw Error('County/state location is missing or conflicting.');
+  // Review rules last-word gate: a confirmed postal/parcel/source rule can
+  // still decide a county-line flag.
+  const cr=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName:geoCounty,candidates:countyCands});
+  if(cr){const f=counties.find(x=>sameJ(x.attributes.NAME,cr.pick.name));if(f)county=[f];}
+  if(county.length!==1){
+   if(countyCands.length)return {...base,status:'needs_review',reason:'This address sits on or near a county line — the map cannot decide between these counties. Pick the correct one.',candidates:countyCands,target:null};
+   throw Error('County/state location is missing or conflicting.');
+  }
  }
  if(String(county[0].attributes.STATE)!==fips||!new RegExp('^'+fips+'[0-9]{3}$').test(String(county[0].attributes.GEOID)))throw Error('County/state location is missing or conflicting.');
  const countyRow=county[0],countyName=countyRow.attributes.NAME,countyId=countyRow.attributes.GEOID;
@@ -70,11 +114,6 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  const muniCands=[];
  const addMuni=(f,src)=>{const name=String(f.attributes.NAME||f.attributes.municipality||'').replace(/\s+(city|village|town)$/i,'').trim();if(!name)return;const ex=muniCands.find(c=>sameJ(c.name,name));if(ex){if(!ex.supported_by.includes(src))ex.supported_by.push(src);if(f.inside&&!ex.inside_sources.includes(src))ex.inside_sources.push(src);ex.inside=ex.inside||!!f.inside;ex.geoid=ex.geoid||String(f.attributes.GEOID||'');ex.distance_m=Math.min(ex.distance_m,Math.round(f.distance_m||0));}else muniCands.push({name,state,type:'municipality',geoid:String(f.attributes.GEOID||''),county:countyName,county_geoid:countyId,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:[src],inside_sources:f.inside?[src]:[]});};
  places.forEach(f=>addMuni(f,'Census municipal boundary'));statePlaces.forEach(f=>addMuni(f,stateSrc));
- // The geocoder's own jurisdiction claims are independent corroboration:
- // locality = the city/village the provider assigns this address, level_3 =
- // county subdivision (township in Ohio), level_2 = county. postal_town is
- // the USPS city name — it is NOT a jurisdiction claim and never picks one.
- const parts=geocode?.address_parts||{},geoLocality=parts.locality||'',geoTwp=parts.administrative_area_level_3||'',geoCounty=parts.administrative_area_level_2||'';
  // Municipality consensus gates — run BEFORE flagging:
  //  1. Every returned feature merged to a single name → sources agree modulo
  //     spelling (St./Saint, Sugar Creek/Sugarcreek) — not a conflict.
@@ -92,11 +131,17 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   if(stOnly.length===1)muniPick=stOnly[0];
   else{const hit=insideMuni.find(c=>sameJ(c.name,geoLocality));if(hit)muniPick=hit;}
  }
+ let pickVia='source_consensus';
+ if(!muniPick&&(cities.length||stateCities.length)){
+  // Review rules last-word gate before the municipal flag stands.
+  const mr=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,candidates:muniCands});
+  if(mr){muniPick=mr.pick;pickVia='resolution_rule';}
+ }
  if(muniPick){
   const feat=[...places,...statePlaces].find(f=>f.inside&&sameJ(String(f.attributes.NAME||f.attributes.municipality||'').replace(/\s+(city|village|town)$/i,''),muniPick.name));
   const censFeat=places.find(f=>sameJ(String(f.attributes.NAME||'').replace(/\s+(city|village|town)$/i,''),muniPick.name));
   const best=feat||censFeat;
-  target={name:muniPick.name,state,type:'municipality',geoid:String(censFeat?.attributes.GEOID||muniPick.geoid||''),county:countyName,county_geoid:countyId,geometry:best?.geometry,source_url:best?.source_url,resolved_by:'source_consensus'};
+  target={name:muniPick.name,state,type:'municipality',geoid:String(censFeat?.attributes.GEOID||muniPick.geoid||''),county:countyName,county_geoid:countyId,geometry:best?.geometry,source_url:best?.source_url,resolved_by:pickVia};
  }else if(cities.length||stateCities.length){
   if(muniCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.',candidates:muniCands,target:null};
   throw Error('Official boundary sources disagree about the municipality.');
@@ -111,6 +156,7 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   if(twpCands.length===1&&insideTwp.length)twpPick=twpCands[0];
   else if(insideTwp.length===1)twpPick=insideTwp[0];
   else if(insideTwp.length>1){const stOnly=insideTwp.filter(c=>c.inside_sources.includes('Ohio state township boundary'));if(stOnly.length===1)twpPick=stOnly[0];else{const hit=insideTwp.find(c=>sameJ(c.name,geoTwp));if(hit)twpPick=hit;}}
+  if(!twpPick){const tr=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,candidates:twpCands});if(tr)twpPick=tr.pick;}
   if(!twpPick){if(twpCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the township here. Pick the correct jurisdiction below.',candidates:twpCands,target:null};throw Error('Township location is missing or conflicting.');}
   const tf=[...townships,...stateTownships].find(f=>f.inside&&sameJ(String(f.attributes.NAME||f.attributes.TOWNSHIP||''),twpPick.name)),censT=townships.find(f=>sameJ(String(f.attributes.NAME||''),twpPick.name));
   target={name:twpPick.name,state,type:'township',geoid:String(censT?.attributes.GEOID||twpPick.geoid||''),county:countyName,county_geoid:countyId,geometry:(tf||censT)?.geometry,source_url:(tf||censT)?.source_url,resolved_by:'source_consensus'};}
@@ -127,19 +173,26 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  // inside every checked boundary. The 150m guard covers street-range
  // interpolation error; an exact provider result keeps the 25m edge check.
  const edge=geocode.approximate_source?150:25;
- if(!geocode.location_exact&&!geocode.approximate_source)return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
+ if(!geocode.location_exact&&!geocode.approximate_source){
+  const ar=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,target});
+  if(ar)return {...base,status:'location_verified',reason:'Map position is approximate, but a confirmed review rule places this address in '+ar.pick.name+' — resolving to '+ar.pick.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'resolution_rule'};
+  return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
+ }
  if(relevant.some(f=>f.distance_m<=edge)){
   // Edge gates before flagging — independent corroboration resolves the pin:
   //  1. The geocoder's own jurisdiction claim for this level agrees with the
   //     geometry (locality for cities, level_3 for townships, level_2 for
   //     counties). postal_town is USPS naming — never evidence.
   //  2. The entered city text matching the inside municipality still rescues.
-  const enteredCity=norm(parts.locality||'');
+  const geoLocalityClaim=norm(parts.locality||'');
   const geoClaim=target.type==='municipality'?geoLocality:target.type==='township'?geoTwp:target.type==='county'?geoCounty:'';
   if(target&&geoClaim&&sameJ(geoClaim,target.name))
    return {...base,status:'location_verified',reason:'The map pin sits close to a boundary, but the geocoder independently places this address in '+target.name+' — resolving to '+target.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'geocoder_jurisdiction'};
   if(target&&target.type==='municipality'&&enteredCity&&sameJ(enteredCity,target.name))
    return {...base,status:'location_verified',reason:'The map pin sits close to a boundary, but the address\'s own city matches the '+target.name+' boundary containing it — resolving to '+target.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'entered_city_name'};
+  // Review rules last-word gate before the edge flag stands.
+  const er=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,target});
+  if(er)return {...base,status:'location_verified',reason:'The map pin sits close to a boundary, but a confirmed review rule places this address in '+er.pick.name+' — resolving to '+er.pick.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'resolution_rule'};
   return {...base,status:'needs_review',target:base.targets[0],reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
  }
   if(!geocode.location_exact)return {...base,status:'location_verified',reason:`Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`,target:base.targets[0]};
@@ -148,9 +201,9 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
 }
 export function exactConfiguredLocality(localities,resolution,profiles=[]){
  if(resolution?.status!=='location_verified'||!resolution.target)return null;const target=resolution.target;
- const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state||norm(row.name)!==norm(target.name))return false;
+ const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state||!sameJ(row.name,target.name))return false;
   const township=/township/i.test(row.name),county=/county$/i.test(String(row.name).trim());if(target.type==='county'&&!county||target.type!=='county'&&county)return false;if(target.type==='township'&&!township||target.type!=='township'&&township)return false;
   if(row.geographic_identity?.geoid)return row.geographic_identity.geoid===target.geoid;
-  if(target.type!=='county'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.parent_county?.name || profile?.parent_county?.name;return norm(county)===norm(target.county);}
+  if(target.type!=='county'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.parent_county?.name || profile?.parent_county?.name;return sameJ(county,target.county);}
   return true;});return matches.length===1?matches[0]:null;
 }
