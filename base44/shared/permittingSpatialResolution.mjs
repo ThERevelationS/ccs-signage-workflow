@@ -189,6 +189,17 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  // interpolation error; an exact provider result keeps the 25m edge check.
  const edge=geocode.approximate_source?150:25;
  if(!geocode.location_exact&&!geocode.approximate_source){
+  // Same corroboration ladder as the boundary-edge gate: the geocoder's own
+  // jurisdiction claim at the target's level, then the entered-city match,
+  // then review rules — flag only when no independent evidence agrees.
+  const geoClaim=target.type==='municipality'?geoLocality:target.type==='township'?geoTwp:target.type==='county'?geoCounty:'';
+  if(target&&geoClaim&&sameJ(geoClaim,target.name))
+   return {...base,status:'location_verified',reason:'Map position is approximate, but the geocoder independently places this address in '+target.name+' — resolving to '+target.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'geocoder_jurisdiction'};
+  // NOTE: enteredCity is deliberately NOT a corroborator here — unlike the
+  // rooftop-pin edge site, an interpolated pin's position is itself unproven,
+  // so entered city + inside-boundary agreeing can be wrong together (USPS
+  // naming and interpolation share the same bias). Only the geocoder's own
+  // jurisdiction claim or a staff rule can rescue an approximate pin.
   const ar=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,target});
   if(ar)return {...base,status:'location_verified',reason:'Map position is approximate, but a confirmed review rule places this address in '+ar.pick.name+' — resolving to '+ar.pick.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'resolution_rule'};
   return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
