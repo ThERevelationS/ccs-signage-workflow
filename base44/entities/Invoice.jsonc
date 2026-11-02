@@ -166,6 +166,41 @@
       "type": "object",
       "additionalProperties": true,
       "description": "Provenance: which record generated this invoice and under what review."
+    },
+    "fee_lines": {
+      "type": "array",
+      "description": "Canonical OrderFee lines (shipping, postage, discount, misc fee) carried through order-to-invoice. Each line: {label, kind, amount, taxable, income_account_code}. Mirrored identically on AllInOneEstimate and Invoice.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Display label for the fee line."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "shipping",
+              "postage",
+              "discount",
+              "fee"
+            ],
+            "description": "Fee classification."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount; discounts are negative."
+          },
+          "taxable": {
+            "type": "boolean",
+            "description": "Whether this line is included in the taxable base."
+          },
+          "income_account_code": {
+            "type": "string",
+            "description": "GL income account code for accounting export."
+          }
+        }
+      }
     }
   },
   "required": [
