@@ -1,5 +1,6 @@
 import { getModuleLabel } from "./moduleRegistry";
-import { recalcOnProofApproval } from "../../../base44/shared/dueDateEngine.ts";
+import { computeOrderDueDate, computeProductDueDate, recalcOnProofApproval } from "../../../base44/shared/dueDateEngine.ts";
+import { OPERATIONAL_STATUS_SET, customerFacingLabel } from "../../../base44/shared/productStatusModel.ts";
 import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -10,12 +11,104 @@ const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(val
 const norm = (value) => String(value || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
 
-export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
+// B-14: canonical initial operational status for conversion-seeded products —
+// the locked vocabulary's first WIP value ("order_review") per
+// base44/shared/productStatusModel.ts. Guarded so a partially-stubbed test
+// bundle (shared imports stubbed to {}) still seeds the same value.
+export const INITIAL_OPERATIONAL_STATUS =
+  (Array.isArray(OPERATIONAL_STATUS_SET) && OPERATIONAL_STATUS_SET[0]) || "order_review";
+
+const asObjectList = (value) =>
+  (Array.isArray(value) ? value.filter((row) => row && typeof row === "object") : []);
+
+// B-14: resolve the parts that drive one line's lead-time due dates through
+// the estimate's own part refs. Precedence, most direct first: part rows
+// embedded on the line (or on its builder snapshot), then the caller-loaded
+// BuilderPart pool matched by estimate_line_id/line_id, then by the line's
+// builder_product_id link. Inactive parts never contribute lead.
+export function resolveEstimateLineParts(line = {}, partsPool = []) {
+  const embedded = [
+    line?.parts, line?.part_list, line?.builder_parts,
+    line?.builder_snapshot?.parts, line?.builder_snapshot?.part_list,
+  ].find((list) => Array.isArray(list) && list.length > 0);
+  if (embedded) return asObjectList(embedded).filter((part) => part.is_active !== false);
+  const pool = asObjectList(partsPool).filter((part) => part.is_active !== false);
+  if (!pool.length) return [];
+  const lineId = String(line?.line_id || "").trim();
+  const builderProductId = String(line?.builder_product_id || "").trim();
+  return pool.filter((part) =>
+    (lineId && (
+      String(part?.estimate_line_id || "").trim() === lineId ||
+      String(part?.line_id || "").trim() === lineId
+    )) ||
+    (builderProductId && String(part?.builder_product_id || "").trim() === builderProductId)
+  );
+}
+
+// B-14: gather the estimate's BuilderPart rows for due-date seeding — the
+// same two paths buildEstimateMaterialsManifest uses (estimate_id stamp
+// first, builder_product_id fallback for legacy parts) — so conversion
+// callers can hand the pool to buildEstimateWorkOrderProducts via
+// options.parts / pricing.parts. Pure read; failures return [].
+export async function loadEstimateConversionParts(estimate = {}, { entity = null } = {}) {
+  const Part = entity || staffEntities?.BuilderPart;
+  if (typeof Part?.filter !== "function") return [];
+  const estimateId = String(estimate?.id || "").trim();
+  const lines = Array.isArray(estimate?.line_items) ? estimate.line_items : [];
+  const builderProductIds = [...new Set(lines.map((l) => String(l?.builder_product_id || "").trim()).filter(Boolean))];
+  const seen = new Set();
+  const parts = [];
+  const push = (row) => {
+    const id = String(row?.id || "").trim();
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    parts.push(row);
+  };
+  if (estimateId) {
+    (await Part.filter({ estimate_id: estimateId }, "created_date", 500).catch(() => []))
+      .forEach(push);
+  }
+  for (const bpid of builderProductIds) {
+    if (parts.some((p) => String(p?.builder_product_id || "").trim() === bpid)) continue;
+    (await Part.filter({ builder_product_id: bpid }, "created_date", 500).catch(() => []))
+      .forEach(push);
+  }
+  return parts;
+}
+
+// B-14: seed WorkOrder products[] from estimate line_items. Each seeded row
+// carries the canonical initial operational_status (blank/"none" line states
+// fold to order_review; a real line status is preserved), dual due dates
+// computed from resolved part leads through the shared engine (design parts
+// use design_lead_days, production uses product_lead_days — max across the
+// line's parts, anchored at the conversion moment), responsibility from the
+// line then the estimate's defaults, and name/qty/price from the priced line.
+// ADD-only: every pre-existing field w-8/w-32 put on the row still emits.
+export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}, options = {}) {
   const pricedByLine = new Map(
     (pricing.sections || [])
       .filter((section) => section?.line_id)
       .map((section) => [section.line_id, section])
   );
+
+  // Part pool for lead resolution: explicit options.parts wins, then
+  // pricing.parts, then an estimate.parts payload — each line slices out its
+  // own refs via resolveEstimateLineParts.
+  const partsPool = asObjectList(options?.parts ?? pricing?.parts ?? estimate?.parts);
+  // Leads anchor at the conversion moment by default (options.anchor_date /
+  // conversionDate / now, or a pricing-level anchor) so seeded deadlines run
+  // from order creation — the same rule recalcOnProofApproval applies later.
+  const anchorDate =
+    firstNonBlank(options?.anchor_date, options?.conversionDate, options?.now, pricing?.anchor_date) ||
+    new Date();
+  const dueOptions = {
+    clock: options?.clock ?? pricing?.clock ?? null,
+    design_clock: options?.design_clock ?? pricing?.design_clock ?? null,
+    tier: options?.tier ?? pricing?.lead_tier ?? "standard",
+    respect_hard_dates: true,
+    push_forward_only: false,
+    label: "estimate_conversion",
+  };
 
   return (estimate.line_items || []).map((line, index) => {
     const priced = pricedByLine.get(line.line_id) || line;
@@ -25,6 +118,26 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
       ? Number(priced.adjusted)
       : unitPrice * quantity * (1 + num(line.adjustment_percent) / 100);
     const productName = line.client_product_name || line.project_name || getModuleLabel(line.module_key) || `Product ${index + 1}`;
+
+    // Dual dates: computeProductDueDate echoes the carried (w-32-imported)
+    // dates when the line resolves no parts, so nothing regresses for
+    // part-less lines — and a hard_due_date row with a stored date holds it.
+    const lineParts = resolveEstimateLineParts(line, partsPool);
+    const due = typeof computeProductDueDate === "function"
+      ? computeProductDueDate({
+          parts: lineParts,
+          anchor_date: anchorDate,
+          hard_due_date: Boolean(line.hard_due_date),
+          product_due_date: firstNonBlank(line.product_due_date, priced.product_due_date),
+          design_due_date: firstNonBlank(line.design_due_date, priced.design_due_date),
+          ...dueOptions,
+        })
+      : { due_date: line.product_due_date || "", design_due_date: line.design_due_date || "" };
+
+    const explicitStatus = String(line.operational_status || "").trim();
+    const seededStatus = explicitStatus && norm(explicitStatus) !== "none"
+      ? explicitStatus
+      : INITIAL_OPERATIONAL_STATUS;
 
     return {
       id: line.builder_product_id || line.line_id || line.project_id || `estimate-product-${index + 1}`,
@@ -43,16 +156,34 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
       category: line.product_category || "",
       customer_description: line.customer_description || "",
       estimator_notes: line.product_notes || "",
-      operational_status: line.operational_status || "order_review",
+      operational_status: seededStatus,
       operational_substatus: line.operational_substatus || "",
-      customer_facing_status: line.customer_facing_status || "",
+      // Seeded products get the canonical customer-facing label for their
+      // initial status (locked vocabulary first, legacy alias map second);
+      // an explicit line value always wins.
+      customer_facing_status: firstNonBlank(
+        line.customer_facing_status,
+        typeof customerFacingLabel === "function" ? customerFacingLabel(seededStatus) : "",
+        customerFacingStatusLabel(seededStatus),
+      ),
       fulfillment_state: line.fulfillment_state || "none",
-      design_due_date: line.design_due_date || "",
-      product_due_date: line.product_due_date || "",
+      design_due_date: due.design_due_date || "",
+      product_due_date: due.due_date || "",
       hard_due_date: Boolean(line.hard_due_date),
       designer: line.designer || "",
       assigned_to: line.assigned_to || "",
-      responsibility: line.responsibility || "",
+      // Responsibility seeds per-line first, then whatever estimate-level
+      // default the estimate carries (default_responsibility /
+      // sales_responsibility / responsibility), then a caller override.
+      responsibility: firstNonBlank(
+        line.responsibility,
+        estimate.default_responsibility,
+        estimate.sales_responsibility,
+        estimate.responsibility,
+        options?.default_responsibility,
+        pricing?.default_responsibility,
+      ),
+      responsibility_color: firstNonBlank(line.responsibility_color, options?.responsibility_color),
       queue_priority: num(line.queue_priority, 0),
       proof_status: line.proof_status || "none",
       proof_file_url: line.proof_file_url || "",
@@ -273,7 +404,104 @@ export function convertedWorkOrderStage(existingStage) {
   return "sales";
 }
 
-export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "", conversionDate = "", verifiedCustomerId = "" } = {}) {
+// --- D-06: conversion history events -----------------------------------------
+// ProductActivity-shaped rows (base44/entities/ProductActivity.jsonc) emitted
+// onto the WorkOrder payload as conversion_events[]. The frontend build path
+// can't write backend-only entities itself, so the rows ride the payload and
+// a backend/portal write path persists them later as the job's audit trail.
+// `label` duplicates `note` — the order-history feed renders row.label first.
+
+const CONVERSION_ACTOR_TYPES = ["staff", "customer", "vendor", "system"];
+
+const conversionActorParts = (actor) => {
+  if (actor && typeof actor === "object") {
+    const type = CONVERSION_ACTOR_TYPES.includes(norm(actor.type)) ? norm(actor.type) : "staff";
+    return { type, label: firstNonBlank(actor.label, actor.name, actor.email, actor.display_name) };
+  }
+  return { type: "staff", label: String(actor ?? "").trim() };
+};
+
+// One typed conversion event. `product` is optional — omit it for the
+// order-level row emitted when no estimate-seeded product matched.
+export function buildConversionEvent({ estimate = {}, workOrder = null, product = null, actor = "", now = "" } = {}) {
+  const parsedNow = now ? new Date(now) : null;
+  const occurred_at = (parsedNow && !Number.isNaN(parsedNow.getTime()) ? parsedNow : new Date()).toISOString();
+  const status = String(estimate?.status || "approved").trim().toUpperCase() || "APPROVED";
+  const label = `Estimate Converted to Order - via product status (${status})`;
+  const who = conversionActorParts(actor);
+  const estimateId = String(estimate?.id || "").trim();
+  const workOrderId = String(workOrder?.id || "").trim();
+  const productId = String(product?.id || "").trim();
+  return {
+    schema_version: 1,
+    // Stable retry-safe receipt — rebuilding the same conversion regenerates
+    // the same key, so a persist path honoring creation_request_key and the
+    // merge helper below never double-write history.
+    creation_request_key: `estimate_conversion:${estimateId || "unknown"}:${workOrderId || "new"}:${productId || "order"}`,
+    work_order_id: workOrderId,
+    product_id: productId,
+    product_label: firstNonBlank(product?.description, product?.client_product_name, product?.product_name),
+    event_type: "conversion",
+    label,
+    actor_type: who.type,
+    actor_label: who.label,
+    from_value: firstNonBlank(estimate?.estimate_number, estimateId),
+    to_value: firstNonBlank(workOrder?.title, workOrderId),
+    note: label,
+    occurred_at,
+    details: {
+      source: "estimate_conversion",
+      estimate_id: estimateId,
+      estimate_number: String(estimate?.estimate_number || ""),
+      conversion_status: status,
+      estimate_line_id: String(product?.estimate_line_id || ""),
+      builder_product_id: String(product?.builder_product_id || ""),
+    },
+  };
+}
+
+// One conversion event per product THIS estimate seeded — matched by
+// source_estimate_id or the estimate's own line/product refs, so pre-existing
+// products a merged WO carries from other estimates are excluded. When no
+// product matches, one order-level row still lands so every conversion is
+// audible in history.
+export function buildConversionEvents({ estimate = {}, workOrder = null, products = [], actor = "", now = "" } = {}) {
+  const estimateId = String(estimate?.id || "").trim();
+  const lineIds = new Set();
+  const builderProductIds = new Set();
+  for (const line of estimate?.line_items || []) {
+    const lineId = String(line?.line_id || "").trim();
+    const builderProductId = String(line?.builder_product_id || "").trim();
+    if (lineId) lineIds.add(lineId);
+    if (builderProductId) builderProductIds.add(builderProductId);
+  }
+  const mine = (Array.isArray(products) ? products : []).filter((product) => {
+    if (!product || typeof product !== "object") return false;
+    if (estimateId && String(product?.source_estimate_id || "").trim() === estimateId) return true;
+    if (lineIds.has(String(product?.estimate_line_id || "").trim())) return true;
+    if (builderProductIds.has(String(product?.builder_product_id || "").trim())) return true;
+    return false;
+  });
+  if (!mine.length) return [buildConversionEvent({ estimate, workOrder, actor, now })];
+  return mine.map((product) => buildConversionEvent({ estimate, workOrder, product, actor, now }));
+}
+
+// Append-only merge keyed on creation_request_key — rebuilding the same
+// conversion never duplicates a history row already on the job.
+export function mergeConversionEvents(existing = [], incoming = []) {
+  const merged = [...(Array.isArray(existing) ? existing : [])];
+  const keys = new Set(merged.map((evt) => String(evt?.creation_request_key || "")).filter(Boolean));
+  for (const evt of Array.isArray(incoming) ? incoming : []) {
+    if (!evt || typeof evt !== "object") continue;
+    const key = String(evt?.creation_request_key || "");
+    if (key && keys.has(key)) continue;
+    if (key) keys.add(key);
+    merged.push(evt);
+  }
+  return merged;
+}
+
+export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "", conversionDate = "", verifiedCustomerId = "", actor = "", now = "" } = {}) {
   return {
     title: firstNonBlank(estimate.project_name, existing?.title),
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
@@ -302,7 +530,25 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     corbridge_invoice_number: firstNonBlank(estimate.estimate_number, existing?.corbridge_invoice_number),
     project_install_date: firstNonBlank(estimate.target_install_date, existing?.project_install_date),
     in_pipeline: true,
+    // B-14: order due = max product due date (engine rollup). push_forward_only
+    // over the existing date means a merge can push the job later but never
+    // pulls it earlier; no product dates echoes the existing date unchanged.
+    due_date: (typeof computeOrderDueDate === "function"
+      ? computeOrderDueDate({
+          products,
+          existing_due_date: existing?.due_date || "",
+          hard_due_date: existing?.hard_due_date === true,
+          push_forward_only: true,
+          label: "estimate_conversion",
+        }).due_date
+      : existing?.due_date) || "",
     products,
+    // D-06: conversion history events ride the WO payload — ProductActivity-
+    // shaped rows a backend/portal write path can persist as the audit trail.
+    conversion_events: mergeConversionEvents(
+      existing?.conversion_events,
+      buildConversionEvents({ estimate, workOrder: existing, products, actor, now }),
+    ),
   };
 }
 
