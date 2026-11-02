@@ -15,9 +15,17 @@
       "type": "string",
       "description": "Human-facing batch/group number (e.g. REC-0042). Generated server-side from the DocNumberCounter 'reconciliation' sequence."
     },
+    "name": {
+      "type": "string",
+      "description": "Optional human label for the close (e.g. 'Main drawer \u2014 Friday'). Defaults to the batch_number when not supplied."
+    },
     "location": {
       "type": "string",
-      "description": "Store/drawer location this close covers. Free text \u2014 there is no shop-locations list in GlobalSettings yet."
+      "description": "Store/drawer location this close covers (display name). Free text \u2014 the SalesLocation registry supplies names for new closes."
+    },
+    "location_id": {
+      "type": "string",
+      "description": "SalesLocation id/code (or free-text key) identifying the till this close covers. I-03 close_batch writes it; location keeps the display name."
     },
     "closed_at": {
       "type": "string",
@@ -26,6 +34,10 @@
     "created_by": {
       "type": "string",
       "description": "Staff email of the closer."
+    },
+    "closed_by": {
+      "type": "string",
+      "description": "Staff email that performed the close (mirrors created_by; kept distinct so a reopened-then-reclosed batch can track each actor separately)."
     },
     "expected_total": {
       "type": "number",
@@ -51,6 +63,51 @@
       "default": 0,
       "description": "collected_total + cash_adjustment - expected_total. Positive = over, negative = short."
     },
+    "expected_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of expected_total (dollars, 2dp). Written by close_batch from integer-cent model output; keep in sync with expected_total."
+    },
+    "collected_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of collected_total (dollars, 2dp)."
+    },
+    "adjustments_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 signed sum of the adjustments[] rows (dollars, 2dp). Mirrors cash_adjustment when the close supplied a single legacy adjustment."
+    },
+    "variance_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "I-03 cent-safe mirror of variance (dollars, 2dp): collected_amount + adjustments_amount - expected_amount."
+    },
+    "payment_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of payments swept into this close (payment_ids.length at write time)."
+    },
+    "adjustments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "Itemized cash adjustments [{amount, reason, note?}] applied to the counted total. A legacy single cash_adjustment is folded in as one row with reason=adjustment_note."
+    },
+    "reopened_by": {
+      "type": "string",
+      "description": "Admin email that reopened the batch (reopen_batch is admin-only)."
+    },
+    "reopened_at": {
+      "type": "string",
+      "description": "ISO timestamp of the reopen."
+    },
+    "reopen_reason": {
+      "type": "string",
+      "description": "Required explanation recorded at reopen; also appended to notes as an audit line."
+    },
     "payment_ids": {
       "type": "array",
       "items": {
@@ -67,10 +124,11 @@
       "type": "string",
       "enum": [
         "open",
-        "closed"
+        "closed",
+        "reopened"
       ],
       "default": "closed",
-      "description": "Reserved for a future draft-then-close flow; created batches are closed immediately."
+      "description": "closed = locked (payments carry this batch's reconciliation_batch_id; the batch rejects new payments). reopened = an admin reversed the close with a reason \u2014 an immutable audit stub; its payments re-sweep into NEW batches. 'open' remains reserved for a future draft-then-close flow."
     },
     "notes": {
       "type": "string"
