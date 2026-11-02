@@ -24,8 +24,9 @@
 //   'expired' — stored status 'expired', OR a parseable expires_on that is
 //               BEFORE today (UTC day compare; a certificate is valid THROUGH
 //               its expires_on date and expires the next day).
-//   'active'  — has a record and is neither revoked nor expired. No expires_on
-//               (or an unparseable one) = perpetual: never auto-expires.
+//   'active'  — has a record and is neither revoked nor expired. A BLANK
+//               expires_on = perpetual: never auto-expires. A non-empty but
+//               malformed expires_on = expired (fail-closed, N-07.4).
 //
 // Tax rule: expired/revoked → the estimate taxes NORMALLY (taxable) and the
 // estimator warns. Active → not taxed. None → taxed (there is no exemption).
@@ -114,16 +115,22 @@ export function taxExemption(customer, { now } = {}) {
   const source = hasObjectContent ? (hasFlatContent || legacyFlag ? "mixed" : "tax_exemption") : "legacy";
   const today = nowDay(now);
   const expiryDay = toUtcDay(expires_on);
-  const perpetual = !Number.isFinite(expiryDay);
-  const days_until_expiry = perpetual ? null : Math.round((expiryDay - today) / 86400000);
+  // N-07.4: a BLANK expires_on is perpetual (documented), but a NON-EMPTY
+  // malformed one ('2026-02-31') must not silently grant a perpetual
+  // exemption — fail closed to 'expired', matching the reports side which
+  // string-compares malformed dates as past. Fix the data to restore.
+  const hasExpiryText = clean(expires_on) !== "";
+  const malformedExpiry = hasExpiryText && !Number.isFinite(expiryDay);
+  const perpetual = !hasExpiryText;
+  const days_until_expiry = Number.isFinite(expiryDay) ? Math.round((expiryDay - today) / 86400000) : null;
 
   const revoked = stored_status === "revoked" || reg.revoked === true || c.tax_exempt_revoked === true;
-  const expired = !revoked && (stored_status === "expired" || (Number.isFinite(expiryDay) && expiryDay < today));
+  const expired = !revoked && (stored_status === "expired" || malformedExpiry || (Number.isFinite(expiryDay) && expiryDay < today));
   const status = revoked ? "revoked" : expired ? "expired" : "active";
 
   return {
     status,
-    record: { reason, certificate_id, expires_on, issued_by, stored_status, perpetual, source },
+    record: { reason, certificate_id, expires_on, issued_by, stored_status, perpetual, malformed_expiry: malformedExpiry, source },
     days_until_expiry,
   };
 }
