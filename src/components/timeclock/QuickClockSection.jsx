@@ -31,7 +31,7 @@ import {
   IDENTIFY_QR_BADGE_BLURB,
   IDENTIFY_QR_BADGE_BLURB_FACE,
   IDENTIFY_QR_ONLY_BLURB,
-  IDENTIFY_QR_UNSUPPORTED,
+  IDENTIFY_QR_BUTTON_PROMPT,
 } from '@/components/timeclock/timeClockIdentifyCopy';
 // html5-qrcode (~300KB) loads on demand when QR mode is picked — most
 // clock-ins use face or PIN, so it isn't fetched at page load.
@@ -1007,7 +1007,7 @@ export default function QuickClockSection({
       if (!faceEnabled || !modelsReady) {
         setRecognitionStatus("BarcodeDetector" in window
           ? IDENTIFY_QR_ONLY_BLURB
-          : IDENTIFY_QR_UNSUPPORTED);
+          : IDENTIFY_QR_BUTTON_PROMPT);
         return;
       }
       setRecognitionStatus(IDENTIFY_CAMERA_BLURB);
