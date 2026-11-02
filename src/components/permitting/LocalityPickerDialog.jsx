@@ -399,6 +399,9 @@ function LocalityPickerSession({
     if (!j || !detectedTarget || !['location_verified', 'needs_review'].includes(result?.location_resolution?.status) || result?.suggested_locality) return false;
     const typeMap = { municipality: ['city', 'village', 'municipality'], township: ['township'], county: ['county'] };
     const countyOf = (v) => String(v || '').toLowerCase().replace(/\s*county$/u, '').trim();
+    // Records explicitly marked as superseded duplicates are dead identity —
+    // they must not match or count as candidates (same rule the bridge uses).
+    if (String(j.duplicate_of || '').trim()) return false;
     return (typeMap[detectedTarget.type] || [detectedTarget.type]).includes(String(j.type || '').toLowerCase())
       && normalizePermitJurisdictionName(j.name) === normalizePermitJurisdictionName(detectedTarget.name)
       && normalizeState(j.state) === normalizeState(detectedTarget.state)
