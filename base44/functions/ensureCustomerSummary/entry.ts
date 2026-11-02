@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const MODULE_PROJECT_ENTITIES: Record<string, string> = {
   channel_letter_installation: 'ChannelLetterInstallation',
@@ -229,7 +230,7 @@ async function deleteVerified(Summary: any, row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Fall back to auth.me() when no sign-shop session token is supplied so
     // request-context users can still complete the guarded summary write.
