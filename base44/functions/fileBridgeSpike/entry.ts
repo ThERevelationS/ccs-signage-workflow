@@ -149,6 +149,22 @@ Deno.serve(async (req) => {
 
     if (body.probe === 'env') {
       out.runtime = { deno: typeof Deno !== 'undefined', now: Date.now() };
+      out.env_keys = ['FILEBRIDGE_HMAC_KEY', 'FILEBRIDGE_HMAC_KEY_PREV']
+        .filter((k) => !!Deno.env.get(k));
+      return Response.json(out);
+    }
+
+    if (body.probe === 'set_fb_settings') {
+      const rows = await sr.entities.GlobalSettings.filter({ key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+      const value = body.value && typeof body.value === 'object' ? body.value : { enabled: true };
+      if (rows?.[0]?.id) {
+        await sr.entities.GlobalSettings.update(rows[0].id, { value });
+        out.updated = true;
+      } else {
+        await sr.entities.GlobalSettings.create({ key: 'fileBridge', value });
+        out.created = true;
+      }
+      out.value = value;
       return Response.json(out);
     }
 
