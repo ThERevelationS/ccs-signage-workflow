@@ -56,17 +56,37 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   const muniCands=[];
   const addMuni=(f,src)=>{const name=String(f.attributes.NAME||f.attributes.municipality||'').replace(/\s+(city|village|town)$/i,'').trim();if(!name)return;const ex=muniCands.find(c=>norm(c.name)===norm(name));if(ex){if(!ex.supported_by.includes(src))ex.supported_by.push(src);if(f.inside&&!ex.inside_sources.includes(src))ex.inside_sources.push(src);ex.inside=ex.inside||!!f.inside;ex.geoid=ex.geoid||String(f.attributes.GEOID||'');ex.distance_m=Math.min(ex.distance_m,Math.round(f.distance_m||0));}else muniCands.push({name,state,type:'municipality',geoid:String(f.attributes.GEOID||''),county:countyName,county_geoid:countyId,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:[src],inside_sources:f.inside?[src]:[]});};
   places.forEach(f=>addMuni(f,'Census municipal boundary'));statePlaces.forEach(f=>addMuni(f,stateSrc));
-  if(cities.length>1||stateCities.length>1||cities.length!==stateCities.length){
+  let coverageGap=false;
+  if(cities.length>1||stateCities.length>1){
    if(muniCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.',candidates:muniCands,target:null};
    throw Error('Official boundary sources disagree about the municipality.');
   }
-  if(cities.length===1){const c=cities[0],s=stateCities[0],sName=s.attributes.municipality || s.attributes.NAME;if(String(c.attributes.STATE)!==fips||!new RegExp('^'+fips+'[0-9]{5}$').test(String(c.attributes.GEOID))||norm(c.attributes.NAME)!==norm(sName)){if(muniCands.length)return {...base,status:'needs_review',reason:'Official boundary sources name different municipalities here. Pick the correct jurisdiction below.',candidates:muniCands,target:null};throw Error('Official municipal identities disagree.');}target={name:c.attributes.NAME.replace(/\s+(city|village|town)$/i,''),state,type:'municipality',geoid:c.attributes.GEOID,county:countyName,county_geoid:countyId,geometry:c.geometry,source_url:s.source_url};}
+  if(cities.length!==stateCities.length){
+   if(muniCands.length===1){
+    // Coverage gap, not an identity conflict: every returned feature names the
+    // same municipality, one source just doesn't cover this pin (typically a
+    // Census place boundary lagging a state-recorded annexation). The state
+    // municipal layer is authoritative for membership — resolve from the
+    // containing source and flag the gap on the target.
+    const s=stateCities[0]||cities[0];
+    const nm=String(s.attributes.NAME||s.attributes.municipality||'').replace(/\s+(city|village|town)$/i,'').trim();
+    const sameNameCensus=cities[0]||places.find(f=>norm(String(f.attributes.NAME||'').replace(/\s+(city|village|town)$/i,''))===norm(nm));
+    target={name:nm,state,type:'municipality',geoid:String(sameNameCensus?.attributes.GEOID||''),county:countyName,county_geoid:countyId,geometry:s.geometry,source_url:s.source_url,coverage_note:'One boundary source does not yet cover this spot — the state municipal boundary was used.'};
+    coverageGap=true;
+   }else if(muniCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the municipality here. Pick the correct jurisdiction below.',candidates:muniCands,target:null};
+   else throw Error('Official boundary sources disagree about the municipality.');
+  }
+  else if(cities.length===1){const c=cities[0],s=stateCities[0],sName=s.attributes.municipality || s.attributes.NAME;if(String(c.attributes.STATE)!==fips||!new RegExp('^'+fips+'[0-9]{5}$').test(String(c.attributes.GEOID))||norm(c.attributes.NAME)!==norm(sName)){if(muniCands.length)return {...base,status:'needs_review',reason:'Official boundary sources name different municipalities here. Pick the correct jurisdiction below.',candidates:muniCands,target:null};throw Error('Official municipal identities disagree.');}target={name:c.attributes.NAME.replace(/\s+(city|village|town)$/i,''),state,type:'municipality',geoid:c.attributes.GEOID,county:countyName,county_geoid:countyId,geometry:c.geometry,source_url:s.source_url};}
   else if(state==='OH'){[townships,stateTownships]=await Promise.all([query('township',LOCATION_SOURCES.township),query('state township',LOCATION_SOURCES.oh_township)]);const t=townships.filter(f=>f.inside&&/\btownship$/i.test(f.attributes.NAME)),s=stateTownships.filter(f=>f.inside);if(t.length!==1||s.length!==1||String(t[0].attributes.STATE)!==fips||!new RegExp('^'+countyId+'[0-9]{5}$').test(String(t[0].attributes.GEOID))||norm(t[0].attributes.NAME)!==norm(s[0].attributes.TOWNSHIP)||norm(countyName)!==norm(s[0].attributes.COUNTY)){const twpCands=[...townships.filter(f=>/\btownship$/i.test(f.attributes.NAME)).map(f=>({name:f.attributes.NAME,state,type:'township',geoid:String(f.attributes.GEOID||''),county:countyName,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:['Census township boundary'],inside_sources:f.inside?['Census township boundary']:[]})),...stateTownships.map(f=>({name:String(f.attributes.TOWNSHIP||'').trim(),state,type:'township',geoid:'',county:countyName,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:['Ohio state township boundary'],inside_sources:f.inside?['Ohio state township boundary']:[]}))].filter(c=>c.name);if(twpCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the township here. Pick the correct jurisdiction below.',candidates:twpCands,target:null};throw Error('Township location is missing or conflicting.');}target={name:t[0].attributes.NAME,state,type:'township',geoid:t[0].attributes.GEOID,county:countyName,county_geoid:countyId,geometry:t[0].geometry,source_url:s[0].source_url};}
   else target={name:countyName,state,type:'county',geoid:countyId,county:countyName,county_geoid:countyId,geometry:countyRow.geometry,source_url:countyRow.source_url};
   base.targets=[{...target,geometry:undefined},{name:countyName,state,type:'county',geoid:countyId,county:countyName}].filter((t,i,all)=>all.findIndex(other=>other.geoid===t.geoid)===i);
   // Separate LineStrings preserve multipart and hole outlines without assuming ring orientation.
   base.boundaries=[{type:'Feature',properties:{name:target.name,source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}}];
-  const relevant=[...counties,...places,...statePlaces,...(cities.length===0?[...townships,...stateTownships]:[])];
+  // In a coverage gap, the not-inside polygon is the same-name artifact whose
+  // edge caused the gap — it must not trigger the proximity check. Everywhere
+  // else all returned features count.
+  const muniRelevant=coverageGap?[...places,...statePlaces].filter(f=>f.inside):[...places,...statePlaces];
+  const relevant=[...counties,...muniRelevant,...(cities.length===0&&stateCities.length===0?[...townships,...stateTownships]:[])];
   // Approximate geocodes (e.g. the free Census locator interpolating a street
   // range) can still confirm jurisdiction — but only when the point sits well
   // inside every checked boundary. The 150m guard covers street-range
