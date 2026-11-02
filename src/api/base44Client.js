@@ -1,6 +1,6 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
-import { createRequestGovernor, isPlatformRateLimit, retryAfterMs } from './requestGovernor.mjs';
+import { createRequestGovernor, isGovernorCallTimeout, isPlatformRateLimit, retryAfterMs } from './requestGovernor.mjs';
 import { noteRateLimit, noteRateLimitSuccess } from './rateLimitCooldown.js';
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
@@ -158,7 +158,7 @@ function wrapEntity(name, target) {
       const isWrite = !READ_METHODS.has(String(prop));
       return (...args) => {
         if (isWrite) governor.bumpEpoch();
-        const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
+        const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite, shouldRetry: (err, attempt) => !isWrite && attempt < 1 && isGovernorCallTimeout(err), timeoutMs: isWrite ? 150000 : 60000 });
         // Feed the app-wide breaker after the governor's own retry decides.
         const tracked = pending.then(
           (r) => { noteRateLimitSuccess(); return r; },
@@ -208,9 +208,14 @@ const functionsProxy = new Proxy(rawClient.functions, {
           pool: 'read',
           respectCooldown: read,
           retryOnRateLimit: isRetryableFunction(fnName, payload),
-          shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
+          shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : isGovernorCallTimeout,
           // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
           maxAttempts: fnName === 'verifyLogin' ? 2 : 1,
+          // A stalled invoke must release its read-pool slot — a handful of
+          // hung sockets deadlocks the whole pool and every read queues forever
+          // (the Time Tracker chip stuck on "Loading clock..."). One retry
+          // (maxAttempts 1) lands on a fresh connection.
+          timeoutMs: read ? 60000 : 0,
         });
         // One rate-limit note per invocation: dedupe followers share exec, so
         // they must not each note the same 429.
