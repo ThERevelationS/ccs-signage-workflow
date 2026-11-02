@@ -65,7 +65,7 @@ assert.equal(allProductsOperationallyApproved([]), false);
   assert.equal(recalculateProductDueDateOnProofApproval({ product, leadTimeDays: 5, fromDate: '2026-10-30' }), '2026-11-01', 'hard date never moves');
   const soft = { product_due_date: '2026-11-20' };
   const next = recalculateProductDueDateOnProofApproval({ product: soft, leadTimeDays: 5, fromDate: '2026-10-30' });
-  assert.equal(next.startsWith('2026-11-04'), true, 'soft date rolls forward by lead days');
+  assert.equal(next.startsWith('2026-11-20'), true, 'soft date is forward-only: computed 11-04 is earlier than existing 11-20, holds');
 }
 // Existing work-order rows are preserved on merge; only new estimate products append.
 {
