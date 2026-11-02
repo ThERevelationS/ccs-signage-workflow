@@ -1,0 +1,73 @@
+{
+  "name": "ScheduledReport",
+  "display_name": "Scheduled Report",
+  "description": "Backend-only scheduled report configs (J-09): report_id + params + user + delivery + cron_hint; next_run_at computed by savedReportRunsModel.nextRunAt. Delivered via H-13 digest.",
+  "properties": {
+    "report_id": {
+      "type": "string"
+    },
+    "params": {
+      "type": "object",
+      "description": "Run parameters object."
+    },
+    "params_hash": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "delivery": {
+      "type": "string",
+      "enum": [
+        "digest",
+        "immediate"
+      ],
+      "default": "digest"
+    },
+    "cron_hint": {
+      "type": "string",
+      "description": "daily | weekly_<dow> | monthly_<dom> \u2014 normalized by savedReportRunsModel.normalizeCronHint."
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_run_at": {
+      "type": "string"
+    },
+    "next_run_at": {
+      "type": "string",
+      "description": "ISO; strictly-after anchor computed per cron_hint (month dom clamps to month length)."
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "rptsched:<report_id>:<user>:<hash>."
+    }
+  },
+  "required": [
+    "report_id",
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__scheduled_report_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__scheduled_report_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__scheduled_report_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__scheduled_report_backend_only__"
+      }
+    }
+  }
+}
