@@ -18,18 +18,25 @@ Deno.serve(async (req) => {
     const key = Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim() || Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
     if (!key) return Response.json({ error: 'no google key configured' }, { status: 500 });
 
-    const url = pagetoken
-      ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${encodeURIComponent(pagetoken)}&key=${encodeURIComponent(key)}`
-      : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${encodeURIComponent(key)}`;
-    const r = await fetch(url);
+    const payload: any = { textQuery: pagetoken ? undefined : query, pageSize: 20 };
+    if (pagetoken) payload.pageToken = pagetoken;
+    const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': key,
+        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.types,nextPageToken',
+      },
+      body: JSON.stringify(payload),
+    });
     const j = await r.json().catch(() => ({}));
     return Response.json({
-      status: j.status || 'HTTP_' + r.status,
-      error: j.error_message || undefined,
-      next_page_token: j.next_page_token || undefined,
-      results: (j.results || []).map((p: any) => ({
-        name: p.name,
-        address: p.formatted_address,
+      status: r.ok ? 'OK' : (j.error?.status || 'HTTP_' + r.status),
+      error: j.error?.message || undefined,
+      next_page_token: j.nextPageToken || undefined,
+      results: (j.places || []).map((p: any) => ({
+        name: p.displayName?.text || '',
+        address: p.formattedAddress || '',
         types: (p.types || []).slice(0, 4),
       })),
     });
