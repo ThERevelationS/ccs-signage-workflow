@@ -5,13 +5,14 @@ import { money } from "@/components/estimator/aioPricing";
 import { savePartGroupTemplate, savePartTemplate } from "./partTemplateService";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const EMPTY_PARTS = [];
 
 export default function SavePartTemplateModal({
   open,
   itemType = "part",
   part = null,
   group = null,
-  parts = [],
+  parts = EMPTY_PARTS,
   estimateId = "",
   builderProductId = "",
   onClose,
