@@ -227,8 +227,8 @@ export default function TimeClockReportsDashboard() {
   // Work order metrics
   const workOrderMetrics = useMemo(() => {
     const now = new Date();
-    const overdueTasks = workOrders.filter(wo => 
-      !wo.completed && wo.due_date && new Date(wo.due_date) < now
+    const overdueTasks = workOrders.filter(wo =>
+      !wo.completed && wo.due_date && parseISO(wo.due_date) < now
     );
     const completedInRange = workOrders.filter(wo => {
       if (!wo.completed) return false;
