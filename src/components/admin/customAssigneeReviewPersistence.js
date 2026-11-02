@@ -11,7 +11,7 @@ export async function confirmSmartsheetCustomAssignee({ label, sheetId, column, 
   const [setting, metadata, users] = await Promise.all([
     loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "smartsheetSyncConfig" }),
     getSmartsheetColumns({ sessionToken, sheetId }),
-    loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, label: "Task-assignee review" }),
+    loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, cacheTtlMs: 30000, label: "Task-assignee review" }),
   ]);
   const config = setting?.setting_value;
   const flags = ["mirror_enabled", "importer_enabled", "pull_enabled", "push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"];
