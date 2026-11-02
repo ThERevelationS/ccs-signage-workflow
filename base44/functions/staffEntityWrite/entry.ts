@@ -86,6 +86,11 @@ const ADMIN_ONLY_WRITE = new Set([
   'ProductSubstatus',
   'Responsibility',
   'FeatureReport',
+  // F-24: pricing/labor/import config — the new admin tabs gate these UI-side,
+  // but the gateway must fail closed the same way for non-admin sessions.
+  'LaborLevel',
+  'BuilderPartGroup',
+  'ImportJob',
 ]);
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
