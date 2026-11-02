@@ -235,6 +235,23 @@
     "statement_batch_id": {
       "type": "string",
       "description": "Statement batch this invoice was included in, when customer statements are generated in bulk."
+    },
+    "splits_override": {
+      "type": "boolean",
+      "description": "Manual GL-split override flag (I-02): when true, income_account_splits was hand-entered rather than auto-computed from line parts."
+    },
+    "splits_override_by": {
+      "type": "string",
+      "description": "Staff user/email who applied the manual split override."
+    },
+    "splits_override_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the manual split override was applied."
+    },
+    "splits_override_reason": {
+      "type": "string",
+      "description": "Required reason recorded for the manual split override (audit trail)."
     }
   },
   "required": [
