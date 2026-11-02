@@ -98,7 +98,7 @@ const firstText = (...vals: any[]): string => {
 const toCents = (v: any): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = looseNum(v);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 
 // Normalize any date-ish value to 'YYYY-MM-DD'. A leading 'YYYY-MM-DD' prefix
