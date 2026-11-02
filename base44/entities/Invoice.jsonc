@@ -201,6 +201,35 @@
           }
         }
       }
+    },
+    "salesperson": {
+      "type": "string",
+      "description": "Screen name of the salesperson credited for this invoice \u2014 carried down the chain from Opportunity/AllInOneEstimate.salesperson (CoreBridge 'Salesperson')."
+    },
+    "entered_by": {
+      "type": "string",
+      "description": "Display name of the staff member who entered the originating order (CoreBridge 'Entered By'; from AllInOneEstimate.entered_by_display, falling back to the acting user)."
+    },
+    "income_account_splits": {
+      "type": "array",
+      "description": "GL income split computed from line parts: one entry per distinct income account code with its summed amount. Used by accounting export and statement reporting.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "income_account_code": {
+            "type": "string",
+            "description": "GL income account code this split posts to."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount posted to this account code."
+          }
+        }
+      }
+    },
+    "statement_batch_id": {
+      "type": "string",
+      "description": "Statement batch this invoice was included in, when customer statements are generated in bulk."
     }
   },
   "required": [
