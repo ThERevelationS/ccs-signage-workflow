@@ -125,6 +125,14 @@ const VOIDISH = new Set(['void', 'refunded', 'cancelled', 'canceled']);
 const isVoidish = (status: any) => VOIDISH.has(clean(status).toLowerCase());
 const isDraft = (status: any) => clean(status).toLowerCase() === 'draft';
 
+// N-05.1: for PAYMENTS only, 'refunded' is a real money movement, not an
+// erasure — the refund leg (negative row, refund_of_payment_id) and the
+// refunded original are both real ledger events that net each other. Only
+// void/cancelled rows never happened. Treating the leg as voidish canceled
+// it out of `paid`/`applied`, so a partial refund never reopened AR.
+const VOID_PAYMENT = new Set(['void', 'cancelled', 'canceled']);
+const isVoidPayment = (p: any) => VOID_PAYMENT.has(clean(p?.status).toLowerCase());
+
 const invoiceDay = (inv: any) => toDay(inv?.issue_date || inv?.created_date);
 const paymentDay = (p: any) => toDay(p?.paid_date || p?.created_date);
 const paymentBelongsToInvoice = (p: any, inv: any) => {
@@ -231,7 +239,7 @@ export function customerStatementContext({ customer, invoices, payments, period,
   for (const pay of custPayments) {
     const d = paymentDay(pay);
     if (!d || d >= start) continue;
-    if (isVoidish(pay.status)) continue;
+    if (isVoidPayment(pay)) continue;
     opening -= toCents(pay.amount);
   }
 
@@ -254,7 +262,7 @@ export function customerStatementContext({ customer, invoices, payments, period,
     if (!d || d < start || d > asOf) continue;
     const cents = toCents(pay.amount);
     paid += cents;
-    if (isVoidish(pay.status)) adjustments += cents;
+    if (isVoidPayment(pay)) adjustments += cents;
   }
   const closing = opening + invoiced - paid + adjustments;
 
@@ -267,7 +275,7 @@ export function customerStatementContext({ customer, invoices, payments, period,
     if (isDraft(inv.status) || isVoidish(inv.status)) continue;
     const total = toCents(inv.total);
     const applied = custPayments
-      .filter((pay) => !isVoidish(pay.status))
+      .filter((pay) => !isVoidPayment(pay))
       .filter((pay) => {
         const pd = paymentDay(pay);
         return pd && pd <= asOf;
