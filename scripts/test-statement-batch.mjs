@@ -138,9 +138,11 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
   eq(ctx.invoiced, 70000, 'invoiced gross includes the voided invoice');
   // paid = gross received in Oct (25000 + 10000 refunded + 5000 unapplied)
   eq(ctx.paid, 40000, 'paid gross includes refunded + unapplied payments');
-  // adjustments = voided/refunded payments (10000) − voided invoices (20000)
-  eq(ctx.adjustments, -10000, 'adjustments back out voided + refunded rows');
-  eq(ctx.closing_balance, 125000, 'closing = opening + invoiced − paid + adjustments');
+  // adjustments = voided invoices (−20000) + void payments (+0, none here).
+  // N-05.1: the 'refunded' payment is a real money movement, not an erasure —
+  // its reversal rides a separate negative leg row, so it stays in `paid`.
+  eq(ctx.adjustments, -20000, 'adjustments back out voided invoice only; refunded payment is live');
+  eq(ctx.closing_balance, 115000, 'closing = opening + invoiced − paid + adjustments');
   eq(ctx.closing_balance, ctx.opening_balance + ctx.invoiced - ctx.paid + ctx.adjustments,
     'roll-forward identity holds');
 }
@@ -156,13 +158,13 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
     'sorted by issue date');
   const oct = ctx.line_items.find((l) => l.invoice_number === 'INV-A-OCT');
   eq(oct.total, 50000);
-  eq(oct.paid, 25000, 'refunded payment not applied; number-linked payment applied');
-  eq(oct.balance, 25000);
+  eq(oct.paid, 35000, 'number-linked + refunded-row payments both apply (N-05.1)');
+  eq(oct.balance, 15000);
   const old = ctx.line_items.find((l) => l.invoice_number === 'INV-A-OLD');
   eq(old.paid, 60000);
   eq(old.balance, 40000);
   const sumOpen = ctx.line_items.reduce((s, l) => s + l.balance, 0);
-  eq(sumOpen, 130000, 'Σ open items');
+  eq(sumOpen, 120000, 'Σ open items');
   eq(sumOpen - ctx.closing_balance, 5000, 'closing = open items − unapplied credit');
 }
 
@@ -172,14 +174,14 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
     customer: CUST1, invoices: INVOICES, payments: PAYMENTS, period: PERIOD,
   });
   deep(ctx.aging, {
-    current: 25000,  // INV-A-OCT due 11-01 (not yet due)
+    current: 15000,  // INV-A-OCT due 11-01 (not yet due) — refunded row applied
     b1_30: 40000,    // INV-A-OLD due 10-01 → exactly 30 days
     b31_60: 20000,   // INV-A-MID2 due 09-15 → 46 days
     b61_90: 15000,   // INV-A-MID3 due 08-20 → 72 days
     b90p: 30000,     // INV-A-MID due 08-01 → 91 days
   });
   const bucketSum = Object.values(ctx.aging).reduce((s, v) => s + v, 0);
-  eq(bucketSum, 130000, 'aging totals Σ open items');
+  eq(bucketSum, 120000, 'aging totals Σ open items');
   // Invoice with no due_date ages current; boundary 31 → b31_60.
   const ctx2 = customerStatementContext({
     customer: CUST2,
@@ -217,8 +219,8 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
   eq(ctx.invoiced, 320700, 'as-of invoiced covers full history incl. voided + November rows');
   // gross paid: 60000+8000+25000+10000+5000+500 = 108500
   eq(ctx.paid, 108500);
-  eq(ctx.adjustments, -10000);
-  eq(ctx.closing_balance, 202200, 'as-of closing = net balance at now');
+  eq(ctx.adjustments, -20000);
+  eq(ctx.closing_balance, 192200, 'as-of closing = net balance at now');
 }
 
 // --- statementCandidates: filtering + flags ------------------------------------
@@ -229,7 +231,7 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
   });
   eq(candidates.length, 3, 'zero-balance, credit-balance, activity-free, and id-less customers skipped');
   deep(candidates.map((c) => c.customer.id), ['c1', 'c2', 'c3'], 'sorted by company name');
-  eq(candidates[0].context.closing_balance, 125000);
+  eq(candidates[0].context.closing_balance, 115000);
   eq(candidates[1].context.closing_balance, 4000);
   eq(candidates[2].context.closing_balance, 7550, 'decimal-dollar invoice is cent-exact');
   eq(candidates[0].missing_email, false);
@@ -274,7 +276,7 @@ const deep = (a, b, msg) => { assert.deepEqual(a, b, msg); n += 1; };
   ok(line.includes('Acme Sign Co'), 'summary carries company');
   ok(line.includes('October 2026'), 'summary carries period label');
   ok(line.includes('5 open invoices'), 'summary carries open count');
-  ok(line.includes('$1,250.00 due'), 'summary carries closing as dollars');
+  ok(line.includes('$1,150.00 due'), 'summary carries closing as dollars');
   ok(line.includes('31-60d $200.00'), 'summary carries non-zero aging buckets');
   const fallback = renderStatementSummary({ company_name: 'X Co', as_of: '2026-11-15', line_items: [], closing_balance: 0, aging: {} });
   ok(fallback.includes('as of 2026-11-15'), 'no period_label → as-of fallback');
