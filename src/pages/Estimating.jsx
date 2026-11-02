@@ -1,10 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { History, Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
-import { Input } from "@/components/ui/input";
+import QueueFilterBar from "@/components/queues/QueueFilterBar";
+import {
+  DEFAULT_QUEUE_FILTERS,
+  flattenQueueRows,
+  filterQueueRows,
+  serializeQueueFilters,
+} from "@/components/queues/productQueueModel";
+import { OPERATIONAL_STATUS_CUSTOMER_LABELS } from "@/components/estimator/workOrderConversion";
 import DragDropList from "@/components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
@@ -14,24 +20,83 @@ import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, tra
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
+import { useEstimateDeepLink } from "@/components/estimator/deepLinks";
 
 const WorkOrder = staffEntities.WorkOrder;
 
+// C-01 — shared CoreBridge queue filter bar on this board. The bar is
+// stateless; the page owns the filter object and pushes it through the
+// product-queue model. flattenQueueRows only emits product rows, so each
+// work order also contributes one order-level "meta" row carrying the
+// order fields the bar can still match (ref/company search blob, WO
+// designer/assignee, sales rep, entered-by, install-date due). Product-only
+// fields stay blank on meta rows so select filters remain product-accurate.
 // Work orders carry no line_items — the honest "notes-level" search set is
 // the description/notes/estimate-number columns the entity actually has.
-const WO_SEARCH_FIELDS = [
-  "title",
-  "client_name",
-  "contact_name",
-  "customer_description",
-  "description",
-  "notes",
-  "estimator_notes",
-  "work_notes",
-  "source_estimate_number",
-  "current_task_description",
+const WO_META_SEARCH_FIELDS = [
+  "title", "client_name", "contact_name", "corbridge_invoice_number",
+  "work_order_number", "source_estimate_number", "customer_description",
+  "description", "estimator_notes", "work_notes", "current_task_description",
 ];
+
+function woMetaQueueRow(wo) {
+  return {
+    workOrderId: wo.id,
+    ref: wo.corbridge_invoice_number || wo.title || wo.id,
+    company: wo.client_name || "",
+    productName: WO_META_SEARCH_FIELDS.map((f) => wo?.[f]).filter((v) => String(v || "").trim()).join(" "),
+    status: "none",
+    substatus: "",
+    designer: wo.designer || "",
+    assignedTo: wo.assigned_to || "",
+    responsibility: "",
+    category: "",
+    moduleKey: "",
+    due: "",
+    woDue: wo.project_install_date || "",
+    hardDue: false,
+    machine: "",
+    part: "",
+    salesperson: wo.sales_rep || wo.salesperson || wo.salesperson_email || "",
+    enteredBy: wo.created_by || wo.entered_by || "",
+    rush: wo.is_rush === true || wo.rush === true ||
+      String(wo.order_priority || "").trim().toLowerCase() === "rush",
+  };
+}
+
+// Options are {value,label} lists of the distinct values present in the
+// queue rows — the QueueFilterBar contract.
+function queueOptionsFromRows(rows) {
+  const uniq = (key) =>
+    [...new Set((rows || []).map((r) => r[key]).filter((v) => String(v || "").trim()))]
+      .sort((a, b) => String(a).localeCompare(String(b)))
+      .map((v) => ({ value: v, label: v }));
+  return {
+    machines: uniq("machine"),
+    partCategories: uniq("category"),
+    parts: uniq("part"),
+    designers: uniq("designer"),
+    substatuses: uniq("substatus"),
+    responsibilities: uniq("responsibility"),
+    assignees: uniq("assignedTo"),
+    salespeople: uniq("salesperson"),
+    enteredBys: uniq("enteredBy"),
+    moduleKeys: uniq("moduleKey"),
+    statuses: [...new Set((rows || []).map((r) => r.status).filter((s) => s && s !== "none"))]
+      .sort()
+      .map((s) => ({ value: s, label: OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s })),
+  };
+}
+
+// Non-default filters (beyond page size / include-fulfilled which do not
+// change which orders show on a board) disable drag reorder — a filtered
+// subset has no meaningful order to persist.
+function queueFiltersActive(filters) {
+  const ser = serializeQueueFilters({ ...filters, pageSize: DEFAULT_QUEUE_FILTERS.pageSize });
+  delete ser.fulfilled;
+  return Object.keys(ser).length > 0 ||
+    ["machine", "part", "salesperson", "enteredBy"].some((k) => (filters?.[k] ?? "all") !== "all");
+}
 
 export default function Estimating() {
   const { currentUser, isRegistered } = useAuth();
@@ -42,27 +107,26 @@ export default function Estimating() {
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(
-    () => new URLSearchParams(window.location.search).get("q") || ""
-  );
+  // C-01 — the shared queue filter bar owns the search box now; its `search`
+  // key is seeded from ?q= so deep links keep working.
+  const [queueFilters, setQueueFilters] = useState(() => ({
+    ...DEFAULT_QUEUE_FILTERS,
+    search: new URLSearchParams(window.location.search).get("q") || "",
+  }));
 
   // Write-back: keep ?q= in the URL in sync so searches survive reload/share.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const next = searchQuery.trim();
+    const next = queueFilters.search.trim();
     if (next) params.set("q", next); else params.delete("q");
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
-  }, [searchQuery]);
+  }, [queueFilters.search]);
   const listContainerRef = useRef(null);
   const [cardContainers, setCardContainers] = useState({});
   const deepLinkedWorkOrderRef = useRef(false);
   // #302 — /Estimating?estimate=<id> forwards to the estimate detail.
   useEstimateDeepLink();
-  // #313 — last-5 searches per user, dropdown under the search input.
-  const [recentOpen, setRecentOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches("estimating", currentUser?.email));
-  const commitRecentSearch = (v) => setRecentSearches(pushRecentSearch("estimating", currentUser?.email, v));
 
   useEffect(() => {
     document.title = "Estimating - Workflow Manager";
@@ -109,18 +173,26 @@ export default function Estimating() {
     };
   }, []);
 
+  // Queue-row universe for the filter bar: product rows (flatten honors
+  // includeFulfilled) + one order-level meta row per work order. The meta
+  // row's productName carries the notes-level search blob so the model's
+  // free-search arm covers the same fields the old bespoke search did (#301).
+  const queueRows = useMemo(() => {
+    const rows = flattenQueueRows(workOrders, { includeFulfilled: queueFilters.includeFulfilled });
+    for (const wo of workOrders) if (wo?.id) rows.push(woMetaQueueRow(wo));
+    return rows;
+  }, [workOrders, queueFilters.includeFulfilled]);
+
+  const queueOptions = useMemo(() => queueOptionsFromRows(queueRows), [queueRows]);
+  const filtersActive = useMemo(() => queueFiltersActive(queueFilters), [queueFilters]);
+
   // Client-side queue filter seeded from the ?q= URL param.
   const filteredWorkOrders = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return workOrders;
-    // #301 — extended beyond title/client into the notes/description fields
-    // a Work Order row actually carries (no line_items exist here).
-    return workOrders.filter((wo) =>
-      WO_SEARCH_FIELDS.some((f) => String(wo[f] ?? "").toLowerCase().includes(query))
-    );
-  }, [workOrders, searchQuery]);
+    const ids = new Set(filterQueueRows(queueRows, queueFilters).map((r) => r.workOrderId));
+    return workOrders.filter((wo) => ids.has(wo.id));
+  }, [workOrders, queueRows, queueFilters]);
 
-  const isFiltering = searchQuery.trim() !== "";
+  const isFiltering = filtersActive || queueFilters.search.trim() !== "";
 
   const queueStats = useMemo(() => {
     let total = 0;
@@ -368,50 +440,28 @@ export default function Estimating() {
       )}
 
       {!isFullscreen && (
-        <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Estimating</h1>
-            <p className="text-sm text-gray-500">Manage estimation requests and quotes</p>
-            <p className="text-xs text-gray-400 mt-1">
-              {queueStats.count} {queueStats.count === 1 ? "job" : "jobs"}
-              {queueStats.hasAmounts &&
-                ` · $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            </p>
+        <>
+          <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Estimating</h1>
+              <p className="text-sm text-gray-500">Manage estimation requests and quotes</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {queueStats.count} {queueStats.count === 1 ? "job" : "jobs"}
+                {queueStats.hasAmounts &&
+                  ` · $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              </p>
+            </div>
           </div>
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search estimating requests"
-              onFocus={() => { setRecentSearches(readRecentSearches("estimating", currentUser?.email)); setRecentOpen(true); }}
-              onBlur={() => { commitRecentSearch(searchQuery); window.setTimeout(() => setRecentOpen(false), 150); }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { commitRecentSearch(searchQuery); setRecentOpen(false); }
-                else if (e.key === "Escape") setRecentOpen(false);
-              }}
-              placeholder="Search title, client or notes..."
-              className="pl-8 bg-white/80"
+          <div className="max-w-7xl mx-auto mb-4">
+            <QueueFilterBar
+              filters={queueFilters}
+              onChange={setQueueFilters}
+              options={queueOptions}
+              pageSize={queueFilters.pageSize}
+              onPageSizeChange={(n) => setQueueFilters((f) => ({ ...f, pageSize: n }))}
             />
-            {recentOpen && recentSearches.length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
-                  <History className="h-3 w-3" aria-hidden="true" /> Recent searches
-                </div>
-                {recentSearches.map((recent) => (
-                  <button
-                    key={recent}
-                    type="button"
-                    onMouseDown={(e) => { e.preventDefault(); setSearchQuery(recent); commitRecentSearch(recent); setRecentOpen(false); }}
-                    className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-blue-50"
-                  >
-                    {recent}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
+        </>
       )}
 
       {!isFullscreen && <StageTasksPanel stage="estimating" />}
@@ -420,7 +470,11 @@ export default function Estimating() {
           <ListSkeleton rows={5} />
         ) : isFiltering && filteredWorkOrders.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No work orders match "{searchQuery.trim()}"</p>
+            <p className="text-gray-500 text-lg">
+              {queueFilters.search.trim()
+                ? `No work orders match "${queueFilters.search.trim()}"`
+                : "No work orders match these filters."}
+            </p>
           </div>
         ) : (
           <DragDropList
