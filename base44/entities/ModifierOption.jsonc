@@ -1,0 +1,61 @@
+{
+  "name": "ModifierOption",
+  "type": "object",
+  "description": "One selectable option of a PricingModifier whose input_type is 'select'. Options can carry per-option rate overrides so picking a choice swaps in different retail/cost rates.",
+  "properties": {
+    "modifier_id": {
+      "type": "string",
+      "description": "Id of the parent PricingModifier this option belongs to."
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label shown in the select dropdown."
+    },
+    "value": {
+      "type": "string",
+      "description": "Stored value written to the estimate line / part config when this option is chosen."
+    },
+    "rate_overrides": {
+      "type": "object",
+      "description": "Optional per-option rate override bag (e.g. {retail, cost, per_unit} or keyed rows) applied instead of the parent modifier's rates when this option is selected.",
+      "additionalProperties": true
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true this option is pre-selected for new inputs."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order within the parent modifier's option list."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status (e.g. active, archived). Free-form string; treated as active when unset."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__modifieroption_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__modifieroption_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__modifieroption_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__modifieroption_backend_only__"
+      }
+    }
+  }
+}
