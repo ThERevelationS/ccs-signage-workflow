@@ -1,0 +1,60 @@
+{
+  "name": "ReportRun",
+  "display_name": "Report Run",
+  "description": "Backend-only report execution history (J-09): params snapshot + hash, run-by, timing, row count. Idempotent via creation_request_key rptrun:<report>:<hash>:<day-ms>.",
+  "properties": {
+    "report_id": {
+      "type": "string"
+    },
+    "params_snapshot": {
+      "type": "string",
+      "description": "Canonical JSON string (deep-sorted keys) \u2014 see savedReportRunsModel.canonicalParamsJson."
+    },
+    "params_hash": {
+      "type": "string",
+      "description": "FNV-1a base36 hash of params_snapshot."
+    },
+    "run_by": {
+      "type": "string"
+    },
+    "run_at": {
+      "type": "string",
+      "description": "ISO timestamp."
+    },
+    "row_count": {
+      "type": "integer"
+    },
+    "duration_ms": {
+      "type": "integer"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "rptrun:<report_id>:<hash>:<day-ms> \u2014 idempotent retry key."
+    }
+  },
+  "required": [
+    "report_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__report_run_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__report_run_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__report_run_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__report_run_backend_only__"
+      }
+    }
+  }
+}
