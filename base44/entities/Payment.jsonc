@@ -85,6 +85,18 @@
       "type": "string",
       "description": "ReconciliationBatch this payment was swept into at cash close. Empty = still unreconciled. Set only by manageReconciliation."
     },
+    "portal_source": {
+      "type": "string",
+      "description": "Event-class marker on portal-originated payment rows, e.g. \"added from Customer Portal\". Empty = staff-entered."
+    },
+    "deposit_applied_to_invoice_id": {
+      "type": "string",
+      "description": "On deposit rows: id of the Invoice this deposit was later applied to."
+    },
+    "gl_memo": {
+      "type": "string",
+      "description": "Free-text memo carried to GL/accounting exports."
+    },
     "created_by": {
       "type": "string"
     }
