@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -92,7 +92,7 @@ export default function PTOBalanceView({ currentUser }) {
       }
 
       setUpcomingRequests(requests.sort((a, b) =>
-        new Date(a.start_date) - new Date(b.start_date)
+        parseISO(a.start_date) - parseISO(b.start_date)
       ));
     } catch (err) {
       console.error("Error loading PTO balance:", err);
@@ -237,9 +237,9 @@ export default function PTOBalanceView({ currentUser }) {
                     {request.request_type.replace("_", " ")}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {format(new Date(request.start_date), "MMM d")}
+                    {format(parseISO(request.start_date), "MMM d")}
                     {request.end_date !== request.start_date && 
-                      ` - ${format(new Date(request.end_date), "MMM d")}`
+                      ` - ${format(parseISO(request.end_date), "MMM d")}`
                     }
                   </p>
                 </div>
@@ -268,7 +268,7 @@ export default function PTOBalanceView({ currentUser }) {
             )}
             {balance.hire_date && (
               <div>
-                <p className="text-gray-500">Hire Date: <strong>{format(new Date(balance.hire_date), "MMM d, yyyy")}</strong></p>
+                <p className="text-gray-500">Hire Date: <strong>{format(parseISO(balance.hire_date), "MMM d, yyyy")}</strong></p>
               </div>
             )}
           </div>
