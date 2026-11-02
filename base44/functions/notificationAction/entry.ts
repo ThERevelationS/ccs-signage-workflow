@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
+import { subscriptionsForUser, SUBSCRIPTIONS_MAX } from "../../shared/alertSubscriptionsModel.ts";
 
 // Persisted-notification layer for the unified attention feed
 // (ESTIMATOR_BACKLOG §14: #326-#350). The live `attention_feed` payload still
@@ -318,9 +319,12 @@ Deno.serve(async (req) => {
           sound_on: row.sound_on !== false,
           digest_opt_in: row.digest_opt_in === true,
           last_digest_date: clean(row.last_digest_date),
+          // K-03 — H-12 subscriptions surface on the account prefs page.
+          subscriptions: subscriptionsForUser(row),
         } : {
           hidden_sections: [], section_snoozed_until: {}, dismissed_feed_items: [],
           sound_on: true, digest_opt_in: false, last_digest_date: "",
+          subscriptions: [],
         },
         exists: !!row,
       });
@@ -348,6 +352,25 @@ Deno.serve(async (req) => {
       if (typeof body?.sound_on === "boolean") patch.sound_on = body.sound_on;
       if (typeof body?.digest_opt_in === "boolean") patch.digest_opt_in = body.digest_opt_in;
       if (clean(body?.last_digest_date)) patch.last_digest_date = clean(body.last_digest_date).slice(0, 10);
+      // K-03 — whole-list subscription replace from the account prefs
+      // surface. The payload is re-normalized server-side (never trusted),
+      // deduped by signature, capped at SUBSCRIPTIONS_MAX, and audit-stamped
+      // to the session actor — the row is already own-scoped via
+      // ensureOwnPrefRow(Pref, me), so a client can only ever edit its own
+      // subscriptions. Omitting `subscriptions` leaves the stored list
+      // untouched (partial-patch contract).
+      if (Array.isArray(body?.subscriptions)) {
+        const stampIso = iso();
+        patch.subscriptions = subscriptionsForUser({ subscriptions: body.subscriptions })
+          .slice(0, SUBSCRIPTIONS_MAX)
+          .map((s: any) => ({
+            ...s,
+            created_by: clean(s.created_by) || me,
+            created_at: clean(s.created_at) || stampIso,
+            updated_by: me,
+            updated_at: stampIso,
+          }));
+      }
       if (requestId) patch.last_request_id = requestId.slice(0, 128);
       patch.schema_version = 1;
       if (Object.keys(patch).length > 1 || requestId) await Pref.update(row.id, patch);
