@@ -35,15 +35,69 @@
 - **Rate-limit discipline**: entity reads share ~140/60s per-caller + a whole-app rolling volume cap. Batch calls, reuse tokens, never run browser pollers during smoke tests, back off 60-120s on "rate-limited"/"entity read traffic" errors. If the app cap is saturated by outside traffic, park the item `[OPEN]` and move to a local-only item rather than hammering.
 - **Stop conditions** — park and end the session if: 3 consecutive unrelated live-call failures, auth rejects a fresh token twice, or any destructive operation is required to proceed.
 - **Silent-swallow rule**: `.catch(() => null)` on writes is banned for new code; surface as `*_warning` response fields (the `intake_link_warning` pattern).
+- **Worker rails (parallel mode)**: workers never touch the ledger, claims, PROGRESS_LOG, AGENTS.md, or hooks; ZZ test data + all entity writes = orchestrator-only (L3); worker scope violations → orchestrator reverts immediately.
 
 ### 0.4 Phase gates
 - After each workstream completes (or hits a dependency gate): `sandbox checkpoint "<ws>: <what shipped>"`, append a phase summary to `PROGRESS_LOG.md`, run `node scripts/validate-opportunity-workspace.mjs` + relevant hardening suites, and confirm `git status` shows no unrelated churn.
+- **Parallel mode:** a phase gate also requires all claims integrated or released — zero `[DOING]` — before the checkpoint.
 - A workstream is only complete when every `[OPEN]` in it is `[DONE]`/`[BLOCKED-*]` with a reason.
 
 ### 0.5 Context budget discipline (for very long runs)
 - Research once, cite file+line in the item's evidence, don't re-read whole files per item.
 - Prefer `grep`/`find` tools over shell `grep`/`rg`/`find` (per shell policy).
 - When a function file exceeds ~100KB, read targeted ranges (the entry.ts files are huge).
+
+### 0.6 PARALLEL EXECUTION MODEL — orchestrator + subagent workers
+
+This plan runs as **one orchestrator session + up to ~8 subagent workers** (`run_subagent` / `subagent_general`, background where possible). The orchestrator is kept alive by `.devin/stop-masterplan.ps1` (Stop hook, gated by `.devin/MASTERPLAN_SESSION_ACTIVE`, ends when `.devin/MASTERPLAN_DONE` exists).
+
+#### Roles
+- **Orchestrator** (the hooked session): the ONLY writer of ledger marks, `.masterplan-claims/claims.jsonl`, `PROGRESS_LOG.md`, `AGENTS.md`, hooks. Owns **all remote writes** (`sandbox edit`/`sandbox write`), **all `functions deploy`**, **all live verification** (fn-call, entity reads/writes, browser tests), checkpoints. Dispatches work and integrates results; may take its own claimed item while workers run.
+- **Workers**: receive a bounded brief (below); write ONLY local files in their owned set; MAY run local commands (`node scripts/*`, esbuild) and `sandbox read` (source reads are bridge API — they don't touch entity budget); may NOT deploy, push remote, touch entities, run live calls, or edit orchestrator-owned files.
+
+#### Worker brief contract — every dispatch carries
+```
+ITEM: <ID> — <title + acceptance copied verbatim from the ledger>
+OWNED FILES: <explicit allowlist of paths the worker may create/edit>
+NEW FILES ALLOWED IN: <dirs>
+FORBIDDEN: all other entities, other functions, shared modules not listed,
+           App.jsx/pagesConfig/nav files, deploys, remote writes, live calls,
+           entity reads/writes, browser, ledger/claims/PROGRESS_LOG/AGENTS.md/hooks
+RULES: AGENTS.md conventions — service-role entities in functions,
+       idempotent creation_request_key creates, CAS anchored on updated_date,
+       expectedFields keys == nextFields keys, unset link fields persist null
+       (never ""), loadAllEntityRows for lists, NO .catch(() => null) on write
+       paths — surface *_warning fields instead.
+VERIFY: <exact local command(s) that must pass>
+EVIDENCE: final message = {files_touched, verify_output, deviations, open_questions}
+```
+
+#### Lanes (per-item default set in each workstream header)
+- **L1 local-only** — suites, docs, pure new shared modules, fixtures, standalone components: freely parallel up to cap.
+- **L2 sandbox-disjoint** — per-entity `.jsonc`, per-function dirs, owned src files: parallel-safe. Worker produces LOCAL file state; the orchestrator pushes remote writes sequentially (`sandbox write` full-file — avoids the CRLF-matcher problem) after verify.
+- **L3 live-serialized** — deploys, fn-call, entity reads/writes, browser: orchestrator-only, one at a time, rate-budget disciplined.
+
+#### Claiming
+- Orchestrator picks next `[OPEN]` items in dependency order whose owned-file sets are **pairwise disjoint**, marks them `[DOING w-N]`, and appends one JSON row per claim to `.masterplan-claims/claims.jsonl` (append-only, orchestrator-written): `{ts, worker, item, owned_files, status: claimed|integrated|failed|released}`.
+- Workers never self-select items and never edit the ledger.
+
+#### Integration loop
+1. Worker returns → orchestrator diffs `git status` vs the OWNED set.
+2. **Out-of-scope changes** → orchestrator reverts those files, re-briefs (max 2), then `[BLOCKED-EXTERNAL]` with a note.
+3. In-scope → run the item's local VERIFY → pass → orchestrator remote-writes the owned files → marks `[DONE]` + evidence line.
+4. Worker crash/timeout → claim released → item back to `[OPEN]`.
+
+#### Concurrency policy
+- Default cap **8 concurrent workers**; orchestrator halves on repeated worker timeouts or local-resource symptoms; never exceeds cap.
+- Background subagents preferred; orchestrator spends idle dispatch time on L3 work (deploys, live verification of already-integrated items) rather than idling.
+- If >half the pool fails on **2 consecutive batches** → orchestrator pauses dispatch, checkpoints, writes an incident note to PROGRESS_LOG.
+
+#### Deploy batching
+- `functions deploy` is orchestrator-only and **batched** per workstream-phase (or every ~10 integrated backend items, whichever first) — deploys upload shared imports, so batching prevents pushing a sibling worker's half-finished shared file.
+- Rotation verified via response-shape markers (observed ~50min worst case), never by timing.
+
+#### Shared-choke-point serialization
+Only the orchestrator (or a worker EXPLICITLY briefed for that file) edits: `base44/shared/*` existing files (new shared files are worker-safe), `src/pages/App.jsx`/`pagesConfig`/nav files (route registration choke point), `ESTIMATOR_MASTERPLAN.md`, `PROGRESS_LOG.md`, `.masterplan-claims/**`, `AGENTS.md`, `.devin/**`. Route registration for worker-built pages is an orchestrator integration step.
 
 ---
 
@@ -92,6 +146,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-A — ENTITY/SCHEMA FOUNDATIONS
 *Extend schemas to carry the fields downstream workstreams write. All additive (new optional fields); no renames/deletes on live fields.*
 
+**Default lane:** `L2` (entities/function dirs disjoint; orchestrator pushes). Exceptions: `A-23` boardFeedFields regen → `L3`; `A-24` audit suite → `L1`.
+
 - [ ] `A-01` **[OPEN]** `IncomeAccount` entity — GL-coded income accounts (code, name, parent_account, status). Seed with CoreBridge-style 4000-series defaults via `ensureNewIncomeAccount`-style idempotent seed in a new `accountingAdminAction`. | Verify: entity exists, seed action creates ≤17 rows w/ creation keys, re-run = 0 dupes.
 - [ ] `A-02` **[OPEN]** `COGSAccount` entity — same shape (5000-series). Same admin action. | Verify: same.
 - [ ] `A-03` **[OPEN]** `BuilderPart` + `PartTemplate` — add `income_account_code`, `cogs_account_code`, `pricing_template_id`, `part_group_id`, `design_lead_days`, `product_lead_days`, `labor_level_id`, `machine_ids[]`, `taxable`, `separate_on_invoice`, `double_sided`, `min_charge`, `parent_sizes[]`, `vendor_id`, `mfg_part_number`, `size_discounts[]`. | Verify: schema fields present; `staffEntityWrite` round-trips one part with all fields.
@@ -120,6 +176,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-B — PRODUCT OPERATIONAL MODEL DEPTH
 *CoreBridge §3/§7: product status × substatus × fulfillment × responsibility × priority × dual due-dates, already scaffolded on `WorkOrder.products[]` — now wire it through every surface.*
 
+**Default lane:** `L2`. `B-01`/`B-07` new shared modules are worker-safe `L1` but orchestrator pushes them (shared-file choke); live verifications → `L3`.
+
 - [ ] `B-01` **[OPEN]** Operational-status enum lock — freeze `operational_status` vocabulary to the CB WIP set: `order_review`, `site_survey`, `awaiting_customer_action`, `awaiting_proof_approval`, `permitting`, `proof_approved`, `in_production`, `install_removal_only`, `quality_control`, `design_review`, `service_repair` + `built`/`completed`/`voided` wrappers. Put the map in `base44/shared/productStatusModel.ts` (shared w/ frontend). | Verify: shared module exports status set + stage map; both function + UI import it.
 - [ ] `B-02` **[OPEN]** `customer_facing_status` label map — per-status display text (e.g. "WIP: Awaiting Proof Approval"→"Requires Proof Approval") in the same shared module; portal + customer-facing surfaces render the label, never the internal status. | Verify: portal shows mapped label on a test product.
 - [ ] `B-03` **[OPEN]** `operational_substatus` quick tags — persistent custom tags on products (create/rename/delete in product editor + queue filter). Store on `products[].quick_tags[]` (A-17) + a `ProductSubstatus` registry entity for the picklist. | Verify: tag persists, appears in filter, registry CRUD.
@@ -139,6 +197,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-C — SHARED QUEUE SYSTEM
 *§4: CB's home = counters + filtered queues with a shared filter bar. CCS has per-stage queues; make them product-level with the full CB filter set + server-saved views (better than browser-local).*
 
+**Default lane:** `L2`. `C-01` QueueFilterBar + `C-02`/`C-03`/`C-06`/`C-08`/`C-10` new files → `L1`; `C-04`/`C-05`/`C-07` mount into existing stage pages → `L2` per-page disjoint; `C-09` feed function verify → `L3`.
+
 - [ ] `C-01` **[OPEN]** `QueueFilterBar` shared component — machine, part category, parts, designer, date presets (Past Due / Today / Tomorrow / This Week / Next 7 / Rush / hard-dates-only), substatus, responsibility, assigned-to, salesperson, entered-by, free search, page size. Stateless: takes filters + emits onChange. | Verify: mounts on Design/Estimating/Fabrication/InstallationDeliver/Production + EstimatorQueues without page-specific forks.
 - [ ] `C-02` **[OPEN]** `ProductQueue` rows at product granularity — each row = order# + product position ("INV-14022 3/3"), Product, Company, Product Name, Status/Substatus, both due dates, responsibility color, priority. Data path: WO `products[]` denormalized or a `productQueueFeed` function projection. | Verify: a WO with 3 products shows 3 rows; fields match spec.
 - [ ] `C-03` **[OPEN]** Server-saved views via `SavedQueueView` (A-20): save/rename/pin/delete per user per page; views apply through QueueFilterBar; per-session persistence fallback. | Verify: saved view round-trips through the entity; pin ordering stable.
@@ -152,6 +212,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ## WS-D — JOB WORKSPACE DEPTH
 *§5: one screen = header + products + waterfall + history + payments + actions. JobWorkspace exists; deepen to CB detail parity.*
+
+**Default lane:** `L2` — serialize edits to `JobWorkspace.jsx` itself (one worker at a time on that file); `D-08`/`D-09` print templates → `L1` new files; portal/live checks → `L3`.
 
 - [ ] `D-01` **[OPEN]** Order header parity — status, EST-/INV- numbers, payment terms label, PO#, salesperson, entered-by, sales center, order description, created/follow-up dates — all populated (A-16/A-18). | Verify: header renders all fields on a converted test WO.
 - [ ] `D-02` **[OPEN]** Waterfall — Subtotal→Discount→Shipping→Postage→New Subtotal→Tax%→Total→Total Paid→Balance Due, computed server-side from invoice + fee lines (A-22). | Verify: waterfall math matches invoice totals to the cent.
@@ -169,6 +231,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-E — PROOF WORKFLOW & FULFILLMENT
 *§3/§7/§13.4-5: Awaiting Proof→Approved with portal approval + due-date recalc; then built→fulfillment→completed→closed, unpaid-completed legal.*
 
+**Default lane:** `L2`. Portal/fulfillment live checks → `L3`.
+
 - [ ] `E-01` **[OPEN]** Proof upload pipeline — per-product + per-part proof upload (file criteria list), `proof_version` increment, prior versions retained (`proof_history[]`). | Verify: upload bumps version, history retained, portal sees current.
 - [ ] `E-02` **[OPEN]** `awaiting_proof_approval` → `proof_approved` transitions via portal (customer approval action) and staff (design review queue action); both write the same `proof_approved_version` + audit. | Verify: both paths work on test product; audit records actor class.
 - [ ] `E-03` **[OPEN]** Proof-change requests — customer "request changes" action → status back to design + reason captured + notification to designer (H-xx). | Verify: status regresses, reason stored, notification fires.
@@ -182,6 +246,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ## WS-F — PRICING ENGINE PARITY (largest cluster)
 *§8: tier charts, market-based mode, formula modifiers, labor levels, machine costs, part groups, variable rates, global variables, size discounts, import pipeline, GL mapping — with PricingTierMatrix/MachineRate/LaborLevel already scaffolded. Internal order: catalog model → tier engine → formula engine → machine/labor → import → GL wiring.*
+
+**Default lane:** `L1` core — `F-01` doc, `F-02`/`F-09`/`F-11`/`F-12`/`F-13`/`F-14`/`F-15`/`F-16` pure modules + suites are maximally parallel; `F-03`–`F-08`/`F-10`/`F-17`–`F-22`/`F-24` wiring → `L2`; `F-23a`–`F-23j` per-module wires = 10 separate workers on disjoint module dirs → `L2`; `F-20` import function → `L2`; live price checks → `L3`.
 
 - [ ] `F-01` **[OPEN]** Pricing architecture doc → `docs/pricing-engine.md` — current aioPricing.js/customerPricing.js flow vs target CB model; decide compose-vs-replace per module (keep CCS module estimators intact, inject shared engine). | Verify: doc committed; two module owners' files referenced correctly.
 - [ ] `F-02` **[OPEN]** `pricingEngine` shared module (`base44/shared/pricingEngine.ts`) — pure functions: cost base → tier lookup → markup → minimums → tax → total. Deterministic, unit-testable, no entity access. | Verify: `scripts/test-pricing-engine.mjs` PASS w/ ≥30 cases.
@@ -213,6 +279,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-G — CUSTOMER / CRM DEPTH
 *§9: hierarchical origination, master accounts, contact roles, typed events, auto-inactive, credit, tax-exempt, in-store credit, analytics.*
 
+**Default lane:** `L2` (entity/registry + page pairs disjoint per item); `G-14` merge live test → `L3`.
+
 - [ ] `G-01` **[OPEN]** Hierarchical `origination_path` — tree-managed list (settings registry `OriginationNode`), customer picks path, reports group by any level. | Verify: "Networking Group : BNI - Carl" parses into levels; report groups correctly.
 - [ ] `G-02` **[OPEN]** Master accounts — `master_account_id` on Customer; master view rolls up child customers' balances, jobs, contacts. | Verify: rollup totals = sum of children.
 - [ ] `G-03` **[OPEN]** Customer status lifecycle — Lead→Prospect→Active→Inactive + `auto_inactive_months` sweep (`manageWorkflowSchedules` or new scheduler action; disable-able per customer). | Verify: test customer inactivates after simulated window; opt-out honored.
@@ -230,6 +298,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ## WS-H — COMMUNICATION AUTOMATION (email-ready, off by default)
 *§9: templated customer notifications + two-stage follow-ups + vendor set + broadcast + per-user subscriptions. `sendEmail` disabled → everything routes through a `deliveryChannel` adapter: `email` (flagged off) or `smartsheet_note`/`internal_notification` (live now).*
+
+**Default lane:** `L1` — `H-01` adapter, `H-03` renderer, `H-04`/`H-06` state machines, `H-13` digest logic are pure modules + suites; `H-02`/`H-05`/`H-07`–`H-12`/`H-14` wiring → `L2`; `H-15` backlog conversion → `L2`.
 
 - [ ] `H-01` **[OPEN]** `deliveryChannel` adapter (`base44/shared/delivery.ts`) — resolve channel from GlobalSettings.emailDelivery (A-21): if enabled → sendEmail; else → Smartsheet activity + `notificationAction.record` internal row. Every downstream item writes through it. | Verify: flag off → Smartsheet+internal rows land; flag on → adapter would call sendEmail (assert adapter path chosen, don't actually send).
 - [ ] `H-02` **[OPEN]** `NotificationTemplate` entity — templated messages w/ placeholders (order/customer/company/user/location fields), from-location vs from-salesperson toggle, CC-billing flag, attach-PDF flag. Seed CoreBridge's set: estimate ready, new order, action needed, proof ready, built, completed, payment-due-5-day, monthly statement, estimate follow-up #1/#2, proof follow-up #1/#2, credit memo, multi-invoice, login info. | Verify: seed + render of every placeholder on a test record.
@@ -250,6 +320,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-I — ACCOUNTING
 *§10: GL accounts, reconciliation batches (entity exists), export files, QBO adapter, statements, in-store credit (G-09), portal-payment flag.*
 
+**Default lane:** `L2`; `I-08`/`I-09`/`I-10` export/QBO dry-run suites → `L1`; `I-03`/`I-04` share `manageReconciliation` — serialize that function dir to one worker; live batch checks → `L3`.
+
 - [ ] `I-01` **[OPEN]** Income/COGS account admin (A-01/A-02) — Manage Accounts page (admin): CRUD + parent accounts + active toggle. | Verify: admin CRUD; inactive accounts excluded from pickers.
 - [ ] `I-02` **[OPEN]** Invoice GL splits — `income_account_splits[]` (A-16) auto-computed from line parts' accounts at invoice create/edit (F-17); manual split override w/ audit. | Verify: splits sum == invoice total; override persists + audits.
 - [ ] `I-03` **[OPEN]** Reconciliation close flow — `manageReconciliation`: build batch from unbatched payments (location/date/method filters), expected vs collected vs cash_adjustment → variance; close locks payments' `reconciliation_batch_id`; reopen guard (admin + reason). | Verify: batch closes, variance math correct, reopen audits, payments locked after close.
@@ -267,6 +339,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-J — REPORTS PARITY
 *§11: reconcile report catalog; Summary/Detail/Drilldown/Export variants, explicit date basis + void-inclusion rules. FeatureReports/manageFeatureReports is the runtime — extend `reportEngine`.*
 
+**Default lane:** `L1` — `J-01` engine + `J-04`/`J-05`/`J-06`/`J-07`/`J-08` report definitions as pure spec rows (worker-parallel); `J-02`/`J-09`/`J-10`/`J-11` page/function wiring → `L2`; live reconciliation → `L3`.
+
 - [ ] `J-01` **[OPEN]** `reportEngine` shared module — parameterized definitions (name, category, params: date_basis[created|completed|built], date_range, salesperson, location, void_policy), runner returns rows + summary, export to CSV. | Verify: `scripts/test-report-engine.mjs` PASS w/ fixture rows.
 - [ ] `J-02` **[OPEN]** Report catalog page — reports registry (admin CRUD on ReportDefinition A-19) + run/preview/export UI in FeatureReports. | Verify: registry drives the catalog UI.
 - [ ] `J-03` **[OPEN]** AR Aging suite — summary / detail / by-customer / by-salesperson (aging buckets already in get_customer_360 — generalize into engine). | Verify: aging buckets reconcile to invoice balances.
@@ -281,6 +355,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ## WS-K — SYSTEM / SETTINGS / ADMIN
 *§12 + §20 backlog admin items.*
+
+**Default lane:** `L2` (settings pages + numbering paths disjoint); `K-07` rename touches permitting agent wiring → `L3` verify; admin-page live checks → `L3`.
 
 - [ ] `K-01` **[OPEN]** Hours of operation (A-21) — sales-center hours vs production hours (open/close vs start/day); deadline math uses production clock; follow-up math uses sales clock. | Verify: due-date engine consumes the right clock per rule.
 - [ ] `K-02` **[OPEN]** Email/domain settings — authorized sending domains, default outgoing address (location email / noreply), per-user send-as; stored + validated (no sending while disabled). | Verify: settings save + adapter honors from-rules.
@@ -298,6 +374,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-L — BACKLOG TAIL & REGISTERED DEFECTS
 *Explicit carry-over from ESTIMATOR_BACKLOG.md + audit findings.*
 
+**Default lane:** `L2` disjoint fixes; `L-01`/`L-02` audit suites → `L1`; `L-09`/`L-12` live paths → `L3` orchestrator-only.
+
 - [ ] `L-01` **[OPEN]** CAS expected/nextFields key-parity sweep — every `replaceFoundationFieldsIfUnchanged`/`replaceEstimatingRequestFieldsIfUnchanged` call site across all functions: assert `expectedFields` keys == `nextFields` keys (the revoke_link/bumpOpen defect class). Write `scripts/test-cas-key-parity.mjs`. | Verify: suite PASS; fix any site failing it.
 - [ ] `L-02` **[OPEN]** Silent-swallow sweep — `.catch(() => null)` / `.catch(() => {})` on WRITE paths across functions: each must either surface `*_warning` in the response or carry a code-comment justifying silence. Write `scripts/test-write-swallow-audit.mjs`. | Verify: suite PASS; convert offending swallows.
 - [ ] `L-03` **[OPEN]** `sameFoundationValue` empty-equivalence — decide + implement: treat `null`/`undefined`/`""` as one empty class (fixes the whole defect family at the root) OR document strict semantics + fix every call site to match storage. Choose in implementation; add unit cases either way. | Verify: `scripts/test-entity-persistence.mjs` + new empty-class cases PASS.
@@ -314,6 +392,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 ## WS-M — RATE-LIMIT & PERFORMANCE DISCIPLINE
 *The whole-app entity-read cap + per-caller 140/60s are the scaling constraint; every new feature must live inside the budget.*
 
+**Default lane:** `L1` audits/docs/suites; `M-03`/`M-04`/`M-08` shared-path wiring → `L2` serialized; any live measurement → `L3`.
+
 - [ ] `M-01` **[OPEN]** Read-budget audit — per-page entity-read inventory (which function, which entities, paging) → `docs/read-budget.md`; flag any page >2 entity fan-outs without cache. | Verify: doc lists every surface's read cost.
 - [ ] `M-02` **[OPEN]** `loadAllEntityRows` telemetry — count/log pages fetched per call in dev builds; surfaces exceeding budget get projections or cursors. | Verify: telemetry identifies top consumers.
 - [ ] `M-03` **[OPEN]** Feed consolidation — boardFeed-style projection+cache for queue feeds (C-09), Customer360, workspace fan-outs (single reader returns composed payload instead of N parallel entity pulls). | Verify: per-view entity reads measurably lower.
@@ -325,6 +405,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ## WS-N — VERIFICATION INFRASTRUCTURE & TEST COVERAGE
 *Every workstream's verify steps run through here; final gate = full-suite + route sweep + live chain.*
+
+**Default lane:** `L1` suites; `N-08`/`N-09`/`N-11`/`N-12` live gates → `L3` orchestrator-only.
 
 - [ ] `N-01` **[OPEN]** Test-file conventions — all new suites `scripts/test-<domain>.mjs` printing `PASS <name>`; pure-domain tests esbuild-bundled Node (existing pattern). Add to AGENTS verify list as they land. | Verify: convention lint (file naming, PASS output).
 - [ ] `N-02` **[OPEN]** Pricing engine suite (F-02..F-26) — the biggest correctness surface: ≥60 cases incl. precedence, interpolation, formula errors, GL splits, module regression (no-config → identical prices). | Verify: PASS.
@@ -340,6 +422,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 - [ ] `N-12` **[OPEN]** Final gauntlet — end-state: full suite + sweep + e2e chain + checkpoint; the masterplan is not DONE until this gate passes in one run. | Verify: single green run recorded.
 
 ## WS-Z — PARKING LOT (discovered defects — append, never mid-list insert)
+
+**Default lane:** orchestrator-only.
 - `Z-01` **[OPEN]** EstimatingRequest stale-worker back-stamp orphan: `6ae812787fdadfae4566b425` (see L-09).
 - `Z-02` **[OPEN]** 9 `ZZ E2E` live test records — deletion runbook (below).
 - `Z-03` **[OPEN]** (reserved)
@@ -347,7 +431,8 @@ Dependency notes: A (schema fields) precedes B/E/F/G/I. F (pricing) is the large
 
 ---
 
-## 3. ESTIMATED SHAPE & SESSION STRATEGY
-- ~220 items across 12 workstreams + parking lot. Item sizing deliberately small (0.5–4 tool-hours) so a session completes several per run.
-- Suggested unattended cadence: pick items in workstream order; skip `[BLOCKED-*]`; on live-read saturation, switch to local-only items (suites, schema edits, docs) — never idle.
-- Every phase ends: checkpoint + PROGRESS_LOG entry + suites green + ledger updated. A new session reads the ledger and continues cold.
+## 3. ESTIMATED SHAPE & EXECUTION STRATEGY
+- ~220 items across 12 workstreams + parking lot. Item sizing deliberately small (0.5–4 tool-hours) so a worker completes several per dispatch.
+- **Parallel cadence (§0.6):** the orchestrator dispatches up to 8 file-locked workers per batch, integrating + remote-writing as they return, batch-deploying at phase gates, and spending its own time on L3 lanes (deploys, live verification). On live-read saturation it shifts dispatch weight to L1 items — never idles.
+- **Solo fallback:** if run without subagents, pick items in workstream order; skip `[BLOCKED-*]`; on saturation switch to L1 items — same ledger, same rules.
+- Every phase ends: checkpoint + PROGRESS_LOG entry + suites green + ledger updated + zero live claims. A new session reads the ledger and continues cold.
