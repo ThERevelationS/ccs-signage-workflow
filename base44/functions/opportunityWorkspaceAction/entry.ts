@@ -1697,6 +1697,7 @@ Deno.serve(async (req) => {
       });
       const intake = intakeResult.record;
 
+      let intakeLinkWarning = "";
       if (!clean(opportunity.source_primary_intake_id)) {
         await replaceFoundationFieldsIfUnchanged({
           entity: Opportunity,
@@ -1704,7 +1705,7 @@ Deno.serve(async (req) => {
           expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? null },
           nextFields: { source_primary_intake_id: clean(intake.id) },
           label: "Opportunity primary intake link",
-        }).catch(() => null);
+        }).catch((e: any) => { intakeLinkWarning = String(e?.message || e); return null; });
       }
 
       const fresh = await Opportunity.get(clean(opportunity.id)).catch(() => opportunity);
@@ -1725,6 +1726,7 @@ Deno.serve(async (req) => {
         opportunity: fresh || opportunity,
         intake,
         reused: oppResult.status !== "created",
+        intake_link_warning: intakeLinkWarning || undefined,
       });
     }
 
