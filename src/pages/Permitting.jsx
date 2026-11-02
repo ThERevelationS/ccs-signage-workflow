@@ -27,7 +27,7 @@ import { staffEntities, loadEntitiesBatch } from "@/components/staff/staffEntiti
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { primeEntityRowsCache } from "@/components/estimator/loadAllEntityRows";
 
-const primeAndReturn = (label, query, sort, rows) => { primeEntityRowsCache(label, query, sort, rows); return rows; };
+const primeAndReturn = (entity, query, sort, rows) => { primeEntityRowsCache(entity, query, sort, rows); return rows; };
 
 const WorkOrder = staffEntities.WorkOrder;
 const PermitLineItem = staffEntities.PermitLineItem;
@@ -142,7 +142,7 @@ export default function Permitting() {
       // instead of blanking the whole board on one slow read.
       const [items, wos] = await Promise.all([
         batched?.PermitLineItem
-          ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
+          ? Promise.resolve(primeAndReturn(PermitLineItem, null, "-updated_date", batched.PermitLineItem))
           : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
         fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
@@ -154,12 +154,12 @@ export default function Permitting() {
       const [locs, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
         degrade(
           batched?.PermitLocality
-            ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
+            ? Promise.resolve(primeAndReturn(PermitLocality, null, null, batched.PermitLocality))
             : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
           [], "the saved offices list"),
         degrade(
           batched?.AuthorizedEmail
-            ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
+            ? Promise.resolve(primeAndReturn(AuthorizedEmail, null, null, batched.AuthorizedEmail))
             : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
           [], "the team list"),
         degrade(
