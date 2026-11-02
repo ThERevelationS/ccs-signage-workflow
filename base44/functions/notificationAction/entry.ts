@@ -704,12 +704,16 @@ Deno.serve(async (req) => {
 
     throw bad(`Unsupported notification action: ${action}`);
   } catch (error: any) {
-    const status = Number(error?.status || error?.statusCode || 500);
+    // Rate-limit failures must surface as 429 (not flattened to 500) so the
+    // browser governor retries with backoff — SDK errors can carry only a
+    // message, and 429 was missing from the safe-status list entirely.
+    const limited = Number(error?.status) === 429 || Number(error?.statusCode) === 429 || /rate limit|traffic volume/i.test(String(error?.message || error?.data?.message || ''));
+    const status = limited ? 429 : Number(error?.status || error?.statusCode || 500);
     const safeStatus = [400, 401, 403, 404, 409, 423, 429, 503].includes(status) ? status : 500;
     console.error("notificationAction error:", error?.message || error);
     return Response.json({
       success: false,
-      error: clean(error?.message || "Notification action failed."),
+      error: clean(limited ? "Rate limited — please retry." : error?.message || "Notification action failed."),
     }, { status: safeStatus });
   }
 });
