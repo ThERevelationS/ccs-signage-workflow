@@ -3,14 +3,19 @@ import { money } from "./foundationCalc";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
+const EMPTY_ITEMS = [];
+const EMPTY_POLES = [];
+const EMPTY_WALLS = [];
+const EMPTY_TOTALS = {};
+const EMPTY_INVENTORY = [];
 
 export default function FoundationBOM({
-  items = [],
-  poles = [],
-  walls = [],
+  items = EMPTY_ITEMS,
+  poles = EMPTY_POLES,
+  walls = EMPTY_WALLS,
   delivery,
-  totals = {},
-  inventory = [],
+  totals = EMPTY_TOTALS,
+  inventory = EMPTY_INVENTORY,
 }) {
   const rows = useMemo(() => {
     const out = [];
