@@ -1,0 +1,60 @@
+{
+  "name": "CrmEventType",
+  "type": "object",
+  "description": "Typed CRM event taxonomy registry (CoreBridge-style): each row is one selectable event type in the CRM Events queue \u2014 a channel bucket (call, email, visit, consultation, redo) plus a display label (e.g. 'Estimate Follow Up'). Seeded from the CoreBridge default taxonomy (scripts/crm-event-type-seed.json); types staff add later carry is_custom=true. Backend-only \u2014 read/written via service-role functions.",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "enum": [
+        "call",
+        "email",
+        "visit",
+        "consultation",
+        "redo"
+      ],
+      "description": "Channel bucket the event type belongs to."
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label shown in the CRM Events queue picker (e.g. 'Estimate Follow Up')."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display ordering of this type in the picker."
+    },
+    "is_custom": {
+      "type": "boolean",
+      "default": false,
+      "description": "false for CoreBridge-seeded types; true for staff-added types."
+    },
+    "status": {
+      "type": "string",
+      "default": "active",
+      "description": "Lifecycle state \u2014 active | archived."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__crmeventtype_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__crmeventtype_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__crmeventtype_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__crmeventtype_backend_only__"
+      }
+    }
+  }
+}
