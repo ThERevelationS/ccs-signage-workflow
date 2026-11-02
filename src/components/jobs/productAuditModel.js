@@ -11,12 +11,16 @@ export const PRODUCT_AUDIT_EVENT_TYPES = [
   "status_change",
   "substatus_change",
   "proof_event",
+  "proof_approved",
+  "proof_changes_requested",
+  "proof_superseded",
   "due_date_change",
   "assignment_change",
   "priority_change",
   "note",
   "conversion",
   "override",
+  "price_override",
 ];
 
 export const PRODUCT_AUDIT_ACTOR_TYPES = ["staff", "customer", "vendor", "system"];
