@@ -26,6 +26,7 @@ const names = new Set([
   'glAccountAdminModel.ts', 'portalPaymentModel.ts', 'accountingAlertsModel.ts',
   'savedReportRunsModel.ts', 'reportDrilldownModel.ts', 'salesFunnelModel.ts',
   'crmSuggestionModel.ts', 'auditLogModel.ts', 'dataExportModel.ts',
+  'vendorCostModel.ts', 'reportCatalogModel.ts', 'contactRolesModel.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
