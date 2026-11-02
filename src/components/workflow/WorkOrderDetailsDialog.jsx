@@ -40,7 +40,8 @@ import {
   Pencil,
   FolderOpen,
   ExternalLink,
-  Copy
+  Copy,
+  Printer
 } from "lucide-react";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { format } from "date-fns";
@@ -77,6 +78,8 @@ import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDir
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { openProductsBlockingCompletion } from "@/components/estimator/productStageSync";
+import { PRINT_TEMPLATES, renderWorkOrderPrint } from "@/components/jobs/printTemplates";
+import { loadQuoteDefaults } from "@/components/estimator/quoteDefaults";
 import {
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
@@ -167,6 +170,8 @@ export default function WorkOrderDetailsDialog({
   const [showCreateRiderDialog, setShowCreateRiderDialog] = useState(false);
   const [showDuplicateForm, setShowDuplicateForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null);
+  const [printTemplateId, setPrintTemplateId] = useState("original");
+  const [printingWorkOrder, setPrintingWorkOrder] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -962,6 +967,31 @@ export default function WorkOrderDetailsDialog({
     if (Array.isArray(workOrder.work_notes)) return workOrder.work_notes;
     return [];
   }, [workOrder?.work_notes]);
+
+  // D-09 details print — builds the selected template's standalone HTML and
+  // opens it in a print window (window.open + document.write, same as the
+  // punch-sheet/permit-packet print paths). "Print Traveler" stays on the
+  // separate /WorkOrderTraveler page — that document is the production
+  // checklist traveler, not this order-details sheet.
+  const handlePrintWorkOrder = async () => {
+    if (printingWorkOrder) return;
+    setPrintingWorkOrder(true);
+    try {
+      const company = await loadQuoteDefaults().catch(() => null);
+      const html = renderWorkOrderPrint(workOrder, {
+        templateId: printTemplateId,
+        company: company || undefined,
+      });
+      const printWindow = window.open("", "_blank", "width=1100,height=850");
+      if (!printWindow) return;
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error("Could not render the Work Order print document:", error);
+    } finally {
+      setPrintingWorkOrder(false);
+    }
+  };
 
   if (!workOrder) return null;
 
@@ -1954,6 +1984,33 @@ export default function WorkOrderDetailsDialog({
                       <FileText className="w-4 h-4 mr-2 text-violet-600" />
                       Print Traveler
                     </Button>
+
+                    {/* D-09: order-details print — separate document from the
+                        shop traveler above. Picker chooses the template, the
+                        button opens a standalone print window. */}
+                    <div className="flex gap-1.5">
+                      <Select value={printTemplateId} onValueChange={setPrintTemplateId}>
+                        <SelectTrigger className="h-9 flex-1 text-xs" title="Print template">
+                          <SelectValue placeholder="Print template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRINT_TEMPLATES.map((template) => (
+                            <SelectItem key={template.id} value={template.id} className="text-xs">
+                              {template.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        className="clay-button shrink-0 px-2.5"
+                        variant="ghost"
+                        size="sm"
+                        disabled={printingWorkOrder}
+                        title="Print the work order with the selected template"
+                        onClick={handlePrintWorkOrder}>
+                        <Printer className="w-4 h-4 text-violet-600" />
+                      </Button>
+                    </div>
 
                     <Button
                       className="w-full justify-start clay-button"
