@@ -174,7 +174,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
           (rows || [])
             .filter((o) => o.deleted !== true && String(o.work_order_id) === String(workOrderId))
             .sort((a, b) => (a?.row_number ?? 0) - (b?.row_number ?? 0))),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Work Order purchasing authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Work Order purchasing authorized users" })
       ]);
       setOrders(ordersData);
       setUsers(usersData);
