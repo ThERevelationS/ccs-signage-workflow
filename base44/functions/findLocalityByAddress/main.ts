@@ -398,7 +398,12 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     const relevant = [...counties, ...muniRelevant, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []];
     const edge = geocode.approximate_source ? 150 : 25;
     if (!geocode.location_exact && !geocode.approximate_source) return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
-    if (relevant.some((f) => f.distance_m <= edge)) return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
+    if (relevant.some((f) => f.distance_m <= edge)) {
+      const enteredCity = norm(geocode?.address_parts?.locality || geocode?.address_parts?.postal_town || "");
+      if (target && target.type === "municipality" && enteredCity && enteredCity === norm(target.name))
+        return { ...base, status: "location_verified", reason: `The map pin sits close to a boundary, but the address's own city matches the ${target.name} boundary containing it \u2014 resolving to ${target.name}. Spot-check the pin on the map.`, target: base.targets[0], corroborated_by: "entered_city_name" };
+      return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
+    }
     if (!geocode.location_exact) return { ...base, status: "location_verified", reason: `Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`, target: base.targets[0] };
     return { ...base, status: "location_verified", reason: `Building location is inside the checked ${target.name} government boundary. Office responsibility is checked separately.`, target: base.targets[0] };
   } catch (error) {
@@ -587,7 +592,7 @@ Deno.serve(async (req) => {
       await reporter.emit(item, progress2 || {});
     };
     await reporter.emit({ kind: "address_lookup", detail: `Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.` }, { stage: "Finding the building on the map", indeterminate: true });
-    let geocode = null, geocodingService = null;
+    let geocode = null, geocodingService = null, googleVague = null;
     const serviceFailure = (status, message, diagnostic_code) => geocodingService = { status, issue: true, message, ...diagnostic_code ? { diagnostic_code } : {} };
     try {
       const key = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() || Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim();
@@ -622,10 +627,12 @@ Deno.serve(async (req) => {
         const g = data.results[0];
         const exact = strictGeocode(data.results, address);
         const streetish = exact || (g.types || []).some((t) => ["street_address", "premise", "subpremise", "route", "intersection"].includes(t)) || g.geometry?.location_type === "ROOFTOP";
-        geocode = { lat: g.geometry?.location?.lat, lon: g.geometry?.location?.lng, display_name: g.formatted_address, location_exact: exact, ...exact || !streetish ? {} : { approximate_source: "google_approx" }, address_parts: (g.address_components || []).reduce((a, c) => {
+        const candidate = { lat: g.geometry?.location?.lat, lon: g.geometry?.location?.lng, display_name: g.formatted_address, location_exact: exact, ...exact || !streetish ? {} : { approximate_source: "google_approx" }, address_parts: (g.address_components || []).reduce((a, c) => {
           for (const t of c.types || []) a[t] = c.long_name;
           return a;
         }, {}) };
+        if (exact || streetish) geocode = candidate;
+        else googleVague = candidate;
       }
     } catch (err) {
       if (err?.code === "GOOGLE_DENIED_COOLDOWN") {
@@ -687,6 +694,10 @@ Deno.serve(async (req) => {
       } catch {
         await reporter.emit({ kind: "geocode_failed", detail: "The Census backup locator could not confirm the address either." });
       }
+    }
+    if (!geocode && googleVague) {
+      geocode = googleVague;
+      await reporter.emit({ kind: "geocode_service_result", detail: "Falling back to Google's approximate area result after the free locators found no street match." });
     }
     if (diagnostic) return addressResponse({ success: true, diagnostic_only: true, geocode, geocoding_service: geocodingService, authority_established: false, apply_allowed: false, llm_calls: 0, record_writes: 0 });
     await reporter.emit({ kind: "geocode_result", detail: geocode ? `Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact ? "Street and building coordinates matched." : "Approximate or corrected address; review required."}` : "No map location found." }, { stage: "Checking government boundaries", indeterminate: true });
