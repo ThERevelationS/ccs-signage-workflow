@@ -74,7 +74,7 @@ const isObj = (v: any): boolean => !!v && typeof v === 'object' && !Array.isArra
 const toCents = (v: any): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.\-]/g, ''));
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 
 /** Any date-ish value → epoch ms; NaN-safe (0 = unparseable). */
