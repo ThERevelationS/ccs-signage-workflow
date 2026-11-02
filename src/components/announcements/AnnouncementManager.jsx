@@ -173,7 +173,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
       const [anns, activeRows, users] = await Promise.all([
         loadAllEntityRows({ entity: Announcement, sort: "-updated_date", label: "Announcement history" }),
         loadAllEntityRows({ entity: Announcement, query: { is_active: true }, sort: null, label: "Active announcements" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Announcement target users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Announcement target users" })
       ]);
       setSavedAnnouncements(anns);
       setAllUsers(users);
