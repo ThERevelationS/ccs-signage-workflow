@@ -3,9 +3,11 @@ import { AlertTriangle, Link2, LockKeyhole, RefreshCw, Unlink } from "lucide-rea
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
 
+const EMPTY_PARTS = [];
+
 export default function ReattachPartsModal({
   open,
-  parts = [],
+  parts = EMPTY_PARTS,
   builderName = "Builder",
   onKeepDetached,
   onReattach,
