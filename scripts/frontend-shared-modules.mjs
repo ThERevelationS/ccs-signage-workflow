@@ -27,7 +27,7 @@ const names = new Set([
   'savedReportRunsModel.ts', 'reportDrilldownModel.ts', 'salesFunnelModel.ts',
   'crmSuggestionModel.ts', 'auditLogModel.ts', 'dataExportModel.ts',
   'vendorCostModel.ts', 'reportCatalogModel.ts', 'contactRolesModel.ts',
-  'integrationsStatusModel.ts',
+  'integrationsStatusModel.ts', 'marginModel.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
