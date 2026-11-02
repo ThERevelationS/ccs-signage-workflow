@@ -237,17 +237,17 @@ const ESTIMATES = [
   eq(P.last_contacted_at?.type, 'string', 'schema: last_contacted_at activity stamp');
   eq(P.auto_inactive_months?.type, 'number', 'schema: masterplan months field');
   eq(P.auto_inactive_after_months?.type, 'number', 'schema: entity months field');
-  ok(/0 disables/i.test(String(P.auto_inactive_months?.description ?? '')), "schema documents 0 = disable for auto_inactive_months");
-  ok(/0 disables/i.test(String(P.auto_inactive_after_months?.description ?? '')), "schema documents 0 = disable for auto_inactive_after_months");
+  // N-07.3 fixed: 0 now documents fall-through (opt-out is the flag, not 0).
+  ok(/falls through/i.test(String(P.auto_inactive_months?.description ?? '')), "schema documents 0 = fall-through for auto_inactive_months");
+  ok(/falls through/i.test(String(P.auto_inactive_after_months?.description ?? '')), "schema documents 0 = fall-through for auto_inactive_after_months");
 
-  // NEEDED-BUT-MISSING schema fields (asserted absent on purpose — writers
-  // store these undeclared; a schema addition flips these asserts and is the
-  // intended fix, not something this suite performs).
-  ok(!('auto_inactive_disabled' in P), 'MISSING-FIELD auto_inactive_disabled — sweep opt-out flag is stored but undeclared');
-  ok(!('lifecycle_status' in P), 'MISSING-FIELD lifecycle_status — tolerated denormalized alias');
-  ok(!('tax_exempt_issued_by' in P), 'MISSING-FIELD tax_exempt_issued_by — tolerated issued-by alias');
-  ok(!('tax_exempt_status' in P), 'MISSING-FIELD tax_exempt_status — tolerated flat status alias');
-  ok(!('tax_exempt_revoked' in P), 'MISSING-FIELD tax_exempt_revoked — tolerated revoked flag alias');
+  // N-07 schema gaps FIXED — previously-stored-but-undeclared fields are now
+  // declared (the asserts that pinned their absence are flipped to contract).
+  eq(P.auto_inactive_disabled?.type, 'boolean', 'DECLARED auto_inactive_disabled — sweep opt-out flag');
+  eq(P.lifecycle_status?.type, 'string', 'DECLARED lifecycle_status — denormalized lifecycle mirror');
+  eq(P.tax_exempt_issued_by?.type, 'string', 'DECLARED tax_exempt_issued_by — issued-by alias');
+  eq(P.tax_exempt_status?.type, 'string', 'DECLARED tax_exempt_status — flat status alias');
+  eq(P.tax_exempt_revoked?.type, 'boolean', 'DECLARED tax_exempt_revoked — revoked flag alias');
 
   // Warning-flag storage contract.
   eq(P.warning_flags?.type, 'array', 'schema: warning_flags array');
@@ -290,29 +290,26 @@ const ESTIMATES = [
 // B. ORIGINATION HIERARCHY — flat label, hierarchical path, parent/child.
 // ============================================================================
 {
-  // customersByCreatedRows resolves customer_origination → origination_path
-  // (the FLAT label wins when both are stored).
+  // FIXED DEFECT N-07.1 — canonical precedence is path-first everywhere:
+  // origination_path (structured) wins over the legacy flat label, matching
+  // estimateReports. customersByCreatedRows now resolves identically.
   const rows = rep.customersByCreatedRows(CUSTOMERS, {});
   const c1 = rows.find((r) => r.customer_id === 'c1');
-  eq(c1.customer_origination, 'referral', 'origination: flat label wins on customers_by_created');
+  eq(c1.customer_origination, 'Networking Group : BNI - Carl', 'N-07.1 fixed: path wins on customers_by_created');
   const c10 = rows.find((r) => r.customer_id === 'c10');
-  eq(c10.customer_origination, 'Networking Group : BNI', 'origination: path is the fallback when flat is blank');
+  eq(c10.customer_origination, 'Networking Group : BNI', 'origination: path still resolves when flat is blank');
+  const c2 = rows.find((r) => r.customer_id === 'c2');
+  eq(c2.customer_origination, 'networking', 'origination: flat is the fallback when path is blank');
   const c9 = rows.find((r) => r.customer_id === 'c9');
   eq(c9.customer_origination, '', 'origination: neither field → empty');
 
-  // estimateReports.estimateRows resolves the SAME customer differently —
-  // origination_path FIRST. The two packs disagree when both fields are set.
+  // estimateReports.estimateRows resolves identically — packs converged.
   const estRows = estR.estimateRows(ESTIMATES, { customersById: CUSTOMERS, asOf: AS_OF });
   const e1 = estRows.find((r) => r.estimate_id === 'e1');
   eq(
     e1.origination,
     'Networking Group : BNI - Carl',
-    'KNOWN DEFECT N-07.1 — origination precedence flips across packs: ' +
-    'customers_by_created (customerReports.ts:786) prefers the flat ' +
-    'customer_origination while estimateRows (estimateReports.ts:516-518) ' +
-    'prefers origination_path; the same customer reports different ' +
-    'origination depending on which report is open. Expected: one canonical ' +
-    'order. Actual: flat-first here vs path-first there.',
+    'N-07.1 fixed: estimateRows path-first (already canonical)',
   );
   // Estimate-level fields are the trailing fallback chain on the estimate row.
   const estOnly = estR.estimateRows(
@@ -748,21 +745,17 @@ const ESTIMATES = [
   eq(perp.record.perpetual, true);
   eq(perp.days_until_expiry, null);
 
-  // Malformed rollover-date expiry diverges across the two replicas.
+  // FIXED DEFECT N-07.4 — malformed rollover-date expiry now converges:
+  // non-empty-but-unparseable expires_on fails CLOSED to 'expired' on the
+  // frontend (was: perpetual active — granted exemption on garbage data),
+  // matching the reports side's expired verdict. Blank stays perpetual.
   const badCert = { tax_exemption: { certificate_id: 'B', expires_on: '2026-02-31' } };
   const feBad = tex.taxExemption(badCert, { now: '2026-11-15T12:00:00Z' });
   const shBad = rep.customerTaxExemption(badCert, { asOf: AS_OF });
-  eq(feBad.status, 'active', 'frontend: unparseable rollover date → perpetual → active');
-  eq(
-    shBad.status,
-    'expired',
-    'KNOWN DEFECT N-07.4 — malformed expiry divergence: expires_on ' +
-    "'2026-02-31' is rejected by the frontend toUtcDay validator (→ " +
-    'perpetual active) but customerReports.toDay keeps the literal string ' +
-    'and the < compare lands it expired. Expected: one canonical parse. ' +
-    'Actual: frontend says active/perpetual, reports pack says expired ' +
-    '(days_until_expiry null on both).',
-  );
+  eq(feBad.status, 'expired', 'N-07.4 fixed: malformed expiry → expired, not perpetual');
+  eq(feBad.record.malformed_expiry, true, 'N-07.4 fixed: record flags malformed_expiry');
+  eq(feBad.record.perpetual, false, 'N-07.4 fixed: malformed is NOT perpetual');
+  eq(shBad.status, 'expired', 'reports side already said expired — now converged');
 
   // Grace window — expiring ≤30 days warns, expired errors, >30 silent.
   eq(tex.EXEMPTION_EXPIRING_DAYS, 30, 'grace window constant');
