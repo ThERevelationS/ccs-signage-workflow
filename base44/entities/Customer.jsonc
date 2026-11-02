@@ -346,6 +346,15 @@
       "default": 1,
       "description": "Overall markup pricing tier applied to this customer's estimates."
     },
+    "pricing_tier_set_by": {
+      "type": "string",
+      "description": "Staff user/email who last assigned the pricing tier (F-22 audit)."
+    },
+    "pricing_tier_set_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the pricing tier was last assigned (F-22 audit)."
+    },
     "send_monthly_statements": {
       "type": "boolean",
       "default": true
