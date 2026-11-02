@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { invokePortal } from "@/components/portal/PortalPanel";
@@ -26,13 +26,28 @@ import {
 import {
   findWorkOrder,
   findWorkOrdersForEstimate,
-  jobActivityTimeline,
   jobFinancialSummary,
   recordLinksWorkOrder,
   workspaceProductRows,
   PAYMENT_STATUS_LABELS,
   WORKSPACE_STAGES,
 } from "./jobWorkspaceModel";
+import {
+  resolveWorkspaceTab,
+  tabNeedsActivityFeed,
+  workspaceOrderHistoryFeed,
+  workspaceTabBadges,
+} from "./jobWorkspaceTabsModel";
+import {
+  WorkspaceTabBar,
+  OrderContactPanel,
+  AddressInfoPanel,
+  NotesPanel,
+  OrderHistoryPanel,
+  OverridesPanel,
+} from "./JobWorkspaceTabs";
+import OrderDetailsDrawer from "./OrderDetailsDrawer";
+import JobActionsRow from "./JobActionsRow";
 import {
   DataTableShell,
   EmptyState,
@@ -68,35 +83,11 @@ const INVOICE_STATUS_LABELS = {
   draft: "Draft", sent: "Sent", partially_paid: "Partially paid", paid: "Paid", void: "Void",
 };
 const METHOD_LABELS = { cash: "Cash", check: "Check", card: "Card", ach: "ACH", financing: "Financing", other: "Other" };
-const FIELD_LABELS = {
-  operational_status: "Status", operational_substatus: "Substatus",
-  customer_facing_status: "Customer label", proof_status: "Proof",
-  fulfillment_state: "Fulfillment", design_due_date: "Design due",
-  product_due_date: "Product due", hard_due_date: "Hard due",
-  designer: "Designer", assigned_to: "Assigned to",
-  responsibility: "Responsibility", queue_priority: "Priority",
-};
 
 const sel = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
 const fmtDate = (v) => {
   const d = parseLocalDate(v);
   return d ? d.toLocaleDateString() : "";
-};
-const fmtAt = (v) => {
-  const d = parseLocalDate(v);
-  return d ? `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
-};
-const fieldLabel = (f) => FIELD_LABELS[f] || String(f || "").replace(/_/g, " ");
-const prettyValue = (field, v) => {
-  if (v === true) return "yes";
-  if (v === false) return "no";
-  const s = String(v ?? "");
-  if (field === "operational_status") return OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s || "—";
-  if (field === "fulfillment_state") return FULFILLMENT_LABELS[s] || s || "—";
-  if (!s) return "—";
-  if (/_status$|_state$/.test(field)) return s.replace(/_/g, " ");
-  if (/_date$/.test(field)) return fmtDate(s) || s;
-  return s;
 };
 
 function WorkOrderPicker({ workOrders, estimateId }) {
@@ -186,9 +177,21 @@ export default function JobWorkspace() {
     setTimeout(() => setStatusLinkState(""), 2500);
   };
   const actor = String(currentUser?.email || "").trim();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const woParam = String(searchParams.get("wo") || "").trim();
   const estimateParam = String(searchParams.get("estimate") || "").trim();
+  // D-03: the active tab rides ?tab= so deep links + refreshes keep place.
+  const activeTab = resolveWorkspaceTab(searchParams.get("tab"));
+  const setActiveTab = (key) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (key === "products") next.delete("tab");
+      else next.set("tab", key);
+      return next;
+    }, { replace: true });
+  };
+  // D-04: order-details drawer open state; its estimate read is lazy.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [busy, setBusy] = useState({});
   const [errors, setErrors] = useState({});
   const [transitionError, setTransitionError] = useState("");
@@ -226,6 +229,7 @@ export default function JobWorkspace() {
     });
   }, [wo?.id, wo?.deposit_required, wo?.deposit_amount]);
 
+  const queryClient = useQueryClient();
   const { data: financials, isLoading: financialsLoading } = useQuery({
     queryKey: ["jobWorkspaceFinancials", wo?.id || ""],
     enabled: Boolean(sessionToken && wo?.id),
@@ -242,13 +246,57 @@ export default function JobWorkspace() {
       };
     },
   });
+  // After Enter Payment / void writes, both panels need fresh rows.
+  const queryClientInvalidateFinancials = () =>
+    queryClient.invalidateQueries({ queryKey: ["jobWorkspaceFinancials", wo?.id || ""] });
+
+  // D-03 lazy reads: the Order History + Overrides tabs feed on
+  // ProductActivity + OpportunityActivity rows. The query is disabled until
+  // one of those tabs is actually opened — zero new reads on mount.
+  const { data: activityFeed, isLoading: activityLoading, error: activityError } = useQuery({
+    queryKey: ["jobWorkspaceActivity", wo?.id || "", wo?.opportunity_id || ""],
+    enabled: Boolean(sessionToken && wo?.id && tabNeedsActivityFeed(activeTab)),
+    staleTime: 30000,
+    queryFn: async () => {
+      const [productEvents, orderActivities] = await Promise.all([
+        staffEntities.ProductActivity.filter({ work_order_id: wo.id }, "-occurred_at", 200).catch(() => []),
+        staffEntities.OpportunityActivity.filter({ work_order_id: wo.id }, "-created_date", 200).catch(() => []),
+      ]);
+      // Orders converted before the work_order_id stamp still carry their
+      // sales-side history under the opportunity id — pull both lanes.
+      const oppActivities = wo.opportunity_id
+        ? await staffEntities.OpportunityActivity.filter({ opportunity_id: wo.opportunity_id }, "-created_date", 200).catch(() => [])
+        : [];
+      return { productEvents, activities: [...orderActivities, ...oppActivities] };
+    },
+  });
+
+  // D-04 lazy read: the Order Details drawer resolves estimate-line costs the
+  // first time it opens (one AllInOneEstimate.get — never on mount).
+  const { data: detailsEstimate = null, isLoading: detailsEstimateLoading } = useQuery({
+    queryKey: ["jobWorkspaceEstimate", wo?.estimate_id || ""],
+    enabled: Boolean(sessionToken && wo?.estimate_id && detailsOpen),
+    staleTime: 60000,
+    queryFn: () => staffEntities.AllInOneEstimate.get(wo.estimate_id),
+  });
 
   const summary = useMemo(
     () => jobFinancialSummary({ workOrder: wo, invoices: financials?.invoices || [], payments: financials?.payments || [] }),
     [wo, financials]
   );
   const rows = useMemo(() => workspaceProductRows(wo), [wo]);
-  const timeline = useMemo(() => jobActivityTimeline(wo), [wo]);
+  const historyFeed = useMemo(
+    () => workspaceOrderHistoryFeed(wo, {
+      activities: activityFeed?.activities || [],
+      productEvents: activityFeed?.productEvents || [],
+      payments: financials?.payments || [],
+    }),
+    [wo, activityFeed, financials]
+  );
+  const tabBadges = useMemo(
+    () => workspaceTabBadges(wo, { payments: financials?.payments || [] }),
+    [wo, financials]
+  );
   // Auto-suggest: once linked financials cover the deposit, the card nudges
   // staff to flip deposit_invoiced. Suggest-only -- the flag is still set by
   // an explicit audited write, never silently derived.
@@ -503,7 +551,45 @@ export default function JobWorkspace() {
         </div>
       </div>
 
-      {/* Products */}
+      {/* D-07 — actions row: Edit / Clone / Print-Email Invoice / Packing Slip /
+          Invoice View Settings / Void (admin, reason-guarded) / Enter Payment. */}
+      <JobActionsRow
+        workOrder={wo}
+        invoices={financials?.invoices || []}
+        payments={financials?.payments || []}
+        financialsLoaded={Boolean(financials)}
+        sessionToken={sessionToken}
+        currentUser={currentUser}
+        onOrderChanged={() => {
+          refreshAllWorkOrders();
+          queryClientInvalidateFinancials();
+        }}
+        onOpenOrderDetails={() => setDetailsOpen(true)}
+      />
+
+      {/* D-03 — CoreBridge tab strip. Products/Payments keep their existing
+          panels (the products table + financials card); the other five are
+          self-contained and only the history/overrides pair trigger the lazy
+          activity read above. */}
+      <WorkspaceTabBar active={activeTab} onSelect={setActiveTab} badges={tabBadges} />
+
+      {activeTab === "contact" && <OrderContactPanel workOrder={wo} />}
+      {activeTab === "address" && <AddressInfoPanel workOrder={wo} />}
+      {activeTab === "notes" && <NotesPanel workOrder={wo} />}
+      {activeTab === "history" && (
+        <OrderHistoryPanel
+          feed={historyFeed}
+          loading={activityLoading}
+          error={activityError ? "Order history could not be loaded — the on-record status trail still shows below." : ""}
+          workOrder={wo}
+        />
+      )}
+      {activeTab === "overrides" && (
+        <OverridesPanel workOrder={wo} productActivity={activityFeed?.productEvents || []} loading={activityLoading} />
+      )}
+
+      {/* Products tab — the existing status/transition table. */}
+      {activeTab === "products" && (
       <DataTableShell
         dense
         head={["#", "Product", "Qty", "Unit", "Total", "Status / Substatus", "Proof", "Fulfillment", "Due", "History", ""]}
@@ -569,9 +655,12 @@ export default function JobWorkspace() {
               );
             })}
       </DataTableShell>
+      )}
 
-      {/* Financials */}
-      <div className="rounded border border-gray-200 bg-white p-3">
+      {/* Payments tab — the existing Financials card (KPIs, deposit controls,
+          invoice/payment lists) mapped into the CoreBridge Payments tab. */}
+      {activeTab === "payments" && (
+      <div className="rounded-b rounded-tr border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold">Financials</h2>
           <StatusChip status={summary.paymentStatus} label={PAYMENT_STATUS_LABELS[summary.paymentStatus] || summary.paymentStatus} />
@@ -681,27 +770,17 @@ export default function JobWorkspace() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Product Activity */}
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <h2 className="mb-2 text-sm font-semibold">Product Activity</h2>
-        {!timeline.length && <div className="text-xs text-gray-400">No product status changes recorded yet.</div>}
-        <ul className="divide-y divide-gray-100">
-          {timeline.map((entry, idx) => (
-            <li key={idx} className="flex items-baseline justify-between gap-2 px-1 py-1.5 text-xs">
-              <span className="w-36 shrink-0 text-gray-400">{fmtAt(entry.at) || "—"}</span>
-              <span className="min-w-0 flex-1">
-                <span className="font-medium text-gray-800">{entry.product}</span>
-                <span className="text-gray-500"> · {fieldLabel(entry.field)}: </span>
-                <span className="text-gray-500">{prettyValue(entry.field, entry.from)}</span>
-                <span className="text-gray-400"> → </span>
-                <span className="font-medium text-gray-800">{prettyValue(entry.field, entry.to)}</span>
-              </span>
-              <span className="shrink-0 text-gray-400">{entry.by || ""}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* D-04 — Order Details drawer: per-product price/cost/margin, override
+          flags, order-level margin. Estimate cost rows load on first open. */}
+      <OrderDetailsDrawer
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        workOrder={wo}
+        estimate={detailsEstimate}
+        estimateLoading={detailsEstimateLoading}
+      />
     </div>
   );
 }
