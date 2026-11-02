@@ -14,16 +14,19 @@ import {
   DUE_PRESETS,
   FULFILLMENT_LABELS,
   PAGE_SIZES,
+  QUEUE_SORTS,
   DEFAULT_QUEUE_FILTERS,
   flattenQueueRows,
   filterQueueRows,
   sortQueueRows,
   parseQueueFilters,
   serializeQueueFilters,
-  overdueDays,
+  daysPastDue,
   daysInStatus,
   parseLocalDate,
 } from "./productQueueModel";
+import { proofBadge } from "@/components/proofs/proofModel";
+import { chipStyle, DEFAULT_RESPONSIBILITY_COLOR } from "./tagResponsibilityModel";
 import {
   loadSavedQueueViews,
   saveSavedQueueView,
@@ -147,6 +150,72 @@ function ProofNotifyButton({ row, workOrder, sessionToken, actor }) {
           {state.message}
         </div>
       )}
+    </div>
+  );
+}
+
+// C-05 — compact proof-lookup chip for each queue row. Wraps the shared
+// proofModel badge descriptor (proof_version + approval state) in a kit
+// tone so the queue reads identically to the ProofPanel badge.
+const PROOF_BADGE_TONE = { wip: "amber", done: "emerald", blocked: "red", muted: "slate" };
+function ProofStateChip({ product }) {
+  const badge = proofBadge(product || {});
+  return (
+    <StatusChip
+      size="sm"
+      tone={PROOF_BADGE_TONE[badge.tone] || "slate"}
+      label={badge.label}
+      title={`Proof: ${badge.label}`}
+    />
+  );
+}
+
+// B-05 — small numeric-priority badge (CB 1-99); hidden when unset.
+function PriorityBadge({ value }) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return (
+    <span
+      className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-1.5 py-0 align-middle text-[10px] font-bold text-indigo-800"
+      title={`Priority ${n} (1-99, lower sorts first under the Priority sort)`}
+    >
+      P{n}
+    </span>
+  );
+}
+
+// C-02 — responsibility chip colored by the product's responsibility_color
+// snapshot (registry default when the snapshot is missing).
+function ResponsibilityChip({ name, color }) {
+  if (!name) return null;
+  return (
+    <span
+      className="inline-block max-w-[140px] truncate rounded px-1.5 py-0.5 text-[10px] font-semibold"
+      style={chipStyle(color || DEFAULT_RESPONSIBILITY_COLOR)}
+      title={name}
+    >
+      {name}
+    </span>
+  );
+}
+
+// B-06 — one labeled mini-column inside the Due cell; each date flags
+// overdue on its own. `lens` marks which date the due-preset filter reads.
+function DueMiniCol({ label, value, overdue, lens }) {
+  const d = parseLocalDate(value);
+  const overdueN = Number(overdue) || 0;
+  return (
+    <div className="min-w-[76px]">
+      <div
+        className="text-[9px] font-semibold uppercase tracking-wide text-gray-400"
+        title={lens ? "Due presets filter on this date" : undefined}
+      >
+        {label}{lens ? " ●" : ""}
+      </div>
+      <div className={overdueN > 0 ? "font-semibold text-rose-700" : "text-gray-700"}>
+        {d ? d.toLocaleDateString() : <span className="font-normal text-gray-400">—</span>}
+      </div>
+      {overdueN > 0 && <div className="text-[10px] text-rose-700">{overdueN}d overdue</div>}
     </div>
   );
 }
@@ -275,7 +344,7 @@ export default function ProductQueue({
     setSearchParams((prev) => {
       const nextFilters = typeof updater === "function" ? updater(parseQueueFilters(prev)) : updater;
       const next = new URLSearchParams(prev);
-      for (const key of ["status", "substatus", "designer", "responsibility", "assignedTo", "category", "moduleKey", "due", "q", "size", "fulfilled"]) {
+      for (const key of ["status", "substatus", "designer", "responsibility", "assignedTo", "category", "moduleKey", "due", "sort", "q", "size", "fulfilled"]) {
         next.delete(key);
       }
       for (const [key, value] of Object.entries(serializeQueueFilters(nextFilters))) {
@@ -412,7 +481,7 @@ export default function ProductQueue({
     [...new Set(allRows.map((r) => r[key]).filter(Boolean))].sort(), [allRows]);
 
   const filtered = useMemo(
-    () => sortQueueRows(filterQueueRows(allRows, filters, now)),
+    () => sortQueueRows(filterQueueRows(allRows, filters, now), filters.sort),
     [allRows, filters, now]
   );
 
@@ -516,6 +585,11 @@ export default function ProductQueue({
             {DUE_PRESETS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
           </FilterSelect>
         </FilterField>
+        <FilterField label="Sort">
+          <FilterSelect value={filters.sort || "default"} onChange={(e) => set("sort", e.target.value)}>
+            {QUEUE_SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </FilterSelect>
+        </FilterField>
         {actor !== "" && (viewsStatus.available ? (
           <FilterField label="Views">
             <FilterSelect value="" onChange={onViewAction}>
@@ -564,7 +638,8 @@ export default function ProductQueue({
               const key = `${r.workOrderId}:${r.productId}`;
               const isBusy = !!busy[key];
               const locked = !r.editable || isBusy;
-              const overdue = overdueDays(r, now);
+              const designOverdue = daysPastDue(r.designDue, now);
+              const productOverdue = daysPastDue(r.productDue, now);
               const inStatus = daysInStatus(r, now);
               const rowError = errors[key];
               const stageHint = stageHints.get(r.workOrderId);
@@ -578,9 +653,11 @@ export default function ProductQueue({
                     ) : (
                       <RecordLink kind="workorder" id={r.workOrderId}>{r.ref}</RecordLink>
                     )}
-                    <div className="text-[10px] text-gray-400">{r.position}</div>
+                    {/* C-02 — "WO# · i/N" product-position label + priority badge */}
+                    <span className="text-[10px] text-gray-400"> · {r.position}</span>
+                    <PriorityBadge value={r.priority} />
                   </td>
-                  <td className="px-2 py-1.5 text-gray-500">{r.moduleKey || "—"}</td>
+                  <td className="px-2 py-1.5 text-gray-500">{r.category || r.moduleKey || "—"}</td>
                   <td className="max-w-[140px] truncate px-2 py-1.5">
                     <RecordLink kind="customer" id={r.customerId}>{r.company || "Customer"}</RecordLink>
                   </td>
@@ -603,6 +680,8 @@ export default function ProductQueue({
                     )}
                   </td>
                   <td className="px-2 py-1.5">
+                    {/* C-05 — proof_version + approval state chip above the setter */}
+                    <div className="mb-0.5"><ProofStateChip product={r.product} /></div>
                     <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value={r.proof === "none" ? "" : r.proof}
                       onChange={(e) => transition(r, { proofStatus: e.target.value })}>
                       <option value="">—</option>
@@ -622,10 +701,17 @@ export default function ProductQueue({
                       {FULFILLMENT_OPTIONS.map((o) => <option key={o} value={o}>{FULFILLMENT_LABELS[o]}</option>)}
                     </select>
                   </td>
-                  <td className="px-2 py-1.5 text-gray-500">{r.responsibility || r.assignedTo || "—"}</td>
-                  <td className={`whitespace-nowrap px-2 py-1.5 ${overdue > 0 ? "font-semibold text-rose-700" : ""}`}>
-                    {r.due && parseLocalDate(r.due) ? parseLocalDate(r.due).toLocaleDateString() : <span className="text-gray-400">—</span>}
-                    {overdue > 0 && <div className="text-[10px]">{overdue}d overdue</div>}
+                  <td className="px-2 py-1.5 text-gray-500">
+                    {r.responsibility
+                      ? <ResponsibilityChip name={r.responsibility} color={r.responsibilityColor} />
+                      : (r.assignedTo || "—")}
+                  </td>
+                  {/* B-06 — two labeled mini-columns; each date flags overdue on its own */}
+                  <td className="whitespace-nowrap px-2 py-1.5">
+                    <div className="flex gap-3">
+                      <DueMiniCol label="Design" value={r.designDue} overdue={designOverdue} lens={dueField === "design_due_date"} />
+                      <DueMiniCol label="Product" value={r.productDue} overdue={productOverdue} lens={dueField === "product_due_date"} />
+                    </div>
                   </td>
                   <td className="px-2 py-1.5">
                     <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value=""
