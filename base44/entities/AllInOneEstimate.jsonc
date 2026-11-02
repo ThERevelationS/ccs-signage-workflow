@@ -734,6 +734,10 @@
       "format": "date",
       "description": "Scheduled sales follow-up date (YYYY-MM-DD)."
     },
+    "follow_up_state": {
+      "type": "object",
+      "description": "Follow-up state machine snapshot (H-04): {stage: none|fu1_sent|fu2_sent|answered|closed, last_sent_at, next_due_at, anchor_at, fu1_sent_at, fu2_sent_at, answered_at, closed_reason}."
+    },
     "payment_terms_label": {
       "type": "string",
       "description": "Payment terms display label printed on documents (e.g. 'Balance Due Upon Receipt'). Complements the payment_terms/terms text fields."
