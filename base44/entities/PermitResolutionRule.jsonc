@@ -1,0 +1,78 @@
+{
+  "name": "PermitResolutionRule",
+  "type": "object",
+  "description": "Reusable jurisdiction-resolution rules minted by review decisions. When a flagged address gets resolved (staff pick or verified evidence), a rule row is written so every FUTURE lookup of the same pattern resolves automatically \u2014 reviews generalize instead of fixing one address.",
+  "properties": {
+    "rule_type": {
+      "type": "string",
+      "enum": [
+        "postal_name_map",
+        "address_override",
+        "source_preference"
+      ],
+      "description": "postal_name_map: entered/postal city X -> jurisdiction Y within a county. address_override: one parcel-confirmed address -> jurisdiction. source_preference: for a county, prefer a boundary source when sources conflict."
+    },
+    "entered_name": {
+      "type": "string",
+      "description": "For postal_name_map: the city name as written on addresses (e.g. 'Amelia', 'Cincinnati'). Normalized for matching."
+    },
+    "address_key": {
+      "type": "string",
+      "description": "For address_override: the normalized full address string."
+    },
+    "state": {
+      "type": "string",
+      "description": "OH or KY."
+    },
+    "county": {
+      "type": "string",
+      "description": "Parent county name the rule is scoped to (e.g. 'Hamilton County'). Blank = statewide."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "The jurisdiction this rule resolves to (e.g. 'Pierce township', 'Central City')."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "enum": [
+        "county",
+        "municipality",
+        "township",
+        "city",
+        "village"
+      ],
+      "description": "Type of the resolved jurisdiction."
+    },
+    "geoid": {
+      "type": "string",
+      "description": "Census/state GEOID of the resolved jurisdiction when known."
+    },
+    "preferred_source": {
+      "type": "string",
+      "description": "For source_preference: which boundary source to trust on conflicts ('state' or 'census')."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "staff_review",
+        "auto_consensus",
+        "import"
+      ],
+      "default": "staff_review",
+      "description": "How the rule was minted. staff_review = a human reviewed a flag."
+    },
+    "evidence": {
+      "type": "string",
+      "description": "Address + trace context that produced the rule."
+    },
+    "created_from_address": {
+      "type": "string",
+      "description": "The flagged address whose resolution minted this rule."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Set false to retire a rule without deleting it."
+    }
+  }
+}
