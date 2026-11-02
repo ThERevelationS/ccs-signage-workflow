@@ -1,0 +1,62 @@
+{
+  "name": "COGSAccount",
+  "type": "object",
+  "description": "GL-coded cost-of-goods-sold account (5000-series chart-of-accounts row) used to classify direct job costs on invoices, estimates, and reporting. Backend-only \u2014 rows are managed exclusively through accountingAdminAction, whose seed_gl_accounts action creates the standard chart idempotently via stable creation_request_key receipts.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one seeded/managed account row (e.g. 'seed-cogs-5000')."
+    },
+    "code": {
+      "type": "string",
+      "description": "GL account code (e.g. '5000')."
+    },
+    "name": {
+      "type": "string",
+      "description": "Account display name (e.g. 'Materials COGS')."
+    },
+    "parent_account": {
+      "type": "string",
+      "description": "Optional parent GL account code for sub-accounts; blank on top-level accounts."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive accounts stay on history but are not offered for new coding."
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of the staff user who last saved this row (audit)."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__cogsaccount_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__cogsaccount_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__cogsaccount_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__cogsaccount_backend_only__"
+      }
+    }
+  }
+}
