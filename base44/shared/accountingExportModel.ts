@@ -250,7 +250,7 @@ const firstText = (...vals: unknown[]): string => {
 export const toCents = (v: unknown): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = looseNum(v);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 
 /** Integer cents → dollars. */
@@ -436,7 +436,7 @@ const normalizeSplitRow = (row: unknown): ExportSplit | null => {
   else {
     const n = looseNum(row.amount);
     if (!Number.isFinite(n)) return null;
-    cents = Math.round(n * 100);
+    cents = Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9);
   }
   return { account_code: account, amount_cents: cents };
 };
@@ -455,7 +455,7 @@ export function incomeBaseCents(invoice: unknown): number {
       if (!isObj(fee)) continue;
       const amount = num(fee.amount, 0);
       const signed = clean(fee.kind).toLowerCase() === 'discount' && amount > 0 ? -amount : amount;
-      cents += Math.round(signed * 100);
+      cents += Math.sign(signed) * Math.round(Math.abs(signed) * 100 + 1e-9);
     }
   }
   return cents;
