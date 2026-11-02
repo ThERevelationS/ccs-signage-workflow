@@ -58,7 +58,7 @@ export default function ReportingDashboard() {
           (rows || [])
             .filter((wo) => wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
-        loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
+        loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Reporting Dashboard authorized users" })
       ]);
       setWorkOrders(wos || []);
       setUsers(us || []);
