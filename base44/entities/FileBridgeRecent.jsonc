@@ -1,26 +1,84 @@
 {
   "name": "FileBridgeRecent",
+  "type": "object",
   "description": "Recent-changes ring (~2000 rows) — 'recently changed in customer folders' feed without churning FileIndex. TTL-swept.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "agent_id": { "type": "string" },
-    "root_key": { "type": "string" },
-    "path": { "type": "string" },
-    "name": { "type": "string" },
-    "ext": { "type": "string" },
-    "is_dir": { "type": "boolean", "default": false },
-    "change_type": { "type": "string", "enum": ["created", "modified", "deleted", "moved"], "default": "modified" },
-    "size": { "type": "number" },
-    "mtime_ms": { "type": "number" },
-    "customer_id": { "type": "string" },
-    "event_ts": { "type": "number" },
-    "seq": { "type": "number", "description": "Ring position for ordered eviction." }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "root_key": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "ext": {
+      "type": "string"
+    },
+    "is_dir": {
+      "type": "boolean",
+      "default": false
+    },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "created",
+        "modified",
+        "deleted",
+        "moved"
+      ],
+      "default": "modified"
+    },
+    "size": {
+      "type": "number"
+    },
+    "mtime_ms": {
+      "type": "number"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "event_ts": {
+      "type": "number"
+    },
+    "seq": {
+      "type": "number",
+      "description": "Ring position for ordered eviction."
+    }
   },
-  "required": ["agent_id", "root_key", "path", "event_ts"],
+  "required": [
+    "agent_id",
+    "root_key",
+    "path",
+    "event_ts"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }

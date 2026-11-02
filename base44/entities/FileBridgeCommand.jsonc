@@ -1,34 +1,130 @@
 {
   "name": "FileBridgeCommand",
+  "type": "object",
   "description": "Command queue — the source of truth for every agent action (list_dir, fetch_bytes, deep_search, uploads, mutations). Staff enqueue via fileBridgeAction; agents lease/execute/complete via fileBridgeIngest. dedupe_key collapses identical in-flight requests.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "command_id": { "type": "string", "description": "Client-visible id." },
-    "type": { "type": "string", "description": "COMMAND_SPECS key." },
-    "agent_id": { "type": "string", "description": "Target agent; empty while queued-for-primary." },
-    "target_role": { "type": "string", "enum": ["primary", "backup", "any"], "default": "primary" },
-    "status": { "type": "string", "enum": ["queued", "leased", "running", "completed", "failed", "expired", "cancelled"], "default": "queued" },
-    "args": { "type": "object", "additionalProperties": true },
-    "result": { "type": "object", "additionalProperties": true },
-    "progress": { "type": "object", "additionalProperties": true, "description": "{done,total,label} for long ops." },
-    "error": { "type": "string" },
-    "dedupe_key": { "type": "string", "description": "type|agent|sorted-args — collapses duplicates." },
-    "request_key": { "type": "string", "description": "creation_request_key for idempotent enqueue." },
-    "served_by": { "type": "string", "enum": ["primary", "backup"] },
-    "requested_by": { "type": "string", "description": "Staff email or 'agent'." },
-    "actor_rate_key": { "type": "string" },
-    "lease_expires_ms": { "type": "number" },
-    "leased_by": { "type": "string" },
-    "priority": { "type": "number", "default": 100 },
-    "created_ts": { "type": "number" },
-    "updated_ts": { "type": "number" },
-    "expires_at_ms": { "type": "number", "description": "Queue expiry; stale rows reaped." }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "command_id": {
+      "type": "string",
+      "description": "Client-visible id."
+    },
+    "type": {
+      "type": "string",
+      "description": "COMMAND_SPECS key."
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Target agent; empty while queued-for-primary."
+    },
+    "target_role": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "backup",
+        "any"
+      ],
+      "default": "primary"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "leased",
+        "running",
+        "completed",
+        "failed",
+        "expired",
+        "cancelled"
+      ],
+      "default": "queued"
+    },
+    "args": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "{done,total,label} for long ops."
+    },
+    "error": {
+      "type": "string"
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "type|agent|sorted-args — collapses duplicates."
+    },
+    "request_key": {
+      "type": "string",
+      "description": "creation_request_key for idempotent enqueue."
+    },
+    "served_by": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "backup"
+      ]
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "Staff email or 'agent'."
+    },
+    "actor_rate_key": {
+      "type": "string"
+    },
+    "lease_expires_ms": {
+      "type": "number"
+    },
+    "leased_by": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "number",
+      "default": 100
+    },
+    "created_ts": {
+      "type": "number"
+    },
+    "updated_ts": {
+      "type": "number"
+    },
+    "expires_at_ms": {
+      "type": "number",
+      "description": "Queue expiry; stale rows reaped."
+    }
   },
-  "required": ["command_id", "type", "status"],
+  "required": [
+    "command_id",
+    "type",
+    "status"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
