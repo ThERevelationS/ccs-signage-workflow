@@ -738,6 +738,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
 
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
+  const runStampWarnings: string[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
   for (const rule of orderedRules) {
     // Approval-gated automations: a pending rule is a proposal — it never fires
@@ -789,7 +790,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
       last_run_detail: recentRuns[recentRuns.length - 1].detail,
       run_count: (Number(rule.run_count) || 0) + 1,
       recent_runs: recentRuns,
-    }).catch(() => null);
+    }).catch((e: any) => { runStampWarnings.push(`${rule.name || rule.id}: ${String(e?.message || e)}`); return null; });
   }
-  return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions };
+  return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions, run_stamp_warning: runStampWarnings.length ? runStampWarnings.join("; ") : undefined };
 }
