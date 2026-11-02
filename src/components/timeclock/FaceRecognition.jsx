@@ -18,6 +18,7 @@ import {
   loadFaceModelsOnce,
   passesFaceQualityGate,
 } from '@/components/timeclock/faceScanRuntime';
+import { IDENTIFY_CAMERA_BLURB, IDENTIFY_QR_UNSUPPORTED } from '@/components/timeclock/timeClockIdentifyCopy';
 
 const ENROLL_TARGET = 10;
 const ENROLL_TICK_MS = 250;
@@ -37,7 +38,7 @@ const SCAN_STATUS_TEXT = {
   ambiguous: "Two faces are matching - only you should be in frame.",
 };
 
-export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
+export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
   // Support both old and new prop names
   const isEnrollMode = isEnrollment || mode === "enroll";
   const handleEnrollCapture = onEnrollCapture || onFaceDetected;
@@ -63,6 +64,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [autoCapturing, setAutoCapturing] = useState(false);
+  const onQrScanRef = useRef(onQrScan);
+  onQrScanRef.current = onQrScan;
+  const qrLoopRef = useRef(0);
+  const qrCooldownUntilRef = useRef(0);
 
   // Start the camera and load the models in parallel - the old flow waited for
   // the camera before even starting the model download, which added seconds to
@@ -133,6 +138,32 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     }
   }, [isEnrollMode, modelsLoaded, cameraReady]);
 
+  // QR badge detection on the same camera stream - when the caller accepts
+  // badges, a BarcodeDetector pass runs alongside the face session so a badge
+  // and a face are equally valid identifiers on one camera.
+  useEffect(() => {
+    if (!isScanning || isEnrollMode || !onQrScan || !("BarcodeDetector" in window)) return;
+    const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+    const qrRun = ++qrLoopRef.current;
+    const tick = async () => {
+      if (qrRun !== qrLoopRef.current) return;
+      const v = videoRef.current;
+      if (v && v.readyState >= 2 && Date.now() >= qrCooldownUntilRef.current) {
+        try {
+          const codes = await detector.detect(v);
+          const hit = (codes || []).find((c) => String(c?.rawValue || ""));
+          if (hit) {
+            qrCooldownUntilRef.current = Date.now() + 4000;
+            onQrScanRef.current?.(String(hit.rawValue));
+          }
+        } catch {}
+      }
+      setTimeout(tick, 350);
+    };
+    const starter = setTimeout(tick, 400);
+    return () => { qrLoopRef.current += 1; clearTimeout(starter); };
+  }, [isScanning, isEnrollMode, onQrScan]);
+
   const handleScanFrame = ({ status, detection, winner, votes }) => {
     if (status === "recognized" && winner) {
       scanSessionRef.current?.stop();
@@ -157,7 +188,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     scanSessionRef.current = session;
     setIsScanning(true);
     setRecognizedUser(null);
-    setScanStatus("Looking for face...");
+    setScanStatus(onQrScan && "BarcodeDetector" in window ? IDENTIFY_CAMERA_BLURB : "Looking for face...");
     session.start();
   };
 
@@ -326,6 +357,9 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         : "text-gray-600"}`}>
         {scanStatus}
       </p>
+      {onQrScan && !isEnrollMode && !("BarcodeDetector" in window) && (
+        <p className="text-xs text-amber-600 -mt-2 mb-4 text-center">{IDENTIFY_QR_UNSUPPORTED}</p>
+      )}
 
       {/* Controls */}
       {isEnrollMode ? (
