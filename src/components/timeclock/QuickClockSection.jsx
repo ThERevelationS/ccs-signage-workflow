@@ -25,6 +25,7 @@ import {
   createFaceMatcher,
   createFaceScanSession,
   loadFaceModelsOnce,
+  supportsInlineQrDetection,
 } from '@/components/timeclock/faceScanRuntime';
 import {
   IDENTIFY_CAMERA_BLURB,
@@ -965,7 +966,7 @@ export default function QuickClockSection({
 
       // QR badge detection on the same stream - no second camera. Only
       // TIMECLOCK2 badge payloads act; any other code in frame is ignored.
-      if ("BarcodeDetector" in window) {
+      if (supportsInlineQrDetection()) {
         const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
         const qrRun = ++qrLoopRef.current;
         const tick = async () => {
@@ -1005,7 +1006,7 @@ export default function QuickClockSection({
       healthTimerRef.current = setTimeout(healthTick, 2000);
 
       if (!faceEnabled || !modelsReady) {
-        setRecognitionStatus("BarcodeDetector" in window
+        setRecognitionStatus(supportsInlineQrDetection()
           ? IDENTIFY_QR_ONLY_BLURB
           : IDENTIFY_QR_BUTTON_PROMPT);
         return;
@@ -1976,7 +1977,7 @@ export default function QuickClockSection({
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
-              {!("BarcodeDetector" in window) && (
+              {!supportsInlineQrDetection() && (
                 <Button type="button" variant="outline" onClick={startQrMode} disabled={isLoading} className="gap-2">
                   <QrCode className="w-4 h-4" /> Scan QR badge
                 </Button>
