@@ -47,6 +47,8 @@ async function resolveLink(PortalLink: any, token: string) {
 }
 
 function bumpOpen(PortalLink: any, link: any) {
+  // justified: best-effort open-tracking telemetry — callers fire-and-forget
+  // this (never awaited), so a failed counter write must not block the view.
   replaceFoundationFieldsIfUnchanged({
     entity: PortalLink,
     recordId: clean(link.id),
@@ -175,6 +177,8 @@ function logPortalOpportunityActivity(OpportunityActivity: any, input: {
     },
     readMatches: () => OpportunityActivity.filter({ creation_request_key: key }),
     label: "Portal opportunity activity",
+    // justified: auxiliary activity log — every call site fire-and-forgets
+    // this; a missing audit row must not fail the customer action itself.
   }).catch(() => null);
 }
 
@@ -197,23 +201,25 @@ function messageView(m: any) {
   };
 }
 
-async function loadCustomerThread(PortalMessage: any, customerId: string, markStaffRead = false) {
+async function loadCustomerThread(PortalMessage: any, customerId: string, markStaffRead = false, warnings?: string[]) {
   const rows = await loadAllEntityRows({ entity: PortalMessage, query: { customer_id: customerId }, sort: "created_date", label: "Portal message thread" }).catch(() => []);
   const list = (Array.isArray(rows) ? rows : [])
     .sort((a: any, b: any) => clean(a?.created_date).localeCompare(clean(b?.created_date)));
   if (markStaffRead) {
+    const receipts: Promise<any>[] = [];
     for (const m of list) {
       if (clean(m?.author_side) === "staff" && m?.read_by_customer !== true) {
-        replaceFoundationFieldsIfUnchanged({
+        receipts.push(replaceFoundationFieldsIfUnchanged({
           entity: PortalMessage,
           recordId: clean(m.id),
           expectedFields: expectedFoundationFields(m, { read_by_customer: true }),
           nextFields: { read_by_customer: true },
           label: "Portal message read receipt",
-        }).catch(() => null);
+        }).catch((e: any) => { warnings?.push(String(e?.message || e)); return null; }));
         m.read_by_customer = true;
       }
     }
+    if (receipts.length) await Promise.all(receipts);
   }
   return list;
 }
@@ -323,24 +329,26 @@ const portalMoney = (value: any) => `$${num(value).toLocaleString("en-US", { min
 
 // Single-job threads: a work_order portal link sees only the messages tagged
 // to that job — never the rest of the customer's thread.
-async function loadJobThread(PortalMessage: any, workOrderId: string, markRead = false) {
+async function loadJobThread(PortalMessage: any, workOrderId: string, markRead = false, warnings?: string[]) {
   const rows = await loadAllEntityRows({ entity: PortalMessage, query: { related_kind: "work_order", related_id: workOrderId }, sort: "created_date", label: "Portal job thread" }).catch(() => []);
   const list = (Array.isArray(rows) ? rows : [])
     .filter((m: any) => clean(m?.related_id) === workOrderId)
     .sort((a: any, b: any) => clean(a?.created_date).localeCompare(clean(b?.created_date)));
   if (markRead) {
+    const receipts: Promise<any>[] = [];
     for (const m of list) {
       if (clean(m?.author_side) === "staff" && m?.read_by_customer !== true) {
-        replaceFoundationFieldsIfUnchanged({
+        receipts.push(replaceFoundationFieldsIfUnchanged({
           entity: PortalMessage,
           recordId: clean(m.id),
           expectedFields: expectedFoundationFields(m, { read_by_customer: true }),
           nextFields: { read_by_customer: true },
           label: "Portal job message read receipt",
-        }).catch(() => null);
+        }).catch((e: any) => { warnings?.push(String(e?.message || e)); return null; }));
         m.read_by_customer = true;
       }
     }
+    if (receipts.length) await Promise.all(receipts);
   }
   return list;
 }
@@ -453,7 +461,8 @@ Deno.serve(async (req) => {
         const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
         if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
         const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(order.customer_id) || "");
-        const jobThread = await loadJobThread(PortalMessage, clean(order.id), true);
+        const receiptWarnings: string[] = [];
+        const jobThread = await loadJobThread(PortalMessage, clean(order.id), true, receiptWarnings);
         return Response.json({
           success: true,
           action,
@@ -463,6 +472,7 @@ Deno.serve(async (req) => {
           announcements,
           job: jobPortalView(order),
           messages: jobThread.slice(-100).map(messageView),
+          read_receipt_warning: receiptWarnings.length ? receiptWarnings.join("; ") : undefined,
           products: (Array.isArray(order?.products) ? order.products : [])
             .filter((p: any) => p && p.deleted !== true)
             .map((p: any) => ({
@@ -497,12 +507,13 @@ Deno.serve(async (req) => {
       if (clean(link.kind) !== "customer") throw bad("This portal link does not open the customer workspace.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const customer = await Customer.get(customerId).catch(() => null);
+      const receiptWarnings: string[] = [];
       const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
         loadAllEntityRows({ entity: Estimate, query: { customer_id: customerId }, sort: "-created_date", label: "Portal estimates" }).catch(() => []),
         loadAllEntityRows({ entity: WorkOrder, query: { customer_id: customerId }, sort: "-created_date", label: "Portal work orders" }).catch(() => []),
         loadAllEntityRows({ entity: Invoice, query: { customer_id: customerId }, sort: "-created_date", label: "Portal invoices" }).catch(() => []),
         loadAllEntityRows({ entity: Payment, query: { customer_id: customerId }, sort: "-created_date", label: "Portal payments" }).catch(() => []),
-        loadCustomerThread(PortalMessage, customerId, true),
+        loadCustomerThread(PortalMessage, customerId, true, receiptWarnings),
         loadPortalAnnouncements(customerId),
       ]);
       // Company branding from QuoteDefaults so portal quote/invoice views can
@@ -548,6 +559,7 @@ Deno.serve(async (req) => {
         payments_by_invoice: Object.fromEntries(paidByInvoice),
         messages: thread.slice(-100).map(messageView),
         unread_for_customer: thread.filter((m: any) => clean(m?.author_side) === "staff" && m?.read_by_customer !== true).length,
+        read_receipt_warning: receiptWarnings.length ? receiptWarnings.join("; ") : undefined,
       });
     }
 
@@ -1252,13 +1264,15 @@ Deno.serve(async (req) => {
       if (linkKind === "work_order") {
         const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
         if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
-        const thread = await loadJobThread(PortalMessage, clean(order.id), true);
-        return Response.json({ success: true, action, related_kind: "work_order", related_id: clean(order.id), messages: thread.slice(-200).map(messageView) });
+        const receiptWarnings: string[] = [];
+        const thread = await loadJobThread(PortalMessage, clean(order.id), true, receiptWarnings);
+        return Response.json({ success: true, action, related_kind: "work_order", related_id: clean(order.id), messages: thread.slice(-200).map(messageView), read_receipt_warning: receiptWarnings.length ? receiptWarnings.join("; ") : undefined });
       }
       if (linkKind === "customer") {
         const customerId = clean(link.customer_id) || clean(link.record_id);
-        const thread = await loadCustomerThread(PortalMessage, customerId, true);
-        return Response.json({ success: true, action, messages: thread.slice(-200).map(messageView) });
+        const receiptWarnings: string[] = [];
+        const thread = await loadCustomerThread(PortalMessage, customerId, true, receiptWarnings);
+        return Response.json({ success: true, action, messages: thread.slice(-200).map(messageView), read_receipt_warning: receiptWarnings.length ? receiptWarnings.join("; ") : undefined });
       }
       throw bad("This portal link cannot list messages.", 403);
     }
@@ -1273,6 +1287,7 @@ Deno.serve(async (req) => {
       const rows = await loadAllEntityRows({ entity: PortalMessage, query: { author_side: "customer", read_by_staff: false }, label: "Portal unread messages" }).catch(() => []);
       const list = Array.isArray(rows) ? rows : [];
       let marked = 0;
+      let markReadWarning = "";
       for (const m of list.slice(0, 1000)) {
         const saved = await replaceFoundationFieldsIfUnchanged({
           entity: PortalMessage,
@@ -1280,10 +1295,10 @@ Deno.serve(async (req) => {
           expectedFields: expectedFoundationFields(m, { read_by_staff: true }),
           nextFields: { read_by_staff: true },
           label: "Portal staff mark-all-read",
-        }).catch(() => null);
+        }).catch((e: any) => { markReadWarning = String(e?.message || e); return null; });
         if (saved) marked += 1;
       }
-      return Response.json({ success: true, action, marked, unread_total: list.length, remaining: Math.max(0, list.length - marked) });
+      return Response.json({ success: true, action, marked, unread_total: list.length, remaining: Math.max(0, list.length - marked), mark_read_warning: markReadWarning || undefined });
     }
 
     if (action === "create_link") {
@@ -1402,22 +1417,26 @@ Deno.serve(async (req) => {
       if (!customerId) throw bad("customer_id is required.");
       const thread = await loadCustomerThread(PortalMessage, customerId);
       // Mark inbound customer messages as read by staff on view.
+      let readReceiptWarning = "";
+      const receipts: Promise<any>[] = [];
       for (const m of thread) {
         if (clean(m?.author_side) === "customer" && m?.read_by_staff !== true) {
-          replaceFoundationFieldsIfUnchanged({
+          receipts.push(replaceFoundationFieldsIfUnchanged({
             entity: PortalMessage,
             recordId: clean(m.id),
             expectedFields: expectedFoundationFields(m, { read_by_staff: true }),
             nextFields: { read_by_staff: true },
             label: "Portal staff read receipt",
-          }).catch(() => null);
+          }).catch((e: any) => { readReceiptWarning = String(e?.message || e); return null; }));
           m.read_by_staff = true;
         }
       }
+      if (receipts.length) await Promise.all(receipts);
       const links = await loadAllEntityRows({ entity: PortalLink, query: { customer_id: customerId }, sort: "-created_date", label: "Portal customer links" }).catch(() => []);
       return Response.json({
         success: true,
         action,
+        read_receipt_warning: readReceiptWarning || undefined,
         messages: thread.slice(-200).map(messageView),
         links: (Array.isArray(links) ? links : []).map((l: any) => ({
           id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
@@ -1521,6 +1540,7 @@ Deno.serve(async (req) => {
         throw bad(`Portal email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
       }
       const msgKey = `portal-email-note:${customerId}:${crypto.randomUUID()}`.slice(0, 256);
+      let emailLinkWarning = "";
       await createFoundationRecordWithRecovery({
         entity: PortalMessage,
         data: {
@@ -1539,8 +1559,8 @@ Deno.serve(async (req) => {
         },
         readMatches: () => PortalMessage.filter({ creation_request_key: msgKey }),
         label: "Portal email notice",
-      }).catch(() => null);
-      return Response.json({ success: true, action, sent_to: to, link });
+      }).catch((e: any) => { emailLinkWarning = String(e?.message || e); return null; });
+      return Response.json({ success: true, action, sent_to: to, link, email_link_warning: emailLinkWarning || undefined });
     }
 
     if (action === "portal_inbox") {
