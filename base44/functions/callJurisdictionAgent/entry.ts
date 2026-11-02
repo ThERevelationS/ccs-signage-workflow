@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const { jurisdictionName, jurisdictionState, jurisdictionType, includeParentCounty } = researchInput;
 
     // For now, fallback to direct LLM call since agent API may have timing issues
-    // The agent prompt instructions are documented in agents/jurisdiction_research.jsonc
+    // The agent prompt instructions are documented in agents/jurisdiction_research_agent.jsonc
     
     const researchPrompt = `You are a specialized jurisdiction research assistant for sign permit information.
 
