@@ -1,31 +1,116 @@
 {
   "name": "FileBridgeUpload",
+  "type": "object",
   "description": "PERMANENT append-only provenance ledger — every app-created/app-filed server file. NEVER reaped. rebuild_manifest on promotion sources from this ledger (FileIndex is hot-scope only and would lose cold-root provenance).",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "creation_request_key": { "type": "string" },
-    "upload_id": { "type": "string" },
-    "agent_id": { "type": "string", "description": "Server that owns the file (primary at write time)." },
-    "root_key": { "type": "string" },
-    "path": { "type": "string", "description": "Final root-relative path after apply." },
-    "name": { "type": "string" },
-    "sha256": { "type": "string" },
-    "size": { "type": "number" },
-    "origin": { "type": "string", "enum": ["bridge"], "default": "bridge", "description": "Ledger rows are bridge-created by definition." },
-    "managed_by": { "type": "string", "enum": ["bridge"], "default": "bridge" },
-    "kind": { "type": "string", "enum": ["upload", "revision", "archive_output", "inbound_attach"], "default": "upload" },
-    "uploaded_by": { "type": "string" },
-    "customer_id": { "type": "string" },
-    "file_url": { "type": "string", "description": "Staging copy in Base44 storage (source the agent pulls)." },
-    "status": { "type": "string", "enum": ["staged", "applied", "failed", "superseded"], "default": "staged" },
-    "applied_at": { "type": "string" },
-    "error": { "type": "string" }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string"
+    },
+    "upload_id": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Server that owns the file (primary at write time)."
+    },
+    "root_key": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "description": "Final root-relative path after apply."
+    },
+    "name": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string"
+    },
+    "size": {
+      "type": "number"
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "bridge"
+      ],
+      "default": "bridge",
+      "description": "Ledger rows are bridge-created by definition."
+    },
+    "managed_by": {
+      "type": "string",
+      "enum": [
+        "bridge"
+      ],
+      "default": "bridge"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "upload",
+        "revision",
+        "archive_output",
+        "inbound_attach"
+      ],
+      "default": "upload"
+    },
+    "uploaded_by": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Staging copy in Base44 storage (source the agent pulls)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "staged",
+        "applied",
+        "failed",
+        "superseded"
+      ],
+      "default": "staged"
+    },
+    "applied_at": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
   },
-  "required": ["upload_id", "agent_id", "root_key", "path"],
+  "required": [
+    "upload_id",
+    "agent_id",
+    "root_key",
+    "path"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
