@@ -5,11 +5,12 @@ import { useEscapeKey, useModalDialog } from "@/components/estimator/a11y";
 
 const name = (c) => c?.company_name || c?.display_name || c?.customer_name || c?.client_name || "Unnamed customer";
 const norm = (v) => String(v || "").trim().toLowerCase();
+const EMPTY_CUSTOMERS = [];
 
 // Merge two Customer records: linked estimates and work orders are relinked
 // to the kept customer, then the losing record is marked merged + inactive
 // (kept for audit — never hard-deleted from this dialog).
-export default function CustomerMergeDialog({ open, customers = [], onClose, onMerged }) {
+export default function CustomerMergeDialog({ open, customers = EMPTY_CUSTOMERS, onClose, onMerged }) {
   const [keepId, setKeepId] = useState("");
   const [loseId, setLoseId] = useState("");
   const [preview, setPreview] = useState(null);
