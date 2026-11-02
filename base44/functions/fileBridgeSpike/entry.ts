@@ -155,16 +155,16 @@ Deno.serve(async (req) => {
     }
 
     if (body.probe === 'set_fb_settings') {
-      const rows = await sr.entities.GlobalSettings.filter({ key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+      const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
       const value = body.value && typeof body.value === 'object' ? body.value : { enabled: true };
       if (rows?.[0]?.id) {
-        await sr.entities.GlobalSettings.update(rows[0].id, { value });
+        await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: value });
         out.updated = true;
       } else {
-        await sr.entities.GlobalSettings.create({ key: 'fileBridge', value });
+        await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: value });
         out.created = true;
       }
-      out.value = value;
+      out.setting_value = value;
       return Response.json(out);
     }
 
