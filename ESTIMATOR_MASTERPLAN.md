@@ -96,6 +96,11 @@ EVIDENCE: final message = {files_touched, verify_output, deviations, open_questi
 - `functions deploy` is orchestrator-only and **batched** per workstream-phase (or every ~10 integrated backend items, whichever first) — deploys upload shared imports, so batching prevents pushing a sibling worker's half-finished shared file.
 - Rotation verified via response-shape markers (observed ~50min worst case), never by timing.
 
+#### Live telemetry (drives the dashboard)
+- Orchestrator appends one JSON row per action to `.masterplan-claims/events.jsonl` (append-only): `{ts, type, item, detail, note}` where `type` ∈ `dispatch|integrate|verify|deploy|checkpoint|live_call|warning|fail|scope_violation|phase_gate`.
+- The dashboard (`node scripts/masterplan-serve.mjs` → http://localhost:5170) reads claims + events + the ledger: worker cards, per-workstream bars, event feed, git churn. Keep it running for live visibility; it refreshes every 4s.
+- Event emission is cheap and mandatory — every dispatch/return/deploy/checkpoint/failure gets a row. If the dashboard shows silence during a busy phase, telemetry (not work) is what's broken.
+
 #### Shared-choke-point serialization
 Only the orchestrator (or a worker EXPLICITLY briefed for that file) edits: `base44/shared/*` existing files (new shared files are worker-safe), `src/pages/App.jsx`/`pagesConfig`/nav files (route registration choke point), `ESTIMATOR_MASTERPLAN.md`, `PROGRESS_LOG.md`, `.masterplan-claims/**`, `AGENTS.md`, `.devin/**`. Route registration for worker-built pages is an orchestrator integration step.
 
