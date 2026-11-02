@@ -34,7 +34,8 @@
         "priority_change",
         "note",
         "conversion",
-        "override"
+        "override",
+        "price_override"
       ]
     },
     "actor_type": {
