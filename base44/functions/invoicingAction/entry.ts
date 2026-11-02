@@ -8,6 +8,12 @@ import {
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
+import {
+  creditMemoLedgerRow,
+  creditBalanceCents,
+  creditMemoNotificationDraft,
+} from "../../shared/creditMemoModel.ts";
+import { renderTemplate } from "../../shared/templateRender.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -127,7 +133,11 @@ async function recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, acto
     .reduce((s: number, p: any) => s + num(p?.amount), 0));
   const invoice = await Invoice.get(invoiceId);
   if (!invoice?.id) throw bad("The invoice no longer exists.", 409);
-  const balanceDue = money(num(invoice.total) - amountPaid);
+  // I-12: store-credit applications live on the invoice (credit_applied), not
+  // in the Payment table — a recompute that ignored them would silently
+  // re-open balances a credit already closed.
+  const creditApplied = money(num(invoice.credit_applied));
+  const balanceDue = money(num(invoice.total) - amountPaid - creditApplied);
   let status = clean(invoice.status);
   if (status !== "void") {
     if (balanceDue <= 0.005 && num(invoice.total) > 0) status = "paid";
@@ -995,7 +1005,94 @@ Deno.serve(async (req) => {
         label: "Credit memo",
       });
       const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
-      return Response.json({ success: true, action, credit_memo: createdResult.record, credited_amount: amount, invoice: updated });
+
+      // I-12: post the credit to the in-store credit ledger + notify the
+      // customer. Both legs are non-fatal — the credit memo Payment row is
+      // already persisted; a downstream failure must not roll it back, so
+      // problems surface as warnings on the response (stage_sync_warning
+      // pattern) rather than 500s.
+      let ledger_warning = "";
+      let notification_warning = "";
+      try {
+        const Ledger = (base44.asServiceRole.entities as any).StoreCreditLedger;
+        const customer = await Customer.get(clean(invoice.customer_id)).catch(() => null);
+        if (customer?.id && Ledger) {
+          const priorRows = await loadAllEntityRows({
+            entity: Ledger,
+            query: { customer_id: customer.id },
+            sort: "created_date",
+            label: "Store credit ledger",
+          }).catch(() => []);
+          const row = creditMemoLedgerRow({
+            payment: createdResult.record,
+            invoice,
+            customer,
+            prior_balance_cents: creditBalanceCents(customer, priorRows),
+            actor,
+            now: new Date().toISOString(),
+          });
+          if (row?.ledger_row) {
+            const key = clean(row.ledger_row.creation_request_key);
+            await createFoundationRecordWithRecovery({
+              entity: Ledger,
+              data: row.ledger_row,
+              readMatches: () => findByCreationKey(Ledger, key),
+              label: "Store credit ledger",
+            });
+            if (Object.keys(row.customer_patch || {}).length > 0) {
+              const expected = expectedFoundationFields(customer, row.customer_patch);
+              await replaceFoundationFieldsIfUnchanged({
+                entity: Customer,
+                recordId: customer.id,
+                expectedFields: expected,
+                nextFields: row.customer_patch,
+                label: "Customer store-credit balance",
+              });
+            }
+          }
+        }
+      } catch (e: any) {
+        ledger_warning = clean(e?.message || e) || "credit ledger write failed";
+      }
+      try {
+        const customer = await Customer.get(clean(invoice.customer_id)).catch(() => null);
+        const template = await base44.asServiceRole.entities.NotificationTemplate
+          .filter({ key: "credit_memo" }, undefined, 1)
+          .then((rows: any) => (Array.isArray(rows) ? rows[0] : null))
+          .catch(() => null);
+        const draft = creditMemoNotificationDraft({
+          invoice, customer, payment: createdResult.record,
+          amount, reason, actor,
+        });
+        if (template?.id && draft?.to) {
+          const subject = renderTemplate(clean(template.subject), draft.context).text;
+          const bodyText = renderTemplate(clean(template.body), draft.context).text;
+          const sent = await base44.asServiceRole.functions
+            .invoke("sendGmail", {
+              to: draft.to,
+              cc: draft.cc || undefined,
+              subject,
+              body: bodyText,
+              _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc",
+            })
+            .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+          const sendResult = sent?.data || sent;
+          if (sendResult?.error || sendResult?.success === false) {
+            notification_warning = clean(sendResult?.error) || "credit memo email failed";
+          }
+        }
+      } catch (e: any) {
+        notification_warning = clean(e?.message || e) || "credit memo notification failed";
+      }
+
+      return Response.json({
+        success: true, action,
+        credit_memo: createdResult.record,
+        credited_amount: amount,
+        invoice: updated,
+        ledger_warning: ledger_warning || undefined,
+        notification_warning: notification_warning || undefined,
+      });
     }
 
     if (action === "refund_payment") {
