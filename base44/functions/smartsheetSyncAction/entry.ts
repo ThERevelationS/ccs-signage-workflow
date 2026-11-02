@@ -94,7 +94,7 @@ const MAX_RESPONSE_BYTES = 2_000_000;
 const SETTING_KEY = 'smartsheetSyncConfig';
 const ORDER_REQUEST_TYPES_SETTING_KEY = 'orderRequestTypes';
 
-// Linked-record pull projection: every field the pull???compare???write path can
+// Linked-record pull projection: every field the pull→compare→write path can
 // touch. Sync-critical blobs stay (smartsheet_sync_snapshot is the drift
 // baseline; create_attempt drives duplicate-risk review); the fat
 // production/narrative fields the sync never reads stay in storage, which
@@ -148,14 +148,14 @@ function sameOrderRequestTypeList(left: unknown, right: unknown): boolean {
 
 // Compare current Smartsheet cell values against the last-sync snapshot stored
 // on the Base44 record. Returns true if Smartsheet was edited since the last
-// sync (a conflict ??? someone changed the row outside Base44).
+// sync (a conflict — someone changed the row outside Base44).
 function detectConflict(
   currentSmartsheetCells: { column_id: string; value: string | number | null; display_value?: string }[],
   snapshot: Record<string, string | number | null> | null,
   bindings: Record<string, string>,
   dataset: 'sales' | 'orders',
 ): boolean {
-  if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync ??? no conflict
+  if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync → no conflict
   const bindingColumnIds = new Set(Object.values(bindings || {}).map((id) => String(id).trim()).filter((id) => /^\d+$/.test(id)));
 
   if (dataset === 'sales') {
@@ -563,7 +563,7 @@ async function pullDataset(
         for (const binding of plan.held) {
           const column = String(bindings[binding] || '');
           const field = binding === 'notes_serialized' ? 'work_notes' : binding;
-          // A push-blocked task is held because remote never changed ??? only the
+          // A push-blocked task is held because remote never changed — only the
           // local task/stage inconsistency needs review. Timestamp arbitration
           // must not adopt an unchanged remote baseline over a local edit.
           if (binding === 'current_task_description' && plan.pushBlockedTask) {
@@ -670,7 +670,7 @@ async function pullDataset(
           // change: snapshots written before remote DATE cells were captured
           // hold '' for every date column, so heal the baseline with a
           // metadata-only write instead of a full record update. Capped per
-          // run ??? the next pull heals the remainder. Local-pending Orders are
+          // run — the next pull heals the remainder. Local-pending Orders are
           // held earlier and never reach this branch.
           if (!orderPullSnapshotAligned(existing, expectedOrderSnapshot) &&
               existing?.smartsheet_pending_local_sync !== true &&
@@ -858,7 +858,7 @@ async function pullDataset(
   // Order auto-create runs before the business batches: the new records are
   // already verified linked below, so they cannot belong in the update or
   // evidence pipelines of this same run. An unresolved app-side create attempt
-  // means a remote row could belong to an in-flight POST ??? hold every create.
+  // means a remote row could belong to an in-flight POST — hold every create.
   let orderCreateVerificationFailures = 0;
   const orderVerifiedCreatedRowIds = new Set<string>();
   if (dataset === 'orders' && orderToCreate.length) {
@@ -1751,7 +1751,7 @@ async function claimSyncRun(base44: any, status: any, dataset?: string) {
   // Cross-dataset serialization: the other pipeline shares the same Smartsheet
   // API and Base44 read budget, so an actively-running run on the other
   // dataset still blocks a claim here. A stale/abandoned record does NOT
-  // block ??? its own dataset's recovery path owns that cleanup.
+  // block — its own dataset's recovery path owns that cleanup.
   const otherKey = dataset === 'orders' ? SYNC_STATUS_KEYS.sales
     : dataset === 'sales' ? SYNC_STATUS_KEYS.orders : null;
   if (otherKey) {
@@ -2211,7 +2211,7 @@ async function pushDataset(
     const row = Number.isFinite(Number(record?.row_number)) ? `#${Number(record.row_number)}` : '';
     const customer = cleanText(record?.customer_name, 72) || 'Unnamed customer';
     const description = cleanText(record?.description, 88);
-    return [row, customer, description].filter(Boolean).join(' ?? ');
+    return [row, customer, description].filter(Boolean).join(' · ');
   };
 
   if (dataset === 'orders') {
@@ -2579,7 +2579,7 @@ async function pushDataset(
             !/^\d+$/.test(String(bindings?.status ?? '').trim())) {
           fieldPlan.incoming = orderStatusFromPulledDates(fieldPlan.incoming, record, false);
         }
-        // Collect for batch write/update ??? no per-record GETs or verify reads.
+        // Collect for batch write/update — no per-record GETs or verify reads.
         // This eliminates the per-record Smartsheet GET + Base44 GET + Base44
         // verify read that caused serverless function timeouts on large datasets.
         if (fieldPlan.outgoing.length) {
@@ -3403,7 +3403,7 @@ async function pushDataset(
             phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length,
             fraction: 0.6 + (0.28 * ((verifyIndex + 1) / Math.max(1, remoteChecks.length))),
             item_label: sourceRecord ? orderProgressItemLabel(sourceRecord) : `Order ${verifyIndex + 1} of ${remoteChecks.length}`,
-            detail: `Verifying Smartsheet row ${verification.rowId} ?? ${verifyIndex + 1}/${remoteChecks.length}`,
+            detail: `Verifying Smartsheet row ${verification.rowId} · ${verifyIndex + 1}/${remoteChecks.length}`,
             record_id: recordId, smartsheet_row_id: verification.rowId,
           });
           const freshRow: any = freshRows.get(verification.rowId);
@@ -3637,7 +3637,7 @@ async function pushDataset(
       detail: orderTimeBudgetReached
         ? `${Math.max(0, pendingRecords.length - orderProcessedCount).toLocaleString()} Order${pendingRecords.length - orderProcessedCount === 1 ? '' : 's'} remain safely queued for the next sync`
         : (conflicts.length || orderFailedRecordIds.size
-          ? `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} ?? ${orderFailedRecordIds.size} Order${orderFailedRecordIds.size === 1 ? '' : 's'} with errors remain isolated for review/retry`
+          ? `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} · ${orderFailedRecordIds.size} Order${orderFailedRecordIds.size === 1 ? '' : 's'} with errors remain isolated for review/retry`
           : `${orderProcessedCount.toLocaleString()} Order${orderProcessedCount === 1 ? '' : 's'} processed and verified`),
     });
   }
@@ -4891,7 +4891,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const requestedBy = cleanText(adminActor?.email, 320);
       await claimInvocationRun({
         status: 'running', started_at: startedAt, action,
-        total_steps: 1, completed_steps: 0, current_step_label: 'Order Form ??? Smartsheet',
+        total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
         requested_order_ids: orderIds, requested_by: requestedBy, results: [],
       }, 'orders');
 
@@ -4901,7 +4901,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         orderPushTimeBudgetMs: 4 * 60 * 1000,
         reportOrderProgress: async (progress: any) => saveSyncStatusForRun(base44, {
           status: 'running', action,
-          total_steps: 1, completed_steps: 0, current_step_label: 'Order Form ??? Smartsheet',
+          total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
           requested_order_ids: orderIds, requested_by: requestedBy, results: [],
           progress_dataset: 'orders', progress_direction: 'push',
           progress_phase: progress?.phase || '',
@@ -4958,7 +4958,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const startedAt = new Date().toISOString();
       await claimInvocationRun({
         status: 'running', started_at: startedAt, action,
-        total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline ??? Smartsheet',
+        total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline → Smartsheet',
         requested_work_order_ids: workOrderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
       }, 'sales');
 
@@ -5576,8 +5576,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         }
 
         const steps: { dataset: string; direction: string; label: string }[] = [];
-        if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ??? Smartsheet` });
-        if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ??? Smartsheet` });
+        if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ← Smartsheet` });
+        if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
 
         const runStartedAt = new Date().toISOString();
         const datasetResults: any[] = [];
