@@ -902,6 +902,7 @@
               "site_survey",
               "awaiting_customer_action",
               "awaiting_proof_approval",
+              "proof_changes_requested",
               "permitting",
               "proof_approved",
               "design_review",
