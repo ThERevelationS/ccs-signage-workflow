@@ -255,7 +255,8 @@
     },
     "tax_exempt": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Legacy tax-exempt flag (CoreBridge 'Tax Exempt'). The canonical exemption registry record is tax_exemption; this boolean stays for import fidelity and is read as a legacy alias by taxExemptModel."
     },
     "tax_id_number": {
       "type": "string"
@@ -274,6 +275,37 @@
     "tax_exempt_expires": {
       "type": "string",
       "description": "Tax-exempt certificate expiry date (YYYY-MM-DD). Complements tax_exempt_expiration."
+    },
+    "tax_exemption": {
+      "type": "object",
+      "description": "Canonical tax-exemption registry record for this customer. The flat tax_exempt*/tax_id_number fields above are legacy import aliases \u2014 taxExemptModel normalizes object-first, then flats. A blank expires_on means the certificate does not auto-expire (perpetual).",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Exemption reason (e.g. resale, nonprofit, government)."
+        },
+        "certificate_id": {
+          "type": "string",
+          "description": "Exemption certificate / permit number on file."
+        },
+        "expires_on": {
+          "type": "string",
+          "description": "Certificate expiry date (YYYY-MM-DD). Blank = no auto-expire."
+        },
+        "issued_by": {
+          "type": "string",
+          "description": "Issuing authority (e.g. state / agency that granted the certificate)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "expired",
+            "revoked"
+          ],
+          "description": "Registry status. 'revoked' always wins; 'expired' is also derived automatically from expires_on."
+        }
+      }
     },
     "require_purchase_order": {
       "type": "boolean",
