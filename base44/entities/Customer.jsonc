@@ -373,12 +373,34 @@
     "auto_inactive_after_months": {
       "type": "number",
       "default": 0,
-      "description": "Months without activity after which this customer auto-marks inactive (CoreBridge 'auto-inactive'). 0 disables the automation."
+      "description": "Months without activity after which this customer auto-marks inactive (CoreBridge 'auto-inactive'). 0 falls through to the shop default \u2014 per-customer opt-out is auto_inactive_disabled, NOT zero (N-07.3)."
     },
     "auto_inactive_months": {
       "type": "number",
       "default": 0,
-      "description": "Months without activity before this customer auto-marks inactive (CoreBridge 'Auto Inactive' months). 0 disables. Parallel to auto_inactive_after_months."
+      "description": "Months without activity before this customer auto-marks inactive (CoreBridge 'Auto Inactive' months). 0 falls through to the shop default \u2014 opt-out is auto_inactive_disabled. Parallel to auto_inactive_after_months."
+    },
+    "auto_inactive_disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Per-customer opt-out of the auto-inactive sweep. Set true to exempt this customer regardless of month thresholds."
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "description": "Denormalized lifecycle status mirror written by manageCustomerLifecycle (lead/prospect/active/inactive + merged). Declared for schema completeness \u2014 previously stored undeclared (N-07)."
+    },
+    "tax_exempt_issued_by": {
+      "type": "string",
+      "description": "Legacy flat alias: issuer of the tax-exempt certificate. Read by taxExemptModel after the tax_exemption object."
+    },
+    "tax_exempt_status": {
+      "type": "string",
+      "description": "Legacy flat alias: exemption status (active|expired|revoked). Read by taxExemptModel after tax_exemption.status."
+    },
+    "tax_exempt_revoked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Legacy flat alias: certificate revoked flag. Read by taxExemptModel alongside tax_exemption.revoked."
     },
     "notes": {
       "type": "string"
