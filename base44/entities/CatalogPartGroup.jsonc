@@ -1,0 +1,58 @@
+{
+  "name": "CatalogPartGroup",
+  "type": "object",
+  "description": "Catalog-level part grouping for shared configuration inheritance. Unlike BuilderPartGroup (an ordered group inside one Builder Product on a single estimate), a CatalogPartGroup is a reusable registry row: it lists member catalog part ids and carries shared_defaults \u2014 a JSON bag of inheritable part fields that members adopt unless they override locally.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the catalog part group."
+    },
+    "description": {
+      "type": "string"
+    },
+    "shared_defaults": {
+      "type": "object",
+      "description": "JSON of inheritable part fields applied to every member part that has not overridden the field locally (e.g. pricing mode, margin, vendor, waste factor).",
+      "additionalProperties": true
+    },
+    "part_ids": {
+      "type": "array",
+      "description": "Ids of the catalog parts that belong to this group and inherit shared_defaults.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order of this group in catalog pickers."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status (e.g. active, archived). Free-form string; treated as active when unset."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__catalogpartgroup_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__catalogpartgroup_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__catalogpartgroup_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__catalogpartgroup_backend_only__"
+      }
+    }
+  }
+}
