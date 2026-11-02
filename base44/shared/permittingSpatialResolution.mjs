@@ -177,6 +177,14 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  if(!geocode.location_exact&&!geocode.approximate_source){
   const ar=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,target});
   if(ar)return {...base,status:'location_verified',reason:'Map position is approximate, but a confirmed review rule places this address in '+ar.pick.name+' — resolving to '+ar.pick.name+'. Spot-check the pin on the map.',target:base.targets[0],corroborated_by:'resolution_rule'};
+  // Not-a-real-address gate: an approximate pin on input with no street
+  // structure (phone numbers, IDs, names, street-only text) is a data-quality
+  // reject, not a human review item — the flag class dies here permanently.
+  const streetPart=norm(String(enteredAddress||'').split(',')[0]);
+  if(streetPart){
+   if(!/[a-z]/.test(streetPart))return {...base,status:'invalid_input',reason:'This looks like a phone or ID number, not a street address. Enter a numbered street address.'};
+   if(!/\d/.test(streetPart))return {...base,status:'invalid_input',reason:'This is missing a house or street number — enter a numbered street address.'};
+  }
   return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
  }
  if(relevant.some(f=>f.distance_m<=edge)){
