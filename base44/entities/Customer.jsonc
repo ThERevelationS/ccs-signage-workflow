@@ -56,6 +56,21 @@
       "default": "prospect",
       "description": "Account status shown in the customer header."
     },
+    "status": {
+      "type": "string",
+      "description": "CRM lifecycle status string \u2014 Lead | Prospect | Active | Inactive (CoreBridge 'Status'). Parallel to the legacy customer_status enum; kept as a free string for import fidelity."
+    },
+    "customer_type": {
+      "type": "string",
+      "description": "Customer classification (CoreBridge 'Customer Type', e.g. retail, wholesale, contractor)."
+    },
+    "warning_flags": {
+      "type": "array",
+      "description": "Warning flags raised on this account (e.g. credit_hold, do_not_mail, tax_expired) \u2014 surfaced as badges on customer views.",
+      "items": {
+        "type": "string"
+      }
+    },
     "tags": {
       "type": "array",
       "items": {
@@ -217,14 +232,26 @@
     "customer_origination": {
       "type": "string"
     },
+    "origination_path": {
+      "type": "string",
+      "description": "Hierarchical origination path (CoreBridge 'Origination', e.g. \"Networking Group : BNI - Carl - Tier 1\"). Complements the flat customer_origination label."
+    },
     "industry_type": {
       "type": "string"
     },
     "master_account": {
       "type": "string"
     },
+    "master_account_id": {
+      "type": "string",
+      "description": "Customer id of the master/parent account this record rolls up to (CoreBridge 'Master Account' link). master_account holds the display label."
+    },
     "terms": {
       "type": "string"
+    },
+    "credit_terms_days": {
+      "type": "number",
+      "description": "Net credit terms in days for invoicing (e.g. 30 = Net 30). Complements the free-text terms field."
     },
     "tax_exempt": {
       "type": "boolean",
@@ -240,9 +267,22 @@
     "tax_exempt_reason": {
       "type": "string"
     },
+    "tax_exempt_id": {
+      "type": "string",
+      "description": "Tax-exempt certificate / exemption id number (CoreBridge 'Tax Exempt ID'). Complements tax_id_number."
+    },
+    "tax_exempt_expires": {
+      "type": "string",
+      "description": "Tax-exempt certificate expiry date (YYYY-MM-DD). Complements tax_exempt_expiration."
+    },
     "require_purchase_order": {
       "type": "boolean",
       "default": false
+    },
+    "po_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, orders for this customer require a purchase order number (CoreBridge 'PO Required'). Parallel to require_purchase_order."
     },
     "shipping_account": {
       "type": "string"
@@ -259,6 +299,11 @@
       "type": "number",
       "default": 0,
       "description": "Unapplied in-store credit balance owed to this customer (CoreBridge 'In-Store Credit'). Distinct from credit_limit, which caps open account charges."
+    },
+    "in_store_credit_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current in-store credit balance owed to this customer (CoreBridge 'In-Store Credit' balance). Parallel to in_store_credit."
     },
     "pricing_tier": {
       "type": "number",
@@ -277,6 +322,11 @@
       "type": "number",
       "default": 0,
       "description": "Months without activity after which this customer auto-marks inactive (CoreBridge 'auto-inactive'). 0 disables the automation."
+    },
+    "auto_inactive_months": {
+      "type": "number",
+      "default": 0,
+      "description": "Months without activity before this customer auto-marks inactive (CoreBridge 'Auto Inactive' months). 0 disables. Parallel to auto_inactive_after_months."
     },
     "notes": {
       "type": "string"
