@@ -427,12 +427,17 @@ Deno.serve(async (req) => {
       }).catch(() => []);
       const openStatuses = new Set(["draft", "calculated", "sent"]);
       let flagged = 0;
+      let remarkupFailures = 0;
+      let remarkupWarning = "";
       for (const e of list(rows)) {
         if (!openStatuses.has(clean(e?.status))) continue;
-        await Estimate.update(clean(e?.id), { pricing_stale: true, pricing_stale_reason: `Pricing tier ${tier} changed — recompute before sending.` }).catch(() => {});
+        await Estimate.update(clean(e?.id), { pricing_stale: true, pricing_stale_reason: `Pricing tier ${tier} changed — recompute before sending.` }).catch((err: any) => { remarkupFailures += 1; remarkupWarning = String(err?.message || err); });
         flagged += 1;
       }
-      return Response.json({ success: true, action, tier_number: tier, flagged });
+      return Response.json({
+        success: true, action, tier_number: tier, flagged,
+        remarkup_warning: remarkupFailures ? `${remarkupFailures} estimate update(s) failed${remarkupWarning ? `: ${remarkupWarning}` : ""}` : undefined,
+      });
     }
 
     // Export one estimate as re-importable JSON (#451): the estimate plus its
@@ -461,18 +466,23 @@ Deno.serve(async (req) => {
       const { id: _oid, created_date: _c, updated_date: _u, created_by_id: _cbi, created_by: _cb, ...fields } = src;
       const created = await Estimate.create({ ...fields, status: "draft", estimate_number: "", pricing_stale: true, pricing_stale_reason: "Imported estimate — recompute + re-save before sending." });
       let importedParts = 0;
+      let importFailures = 0;
+      let importWarning = "";
       if (created?.id) {
         for (const p of list(b?.products)) {
           const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
-          await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: created.id }).catch(() => null);
+          await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });
         }
         for (const p of list(b?.parts)) {
           const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
-          const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: created.id }).catch(() => null);
+          const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: created.id }).catch((err: any) => { importFailures += 1; importWarning = String(err?.message || err); return null; });
           if (r?.id) importedParts += 1;
         }
       }
-      return Response.json({ success: true, action, estimate_id: created?.id, imported_parts: importedParts });
+      return Response.json({
+        success: true, action, estimate_id: created?.id, imported_parts: importedParts,
+        import_warning: importFailures ? `${importFailures} bundle row(s) failed to import${importWarning ? `: ${importWarning}` : ""}` : undefined,
+      });
     }
 
     // Copy BOM between estimates (#464): clone a source estimate's
@@ -489,18 +499,19 @@ Deno.serve(async (req) => {
         base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }, "-created_date", 500).catch(() => []),
       ]);
       let copiedProducts = 0, copiedParts = 0;
+      const copyWarnings: string[] = [];
       for (const p of list(products)) {
         const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
-        const r = await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: toId }).catch(() => null);
+        const r = await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`product copy failed: ${String(err?.message || err)}`); return null; });
         if (r?.id) copiedProducts += 1;
       }
       for (const p of list(parts)) {
         const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
-        const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: toId }).catch(() => null);
+        const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`part copy failed: ${String(err?.message || err)}`); return null; });
         if (r?.id) copiedParts += 1;
       }
-      await Estimate.update(toId, { pricing_stale: true, pricing_stale_reason: "BOM copied — recompute + re-save before sending." }).catch(() => null);
-      return Response.json({ success: true, action, copied_products: copiedProducts, copied_parts: copiedParts });
+      await Estimate.update(toId, { pricing_stale: true, pricing_stale_reason: "BOM copied — recompute + re-save before sending." }).catch((err: any) => { copyWarnings.push(`stale-flag update failed: ${String(err?.message || err)}`); return null; });
+      return Response.json({ success: true, action, copied_products: copiedProducts, copied_parts: copiedParts, copy_warning: copyWarnings.length ? copyWarnings.join("; ") : undefined });
     }
 
     // Copy sections between estimates (#467): clone each source line_items
@@ -523,6 +534,7 @@ Deno.serve(async (req) => {
       const svcEntities = base44.asServiceRole.entities as any;
       const newLines: any[] = [];
       let copied = 0;
+      const copyWarnings: string[] = [];
       for (const line of list(src?.line_items)) {
         const moduleKey = clean(line?.module_key);
         const entityName = MODULE_ENTITIES[moduleKey];
@@ -532,7 +544,7 @@ Deno.serve(async (req) => {
           const proj = await svcEntities[entityName].get(clean(line.project_id)).catch(() => null);
           if (proj?.id) {
             const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = proj;
-            const newProj = await svcEntities[entityName].create({ ...pf }).catch(() => null);
+            const newProj = await svcEntities[entityName].create({ ...pf }).catch((err: any) => { copyWarnings.push(`project clone failed: ${String(err?.message || err)}`); return null; });
             if (newProj?.id) newProjectId = newProj.id;
           }
         } catch { /* project clone failed — still copy the line row */ }
@@ -541,7 +553,7 @@ Deno.serve(async (req) => {
           const bp = await base44.asServiceRole.entities.BuilderProduct.get(clean(line.builder_product_id)).catch(() => null);
           if (bp?.id) {
             const { id: _bi, created_date: _bc, updated_date: _bu, created_by_id: _bbi, created_by: _bb, ...bf } = bp;
-            const newBp = await base44.asServiceRole.entities.BuilderProduct.create({ ...bf, estimate_id: toId }).catch(() => null);
+            const newBp = await base44.asServiceRole.entities.BuilderProduct.create({ ...bf, estimate_id: toId }).catch((err: any) => { copyWarnings.push(`builder product clone failed: ${String(err?.message || err)}`); return null; });
             if (newBp?.id) newProductId = newBp.id;
           }
         }
@@ -554,8 +566,8 @@ Deno.serve(async (req) => {
         copied += 1;
       }
       const merged = [...list(dst?.line_items), ...newLines];
-      await Estimate.update(toId, { line_items: merged, pricing_stale: true, pricing_stale_reason: "Sections copied — recompute + re-save before sending." }).catch(() => null);
-      return Response.json({ success: true, action, copied_sections: copied });
+      await Estimate.update(toId, { line_items: merged, pricing_stale: true, pricing_stale_reason: "Sections copied — recompute + re-save before sending." }).catch((err: any) => { copyWarnings.push(`target estimate update failed: ${String(err?.message || err)}`); return null; });
+      return Response.json({ success: true, action, copied_sections: copied, copy_warning: copyWarnings.length ? copyWarnings.join("; ") : undefined });
     }
 
     // Wrap a standalone module project into an AIO estimate (#455): legacy
@@ -1373,8 +1385,9 @@ Deno.serve(async (req) => {
       // (#170) Reconcile-on-read: pipeline UIs can move a WO's stage without
       // routing through this function — re-stamp linked estimates from the
       // WO's current stage whenever the workspace is opened.
+      let stageSyncWarning = "";
       if (workOrder?.id && clean(workOrder.sales_status)) {
-        await syncEstimateSalesStageFromWorkOrder(Estimate, workOrder, workOrder.sales_status).catch(() => {});
+        await syncEstimateSalesStageFromWorkOrder(Estimate, workOrder, workOrder.sales_status).catch((e: any) => { stageSyncWarning = String(e?.message || e); });
       }
       const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
@@ -1405,7 +1418,7 @@ Deno.serve(async (req) => {
           expectedFields: expectedFor(opportunity, opportunity, desired),
           nextFields: desired,
           label: "Opportunity stage advance",
-        }).catch(() => opportunity);
+        }).catch((e: any) => { stageSyncWarning = [stageSyncWarning, String(e?.message || e)].filter(Boolean).join("; "); return opportunity; });
         try {
           await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted", Estimate);
         } catch {}
@@ -1441,6 +1454,7 @@ Deno.serve(async (req) => {
           po_committed: committedTotal,
           co_delta: coDelta,
         },
+        stage_sync_warning: stageSyncWarning || undefined,
       });
     }
 
@@ -2113,13 +2127,14 @@ Deno.serve(async (req) => {
         opportunityDesired.stage = "estimating";
         opportunityDesired.stage_changed_at = now;
       }
+      let opportunityUpdateWarning = "";
       const freshOpportunity = await replaceFoundationFieldsIfUnchanged({
         entity: Opportunity,
         recordId: opportunityId,
         expectedFields: expectedFoundationFields(opportunity, opportunityDesired),
         nextFields: opportunityDesired,
         label: "Opportunity estimating link",
-      }).catch(() => null);
+      }).catch((e: any) => { opportunityUpdateWarning = String(e?.message || e); return null; });
 
       await logActivity(Activity, {
         opportunity_id: opportunityId, actor,
@@ -2144,6 +2159,7 @@ Deno.serve(async (req) => {
         estimate,
         opportunity: freshOpportunity || opportunity,
         reused: requestResult.status !== "created",
+        opportunity_update_warning: opportunityUpdateWarning || undefined,
       });
     }
 
