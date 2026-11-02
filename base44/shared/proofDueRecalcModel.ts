@@ -399,16 +399,31 @@ export function orderDueAfterApprove(workOrder: any, product_id: any, {
     label: 'proof_approval_order_rollup',
   });
 
+  // B-08 second wall on the ORDER date — the same assertDueDateMutable guard
+  // the product path applies (N-03.2): a caller passing
+  // respect_hard_dates:false cannot un-hold a hard order date under a
+  // non-manual actor; manual actors still move it flagged for audit.
+  const orderActor = norm(actor_type) || RECALC_DEFAULT_ACTOR;
+  const orderVerdict = assertDueDateMutable(
+    { hard_due_date: wo.hard_due_date === true, due_date: existingOrder },
+    rollup.due_date,
+    { actor_type: orderActor },
+  );
+  const orderBlocked = rollup.changed === true && orderVerdict.ok !== true;
+
   return {
-    order_due_date: rollup.changed ? rollup.due_date : undefined,
+    order_due_date: rollup.changed && !orderBlocked ? rollup.due_date : undefined,
     product_patches,
     product_found,
     prior_order_due_date: existingOrder,
     computed_order_due_date: rollup.computed_due_date,
-    order_pushed: rollup.pushed === true,
-    order_held: rollup.held_by_hard_date === true,
+    order_pushed: rollup.pushed === true && !orderBlocked,
+    order_held: rollup.held_by_hard_date === true || orderBlocked,
+    order_manual_override: orderVerdict.manual_override === true,
+    order_warning: cleanStr(orderVerdict.warning),
     binding_product_id: rollup.binding_product_id || '',
-    trace: rollup.trace,
+    trace: [...(Array.isArray(rollup.trace) ? rollup.trace : []),
+      { kind: 'guard', held: orderBlocked, actor_type: orderActor }],
   };
 }
 
