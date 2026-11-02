@@ -171,6 +171,66 @@
     "custom_status_meta": {
       "type": "string",
       "description": "Optional JSON {key:{label,color,terminal,bucket,roles,allow_builtin_reentry}} rich status metadata (customStatusModel)."
+    },
+    "email_signature": {
+      "type": "string",
+      "description": "Signature block appended to quote delivery emails (K-10; stored key in QUOTE_DEFAULT_KEYS)."
+    },
+    "email_subject_template": {
+      "type": "string",
+      "description": "Quote email subject template; supports the 7 deployed interpolateQuoteTemplate tokens."
+    },
+    "email_message_template": {
+      "type": "string",
+      "description": "Quote email body template; supports the deployed interpolateQuoteTemplate tokens."
+    },
+    "estimate_number_format": {
+      "type": "string",
+      "description": "Estimate numbering pattern for this config (K-09 numberingModel; e.g. EST-{seq})."
+    },
+    "order_number_format": {
+      "type": "string",
+      "description": "Work-order numbering pattern for this config (K-09)."
+    },
+    "doc_number_padding": {
+      "type": "number",
+      "description": "Zero-padding width for {seq} in numbering patterns (K-09)."
+    },
+    "module_number_prefixes": {
+      "type": "string",
+      "description": "JSON {module:prefix} per-module numbering prefix map (K-09)."
+    },
+    "display_timezone": {
+      "type": "string",
+      "description": "IANA timezone for quote/print date rendering (K-12 user-defaults host; e.g. America/New_York)."
+    },
+    "default_tax_group": {
+      "type": "string",
+      "description": "TaxGroup name applied by default when an estimate has no manual pick (K-10 resolution chain: manual > customer > this > TaxGroup.is_default)."
+    },
+    "number_reissue_policy": {
+      "type": "string",
+      "description": "Whether voided/deleted doc numbers may be reused: never|on_void|always (K-09)."
+    },
+    "signature_text": {
+      "type": "string",
+      "description": "Print-surface signature block text (K-10 proposed slot \u2014 distinct from email_signature used in delivery emails)."
+    },
+    "disclaimer_text": {
+      "type": "string",
+      "description": "Optional disclaimer line in the ordered print footer (K-10 proposed slot 2; renders after warranty/terms)."
+    },
+    "tax_rate_source": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "customer_default",
+        "shop_default",
+        "group_default",
+        "manual",
+        "none"
+      ],
+      "description": "Tax-rate source picker (K-10): which hop of the resolution chain this config prefers."
     }
   },
   "required": [
