@@ -144,6 +144,30 @@ async function estimatePortalView(estimate: any, base44: any) {
   };
 }
 
+function productPortalRow(p: any) {
+  return {
+    id: clean(p?.id || p?.product_id),
+    description: clean(p?.description || p?.customer_description) || "Item",
+    quantity: num(p?.quantity) || null,
+    customer_facing_status: clean(p?.customer_facing_status),
+    operational_status: clean(p?.operational_status),
+    fulfillment_state: clean(p?.fulfillment_state) === "none" ? "" : clean(p?.fulfillment_state),
+    fulfillment_method: clean(p?.fulfillment_method),
+    product_due_date: clean(p?.product_due_date),
+    design_due_date: clean(p?.design_due_date),
+    proof_status: clean(p?.proof_status),
+    proof_file_name: clean(p?.proof_file_name),
+    proof_file_url: clean(p?.proof_file_url),
+    proof_version: num(p?.proof_version) || null,
+  };
+}
+
+function portalProducts(order: any) {
+  return (Array.isArray(order?.products) ? order.products : [])
+    .filter((p: any) => p && p.deleted !== true)
+    .map(productPortalRow);
+}
+
 function jobPortalView(order: any) {
   const tasks = Array.isArray(order?.sub_tasks) ? order.sub_tasks : [];
   const done = tasks.filter((t: any) => t?.completed === true || clean(t?.status) === "completed").length;
@@ -156,6 +180,7 @@ function jobPortalView(order: any) {
     install_date: clean(order?.project_install_date),
     install_location: clean(order?.install_location),
     task_progress: tasks.length ? { completed: done, total: tasks.length } : null,
+    products: portalProducts(order),
     updated_date: clean(order?.updated_date),
   };
 }
@@ -473,14 +498,7 @@ Deno.serve(async (req) => {
           job: jobPortalView(order),
           messages: jobThread.slice(-100).map(messageView),
           read_receipt_warning: receiptWarnings.length ? receiptWarnings.join("; ") : undefined,
-          products: (Array.isArray(order?.products) ? order.products : [])
-            .filter((p: any) => p && p.deleted !== true)
-            .map((p: any) => ({
-              description: clean(p?.description || p?.customer_description) || "Item",
-              quantity: num(p?.quantity) || null,
-              customer_facing_status: clean(p?.customer_facing_status),
-              fulfillment_state: clean(p?.fulfillment_state) === "none" ? "" : clean(p?.fulfillment_state),
-            })),
+          products: portalProducts(order),
         });
       }
 
