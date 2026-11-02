@@ -111,7 +111,7 @@ const pad2 = (n: number): string => String(n).padStart(2, '0');
 const toCents = (v: any): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.\-]/g, ''));
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 const fromCents = (c: any): number => Math.round(num(c)) / 100;
 
@@ -1159,8 +1159,8 @@ export const CUSTOMER_REPORTS = [
           amount: Math.round((received + refunded) * 100) / 100,
           status: '',
           created_by: '',
-          payments_received: Math.round(received * 100) / 100,
-          refunds_issued: Math.round(refunded * 100) / 100,
+          payments_received: Math.sign(received) * Math.round(Math.abs(received) * 100 + 1e-9) / 100,
+          refunds_issued: Math.sign(refunded) * Math.round(Math.abs(refunded) * 100 + 1e-9) / 100,
         },
       };
     },
