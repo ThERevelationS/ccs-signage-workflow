@@ -13,6 +13,7 @@ import {
   creditBalanceCents,
   creditMemoNotificationDraft,
 } from "../../shared/creditMemoModel.ts";
+import { contactMailable, resolveBillingContact } from "../../shared/contactRolesModel.ts";
 import { renderTemplate } from "../../shared/templateRender.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
@@ -210,6 +211,7 @@ Deno.serve(async (req) => {
     const Invoice = base44.asServiceRole.entities.Invoice;
     const Payment = base44.asServiceRole.entities.Payment;
     const Customer = base44.asServiceRole.entities.Customer;
+    const CustomerContact = base44.asServiceRole.entities.CustomerContact;
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const Opportunity = base44.asServiceRole.entities.Opportunity;
@@ -670,8 +672,20 @@ Deno.serve(async (req) => {
       const customer = clean(invoice.customer_id)
         ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
         : null;
-      const onFile = [customer?.email, customer?.contact_email, customer?.billing_email, customer?.contact_office_email, customer?.billing_contact_email]
-        .map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
+      // G-04: invoices/reminders are AR documents — resolve the billing
+      // recipient at contact level first (billing-role > accounts_payable
+      // authority > primary contact > customer-level fields). The contact
+      // read degrades to [] so an entity hiccup never blocks a send.
+      const contacts = clean(invoice.customer_id)
+        ? await CustomerContact.filter({ customer_id: clean(invoice.customer_id) }, '-created_date', 500).catch(() => [])
+        : [];
+      const billing = resolveBillingContact({ contacts, customer });
+      const onFile = [
+        billing?.email,
+        ...(Array.isArray(contacts) ? contacts.filter((ct: any) => contactMailable(ct)).map((ct: any) => ct?.email) : []),
+        customer?.billing_email, customer?.billing_contact_email,
+        customer?.email, customer?.contact_email, customer?.contact_office_email,
+      ].map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
       const requested = clean(body?.email).toLowerCase();
       const to = (requested && onFile.includes(requested)) ? requested : (onFile[0] || '');
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
@@ -748,7 +762,14 @@ Deno.serve(async (req) => {
       if (!cid) throw bad("customer_id or invoice_id is required.");
       const customer = await Customer.get(cid).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email) || clean(customer?.billing_contact_email);
+      // G-04: statements are AR documents — default to the billing contact.
+      // Contact-level chain (billing role > accounts_payable > primary) then
+      // the customer-level billing fields, matching statementBatchModel's
+      // billing-first order. Previously generic email fields outranked the
+      // billing columns here. The contact read degrades to [] so an entity
+      // hiccup never blocks a send.
+      const contacts = await CustomerContact.filter({ customer_id: cid }, '-created_date', 500).catch(() => []);
+      const to = clean(body?.email).toLowerCase() || resolveBillingContact({ contacts, customer }).email;
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       // Full paged invoice history for this customer — a statement built from
       // a truncated first page would silently understate the open balance.
