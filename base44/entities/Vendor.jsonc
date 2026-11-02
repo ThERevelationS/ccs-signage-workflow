@@ -1,0 +1,106 @@
+{
+  "name": "Vendor",
+  "type": "object",
+  "description": "Vendor registry \u2014 canonical supplier record (contacts, payment terms, default GL account, communication preferences, statement email). PurchaseOrder.vendor_id links here; vendor_name stays on the PO for display. Backend-only access.",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "contacts": {
+      "type": "array",
+      "description": "Named contacts at this vendor.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "terms": {
+      "type": "string",
+      "description": "Payment terms (e.g. \"Net 30\")."
+    },
+    "gl_default": {
+      "type": "string",
+      "description": "Default GL account code for purchases from this vendor."
+    },
+    "comm_prefs": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Communication preferences for this vendor.",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "preferred_method": {
+          "type": "string"
+        }
+      }
+    },
+    "statement_email": {
+      "type": "string",
+      "description": "Email address vendor statements are sent to."
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "account_number": {
+      "type": "string",
+      "description": "Our account number on file with this vendor."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__vendor_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__vendor_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__vendor_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__vendor_backend_only__"
+      }
+    }
+  }
+}
