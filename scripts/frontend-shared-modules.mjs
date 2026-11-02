@@ -32,6 +32,7 @@ const names = new Set([
   'cncPricingWire.ts', 'brickPricingWire.ts',
   'laserPricingWire.ts', 'metalPricingWire.ts',
   'paintPricingWire.ts', 'foundationPricingWire.ts',
+  'maintenancePricingWire.ts', 'customItemsPricingWire.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
