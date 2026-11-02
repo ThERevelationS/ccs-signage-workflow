@@ -1,43 +1,179 @@
 {
   "name": "FileIndex",
+  "type": "object",
   "description": "HOT-scope file metadata — customer-linked + usage-promoted folders only (~50k/agent cap, demote-oldest overflow). The authoritative full index lives in agent SQLite; this is the instant-search/browse tier. creation_request_key = path_key for idempotent upsert.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "creation_request_key": { "type": "string", "description": "= path_key (agent|root|nfc+casefold path)." },
-    "agent_id": { "type": "string" },
-    "root_key": { "type": "string" },
-    "path": { "type": "string", "description": "Root-relative display path (original case)." },
-    "path_key": { "type": "string" },
-    "parent_path": { "type": "string", "description": "Prefix-scoped customer/customer-panel queries." },
-    "name": { "type": "string" },
-    "ext": { "type": "string" },
-    "kind": { "type": "string" },
-    "is_dir": { "type": "boolean", "default": false },
-    "size": { "type": "number" },
-    "mtime_ms": { "type": "number" },
-    "dir_size_bytes": { "type": "number", "description": "Dirs only: rollup size." },
-    "sha256": { "type": "string", "description": "Set for bridge-delivered/uploaded files." },
-    "customer_ids": { "type": "array", "items": { "type": "string" }, "description": "Display hint; queries use root_key+parent_path prefix." },
-    "origin": { "type": "string", "enum": ["bridge", "external"], "default": "external", "description": "bridge = app-created = deletable." },
-    "managed_by": { "type": "string", "enum": ["bridge", "none"], "default": "none", "description": "bridge = bridge-filed = movable (still not deletable)." },
-    "pinned": { "type": "boolean", "default": false },
-    "hot": { "type": "boolean", "default": false, "description": "Usage-promoted into hot index." },
-    "hot_score": { "type": "number", "default": 0 },
-    "thumb_url": { "type": "string" },
-    "preview_url": { "type": "string" },
-    "preview_state": { "type": "string", "enum": ["none", "pending", "ready", "failed:timeout", "failed:unsupported", "failed:locked"], "default": "none" },
-    "delivered_url": { "type": "string", "description": "Full bytes in Base44 storage. Permanent once landed (no storage delete API) — keep_delivered_max_mb gates size." },
-    "delivered_at_ms": { "type": "number" },
-    "open_state": { "type": "string", "enum": ["openable", "needs_preview", "download_only", "encrypted", "corrupt", "locked", "unknown"], "default": "unknown" },
-    "missing": { "type": "boolean", "default": false, "description": "2-sweep missing flag." },
-    "served_by": { "type": "string", "enum": ["primary", "backup"], "description": "Last scan source." },
-    "last_seen_scan": { "type": "string" }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "= path_key (agent|root|nfc+casefold path)."
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "root_key": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "description": "Root-relative display path (original case)."
+    },
+    "path_key": {
+      "type": "string"
+    },
+    "parent_path": {
+      "type": "string",
+      "description": "Prefix-scoped customer/customer-panel queries."
+    },
+    "name": {
+      "type": "string"
+    },
+    "ext": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "is_dir": {
+      "type": "boolean",
+      "default": false
+    },
+    "size": {
+      "type": "number"
+    },
+    "mtime_ms": {
+      "type": "number"
+    },
+    "dir_size_bytes": {
+      "type": "number",
+      "description": "Dirs only: rollup size."
+    },
+    "sha256": {
+      "type": "string",
+      "description": "Set for bridge-delivered/uploaded files."
+    },
+    "customer_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Display hint; queries use root_key+parent_path prefix."
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "bridge",
+        "external"
+      ],
+      "default": "external",
+      "description": "bridge = app-created = deletable."
+    },
+    "managed_by": {
+      "type": "string",
+      "enum": [
+        "bridge",
+        "none"
+      ],
+      "default": "none",
+      "description": "bridge = bridge-filed = movable (still not deletable)."
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "hot": {
+      "type": "boolean",
+      "default": false,
+      "description": "Usage-promoted into hot index."
+    },
+    "hot_score": {
+      "type": "number",
+      "default": 0
+    },
+    "thumb_url": {
+      "type": "string"
+    },
+    "preview_url": {
+      "type": "string"
+    },
+    "preview_state": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "ready",
+        "failed:timeout",
+        "failed:unsupported",
+        "failed:locked"
+      ],
+      "default": "none"
+    },
+    "delivered_url": {
+      "type": "string",
+      "description": "Full bytes in Base44 storage. Permanent once landed (no storage delete API) — keep_delivered_max_mb gates size."
+    },
+    "delivered_at_ms": {
+      "type": "number"
+    },
+    "open_state": {
+      "type": "string",
+      "enum": [
+        "openable",
+        "needs_preview",
+        "download_only",
+        "encrypted",
+        "corrupt",
+        "locked",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "missing": {
+      "type": "boolean",
+      "default": false,
+      "description": "2-sweep missing flag."
+    },
+    "served_by": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "backup"
+      ],
+      "description": "Last scan source."
+    },
+    "last_seen_scan": {
+      "type": "string"
+    }
   },
-  "required": ["agent_id", "root_key", "path", "path_key"],
+  "required": [
+    "agent_id",
+    "root_key",
+    "path",
+    "path_key"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
