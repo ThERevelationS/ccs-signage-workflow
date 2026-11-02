@@ -571,14 +571,14 @@ function exactConfiguredLocality(localities, resolution, profiles = []) {
   if (resolution?.status !== "location_verified" || !resolution.target) return null;
   const target = resolution.target;
   const matches = localities.filter((row) => {
-    if (normalizeAddressState(row.state).toUpperCase() !== target.state || norm(row.name) !== norm(target.name)) return false;
+    if (normalizeAddressState(row.state).toUpperCase() !== target.state || !sameJ(row.name, target.name)) return false;
     const township = /township/i.test(row.name), county = /county$/i.test(String(row.name).trim());
     if (target.type === "county" && !county || target.type !== "county" && county) return false;
     if (target.type === "township" && !township || target.type !== "township" && township) return false;
     if (row.geographic_identity?.geoid) return row.geographic_identity.geoid === target.geoid;
     if (target.type !== "county") {
       const profile = profiles.find((p) => p.id === row.jurisdiction_profile_id), county2 = row.county || row.parent_county?.name || profile?.parent_county?.name;
-      return norm(county2) === norm(target.county);
+      return sameJ(county2, target.county);
     }
     return true;
   });
