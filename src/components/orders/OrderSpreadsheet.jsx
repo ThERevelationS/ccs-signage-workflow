@@ -437,7 +437,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true))
           : Promise.resolve(cachedWorkOrdersRef.current || []),
         reloadAux
-          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Order Spreadsheet authorized users" })
           : Promise.resolve(cachedUsersRef.current || [])
       ]);
       // A manual Sync or a newer refresh can start while these reads are
