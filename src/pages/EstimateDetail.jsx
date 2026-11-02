@@ -12,6 +12,7 @@ import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor"
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import PricingSummary from "@/components/estimator/PricingSummary";
+import EstimateMarginSection from "@/components/estimator/EstimateMarginSection";
 import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
@@ -2003,6 +2004,7 @@ export default function EstimateDetail() {
                   sessionToken={sessionToken}
                 />
               </div>
+              <EstimateMarginSection estimate={estimate} pricing={pricing} />
               <CustomerQuotePanel
                 estimate={estimate}
                 pricing={pricing}
