@@ -662,7 +662,10 @@ Deno.serve(async (req) => {
         const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
         const Staff = base44.asServiceRole.entities.AuthorizedEmail;
         const Notification = base44.asServiceRole.entities.Notification;
-        const Activity = base44.asServiceRole.entities.Activity;
+        // Undeclared `entities.Activity` does not exist — smartsheet-lane rows
+        // were silently dropped by the catch below. OpportunityActivity is the
+        // shared CRM activity surface (same convention as followUpSweepAction).
+        const Activity = base44.asServiceRole.entities.OpportunityActivity;
         const [settingsRows, staffRows, customer, related] = await Promise.all([
           loadAllEntityRows({ entity: GlobalSettings, query: {}, sort: "created_date", label: "Delivery settings" }).catch(() => []),
           loadAllEntityRows({ entity: Staff, query: {}, sort: "created_date", label: "Staff directory" }).catch(() => []),
@@ -710,8 +713,17 @@ Deno.serve(async (req) => {
             await Activity.create({
               event_type: "Portal Reply",
               summary: plan.smartsheetRow.summary,
+              subject: plan.smartsheetRow.summary,
               notes: plan.smartsheetRow.detail,
+              company_name: clean(customer?.company_name),
               customer_id: clean(plan.smartsheetRow.customer_id) || scope.customerId,
+              opportunity_id: clean(related?.opportunity_id),
+              work_order_id: scope.relatedKind === "work_order" ? scope.relatedId : clean(related?.work_order_id),
+              assigned_to: salespersonRaw,
+              completed_at: new Date().toISOString(),
+              outcome: "completed",
+              source: "customer_portal",
+              actor: clean(result?.record?.author_name) || "Customer",
             }).catch(() => {});
           }
         }
