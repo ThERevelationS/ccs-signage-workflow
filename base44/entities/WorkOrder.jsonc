@@ -189,6 +189,16 @@
       "default": false,
       "description": "When true, product-driven stage derivation (B-13) does not move current_stage; set/cleared by manual stage UI"
     },
+    "fulfillment_method": {
+      "type": "string",
+      "enum": [
+        "pickup",
+        "installation",
+        "shipping",
+        "delivery"
+      ],
+      "description": "Order-level fulfillment method (A-28); product-level fulfillment_method may override per product"
+    },
     "priority": {
       "type": "number",
       "description": "Priority order"
@@ -924,6 +934,41 @@
               "shipped",
               "delivered"
             ]
+          },
+          "fulfillment_method": {
+            "type": "string",
+            "enum": [
+              "pickup",
+              "installation",
+              "shipping",
+              "delivery"
+            ],
+            "description": "Per-product fulfillment method (A-28); falls back to order-level fulfillment_method"
+          },
+          "notes": {
+            "type": "array",
+            "description": "Channel-scoped product notes (A-30/B-10): {id, channel, text, author, created_at}",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
           },
           "design_due_date": {
             "type": "string"
