@@ -57,7 +57,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
       const [orders, usersData] = await Promise.all([
         fetchAllWorkOrders().then((rows) =>
           (rows || []).filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financial spreadsheet authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Financial spreadsheet authorized users" })
       ]);
       setWorkOrders(orders.map((order) => ({
         ...order,
