@@ -73,7 +73,7 @@ const num = (v: any, fb = 0): number => {
   return Number.isFinite(n) ? n : fb;
 };
 // Dollars → signed integer cents (entity amounts are dollar numbers).
-const toCents = (v: any): number => Math.round(num(v) * 100);
+const toCents = (v: any): number => Math.sign(num(v)) * Math.round(Math.abs(num(v)) * 100 + 1e-9);
 const toDollars = (cents: number): number => Math.round(cents) / 100;
 const usd = (cents: number): string => `$${(toDollars(cents)).toFixed(2)}`;
 
