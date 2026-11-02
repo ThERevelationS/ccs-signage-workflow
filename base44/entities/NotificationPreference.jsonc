@@ -55,6 +55,13 @@
     "last_request_id": {
       "type": "string",
       "description": "Idempotency request id of the most recent preference update"
+    },
+    "subscriptions": {
+      "type": "array",
+      "description": "Per-user alert subscriptions (H-12). Entries {event_key, criteria:{field:value}, delivery:'feed'|'digest'|'both', enabled, created_by/at, updated_by/at}; dedupe by event_key+criteria signature; bounded to 200 \u2014 base44/shared/alertSubscriptionsModel.ts canonicalizes.",
+      "items": {
+        "type": "object"
+      }
     }
   },
   "required": [
