@@ -37,6 +37,7 @@ import {
 
 const clean = (v) => String(v ?? "").trim();
 const today = () => new Date().toISOString().slice(0, 10);
+const EMPTY_CUSTOMERS = [];
 
 // Shared kit input vocabulary (adds placeholder styling over the old copy).
 const inputCls = filterInputCls;
@@ -79,7 +80,7 @@ export default function CustomerStatements() {
 
   useEffect(() => { document.title = "Customer Statements"; }, []);
 
-  const { data: allCustomers = [], isFetching: customersLoading, refetch: refetchCustomers } = useQuery({
+  const { data: allCustomers = EMPTY_CUSTOMERS, isFetching: customersLoading, refetch: refetchCustomers } = useQuery({
     queryKey: ["customer-statements", "customers"],
     enabled: Boolean(sessionToken),
     queryFn: () =>
