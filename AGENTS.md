@@ -2,6 +2,8 @@
 
 **SCOPE (per Brett): work ONLY on the Time Clock module** — `src/components/timeclock/*`, `src/pages/TimeClock*`, `base44/functions/timeClockAction`, `staffDataRead`/`staffEntityWrite` time-clock paths, face/QR clock-in camera. Do NOT touch other modules (estimator, fleet, customer360, orders, SOP, walk-in, etc.) or unpushed local work outside this scope — even to fix, extend, or push them — unless Brett explicitly asks.
 
+**SCOPE EXPANSION (granted 2026-11-02, in-session): the Unraid File Bridge** — see `FILEBRIDGE_MASTERPLAN.md` (workstreams + `FB-xx` items, claims in `.masterplan-claims/`). Approved surfaces: `base44/shared/fileBridge*`, `base44/functions/fileBridge*`, `base44/actors/FileBridgeHub`, `base44/entities/{File*,CustomerFolderLink}.jsonc` (all backend-only RLS — NEVER in staffDataRead/staffEntityWrite/boardFeedFields), `src/pages/ServerFiles.jsx`, `src/components/files/*`, embedded panels in Customer360/EstimateDetail/WorkOrder/SalesPipeline, `agent/` (Unraid Docker agent), `scripts/test-file-bridge.mjs`, `docs/unraid-filebridge-setup.md`, `docs/filebridge-*`. Embedded integration points touch existing files by necessity (Customer360/EstimateDetail/WorkOrder dialog/pipeline/nav) — keep those edits minimal and additive.
+
 Base44 app `68dfcc5e57bbbc35387da97c` (published: https://clay-flow-signage-suite-387da97c.base44.app).
 Remote sandbox is the source of truth — pull remote files before editing (`npx base44@latest sandbox read <path> --app-id 68dfcc5e57bbbc35387da97c --branch main --json`). Do not push stale local copies. Writes sometimes report timeouts but land anyway — verify with `sandbox run` grep before retrying.
 
