@@ -1368,18 +1368,18 @@ Deno.serve(async (req) => {
       const opportunity = await Opportunity.get(opportunityId).catch(() => null);
       if (!opportunity?.id) throw bad("Opportunity not found.", 404);
       const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders, activity] = await Promise.all([
-        Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
-        EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
+        Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100).catch(() => []),
+        EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
         clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
         clean(opportunity?.contact_id) ? CustomerContact.get(clean(opportunity.contact_id)).catch(() => null) : null,
         clean(opportunity?.location_id) ? CustomerLocation.get(clean(opportunity.location_id)).catch(() => null) : null,
         clean(opportunity?.compatibility_work_order_id)
           ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
           : null,
-        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 500),
-        Invoice.filter({ opportunity_id: opportunityId }, "-created_date", 500),
-        PurchaseOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500),
-        ChangeOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500),
+        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        Invoice.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        PurchaseOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
+        ChangeOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500).catch(() => []),
         Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
       ]);
       // (#170) Reconcile-on-read: pipeline UIs can move a WO's stage without
