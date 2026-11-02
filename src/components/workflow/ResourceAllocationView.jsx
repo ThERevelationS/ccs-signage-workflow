@@ -15,6 +15,7 @@ import {
   Calendar
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -107,12 +108,9 @@ export default function ResourceAllocationView({ compact = false }) {
       const [directory, capacitiesData, ordersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
         loadAllEntityRows({ entity: staffEntities.UserCapacity, sort: null, label: "Resource Allocation user capacities" }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Resource Allocation Work Orders",
-        })
+        fetchAllWorkOrders().then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || ""))))
       ]);
       setUsers(directory.users);
       setUserCapacities(capacitiesData);
