@@ -1,0 +1,96 @@
+{
+  "name": "Machine",
+  "type": "object",
+  "description": "Unified production machine registry for the estimator: one row per piece of equipment (roll-fed printer/cutter, sheet-fed press, or other production hardware). Carries run-cost economics (cost_per_hour, setup cost/time, disposable consumables), named speed/quality profiles, labor and margin hooks. Generalizes the narrower MachineRate pricing rows and the vinyl-specific VinylMachine records \u2014 those registries stay authoritative for their own modules; Machine is the cross-module catalog new estimating code should reference.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Machine label, e.g. 'HP Latex 360', 'CNC Router Table A'."
+    },
+    "machine_type": {
+      "type": "string",
+      "description": "Feed/class of machine: 'roll_fed', 'sheet_fed', or 'other'. Stored as a free-form string so additional classes can be introduced without a schema migration."
+    },
+    "cost_per_hour": {
+      "type": "number",
+      "description": "Machine run cost in $ per runtime hour."
+    },
+    "profiles": {
+      "type": "array",
+      "description": "Named speed/quality profiles for this machine, e.g. draft / production / high_quality. Each entry: { name: string, speed_settings: object } where speed_settings holds machine-specific rate keys (sqft_per_hour, inches_per_second, pass_count, etc.).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Profile label, e.g. 'draft', 'production', 'high_quality'."
+          },
+          "speed_settings": {
+            "type": "object",
+            "description": "Machine-specific speed/quality parameters for this profile; key set is module-defined.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "disposable_cost_per_unit": {
+      "type": "number",
+      "description": "Consumable/disposable cost per produced unit (blades, bits, ink allowance, etc.)."
+    },
+    "setup_cost": {
+      "type": "number",
+      "description": "Flat $ charged once per job for machine setup, in addition to any time-based setup billing."
+    },
+    "setup_minutes": {
+      "type": "number",
+      "description": "One-time setup minutes billed at the machine rate each time the machine is used."
+    },
+    "labor_pct": {
+      "type": "number",
+      "description": "Percent of machine run time that requires paid operator labor (0-100)."
+    },
+    "weighted_multiplier": {
+      "type": "number",
+      "description": "Complexity/difficulty weighting applied to this machine's computed cost before margin."
+    },
+    "margin_chart_id": {
+      "type": "string",
+      "description": "Optional reference to the margin/markup chart record used to price this machine's output."
+    },
+    "income_account": {
+      "type": "string",
+      "description": "Income account code/name this machine's revenue posts to (links into the accounting chart, e.g. an IncomeAccount row)."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status, e.g. 'active' or 'inactive'. Inactive machines are ignored by pricing."
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-form notes about this machine (location, capabilities, constraints)."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__machine_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__machine_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__machine_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__machine_backend_only__"
+      }
+    }
+  }
+}
