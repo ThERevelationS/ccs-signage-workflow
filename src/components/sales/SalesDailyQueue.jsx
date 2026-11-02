@@ -22,15 +22,17 @@ const dateLabel = (stamp) => {
 
 const ownerKey = (value) => String(value || "").trim().toLowerCase();
 const canonicalOwnerKey = (value, users) => ownerKey(buildSalesPersonSelectModel(value, users).canonical);
+const EMPTY_WORK_ORDERS = [];
+const EMPTY_USERS = [];
 
 export default function SalesDailyQueue({
-  workOrders = [],
+  workOrders = EMPTY_WORK_ORDERS,
   onOpenDetails,
   onUpdateWorkOrder,
   onCompleteFollowUp,
   isRegistered,
   currentSalesOwnerLabel = "",
-  users = [],
+  users = EMPTY_USERS,
 }) {
   const [ownerScope, setOwnerScope] = useState("all");
   const [quoteDateErrors, setQuoteDateErrors] = useState({});
