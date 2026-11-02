@@ -4,11 +4,13 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  CalendarX2,
   Camera,
   Clock,
   Clock3,
   Loader2,
   LogOut,
+  MessageSquare,
   QrCode,
   User,
   X,
@@ -19,6 +21,8 @@ import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
+import MissedShiftDialog from "@/components/timeclock/MissedShiftDialog";
+import AdminNoteDialog from "@/components/timeclock/AdminNoteDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import CrystalShiftButton from "@/components/timeclock/CrystalShiftButton";
 import {
@@ -202,6 +206,10 @@ export default function QuickClockSection({
   const [lateClockInReview, setLateClockInReview] = useState(null);
   const [lateClockInError, setLateClockInError] = useState("");
   const [missedClockInPrompt, setMissedClockInPrompt] = useState(false);
+  const [missedShiftPrompt, setMissedShiftPrompt] = useState(false);
+  const [missedShiftError, setMissedShiftError] = useState("");
+  const [adminNotePrompt, setAdminNotePrompt] = useState(false);
+  const [adminNoteError, setAdminNoteError] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -831,6 +839,20 @@ export default function QuickClockSection({
       if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
 
       const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
+      if (identifyIntentRef.current === "missed_shift") {
+        identifyIntentRef.current = "clock_in";
+        setMissedShiftError("");
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Enter the shift that was missed.`);
+        setMissedShiftPrompt(true);
+        return;
+      }
+      if (identifyIntentRef.current === "admin_note") {
+        identifyIntentRef.current = "clock_in";
+        setAdminNoteError("");
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}.`);
+        setAdminNotePrompt(true);
+        return;
+      }
       if (resolvedStatus === "clocked_in") {
         if (identifyIntentRef.current === "missed_clock_in") {
           identifyIntentRef.current = "clock_in";
@@ -1574,6 +1596,86 @@ export default function QuickClockSection({
     }
   };
 
+  const handleReportMissedShift = async ({ claimed_clock_in, claimed_clock_out, lunch_minutes, reason }) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Missed-shift identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("report_missed_shift", email);
+    let actionEpoch = workViewEpochRef.current;
+    setMissedShiftError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "report_missed_shift",
+        request_id: requestId,
+        claimed_clock_in,
+        claimed_clock_out,
+        lunch_minutes,
+        reason,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      assertEmployeeAcknowledgement(result, email, "Missed shift report");
+      clearRequest("report_missed_shift", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
+      if (result?.success !== true || !result?.entry?.id || result.entry.status !== "clocked_out") {
+        throw new Error("Missed shift report returned an unexpected response. Reload before continuing.");
+      }
+      setMissedShiftPrompt(false);
+      setMissedShiftError("");
+      setRecognitionStatus("Missed shift reported - a manager will review and approve those hours.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("report_missed_shift", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setMissedShiftError(err?.message || "Missed shift report was not confirmed by the server.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
+  const handleSendAdminNote = async (note) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Note identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("send_admin_note", email);
+    setAdminNoteError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "send_admin_note",
+        request_id: requestId,
+        note,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      if (result?.success !== true || !result?.note?.id ||
+          String(result.note.user_email || "").trim().toLowerCase() !== email.trim().toLowerCase()) {
+        throw new Error("The note was not confirmed by the server.");
+      }
+      clearRequest("send_admin_note", email, requestId);
+      if (!stillCurrent()) return null;
+      setAdminNotePrompt(false);
+      setAdminNoteError("");
+      setRecognitionStatus("Note sent to the admins.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("send_admin_note", email, requestId);
+      if (stillCurrent()) {
+        setAdminNoteError(err?.message || "The note could not be sent.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
   const handleLateClockInClockInNow = async () => {
     if (!selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock In identity is no longer verified. Identify again before continuing.");
@@ -1700,6 +1802,24 @@ export default function QuickClockSection({
         error={lateClockInError}
         onReport={handleReportMissedClockIn}
         onCancel={resetState}
+      />
+
+      <MissedShiftDialog
+        open={missedShiftPrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={missedShiftError}
+        onReport={handleReportMissedShift}
+        onCancel={() => { setMissedShiftPrompt(false); setMissedShiftError(""); }}
+      />
+
+      <AdminNoteDialog
+        open={adminNotePrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={adminNoteError}
+        onSend={handleSendAdminNote}
+        onCancel={() => { setAdminNotePrompt(false); setAdminNoteError(""); }}
       />
 
       <WorkPauseOverlay
@@ -1845,6 +1965,26 @@ export default function QuickClockSection({
             >
               Not you? Identify a different employee
             </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setMissedShiftError(""); setMissedShiftPrompt(true); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 to-amber-50/90 px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <CalendarX2 className="w-3.5 h-3.5" />
+                Missed a shift?
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAdminNoteError(""); setAdminNotePrompt(true); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Note to admin
+              </button>
+            </div>
           </div>
         )}
 
@@ -1877,6 +2017,26 @@ export default function QuickClockSection({
               Forgot to Clock Out? Report it
               <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
             </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => { identifyIntentRef.current = "missed_shift"; startRecognition(); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 to-amber-50/90 px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <CalendarX2 className="w-3.5 h-3.5" />
+                Missed a whole shift?
+              </button>
+              <button
+                type="button"
+                onClick={() => { identifyIntentRef.current = "admin_note"; startRecognition(); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Note to admin
+              </button>
+            </div>
             <CrystalShiftButton
               onClockIn={startRecognition}
               onClockOut={startRecognition}
