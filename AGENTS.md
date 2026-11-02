@@ -7,6 +7,16 @@
 Base44 app `68dfcc5e57bbbc35387da97c` (published: https://clay-flow-signage-suite-387da97c.base44.app).
 Remote sandbox is the source of truth — pull remote files before editing (`npx base44@latest sandbox read <path> --app-id 68dfcc5e57bbbc35387da97c --branch main --json`). Do not push stale local copies. Writes sometimes report timeouts but land anyway — verify with `sandbox run` grep before retrying.
 
+## Permitting scan — HARD CONCURRENCY CAP (per Brett 2026-11-02)
+
+**Four agents total, ever: 3 address-lookup workers + 1 office creator** (raised from 1+1 same day after batched telemetry proved the budget holds). The shared entity-read budget (140 req/60s/caller + app-level volume cap) collapses into HTTP 500 `invoke` failures past that — the whole 500-flood class came from overspawned workers.
+
+- Validator: `PERMIT_SESSION_TOKEN=$(cat .permit-session-token) node scripts/permitting-address-validation.mjs --file <pool.json> --limit N --workers 3 --json <out>.json --events .live-events.jsonl`. `--workers` is code-clamped ≤3; default is 1.
+- Office creator: `node scripts/permitting-bulk-office-drafts.mjs` — exactly ONE instance.
+- Watchdog (`scripts/permitting-error-watchdog.mjs`) is a supervisor, not a worker: it requeues `invoke`/`unresolved`/`office_error` marks and only spawns a 1-worker retry pass when NO validator is alive (empty/unreadable liveness check = assume busy, never spawn). One instance max.
+- Rebuild pools from latest-stage marks before restarting; done stages: `resolved*`, `located_no_locality`, `office_*`, `seed_office_*`, `rule_*`.
+- Flagged `needs_review` items are NOT errors — resolve via `scripts/permitting-review-resolve.mjs --list` then `--pick` (mints a reusable `PermitResolutionRule`); rules are consulted at every flag point before `needs_review` emits.
+
 ## SOP module (added 2026-10-29)
 
 - `/sop` page (`src/pages/SOP.jsx` + `src/components/sop/*`) — procedure library w/ AI build (TranscribeAudio dictation, InvokeLLM drafts/polish/photo-to-step), photos/video/links, drag-reorder steps (react-quill + @hello-pangea/dnd), print view, per-version read receipts.
@@ -32,7 +42,7 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 - Session-authenticated backend actions: `authenticateSignShopSession` + `base44.asServiceRole.entities.*` in `base44/functions/*/entry.ts`.
 - Idempotent creates: `createFoundationRecordWithRecovery` / `ensureIdempotentEntityCreate` with `creation_request_key`.
 - Concurrency: `replaceFoundationFieldsIfUnchanged` / `replaceEstimateFieldsIfUnchanged` / `deleteBuilderEntityIfUnchanged` — CAS anchored on loaded `updated_date` + baseline fields.
-- Frontend lists: `loadAllEntityRows` (paged, rate-limit retry, dedupe, fail-closed).
+- Frontend lists: `loadAllEntityRows` (paged, rate-limit retry, dedupe, fail-closed). Its `cacheTtlMs` TTL cache (≤30s cap) and in-flight dedupe are keyed per **entity object** + query/sort/limits — identical reads from different call sites share one slot, so pass `cacheTtlMs` consistently on hot shared reads (e.g. `staffEntities.AuthorizedEmail` roster). `primeEntityRowsCache(entity, query, sort, rows)` seeds that same per-entity slot after a `loadEntitiesBatch` read.
 - Deploy a function: `npx base44@latest functions deploy <name> --app-id <id> --json` (deploys from LOCAL file — pull remote first). Site publishes only on explicit request.
 - Publish the app: `sandbox checkpoint` → `POST /api/apps/{id}/app-checkpoints/{checkpoint_id}/retry-build` (waits for `"status":"ready"`) → `POST /api/apps/{id}/deploy` with `{"checkpoint_id":"..."}` (use `MSYS_NO_PATHCONV=1` on Windows; `api fetch` mangles paths otherwise). Deploying a bare `checkpoint_id` before its build is ready → 500 "Failed to load backend function source". `base44 deploy` (local) fails 428 if local entities are missing remote ones — prefer checkpoint deploys.
 - `functions pull` writes a MALFORMED `"entry": "base44/functions/<name>/entry.ts"` into function.jsonc (correct: `"entry": "entry.ts"`); it breaks checkpoint builds. If a deploy fails `checkpoint_source_no_longer_compiles`, grep remote `base44/functions/*/function.jsonc` for `base44/functions/` and fix all hits.
