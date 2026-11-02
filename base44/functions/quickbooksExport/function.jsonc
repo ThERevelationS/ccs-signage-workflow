@@ -1,0 +1,4 @@
+{
+  "description": "QuickBooks Online export adapter — status/dry_run/disconnect + credential-gated push/pull stubs (I-09). Live OAuth BLOCKED-CREDENTIALS.",
+  "entry": "entry.ts"
+}
