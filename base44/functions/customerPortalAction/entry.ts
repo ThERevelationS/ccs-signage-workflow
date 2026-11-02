@@ -17,6 +17,9 @@ const whole = (value: any, fallback = 0) => {
   const parsed = Math.floor(Number(value));
   return Number.isFinite(parsed) ? parsed : fallback;
 };
+const money = (value: number) => Math.round(value * 100) / 100;
+const today = () => new Date().toISOString().slice(0, 10);
+const PORTAL_PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
 
 const bad = (message: string, status = 400) => {
   const error: any = new Error(message);
@@ -1130,6 +1133,90 @@ Deno.serve(async (req) => {
         key: `portal-act:paynotice:${invoiceId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, message: messageView(msg.record) });
+    }
+
+    if (action === "record_portal_payment") {
+      // I-06: real portal-originated payment ledger entry (payment_notice only
+      // messages staff — this writes the Payment row + recomputes AR, stamped
+      // portal_source per A-15 so the register/events feed attribute it).
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      if (clean(link.kind) !== "customer") throw bad("This portal link cannot record payments.", 403);
+      const customerId = clean(link.customer_id) || clean(link.record_id);
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id || clean(invoice.customer_id) !== customerId) throw bad("Invoice not found.", 404);
+      if (!["sent", "partially_paid"].includes(clean(invoice.status))) {
+        throw bad("Payments can only be recorded on sent or partially paid invoices.", 409);
+      }
+      const amount = num(body?.amount, NaN);
+      if (!(amount > 0)) throw bad("Payment amount must be positive.");
+      if (amount - num(invoice.balance_due) > 0.005) {
+        throw bad(`Payment exceeds the open balance of $${money(num(invoice.balance_due)).toFixed(2)}.`, 409);
+      }
+      const method = clean(body?.method) || "other";
+      if (!PORTAL_PAYMENT_METHODS.includes(method)) throw bad(`method must be one of ${PORTAL_PAYMENT_METHODS.join(", ")}.`);
+      const key = `portal-payment:${invoiceId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+      const created = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: key,
+          invoice_id: invoiceId,
+          customer_id: customerId,
+          opportunity_id: clean(invoice.opportunity_id),
+          estimate_id: clean(invoice.estimate_id),
+          work_order_id: clean(invoice.work_order_id),
+          estimating_request_id: clean(invoice.estimating_request_id),
+          amount: money(amount),
+          method,
+          reference_number: clean(body?.reference_number),
+          paid_date: clean(body?.paid_date) || today(),
+          status: "recorded",
+          notes: clean(body?.notes),
+          created_by: clean(link.label) || "portal",
+          portal_source: "customer_portal",
+          portal_link_kind: clean(link.kind),
+          portal_actor: clean(link.label),
+          recorded_via: "portal",
+          portal_recorded_at: new Date().toISOString(),
+        },
+        readMatches: () => Payment.filter({ creation_request_key: key }),
+        label: "Portal payment",
+      });
+      // Recompute invoice AR — same semantics as invoicingAction.recomputeInvoiceAfterPayments.
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500).catch(() => []);
+      const amountPaid = money((Array.isArray(payments) ? payments : [])
+        .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status)))
+        .reduce((s: number, p: any) => s + num(p?.amount), 0));
+      const current = await Invoice.get(invoiceId);
+      const balanceDue = money(num(current.total) - amountPaid);
+      let status = clean(current.status);
+      if (status !== "void") {
+        if (balanceDue <= 0.005 && num(current.total) > 0) status = "paid";
+        else if (amountPaid > 0) status = "partially_paid";
+        else status = clean(current.sent_date) ? "sent" : "draft";
+      }
+      const desired: any = {
+        amount_paid: amountPaid,
+        balance_due: balanceDue,
+        status,
+        paid_date: status === "paid" ? clean(current.paid_date) || today() : "",
+        updated_by: "portal",
+      };
+      await replaceFoundationFieldsIfUnchanged({
+        entity: Invoice,
+        recordId: invoiceId,
+        expectedFields: expectedFoundationFields(current, desired),
+        nextFields: desired,
+        label: "Invoice payment totals (portal)",
+      });
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: clean(invoice.opportunity_id),
+        eventType: "note",
+        summary: `Payment of $${money(amount).toFixed(2)} recorded on ${clean(invoice.invoice_number) || "invoice"} via the Customer Portal`,
+        details: { invoice_id: invoiceId, amount: money(amount), method, source: "customer_portal" },
+        key: `portal-act:pay:${clean(created.record?.id) || key}`,
+      });
+      return Response.json({ success: true, action, payment: created.record, invoice: await Invoice.get(invoiceId) });
     }
 
     if (action === "request_job_revision") {
