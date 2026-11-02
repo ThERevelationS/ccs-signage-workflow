@@ -3,6 +3,11 @@
 
 const DAY = 86400000;
 const norm = (v) => String(v || "").trim().toLowerCase();
+// Positive finite number rounded to an int; anything else reads as 0 (unset).
+const queuePosNum = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+};
 
 export const FULFILLED_STATES = ["picked_up", "installed", "shipped", "delivered"];
 
@@ -26,10 +31,19 @@ export const DUE_PRESETS = [
 
 export const PAGE_SIZES = [15, 30, 50, 100, 250];
 
+// Row sort options (B-05). "default" keeps the legacy queue order
+// (queue priority desc, then earliest due); "priority" is the CB 1-99
+// line priority — ascending, unset last; "due" is pure earliest-due-first.
+export const QUEUE_SORTS = [
+  { key: "default", label: "Queue order" },
+  { key: "priority", label: "Priority (1-99)" },
+  { key: "due", label: "Due date" },
+];
+
 export const DEFAULT_QUEUE_FILTERS = {
   status: "all", substatus: "", designer: "all", responsibility: "all",
   assignedTo: "all", category: "all", moduleKey: "all", duePreset: "all",
-  search: "", pageSize: 50, includeFulfilled: false,
+  search: "", pageSize: 50, includeFulfilled: false, sort: "default",
 };
 
 // "YYYY-MM-DD" must mean that calendar day in local time, not UTC midnight.
@@ -80,6 +94,9 @@ export function flattenQueueRows(workOrders = [], { dueField = "product_due_date
         productId: p.id || `${wo.id}-${idx}`,
         editable: Boolean(p.id),
         position: `${idx + 1}/${products.length}`,
+        positionIndex: idx + 1,
+        total_products: products.length,
+        totalProducts: products.length,
         ref: wo.corbridge_invoice_number || wo.title || wo.id,
         company: wo.client_name || "",
         customerId: wo.customer_id || "",
@@ -88,13 +105,25 @@ export function flattenQueueRows(workOrders = [], { dueField = "product_due_date
         substatus: p.operational_substatus || "",
         fulfillment: p.fulfillment_state || "none",
         proof: p.proof_status || "none",
+        proofVersion: Number(p.proof_version) || 0,
+        proofApprovedVersion: Number(p.proof_approved_version) || 0,
         designer: p.designer || "",
         assignedTo: p.assigned_to || "",
         responsibility: p.responsibility || "",
-        priority: Number(p.queue_priority) || 0,
+        responsibilityColor: String(p.responsibility_color || "").trim(),
+        // C-02/B-05: the CB 1-99 `priority` field wins when set (A-17);
+        // legacy `queue_priority` remains the fallback so older rows still
+        // surface an ordering signal. `queuePriority` stays raw for callers
+        // that need the queue-order field specifically.
+        priority: queuePosNum(p.priority) || queuePosNum(p.queue_priority),
+        queuePriority: Number(p.queue_priority) || 0,
         category: p.category || p.product_type || "",
         moduleKey: p.module_key || "",
         due: p[dueField] || "",
+        // B-06: both due dates ride the row; `dueField` only picks which one
+        // `due` (and therefore the due-preset filter) reads.
+        designDue: p.design_due_date || "",
+        productDue: p.product_due_date || "",
         hardDue: p.hard_due_date === true,
         statusChangedAt: p.operational_status_changed_at || "",
         bp: p.builder_product_id || "",
@@ -146,14 +175,30 @@ export function filterQueueRows(rows = [], filters = DEFAULT_QUEUE_FILTERS, now 
   });
 }
 
-export function sortQueueRows(rows = []) {
-  return [...(rows || [])].sort((a, b) => {
+export function sortQueueRows(rows = [], sortKey = "default") {
+  const list = [...(rows || [])];
+  const dueCmp = (a, b) => String(a.due || "9999").localeCompare(String(b.due || "9999"));
+  if (sortKey === "priority") {
+    // B-05 — CB 1-99 line priority: ascending (1 first); unset rows always
+    // last and keep their own earliest-due order; due date breaks ties.
+    return list.sort((a, b) => {
+      const pa = queuePosNum(a.priority), pb = queuePosNum(b.priority);
+      if ((pa > 0) !== (pb > 0)) return pa > 0 ? -1 : 1;
+      if (pa !== pb) return pa - pb;
+      return dueCmp(a, b);
+    });
+  }
+  if (sortKey === "due") {
+    return list.sort((a, b) => dueCmp(a, b) || ((b.priority || 0) - (a.priority || 0)));
+  }
+  return list.sort((a, b) => {
     if ((b.priority || 0) !== (a.priority || 0)) return (b.priority || 0) - (a.priority || 0);
-    return String(a.due || "9999").localeCompare(String(b.due || "9999"));
+    return dueCmp(a, b);
   });
 }
 
 const DUE_PRESET_KEYS = new Set(DUE_PRESETS.map((d) => d.key));
+const QUEUE_SORT_KEYS = new Set(QUEUE_SORTS.map((s) => s.key));
 
 export function parseQueueFilters(searchParams) {
   const get = (k) => (searchParams?.get ? searchParams.get(k) : "") || "";
@@ -174,6 +219,7 @@ export function parseQueueFilters(searchParams) {
   filters.moduleKey = get("moduleKey").trim() || "all";
   const due = enumOr("due", [...DUE_PRESET_KEYS], "all");
   filters.duePreset = due;
+  filters.sort = enumOr("sort", [...QUEUE_SORT_KEYS], DEFAULT_QUEUE_FILTERS.sort);
   filters.search = get("q").trim();
   const size = Number(get("size"));
   if (PAGE_SIZES.includes(size)) filters.pageSize = size;
@@ -192,18 +238,25 @@ export function serializeQueueFilters(filters = {}) {
   if (f.category !== "all") out.category = f.category;
   if (f.moduleKey !== "all") out.moduleKey = f.moduleKey;
   if (f.duePreset !== "all") out.due = f.duePreset;
+  if (f.sort && f.sort !== DEFAULT_QUEUE_FILTERS.sort) out.sort = f.sort;
   if (f.search) out.q = f.search;
   if (f.pageSize !== DEFAULT_QUEUE_FILTERS.pageSize) out.size = String(f.pageSize);
   if (f.includeFulfilled) out.fulfilled = "1";
   return out;
 }
 
-// Whole days past the local due date; 0 when not overdue or undated.
-export function overdueDays(row, now = new Date()) {
-  const due = parseLocalDate(row?.due || row?.woDue);
+// Whole days past a single local due date (B-06: design_due_date and
+// product_due_date flag overdue independently); 0 when not overdue/undated.
+export function daysPastDue(dateStr, now = new Date()) {
+  const due = parseLocalDate(dateStr);
   if (!due) return 0;
   const diff = startOfDay(now).getTime() - startOfDay(due).getTime();
   return diff > 0 ? Math.round(diff / DAY) : 0;
+}
+
+// Whole days past the local due date; 0 when not overdue or undated.
+export function overdueDays(row, now = new Date()) {
+  return daysPastDue(row?.due || row?.woDue, now);
 }
 
 export function daysInStatus(row, now = new Date()) {
