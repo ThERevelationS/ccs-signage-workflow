@@ -418,7 +418,10 @@ const plainProject = () => ({
   // and foundation keep their own math, unknown keys hit the fallback.
   const rec = { subtotal: 100, markup_amount: 20, total_cost: 120, items: [{ id: 'a', item_total_cost: 50, fixed_price: 1 }] };
   eq(sourceProjectEconomics('brick_stone', rec).customerPrice, 120, 'brick untouched by engine');
-  eq(sourceProjectEconomics('maintenance', rec).customerPrice, 120, 'maintenance untouched');
+  // F-23i: maintenance now scans items[] like vinyl/metal — the fixed_price
+  // line legitimately reprices there, so the "untouched" check uses a
+  // config-free item.
+  eq(sourceProjectEconomics('maintenance', { ...rec, items: [{ id: 'a', item_total_cost: 50 }] }).customerPrice, 120, 'maintenance passthrough on unconfigured record');
   const ch = { total_letters_cost: 140, letters_subtotal: 100, subtotal: 120, total_cost: 120 };
   const econCh = sourceProjectEconomics('channel_letters', ch);
   eq(econCh.customerPrice, 120, 'channel math preserved');
