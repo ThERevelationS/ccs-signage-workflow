@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Clock3, Loader2, Search, Square, Wrench } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -86,12 +86,9 @@ export default function CurrentWorkCard({
       const seq = ++searchSeqRef.current;
       setSearchBusy(true);
       try {
-        const rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "-created_date",
-          label: "Current Work WorkOrders",
-        });
+        const rows = (await fetchAllWorkOrders({ preferSnapshot: true }))
+          .filter((wo) => wo.completed !== true && wo.deleted !== true)
+          .sort((a, b) => String(b.created_date || "").localeCompare(String(a.created_date || "")));
         if (seq !== searchSeqRef.current) return;
         const needle = searchTerm.trim().toLowerCase();
         setResults(rows.filter((wo) => [wo.title, wo.client_name, wo.description].filter(Boolean).join(" ").toLowerCase().includes(needle)).slice(0, 12));
