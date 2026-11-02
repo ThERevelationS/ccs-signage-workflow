@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllOrders } from "@/lib/workOrderCache";
 import {
   createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
@@ -169,12 +170,10 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     setReadError("");
     try {
       const [ordersData, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: Order,
-          query: { work_order_id: workOrderId, deleted: { $ne: true } },
-          sort: "row_number",
-          label: "Work Order orders",
-        }),
+        fetchAllOrders().then((rows) =>
+          (rows || [])
+            .filter((o) => o.deleted !== true && String(o.work_order_id) === String(workOrderId))
+            .sort((a, b) => (a?.row_number ?? 0) - (b?.row_number ?? 0))),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Work Order purchasing authorized users" })
       ]);
       setOrders(ordersData);
