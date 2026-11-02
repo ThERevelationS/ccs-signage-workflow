@@ -23,6 +23,14 @@ function sameValue(a, b) {
 const SETTING_READ_TTL_MS = 60 * 1000;
 const settingReadCache = new WeakMap(); // entity -> Map<key, {at, promise|value}>
 
+// The settings table is a small KV store (~27 rows today): one unfiltered read
+// warms every key at once, so a mount burst costs one staffDataRead instead of
+// one per key. If the table ever grows past TABLE_WARM_LIMIT the warm is marked
+// incomplete — present keys still cache, but absent keys fall back to a
+// targeted read because truncation can hide them.
+const TABLE_WARM_LIMIT = 400;
+const TABLE_WARM_KEY = "__table_warm__";
+
 const cacheBucket = (entity) => {
   let bucket = settingReadCache.get(entity);
   if (!bucket) {
@@ -32,9 +40,46 @@ const cacheBucket = (entity) => {
   return bucket;
 };
 
+async function warmSettingsTable(entity, bucket, label) {
+  const existing = bucket.get(TABLE_WARM_KEY);
+  if (existing?.promise) return existing.promise;
+  const promise = (async () => {
+    const rows = await withRateLimitRetry(() => entity.filter({}, null, TABLE_WARM_LIMIT + 1));
+    if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
+    const complete = rows.length <= TABLE_WARM_LIMIT;
+    const seen = new Set();
+    const rowsByKey = new Map();
+    for (const row of rows) {
+      const key = String(row?.setting_key || "").trim();
+      if (!key || seen.has(key)) continue; // first row per key wins, matching rows[0]
+      seen.add(key);
+      rowsByKey.set(key, row);
+      const prev = bucket.get(key);
+      if (!prev?.promise) bucket.set(key, { at: Date.now(), value: row });
+    }
+    bucket.set(TABLE_WARM_KEY, { at: Date.now(), complete, seen, rowsByKey });
+    return complete;
+  })();
+  bucket.set(TABLE_WARM_KEY, { ...(existing || {}), promise });
+  try {
+    return await promise;
+  } finally {
+    const current = bucket.get(TABLE_WARM_KEY);
+    if (current?.promise === promise) {
+      bucket.set(TABLE_WARM_KEY, { ...current, promise: null });
+    }
+  }
+}
+
 export function invalidateGlobalSettingRead(entity, settingKey) {
   const key = String(settingKey || "").trim();
-  if (key) settingReadCache.get(entity)?.delete(key);
+  if (!key) return;
+  const bucket = settingReadCache.get(entity);
+  if (!bucket) return;
+  bucket.delete(key);
+  // The warm snapshot still believes the old row — drop it so the next load
+  // re-warms with the post-write truth instead of answering from a stale copy.
+  bucket.delete(TABLE_WARM_KEY);
 }
 
 export async function loadSingleGlobalSetting({ entity, settingKey, label = "Global setting", fresh = false } = {}) {
@@ -47,8 +92,33 @@ export async function loadSingleGlobalSetting({ entity, settingKey, label = "Glo
     const hit = bucket.get(key);
     if (hit?.promise) return hit.promise;
     if (hit && Date.now() - hit.at < SETTING_READ_TTL_MS) return hit.value;
+    const warm = bucket.get(TABLE_WARM_KEY);
+    if (warm?.complete && warm.seen && Date.now() - warm.at < SETTING_READ_TTL_MS) {
+      if (!warm.seen.has(key)) {
+        bucket.set(key, { at: Date.now(), value: null });
+        return null;
+      }
+    }
   }
   const promise = (async () => {
+    if (!fresh) {
+      let warm = bucket.get(TABLE_WARM_KEY);
+      if (!warm?.seen || Date.now() - warm.at >= SETTING_READ_TTL_MS) {
+        try {
+          await warmSettingsTable(entity, bucket, label);
+        } catch {
+          // Warm failed — fall back to the targeted read so one bad table scan
+          // does not block every setting.
+        }
+        warm = bucket.get(TABLE_WARM_KEY);
+      }
+      if (warm?.seen && Date.now() - warm.at < SETTING_READ_TTL_MS) {
+        // A warm that saw the key answers from its rows; absence is only
+        // conclusive when the table scan was complete (not truncated).
+        if (warm.seen.has(key)) return warm.rowsByKey.get(key) || null;
+        if (warm.complete) return null;
+      }
+    }
     const rows = await withRateLimitRetry(() => entity.filter({ setting_key: key }));
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     if (rows.length > 1) {
@@ -127,7 +197,15 @@ export async function saveGlobalSettingValueIfUnchanged({
     if (!sameValue(saved.setting_value, nextValue)) {
       throw new Error(`${label} was created concurrently with a different value. Reload and review the saved setting.`);
     }
-    cacheBucket(entity).set(key, { at: Date.now(), value: saved });
+    const bucket = cacheBucket(entity);
+    bucket.set(key, { at: Date.now(), value: saved });
+    // A warm snapshot taken before this create believes the key is absent —
+    // fold the verified row into it rather than forcing a re-warm.
+    const warm = bucket.get(TABLE_WARM_KEY);
+    if (warm?.seen) {
+      warm.seen.add(key);
+      warm.rowsByKey?.set(key, saved);
+    }
     return saved;
   }
 
