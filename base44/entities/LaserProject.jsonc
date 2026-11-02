@@ -178,6 +178,11 @@
       "description": "Saved customer sell-price snapshot from the shared Markup Tier engine. Preserves selected tier, category breakdown, volume discount and final customer price without changing internal Builder cost.",
       "additionalProperties": true
     },
+    "pricing_engine": {
+      "type": "object",
+      "description": "F-23e: optional pricing-engine context block \u2014 {customer_tier, tier_rules[], templates[], default_markup_pct, tax_percent, setup_fee, minimum_charge}. When present, laserPricingWire routes the sell side through the shared engine; absent = legacy pricing verbatim.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string"
     }
@@ -187,9 +192,25 @@
     "client_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__laserproject_backend_only__" } },
-    "read": { "user_condition": { "role": "__laserproject_backend_only__" } },
-    "update": { "user_condition": { "role": "__laserproject_backend_only__" } },
-    "delete": { "user_condition": { "role": "__laserproject_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__laserproject_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__laserproject_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__laserproject_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__laserproject_backend_only__"
+      }
+    }
   }
 }
