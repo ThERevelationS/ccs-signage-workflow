@@ -11,6 +11,10 @@ const names = new Set([
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
   'dueDateEngine.ts', 'customerLifecycleRules.ts',
+  'productStatusModel.ts', 'fulfillmentModel.ts',
+  'salesOpportunityHistory.mjs', 'salesSaveAcknowledgmentGuard.mjs',
+  'pricingEngine.ts', 'modifierPricing.ts', 'pricingVariables.ts', 'formulaEval.ts',
+  'templateRender.ts', 'followUpMachine.ts', 'delivery.ts', 'setupFeeCompose.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
