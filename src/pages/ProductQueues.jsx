@@ -1,8 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductQueue, { flattenQueueRows } from "@/components/queues/ProductQueue";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { PageHeader } from "@/components/kit";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
+import {
+  queuePrefsFromWorkspace,
+  resolveQueueLens,
+  shouldSeedMyQueue,
+  urlHasQueueFilterIntent,
+} from "@/components/account/userPrefsModel";
 
 // CoreBridge-style module queues over the shared product operational model.
 // Each tab is the same component with a different stage/due-date lens.
@@ -16,8 +23,12 @@ const QUEUES = [
 export default function ProductQueues() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: workOrders = [] } = useAllWorkOrders();
+  const { prefs } = useWorkspacePreferences();
+  const queuePrefs = useMemo(() => queuePrefsFromWorkspace(prefs), [prefs]);
   const activeParam = searchParams.get("queue");
-  const active = QUEUES.some((q) => q.key === activeParam) ? activeParam : "design";
+  // K-03 queue default: an explicit ?queue= (deep link, tab click) wins;
+  // otherwise the user's stored defaultLens, otherwise the app default.
+  const active = resolveQueueLens({ queuePrefs, urlLens: activeParam, fallback: "design" });
   const setActive = (key) => setSearchParams((prev) => {
     const next = new URLSearchParams(prev);
     next.set("queue", key);
@@ -25,6 +36,22 @@ export default function ProductQueues() {
   });
 
   useEffect(() => { document.title = "Product Queues"; }, []);
+
+  // K-03 "Only show my work" default — seeds ?assigned=me once on mount when
+  // the URL carries no explicit filter intent. One-shot: clearing the
+  // filters on the page (or a deep link) never gets overridden by the pref.
+  const myQueueSeeded = useRef(false);
+  const myQueueOnly = queuePrefs.myQueueOnly === true;
+  useEffect(() => {
+    if (myQueueSeeded.current || !myQueueOnly) return;
+    if (!shouldSeedMyQueue({ queuePrefs, params: searchParams })) return;
+    myQueueSeeded.current = true;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!urlHasQueueFilterIntent(next)) next.set("assigned", "me");
+      return next;
+    });
+  }, [searchParams, myQueueOnly, queuePrefs, setSearchParams]);
 
   const counts = useMemo(() => {
     const map = {};
