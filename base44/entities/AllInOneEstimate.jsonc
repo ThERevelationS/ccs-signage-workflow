@@ -63,6 +63,16 @@
       "type": "string",
       "description": "Customer purchase order number, shown on the customer quote."
     },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "pickup",
+        "installation",
+        "shipping",
+        "delivery"
+      ],
+      "description": "Requested fulfillment/delivery method captured at quote time (A-28); seeds WorkOrder.fulfillment_method on conversion."
+    },
     "terms": {
       "type": "string",
       "description": "Payment terms selected from the admin-managed terms list."
