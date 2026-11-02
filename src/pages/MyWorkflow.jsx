@@ -191,6 +191,7 @@ export default function MyWorkflow() {
         loadAllEntityRows({
           entity: AuthorizedEmail,
           sort: null,
+          cacheTtlMs: 30000,
           label: "My Workflow authorized users",
         }),
         loadSingleGlobalSetting({
