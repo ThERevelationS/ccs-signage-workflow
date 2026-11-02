@@ -93,7 +93,16 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   // interpolation error; an exact provider result keeps the 25m edge check.
   const edge=geocode.approximate_source?150:25;
   if(!geocode.location_exact&&!geocode.approximate_source)return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
-  if(relevant.some(f=>f.distance_m<=edge))return {...base,status:'needs_review',target:base.targets[0],reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  if(relevant.some(f=>f.distance_m<=edge)){
+   // A near-edge pin is not a guess when the address's own city text
+   // corroborates the boundary it landed in — the entered city name is
+   // independent evidence. Applies to municipal targets only; a city name
+   // can never prove which township a parcel sits in.
+   const enteredCity=norm(geocode?.address_parts?.locality||geocode?.address_parts?.postal_town||'');
+   if(target&&target.type==='municipality'&&enteredCity&&enteredCity===norm(target.name))
+    return {...base,status:'location_verified',reason:`The map pin sits close to a boundary, but the address's own city matches the ${target.name} boundary containing it — resolving to ${target.name}. Spot-check the pin on the map.`,target:base.targets[0],corroborated_by:'entered_city_name'};
+   return {...base,status:'needs_review',target:base.targets[0],reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  }
   if(!geocode.location_exact)return {...base,status:'location_verified',reason:`Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`,target:base.targets[0]};
   return {...base,status:'location_verified',reason:`Building location is inside the checked ${target.name} government boundary. Office responsibility is checked separately.`,target:base.targets[0]};
  }catch(error){await onProgress({kind:'boundary_failed',detail:String(error.message || error)});return {...base,reason:'Government location data could not confirm this address. No jurisdiction was selected.',error:String(error.message || error)};}
