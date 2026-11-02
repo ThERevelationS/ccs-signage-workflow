@@ -22,7 +22,8 @@
       "type": "string",
       "enum": [
         "missed_clock_out",
-        "late_clock_in"
+        "late_clock_in",
+        "missed_shift"
       ],
       "description": "Detected punch exception type"
     },
@@ -58,7 +59,8 @@
       "enum": [
         "missed_clock_out",
         "worked_through",
-        "missed_clock_in"
+        "missed_clock_in",
+        "missed_shift"
       ],
       "description": "Employee attestation supplied during self-service recovery"
     },
