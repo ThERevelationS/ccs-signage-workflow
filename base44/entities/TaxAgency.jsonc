@@ -1,0 +1,53 @@
+{
+  "name": "TaxAgency",
+  "type": "object",
+  "description": "Tax agency registry: one row per taxing authority the shop remits to (state, county, city, or special district). TaxGroup rows optionally reference an agency via agency_id so collected tax can be reported and remitted per jurisdiction.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agency label, e.g. 'Ohio Dept. of Taxation' or 'Hamilton County'."
+    },
+    "rate": {
+      "type": "number",
+      "description": "Tax rate this agency levies, as a percent (e.g. 7.8 for 7.8%)."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "Geographic/political jurisdiction the agency covers, e.g. 'Ohio', 'Hamilton County', 'Cincinnati'."
+    },
+    "gl_account": {
+      "type": "string",
+      "description": "General-ledger liability account code/name that collected tax for this agency posts to."
+    },
+    "reporting_period": {
+      "type": "string",
+      "description": "Filing cadence for remittance, e.g. 'monthly', 'quarterly', 'annual'. Stored free-form so shop-specific periods are allowed."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status, e.g. 'active' or 'inactive'. Inactive agencies are hidden from new tax-group assignments."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__taxagency_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__taxagency_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__taxagency_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__taxagency_backend_only__"
+      }
+    }
+  }
+}
