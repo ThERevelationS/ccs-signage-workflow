@@ -103,7 +103,7 @@ Deno.serve(async req=>{
   if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
   await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
-  let geocode:any=null,geocodingService:any=null;
+  let geocode:any=null,geocodingService:any=null,googleVague:any=null;
   const serviceFailure=(status:string,message:string,diagnostic_code?:string)=>geocodingService={status,issue:true,message,...(diagnostic_code?{diagnostic_code}:{})};
   try{
    // Never return the dedicated server key through getGoogleMapsKey.
@@ -129,7 +129,11 @@ Deno.serve(async req=>{
     // instead of dead-ending at "vague pin". True locality/zip centroids stay
     // vague because they cannot prove which jurisdiction they sit in.
     const streetish=exact||(g.types||[]).some((t:string)=>['street_address','premise','subpremise','route','intersection'].includes(t))||g.geometry?.location_type==='ROOFTOP';
-    geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:exact,...(exact||!streetish?{}:{approximate_source:'google_approx'}),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
+    const candidate={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:exact,...(exact||!streetish?{}:{approximate_source:'google_approx'}),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};
+    // A vague Google result (locality/zip centroid) is never the last word —
+    // hold it as the final fallback and let the free locators try for a real
+    // street pin first instead of dead-ending every lookup at a guess.
+    if(exact||streetish)geocode=candidate;else googleVague=candidate;}
   }catch(err:any){if(err?.code==='GOOGLE_DENIED_COOLDOWN'){geocodingService=googleDeniedService||geocodingService||{status:'REQUEST_DENIED',issue:true,message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing. You do not need to re-enter this address.'};await reporter.emit({kind:'geocode_service_result',detail:'Google Geocoding is still denied from the last check; trying the free locators first.'});await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding skipped during denial cooldown: ${geocodingService.message}`});}else{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}}
   // Browser-resolved Census hint: the worker cannot reach census.gov (its fetch
  // hangs until abort), so the client geocodes via the browser and resubmits.
@@ -184,6 +188,9 @@ Deno.serve(async req=>{
    }
   }catch{await reporter.emit({kind:'geocode_failed',detail:'The Census backup locator could not confirm the address either.'});}
  }
+ // Last resort only: Google's vague centroid is still better than nothing —
+ // it surfaces as an honest needs_review rather than a total geocode miss.
+ if(!geocode&&googleVague){geocode=googleVague;await reporter.emit({kind:'geocode_service_result',detail:'Falling back to Google\'s approximate area result after the free locators found no street match.'});}
  if(diagnostic)return addressResponse({success:true,diagnostic_only:true,geocode,geocoding_service:geocodingService,authority_established:false,apply_allowed:false,llm_calls:0,record_writes:0});
   await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact?'Street and building coordinates matched.':'Approximate or corrected address; review required.'}`:'No map location found.'},{stage:'Checking government boundaries',indeterminate:true});
   const resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress});
