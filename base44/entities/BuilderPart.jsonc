@@ -318,6 +318,65 @@
         },
         "additionalProperties": true
       }
+    },
+    "labor_levels": {
+      "type": "array",
+      "description": "F-25: explicit LaborLevel assignments alongside labor_level_id \u2014 each entry may be a level id or {labor_level_id, rate_basis, hours, rate} row resolved by marginModel's labor cost chain.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "machine_id": {
+      "type": "string",
+      "description": "Primary machine this part routes through (singular companion to machine_ids; first-declared machine ref wins in marginModel)."
+    },
+    "machine_hours": {
+      "type": "object",
+      "description": "F-25: per-machine run hours keyed by machine id (or a flat number for the primary machine) feeding marginModel's machine-time cost.",
+      "additionalProperties": true
+    },
+    "modifiers": {
+      "type": "array",
+      "description": "F-25: PricingModifier attachment refs (ids or inline modifier rows) \u2014 canonical attachment field resolved before modifier_ids/pricing_modifier_ids aliases.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "modifier_answers": {
+      "type": "object",
+      "description": "F-25: collected modifier answers keyed by modifier id or name; drives option rate_overrides in modifier cost resolution.",
+      "additionalProperties": true
+    },
+    "area_sqft": {
+      "type": "number",
+      "description": "Area in square feet (canonical alias of sqft) used by per-unit modifier rates and waste scaling."
+    },
+    "waste_factor": {
+      "type": "number",
+      "description": "Material waste multiplier (e.g. 1.1 = 10% waste) applied to waste-affecting cost components."
+    },
+    "machine_cost": {
+      "type": "number",
+      "description": "F-25: explicit machine-cost override for this part; when set it outranks the machine-rate resolution chain."
+    },
+    "labor_cost": {
+      "type": "number",
+      "description": "F-25: explicit labor-cost override; outranks labor-level resolution when present."
+    },
+    "modifier_cost": {
+      "type": "number",
+      "description": "F-25: explicit modifier-cost override; outranks the modifier attachment resolution when present."
+    },
+    "material_cost": {
+      "type": "number",
+      "description": "F-25: explicit material-cost override; outranks frozen/current cost snapshots when present."
+    },
+    "cost_breakdown": {
+      "type": "object",
+      "description": "F-25: free-form cost component bag ({material, machine, labor, modifier, ...}) \u2014 marginModel reads explicit totals from it after dedicated fields.",
+      "additionalProperties": true
     }
   },
   "required": [
