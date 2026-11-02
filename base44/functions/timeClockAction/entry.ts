@@ -3295,6 +3295,7 @@ Deno.serve(async (req) => {
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
     const ptoBalanceEntity = base44.asServiceRole.entities.UserPTOBalance;
     const prefsEntity = base44.asServiceRole.entities.TimeClockEmployeePreference;
+    const adminNoteEntity = base44.asServiceRole.entities.TimeClockAdminNote;
 
     if (action === 'monitor_stale_shifts') {
       if (!(await hasStaleShiftMonitorCapability(body))) {
@@ -3444,6 +3445,7 @@ Deno.serve(async (req) => {
       work_pauses: { entity: workPauseEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active Work Pauses' },
       labor_segments: { entity: laborEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active labor segments' },
       correction_requests: { entity: correctionRequestEntity, query: { status: { $in: ['pending', 'reviewing'] } }, sort: '-requested_at', label: 'Time Clock active correction requests' },
+      admin_notes: { entity: adminNoteEntity, query: { status: 'new' }, sort: '-requested_at', label: 'Time Clock employee admin notes' },
       punch_exceptions: { entity: punchExceptionEntity, query: {}, sort: '-detected_at', label: 'Time Clock punch exception reports' },
       devices: { entity: deviceEntity, query: {}, sort: '-last_seen_at', label: 'Time Clock devices' },
     };
@@ -8090,6 +8092,82 @@ Deno.serve(async (req) => {
         }))
         .sort((a: any, b: any) => Number(a.enrolled) - Number(b.enrolled) || String(a.name).localeCompare(String(b.name)));
       return Response.json({ success: true, roster });
+    }
+
+    if (action === 'send_admin_note') {
+      // Standalone employee -> admin note. Not tied to a TimeEntry stamp; the
+      // kiosk and Time Clock page both send through this one audited path.
+      const noteText = String(body?.note || '').trim();
+      if (noteText.length < 3 || noteText.length > 1000) {
+        return Response.json({ success: false, error: 'Write a note between 3 and 1,000 characters.' }, { status: 400 });
+      }
+      const priorNote = await uniqueRow(adminNoteEntity, { request_id: requestId }, 'Admin note submission');
+      if (priorNote?.id) {
+        if (asEmail(priorNote.user_email) !== target.email || String(priorNote.note || '') !== noteText) {
+          return Response.json({ success: false, error: 'This note request id is already bound to a different note.' }, { status: 409 });
+        }
+        return Response.json({ success: true, note: priorNote, reused: true });
+      }
+      const noteRequestedAt = new Date().toISOString();
+      const noteRow = await adminNoteEntity.create({
+        request_id: requestId,
+        user_email: target.email,
+        user_name: target.full_name || target.email,
+        note: noteText,
+        status: 'new',
+        requested_at: noteRequestedAt,
+      });
+      if (!noteRow?.id) throw new Error('Admin note could not be saved.');
+      const savedNote = await adminNoteEntity.get(noteRow.id).catch(() => null);
+      if (!savedNote?.id || String(savedNote.request_id || '') !== requestId || asEmail(savedNote.user_email) !== target.email) {
+        throw new Error('Admin note save could not be verified.');
+      }
+      await audit(auditEntity, {
+        action: 'admin_note', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: noteRequestedAt, request_id: requestId,
+        reason: 'Employee sent a note to administrators',
+        details: { admin_note_id: savedNote.id },
+      });
+      return Response.json({ success: true, note: savedNote });
+    }
+
+    if (action === 'acknowledge_admin_note') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to acknowledge employee notes.' }, { status: 403 });
+      const adminNoteId = String(body?.note_id || '').trim();
+      const expectedNoteUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const noteResolution = String(body?.resolution_note || '').trim();
+      if (!adminNoteId || !expectedNoteUpdatedDate) return Response.json({ success: false, error: 'The loaded note version is required before acknowledging it.' }, { status: 400 });
+      if (noteResolution.length > 500) return Response.json({ success: false, error: 'Acknowledgement notes are limited to 500 characters.' }, { status: 400 });
+      const noteRecord = await adminNoteEntity.get(adminNoteId).catch(() => null);
+      if (!noteRecord?.id) return Response.json({ success: false, error: 'The note was not found.' }, { status: 404 });
+      if (String(noteRecord.status || '') === 'acknowledged') {
+        const already = Boolean(String(noteRecord.acknowledged_by || '') && String(noteRecord.acknowledged_at || ''));
+        if (!already) return Response.json({ success: false, retry_same_request: true, error: 'The note is acknowledged but its finalization is incomplete. Retry the same request.' }, { status: 409 });
+        return Response.json({ success: true, note: noteRecord, reused: true });
+      }
+      const ackAt = new Date().toISOString();
+      const acked = await adminNoteEntity.updateMany(
+        { id: noteRecord.id, updated_date: expectedNoteUpdatedDate, status: 'new' },
+        { $set: { status: 'acknowledged', acknowledged_by: asEmail(actor.email), acknowledged_at: ackAt, resolution_note: noteResolution } },
+      );
+      if (!acked || typeof acked.updated !== 'number') {
+        return Response.json({ success: false, error: 'The note changed while acknowledging. Reload before retrying.' }, { status: 409 });
+      }
+      const verifiedNote = await adminNoteEntity.get(noteRecord.id).catch(() => null);
+      if (!verifiedNote?.id || String(verifiedNote.status || '') !== 'acknowledged') {
+        throw new Error('Admin note acknowledgement could not be verified.');
+      }
+      await audit(auditEntity, {
+        action: 'admin_note_acknowledge', outcome: 'confirmed',
+        user_email: verifiedNote.user_email, user_name: verifiedNote.user_name || verifiedNote.user_email,
+        actor_email: actorEmail, actor_role: actor.role, authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: ackAt, request_id: requestId,
+        reason: 'Administrator acknowledged an employee note',
+        details: { admin_note_id: verifiedNote.id, resolution_note: noteResolution },
+      });
+      return Response.json({ success: true, note: verifiedNote });
     }
 
     if (action === 'update_notes') {
