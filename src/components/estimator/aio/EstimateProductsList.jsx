@@ -11,8 +11,9 @@ import { loadProductionProductTypes } from "@/components/estimator/productionPro
 // mount every ProductRow at once. "Show more" grows the window; deep links
 // expand it as needed to reach their target row.
 const ROW_PAGE = 50;
+const EMPTY_LINES = [];
 
-export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
+export default function EstimateProductsList({ lines = EMPTY_LINES, rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
   const [query, setQuery] = useState("");
   const [splitMode, setSplitMode] = useState(false);
   const [splitIds, setSplitIds] = useState(() => new Set());
