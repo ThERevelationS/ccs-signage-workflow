@@ -72,7 +72,9 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
   const state = String(row?.state || "").trim().toLowerCase();
   return profiles.filter((profile) =>
     String(profile?.name || "").trim().toLowerCase() === name &&
-    String(profile?.state || "").trim().toLowerCase() === state
+    String(profile?.state || "").trim().toLowerCase() === state &&
+    !String(profile?.duplicate_of || "").trim() &&
+    String(profile?.verification_status || "").toLowerCase() !== "historical"
   );
 }
 
