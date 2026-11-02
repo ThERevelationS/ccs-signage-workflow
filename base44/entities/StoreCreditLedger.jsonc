@@ -1,0 +1,93 @@
+{
+  "name": "StoreCreditLedger",
+  "type": "object",
+  "description": "Append-only in-store credit ledger (G-09/A-35): one signed row per credit event \u2014 issuance, application to an invoice, expiry, or void. Customer.in_store_credit_balance is a denormalized cache of SUM(amount) over the customer's rows; corrections are reversing rows, never edits. Written by service-role backends; customer-facing credit views read it.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt so a lost create response never double-posts credit."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Customer the ledger row belongs to \u2014 the primary filter/grouping key."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "credit_issued",
+        "credit_applied",
+        "credit_expired",
+        "credit_voided"
+      ],
+      "description": "Event kind (storeCreditModel CREDIT_LEDGER_KINDS)."
+    },
+    "amount": {
+      "type": "number",
+      "description": "Signed amount in dollars \u2014 positive on issue, negative on apply/expire/void."
+    },
+    "amount_cents": {
+      "type": "number",
+      "description": "Signed amount in integer cents \u2014 the canonical ledger value (amount is a display mirror)."
+    },
+    "ref": {
+      "type": "string",
+      "description": "For credit_voided rows: id of the ledger row being reversed."
+    },
+    "reversed_kind": {
+      "type": "string",
+      "description": "For credit_voided rows: the kind of the reversed row."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Free-text reason (issue memo / void justification)."
+    },
+    "actor": {
+      "type": "string",
+      "description": "Email/id of the staff member (or system) that posted the row."
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "For credit_applied rows: the invoice the credit was applied to."
+    },
+    "balance_after": {
+      "type": "number",
+      "description": "Running customer balance in dollars immediately after this row posted."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Effective timestamp of the credit event (defaults to write time)."
+    }
+  },
+  "required": [
+    "customer_id",
+    "kind",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__store_credit_ledger_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__store_credit_ledger_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__store_credit_ledger_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__store_credit_ledger_backend_only__"
+      }
+    }
+  }
+}
