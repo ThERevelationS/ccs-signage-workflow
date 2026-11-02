@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Camera,
   Loader2,
+  QrCode,
   UserX,
   RefreshCw,
   Scan,
@@ -18,7 +19,7 @@ import {
   loadFaceModelsOnce,
   passesFaceQualityGate,
 } from '@/components/timeclock/faceScanRuntime';
-import { IDENTIFY_CAMERA_BLURB, IDENTIFY_QR_UNSUPPORTED } from '@/components/timeclock/timeClockIdentifyCopy';
+import { IDENTIFY_CAMERA_BLURB, IDENTIFY_QR_BADGE_BLURB, IDENTIFY_QR_BUTTON_PROMPT } from '@/components/timeclock/timeClockIdentifyCopy';
 
 const ENROLL_TARGET = 10;
 const ENROLL_TICK_MS = 250;
@@ -68,6 +69,9 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
   onQrScanRef.current = onQrScan;
   const qrLoopRef = useRef(0);
   const qrCooldownUntilRef = useRef(0);
+  const qrScannerRef = useRef(null);
+  const qrSeqRef = useRef(0);
+  const [qrMode, setQrMode] = useState(false);
 
   // Start the camera and load the models in parallel - the old flow waited for
   // the camera before even starting the model download, which added seconds to
@@ -113,6 +117,8 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
         clearInterval(enrollIntervalRef.current);
         enrollIntervalRef.current = null;
       }
+      qrScannerRef.current?.stop().catch(() => {});
+      qrScannerRef.current = null;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
         streamRef.current = null;
@@ -178,6 +184,54 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
       : SCAN_STATUS_TEXT[status] || "Scanning...");
   };
 
+  const stopQrScanner = async () => {
+    qrSeqRef.current += 1;
+    try { await qrScannerRef.current?.stop(); } catch {}
+    qrScannerRef.current = null;
+  };
+
+  // Fallback QR path for browsers without BarcodeDetector - html5-qrcode
+  // bundles its own decoder, so QR works everywhere the camera does.
+  const startQrMode = async () => {
+    stopScanning();
+    setQrMode(true);
+    setScanStatus("Starting QR camera...");
+    const seq = qrSeqRef.current;
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode("fr-qr-reader");
+      qrScannerRef.current = scanner;
+      const onDecode = async (decodedText) => {
+        if (qrSeqRef.current !== seq) return;
+        const raw = String(decodedText || "");
+        if (!raw) return;
+        await stopQrScanner();
+        setQrMode(false);
+        setScanStatus("Badge scanned.");
+        onQrScanRef.current?.(raw);
+      };
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 8, qrbox: { width: 220, height: 220 } },
+        onDecode,
+        () => {},
+      );
+      if (qrSeqRef.current !== seq) return;
+      setScanStatus(IDENTIFY_QR_BADGE_BLURB);
+    } catch (err) {
+      console.warn("QR scanner error:", err);
+      await stopQrScanner();
+      setQrMode(false);
+      setScanStatus("QR camera unavailable - use the face camera or credentials.");
+    }
+  };
+
+  const exitQrMode = async () => {
+    await stopQrScanner();
+    setQrMode(false);
+    startScanning();
+  };
+
   const startScanning = () => {
     scanSessionRef.current?.stop();
     const session = createFaceScanSession({
@@ -188,7 +242,9 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
     scanSessionRef.current = session;
     setIsScanning(true);
     setRecognizedUser(null);
-    setScanStatus(onQrScan && "BarcodeDetector" in window ? IDENTIFY_CAMERA_BLURB : "Looking for face...");
+    setScanStatus(onQrScan
+      ? ("BarcodeDetector" in window ? IDENTIFY_CAMERA_BLURB : IDENTIFY_QR_BUTTON_PROMPT)
+      : "Looking for face...");
     session.start();
   };
 
@@ -295,9 +351,14 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
       </div>
 
       {/* Video */}
+      {qrMode ? (
+        <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4" style={{ width: 320, height: 240 }}>
+          <div id="fr-qr-reader" className="w-full h-full" />
+        </div>
+      ) : (
       <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4" style={{ width: 320, height: 240 }}>
         <video
-          ref={videoRef}
+          ref={(el) => { videoRef.current = el; if (el && streamRef.current && !el.srcObject) el.srcObject = streamRef.current; }}
           autoPlay
           muted
           playsInline
@@ -349,6 +410,7 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
           </div>
         )}
       </div>
+      )}
 
       {/* Status */}
       <p className={`text-sm mb-4 text-center font-medium transition-colors duration-300 ${
@@ -357,9 +419,6 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
         : "text-gray-600"}`}>
         {scanStatus}
       </p>
-      {onQrScan && !isEnrollMode && !("BarcodeDetector" in window) && (
-        <p className="text-xs text-amber-600 -mt-2 mb-4 text-center">{IDENTIFY_QR_UNSUPPORTED}</p>
-      )}
 
       {/* Controls */}
       {isEnrollMode ? (
@@ -404,6 +463,11 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
             </Button>
           )}
         </div>
+      ) : qrMode ? (
+        <Button onClick={exitQrMode} variant="outline" className="gap-2">
+          <Camera className="w-4 h-4" />
+          Back to face scan
+        </Button>
       ) : (
         <div className="flex gap-3">
           {isScanning ? (
@@ -415,6 +479,12 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
             <Button onClick={startScanning} className="gap-2 bg-purple-600 hover:bg-purple-700" disabled={!modelsLoaded}>
               <Scan className="w-4 h-4" />
               Start Scan
+            </Button>
+          )}
+          {onQrScan && !("BarcodeDetector" in window) && (
+            <Button onClick={startQrMode} variant="outline" className="gap-2">
+              <QrCode className="w-4 h-4" />
+              Scan QR badge
             </Button>
           )}
         </div>
