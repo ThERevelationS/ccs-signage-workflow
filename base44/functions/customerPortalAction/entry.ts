@@ -7,6 +7,20 @@ import {
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
+import { buildDeliveryPlan } from "../../shared/delivery.ts";
+
+// Resolve a stored "salesperson"/"assigned_to" display name to a staff email —
+// the same contract notificationAction.resolveStaffEmail uses.
+function resolveStaffEmailForNotify(raw: any, directory: any[]) {
+  const needle = clean(raw).toLowerCase();
+  if (!needle) return "";
+  if (needle.includes("@")) return needle;
+  const match = (Array.isArray(directory) ? directory : []).find((u: any) =>
+    clean(u?.full_name).toLowerCase() === needle ||
+    clean(u?.name).toLowerCase() === needle ||
+    clean(u?.username).toLowerCase() === needle);
+  return clean(match?.email).toLowerCase();
+}
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -637,7 +651,74 @@ Deno.serve(async (req) => {
         readMatches: () => PortalMessage.filter({ creation_request_key: key }),
         label: "Portal customer message",
       });
-      return Response.json({ success: true, action, message: messageView(result.record) });
+
+      // Backlog #242 / H-15: staff reply-notification through the delivery
+      // adapter — an internal Notification row always lands for the
+      // responsible salesperson, plus the configured channel lane (Smartsheet
+      // Activity row while sendEmail stays disabled; Core.SendEmail when the
+      // flag flips). Never fatal — a notify failure rides `notify_warning`.
+      let notify_warning = "";
+      try {
+        const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
+        const Staff = base44.asServiceRole.entities.AuthorizedEmail;
+        const Notification = base44.asServiceRole.entities.Notification;
+        const Activity = base44.asServiceRole.entities.Activity;
+        const [settingsRows, staffRows, customer, related] = await Promise.all([
+          loadAllEntityRows({ entity: GlobalSettings, query: {}, sort: "created_date", label: "Delivery settings" }).catch(() => []),
+          loadAllEntityRows({ entity: Staff, query: {}, sort: "created_date", label: "Staff directory" }).catch(() => []),
+          Customer.get(scope.customerId).catch(() => null),
+          scope.relatedKind === "work_order" ? WorkOrder.get(scope.relatedId).catch(() => null)
+            : scope.relatedKind === "estimate" ? Estimate.get(scope.relatedId).catch(() => null)
+            : scope.relatedKind === "invoice" ? Invoice.get(scope.relatedId).catch(() => null) : Promise.resolve(null),
+        ]);
+        const settings = (Array.isArray(settingsRows) ? settingsRows : [])
+          .find((r: any) => clean(r?.setting_key) === "emailDelivery")?.setting_value
+          ?? (Array.isArray(settingsRows) ? settingsRows : []).find((r: any) => r?.emailDelivery)?.emailDelivery
+          ?? settingsRows;
+        const salespersonRaw = clean(related?.salesperson) || clean(related?.entered_by_display)
+          || clean(customer?.salesperson) || clean(related?.assigned_to);
+        const recipient = resolveStaffEmailForNotify(salespersonRaw, staffRows);
+        if (recipient) {
+          const label = clean(scope.relatedLabel) || "a portal thread";
+          const author = clean(result?.record?.author_name) || "Customer";
+          const plan = buildDeliveryPlan({
+            settings,
+            notification: {
+              to: recipient,
+              subject: `Portal reply from ${author} — ${label}`,
+              body: (text || `[Attachment] ${attachmentName || "file"}`).slice(0, 500),
+              kind: "portal_reply",
+              deep_link: `/CommsFollowups`,
+              dedupe_key: `portal-reply:${clean(result?.record?.id) || key}`,
+            },
+            context: {
+              customer_id: scope.customerId,
+              work_order_id: scope.relatedKind === "work_order" ? scope.relatedId : "",
+              dedupe_key: `portal-reply:${clean(result?.record?.id) || key}`,
+            },
+          });
+          if (plan?.internalRow?.recipient_email) {
+            await Notification.create(plan.internalRow).catch((e: any) => {
+              notify_warning = `internal:${clean(e?.message) || "write failed"}`;
+            });
+          }
+          if (plan?.channel === "email" && plan?.email) {
+            await base44.integrations.Core.SendEmail(plan.email).catch((e: any) => {
+              notify_warning = `email:${clean(e?.message) || "send failed"}`;
+            });
+          } else if (plan?.smartsheetRow && Activity) {
+            await Activity.create({
+              event_type: "Portal Reply",
+              summary: plan.smartsheetRow.summary,
+              notes: plan.smartsheetRow.detail,
+              customer_id: clean(plan.smartsheetRow.customer_id) || scope.customerId,
+            }).catch(() => {});
+          }
+        }
+      } catch (e: any) {
+        notify_warning = clean(e?.message || e) || "notify failed";
+      }
+      return Response.json({ success: true, action, message: messageView(result.record), notify_warning: notify_warning || undefined });
     }
 
     // Dedicated file upload (#244): site photos + marked-up drawings. The file
