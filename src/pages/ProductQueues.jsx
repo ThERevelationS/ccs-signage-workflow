@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductQueue, { flattenQueueRows } from "@/components/queues/ProductQueue";
-import { useAllWorkOrders } from "@/lib/workOrderCache";
+import { useQueueWorkOrders } from "@/components/queues/queueFeedClient";
 import { PageHeader } from "@/components/kit";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import {
@@ -22,7 +22,9 @@ const QUEUES = [
 
 export default function ProductQueues() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: workOrders = [] } = useAllWorkOrders();
+  // M-03 — the composed queueFeed projection serves the tab counts; when the
+  // function is unavailable the hook fails open to the shared board feed.
+  const { data: workOrders = [] } = useQueueWorkOrders();
   const { prefs } = useWorkspacePreferences();
   const queuePrefs = useMemo(() => queuePrefsFromWorkspace(prefs), [prefs]);
   const activeParam = searchParams.get("queue");
