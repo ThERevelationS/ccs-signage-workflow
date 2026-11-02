@@ -36,6 +36,18 @@
       "type": "string",
       "description": "Default GL account code for purchases from this vendor."
     },
+    "default_cost": {
+      "type": "number",
+      "description": "Vendor-level fallback unit cost used when the part carries no vendor_cost (vendorCostModel precedence: part vendor_cost > vendor default_cost > part cost)."
+    },
+    "default_markup_percent": {
+      "type": "number",
+      "description": "Vendor-level fallback retail markup percent for supplied parts; overridden by part vendor_markup_percent."
+    },
+    "default_markup_flat": {
+      "type": "number",
+      "description": "Vendor-level fallback flat markup added after percent for supplied parts; overridden by part vendor_markup_flat."
+    },
     "comm_prefs": {
       "type": "object",
       "additionalProperties": true,
