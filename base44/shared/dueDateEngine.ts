@@ -78,7 +78,17 @@ export function toLocalDate(value: any): Date | null {
   if (typeof value === "number" && Number.isFinite(value)) return new Date(value);
   const v = String(value ?? "").trim();
   if (!v) return null;
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00`) : new Date(v);
+  let d: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    // Date-only strings parse at LOCAL midnight. `new Date("YYYY-MM-DDT00:00:00")`
+    // rolls day-overflow inputs forward (Feb 30 → Mar 2) instead of failing —
+    // verify the components round-trip so invalid days fail closed (N-03.3).
+    const y = Number(v.slice(0, 4)), m = Number(v.slice(5, 7)), day = Number(v.slice(8, 10));
+    const dt = new Date(y, m - 1, day);
+    d = dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day ? dt : new Date(NaN);
+  } else {
+    d = new Date(v);
+  }
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
