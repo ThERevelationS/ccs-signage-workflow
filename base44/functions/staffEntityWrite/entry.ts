@@ -25,6 +25,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   LaborLevel: new Set(['create', 'updateMany', 'delete']),
   MachineRate: new Set(['create', 'updateMany', 'delete']),
   PermitLocality: new Set(['create', 'update']),
+  SourceCollectionQueue: new Set(['create']),
   LegacyMigrationMap: new Set(['create']),
   // CRM event queue rows live on OpportunityActivity: staff create typed
   // contact events and close them out with the same single-record
@@ -79,6 +80,11 @@ Deno.serve(async (req) => {
     }
     if (entityName === 'SalesLocation' && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage locations.' }, { status: 403 });
+    }
+    // Research-queue rows feed the permitting research backlog dispatch —
+    // admin-gated like jurisdictions so only admins can schedule research.
+    if (entityName === 'SourceCollectionQueue' && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can queue permitting research.' }, { status: 403 });
     }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
