@@ -25,6 +25,10 @@
 //     A clock is { business_days?: (0-6 weekday indexes|names)[] | null,
 //     holidays?: "YYYY-MM-DD"[] }. No clock / no business_days = calendar days.
 //     `clockFromHours` adapts hoursOfOperation-style entries into a clock.
+//   - B-08: `isHardDue` / `assertDueDateMutable` (end of file) are the standalone
+//     form of the hard-date rule for writers staging a due-date write outside
+//     the computes: a hard date is locked BOTH directions — a recalc that
+//     would move it is a no-op; flagging a manual override is the caller's job.
 //
 // Dates: stored convention is date-only "YYYY-MM-DD" (local day). Inputs may be
 // date-only or full ISO; outputs are always "YYYY-MM-DD" and day-granularity
@@ -479,4 +483,89 @@ export function recalcOnProofApproval({
     push_forward_only,
     label: "proof_approval",
   });
+}
+
+// ---------------------------------------------------------------------------
+// B-08 hard-due-date guard — explicit named exports for writers.
+//
+// The computes already honor hard_due_date internally: with respect_hard_dates
+// on (the default) a hard product carrying a stored date is held in place
+// (held_by_hard_date: true — see computeProductDueDate, computeOrderDueDate,
+// and holdResult above). isHardDue + assertDueDateMutable expose that same rule
+// as a standalone check for call sites that stage a due-date write outside the
+// computes (server actions, importers, manual patch builders) so they can ask
+// "may this write land?" before applying it.
+//
+// assertDueDateMutable(product, new_date, { actor_type }) semantics:
+//   - Soft product (hard_due_date !== true) → always ok; dates may move either
+//     direction.
+//   - Hard product + new_date equal to the stored date (incl. both blank) →
+//     ok: a recalc that doesn't move the date is a no-op.
+//   - Hard product + new_date different — EARLIER OR LATER; a hard date is
+//     locked both directions, and a blank/unparseable new_date against a
+//     stored date counts as clearing it (fail closed) — the actor decides:
+//       * manual actor (DUE_DATE_MANUAL_ACTORS — a human deliberately editing
+//         the date) → ok:true with manual_override:true + a warning. The guard
+//         allows the move; FLAGGING it (status_history note, ProductActivity
+//         override row, confirmation dialog) is the caller's job.
+//       * any other actor — "recalc", "auto", "system", "proof_approval",
+//         "sync", every unknown value, and a missing actor_type (defaults to
+//         "recalc"; fail closed) → ok:false + error + held_by_hard_date:true.
+//         The write must be skipped or re-issued as a manual override.
+//
+// The existing date is read from product_due_date (products[] convention) with
+// due_date as a fallback so computeProductDueDate result objects can be passed
+// straight back in. Composes with the computes: feeding recalcOnProofApproval's
+// held result back through the guard yields a same-date no-op ok.
+export const DUE_DATE_MANUAL_ACTORS = [
+  "manual",
+  "manual_override",
+  "override",
+  "user",
+  "staff",
+  "admin",
+];
+
+export function isHardDue(product: any): boolean {
+  return product?.hard_due_date === true;
+}
+
+export function assertDueDateMutable(product: any, new_date: any, { actor_type = "recalc" }: any = {}) {
+  const actor = String(actor_type ?? "recalc").trim().toLowerCase() || "recalc";
+  const manual = DUE_DATE_MANUAL_ACTORS.includes(actor);
+  const existing = parseDateOnly(product?.product_due_date ?? product?.due_date);
+  const requested = parseDateOnly(new_date);
+  const moves = requested !== existing;
+  const base = {
+    actor_type: actor,
+    is_hard: isHardDue(product),
+    existing_due_date: existing,
+    requested_due_date: requested,
+    moves_date: moves,
+    held_by_hard_date: false,
+    manual_override: false,
+    warning: "",
+  };
+  if (!base.is_hard) {
+    return { ...base, ok: true, error: "" };
+  }
+  if (!moves) {
+    // Same-date (or both-blank) no-op — the hard date is untouched.
+    return { ...base, ok: true, error: "" };
+  }
+  if (manual) {
+    return {
+      ...base,
+      ok: true,
+      error: "",
+      manual_override: true,
+      warning: "Hard due date moved by manual override — flag this change for audit.",
+    };
+  }
+  return {
+    ...base,
+    ok: false,
+    error: "Hard due date is locked — automatic recalculation will not move it. Re-issue as a manual override to change it.",
+    held_by_hard_date: true,
+  };
 }
