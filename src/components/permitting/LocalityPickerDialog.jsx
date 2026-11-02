@@ -120,6 +120,11 @@ function LocalityPickerSession({
   const [repositoryError, setRepositoryError] = useState("");
   const [repositoryRetry, setRepositoryRetry] = useState(0);
   const [draftCandidate, setDraftCandidate] = useState(null);
+  // When official boundary sources disagree, the resolver returns candidates
+  // instead of a target — the user picks one, which then behaves exactly like
+  // a detected target for office matching and admin drafts.
+  const [pickedCandidate, setPickedCandidate] = useState(null);
+  useEffect(() => { setPickedCandidate(null); }, [result]);
   const [repositoryDraftId,setRepositoryDraftId]=useState("");
   const [draftCreateError, setDraftCreateError] = useState("");
   const [creatingDraft, setCreatingDraft] = useState(false);
@@ -386,7 +391,7 @@ function LocalityPickerSession({
   // When a boundary-verified address resolves to a jurisdiction that has no
   // tracker locality yet, an admin may still create a draft — but only for the
   // profile matching the detected name/type/county, never a same-name sibling.
-  const detectedTarget = result?.location_resolution?.target;
+  const detectedTarget = result?.location_resolution?.target || pickedCandidate;
   // needs_review means the boundary resolved a town/county but the pin wasn't
   // exact — a draft record (which stays review-flagged downstream) is still
   // the honest next step, so admins may create one there too.
@@ -950,6 +955,35 @@ function LocalityPickerSession({
                 {advanced && <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>}
                 {currentUser?.role==='admin'&&result&&<details className="rounded border bg-gray-50 p-2 text-[10px]"><summary className="cursor-pointer font-semibold text-gray-600">Show technical details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify({geocoding_service:result.geocoding_service,location_resolution:result.location_resolution,authority_review:result.authority_review,match_confidence:result.match_confidence,match_method:result.match_method,apply_allowed:result.apply_allowed},null,2)}</pre></details>}
                 {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. The sign and zoning offices haven't been checked yet — you can still press Use it anyway below, and the lines will be marked needs-a-check.</p>}
+                {/* Boundary conflict — the official map services disagree. Show every
+                    candidate they returned so the user picks; never auto-pick. */}
+                {!result.suggested_locality && Array.isArray(result?.location_resolution?.candidates) && result.location_resolution.candidates.length > 0 && (
+                  <div className="border rounded-lg p-3 bg-sky-50 border-sky-200 space-y-2">
+                    <div>
+                      <h4 className="font-semibold text-sm text-sky-950">Pick the right place</h4>
+                      <p className="text-[11px] text-sky-800 mt-0.5">
+                        The map services disagree about this spot — tell us which place is right, then the office list below will match it.
+                      </p>
+                    </div>
+                    {result.location_resolution.candidates.map((c, i) => (
+                      <div key={i} className="rounded-md border border-sky-200 bg-white p-2.5 flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{c.name}{c.state ? `, ${c.state}` : ""}</p>
+                          <p className="text-[11px] text-gray-500 capitalize">{c.type}{c.type !== 'county' && c.county ? ` • in ${c.county}` : ""}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            {c.inside_sources?.length ? `Inside: ${c.inside_sources.join(' + ')}` : 'Not inside the pin'}
+                            {c.supported_by?.some((s) => !c.inside_sources?.includes(s)) ? ` · only listed by: ${c.supported_by.filter((s) => !c.inside_sources?.includes(s)).join(' + ')}` : ''}
+                          </p>
+                        </div>
+                        <Button type="button" size="sm" variant={pickedCandidate === c ? "default" : "outline"}
+                          onClick={() => setPickedCandidate((prev) => (prev === c ? null : c))}
+                          className="h-7 text-xs border-sky-300 flex-shrink-0">
+                          {pickedCandidate === c ? "Picked" : "Use this one"}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
