@@ -1,0 +1,64 @@
+{
+  "name": "Responsibility",
+  "type": "object",
+  "description": "Registry of responsibility assignments for products (CoreBridge-style department/person/group). Products carry the chosen label on products[].responsibility plus a denormalized products[].responsibility_color snapshot taken at assignment; registry rows define the managed picklist \u2014 label, kind, chip color, member roster, and queue group-header ordering. Backend-only \u2014 read/written via service-role functions.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Responsibility label as stored on products[].responsibility (e.g. 'Design Dept', 'Install Crew A')."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "department",
+        "person",
+        "group"
+      ],
+      "description": "What the label refers to \u2014 a department, a single person, or an ad-hoc group."
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex display color for the responsibility chip; copied to products[].responsibility_color on assignment."
+    },
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Staff emails belonging to this department/group; empty for person rows or unmanaged labels."
+    },
+    "sort": {
+      "type": "number",
+      "default": 0,
+      "description": "Display ordering in pickers and queue group headers."
+    },
+    "status": {
+      "type": "string",
+      "default": "active",
+      "description": "Lifecycle state \u2014 active | archived."
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__responsibility_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__responsibility_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__responsibility_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__responsibility_backend_only__"
+      }
+    }
+  }
+}
