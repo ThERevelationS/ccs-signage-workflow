@@ -52,6 +52,33 @@ const regexOr = (fields: string[], term: string) => ({
 let attentionFeedRowsCache: { rows: any[]; expires: number } | null = null;
 const ATTENTION_FEED_CACHE_MS = 120_000;
 
+// M-03: per-key isolate cache for the two heaviest uncached aggregates —
+// get_customer_360 + customer_workspace each fan out 8-11 entity reads per
+// open with no shield. A 60s per-customer row cache turns workspace reopen
+// storms into one fan-out per minute (attention_feed rides the same 120s
+// contract). get_opportunity is deliberately NOT cached — its
+// reconcile-on-read write must run every open.
+const aggregateRowsCache = new Map<string, { rows: any[]; expires: number }>();
+const AGGREGATE_CACHE_MS = 60_000;
+const AGGREGATE_CACHE_MAX_KEYS = 64;
+const aggregateCacheGet = (key: string) => {
+  const hit = aggregateRowsCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.rows;
+  if (hit) aggregateRowsCache.delete(key);
+  return null;
+};
+const aggregateCacheSet = (key: string, rows: any[]) => {
+  if (aggregateRowsCache.size >= AGGREGATE_CACHE_MAX_KEYS) {
+    let oldestKey: string | null = null;
+    let oldestExp = Infinity;
+    for (const [k, v] of aggregateRowsCache) {
+      if (v.expires < oldestExp) { oldestExp = v.expires; oldestKey = k; }
+    }
+    if (oldestKey) aggregateRowsCache.delete(oldestKey);
+  }
+  aggregateRowsCache.set(key, { rows, expires: Date.now() + AGGREGATE_CACHE_MS });
+};
+
 const STAGES = ["new", "qualified", "estimating", "quoted", "follow_up", "on_hold", "won", "lost"];
 const CLOSED_STAGES = new Set(["won", "lost"]);
 const REQUIREMENT_VALUES = ["unknown", "yes", "no", "maybe", "na"];
@@ -2172,7 +2199,11 @@ Deno.serve(async (req) => {
       if (!customer?.id) throw bad("Customer not found.", 404);
       // Scoped paged reads — default-limited filters silently dropped rows
       // past the first 50, which corrupted the summary totals and AR aging.
-      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = await Promise.all([
+      // M-03: 60s per-customer cache — a workspace reopen inside the window
+      // reuses these rows instead of re-issuing all 8 fan-out reads.
+      const c360Key = `c360:${customerId}`;
+      const c360Cached = aggregateCacheGet(c360Key);
+      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = c360Cached ?? await Promise.all([
         loadAllEntityRows({ entity: CustomerContact, query: { customer_id: customerId }, sort: "-created_date", label: "Customer contacts" }).catch(() => []),
         loadAllEntityRows({ entity: CustomerLocation, query: { customer_id: customerId }, sort: "-created_date", label: "Customer locations" }).catch(() => []),
         loadAllEntityRows({ entity: Opportunity, query: { customer_id: customerId }, sort: "-created_date", label: "Customer opportunities" }).catch(() => []),
@@ -2181,6 +2212,7 @@ Deno.serve(async (req) => {
         loadAllEntityRows({ entity: Payment, query: { customer_id: customerId }, sort: "-created_date", label: "Customer payments" }).catch(() => []),
         loadAllEntityRows({ entity: Estimate, query: { customer_id: customerId }, sort: "-created_date", label: "Customer estimates" }).catch(() => []),
       ]);
+      if (!c360Cached) aggregateCacheSet(c360Key, [contacts, locations, opportunities, invoices, workOrders, payments, estimates]);
       const custEstimates = (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true)
         .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
       const estimateStatusCounts: any = {};
@@ -2304,7 +2336,11 @@ Deno.serve(async (req) => {
       const rows = (v: any) => (Array.isArray(v) ? v : []);
       const descCreated = (a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date));
 
-      const [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders] = await Promise.all([
+      // M-03: same 60s per-customer cache as get_customer_360 — workspace
+      // reopens inside the window skip the whole 8-entity fan-out.
+      const cwsKey = `cws:${customerId}`;
+      const cwsCached = aggregateCacheGet(cwsKey);
+      const [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders] = cwsCached ?? await Promise.all([
         CustomerContact.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
         CustomerLocation.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
         Opportunity.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
@@ -2314,6 +2350,7 @@ Deno.serve(async (req) => {
         Payment.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
         ChangeOrder.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
       ]);
+      if (!cwsCached) aggregateCacheSet(cwsKey, [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders]);
 
       const customerOpportunities = rows(opportunities).sort(descCreated);
       const customerEstimates = rows(estimates).filter((e: any) => e?.deleted !== true).sort(descCreated);
@@ -2326,20 +2363,30 @@ Deno.serve(async (req) => {
       const estimateIds = new Set(customerEstimates.map((e: any) => clean(e?.id)).filter(Boolean));
       const workOrderIds = new Set(customerWorkOrders.map((w: any) => clean(w?.id)).filter(Boolean));
 
+      // M-03: the PurchaseOrder scan is customer-agnostic (whole table) — one
+      // global 60s entry shares it across EVERY workspace open, not just
+      // reopens of the same customer. The activity scan stays per-customer
+      // (its shape depends on this customer's opportunity count).
+      const poKey = "poscan:global";
+      const actKey = `actscan:${customerId}`;
+      const poCached = aggregateCacheGet(poKey);
+      const actCached = aggregateCacheGet(actKey);
       const [poScan, activityScan] = await Promise.all([
         // Purchase orders have no customer column — match the rows linked to
         // any of the customer's documents (get_opportunity uses the same
         // opportunity_id / estimate_id / work_order_id linkage for one opp).
-        PurchaseOrder.filter({}, "-created_date", 4000).catch(() => []),
+        poCached ?? PurchaseOrder.filter({}, "-created_date", 4000).catch(() => []),
         // Activity rows link only by opportunity_id. A per-opp fan-out is
         // exact for small accounts; past a dozen opportunities one scan of
         // the recent activity tail is cheaper than N entity calls.
-        opportunityIds.size <= 12
+        actCached ?? (opportunityIds.size <= 12
           ? Promise.all([...opportunityIds].map((oppId) =>
               Activity.filter({ opportunity_id: oppId }, "-created_date", ACTIVITY_CAP + 1).catch(() => [])))
               .then((sets: any[]) => sets.flat())
-          : Activity.filter({}, "-created_date", 3000).catch(() => []),
+          : Activity.filter({}, "-created_date", 3000).catch(() => [])),
       ]);
+      if (!poCached) aggregateCacheSet(poKey, poScan);
+      if (!actCached) aggregateCacheSet(actKey, activityScan);
       const purchaseOrders = rows(poScan)
         .filter((p: any) =>
           opportunityIds.has(clean(p?.opportunity_id))
