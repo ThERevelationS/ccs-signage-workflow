@@ -14,29 +14,58 @@ async function createScanReporter({ entity, token, user, targetId, targetName, k
 }
 function attachScanReporter(entity, id) {
   let snapshot = null, trackingError = "";
-  async function emit(event, patch = {}) {
-    try {
-      trackingError = "";
-      const current = await entity.get(id);
-      if (current.status !== "running") return;
-      const item = { at: (/* @__PURE__ */ new Date()).toISOString(), ...event };
-      if (item.resources) {
-        item.omitted_resources = Math.max(0, item.resources.length - 100);
-        item.resources = item.resources.slice(0, 100).map((r) => ({ url: r.url, title: r.title, kind: r.referral_kind || r.doc_type }));
-      }
-      if (item.detail) item.detail = String(item.detail).slice(0, 24e3);
-      const events = [...current.events || [], item], overflow = Math.max(0, events.length - 200);
-      snapshot = { ...current, ...patch, events: events.slice(-200), omitted_events: (current.omitted_events || 0) + overflow, last_event_at: item.at };
-      await entity.update(id, { ...patch, events: snapshot.events, omitted_events: snapshot.omitted_events, last_event_at: item.at });
-    } catch (error) {
-      trackingError = String(error.message || error);
+  let pending = [], patchQueue = {}, flushing = null, timer = null;
+  const normalizeItem = (event) => {
+    const item = { at: (/* @__PURE__ */ new Date()).toISOString(), ...event };
+    if (item.resources) {
+      item.omitted_resources = Math.max(0, item.resources.length - 100);
+      item.resources = item.resources.slice(0, 100).map((r) => ({ url: r.url, title: r.title, kind: r.referral_kind || r.doc_type }));
     }
+    if (item.detail) item.detail = String(item.detail).slice(0, 24e3);
+    return item;
+  };
+  async function flush() {
+    if (!pending.length && !Object.keys(patchQueue).length) return;
+    if (flushing) return flushing;
+    flushing = (async () => {
+      try {
+        trackingError = "";
+        if (!snapshot) snapshot = await entity.get(id).catch(() => null) || { events: [], omitted_events: 0 };
+        const items = pending.splice(0);
+        const patch = patchQueue;
+        patchQueue = {};
+        const events = [...snapshot.events || [], ...items], overflow = Math.max(0, events.length - 200);
+        snapshot = { ...snapshot, ...patch, events: events.slice(-200), omitted_events: (snapshot.omitted_events || 0) + overflow, last_event_at: (items.at(-1) || {}).at || (/* @__PURE__ */ new Date()).toISOString() };
+        await entity.update(id, { ...patch, events: snapshot.events, omitted_events: snapshot.omitted_events, last_event_at: snapshot.last_event_at });
+      } catch (error) {
+        trackingError = String(error.message || error);
+      } finally {
+        flushing = null;
+        if (pending.length || Object.keys(patchQueue).length) schedule();
+      }
+    })();
+    return flushing;
+  }
+  function schedule() {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = null;
+      flush();
+    }, 4e3);
+  }
+  function emit(event, patch = {}) {
+    pending.push(normalizeItem(event));
+    Object.assign(patchQueue, patch);
+    if (pending.length >= 8) flush();
+    else schedule();
+    return Promise.resolve();
   }
   async function finish(status = "complete", error = "") {
     const current = await entity.get(id).catch(() => null);
     const completion = status === "complete" && current?.total > 0 ? { processed: current.total } : {};
     for (let attempt = 0; attempt < 4; attempt++) {
-      await emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+      emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+      await flush();
       if (!trackingError) break;
       await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
     }
@@ -51,6 +80,78 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.25";
 // base44/shared/pagedEntityRows.ts
 var DEFAULT_PAGE_SIZE = 2e3;
 var DEFAULT_MAX_ROWS = 5e4;
+function emptyReadTelemetryBucket() {
+  return {
+    calls: 0,
+    pages: 0,
+    rows: 0,
+    totalMs: 0,
+    inflight: 0,
+    maxInflight: 0,
+    maxPagesPerCall: 0,
+    maxRowsPerCall: 0,
+    lastCall: null
+  };
+}
+var readTelemetryTotal = emptyReadTelemetryBucket();
+var readTelemetryByEntity = /* @__PURE__ */ new Map();
+function readTelemetryBucketFor(key) {
+  let bucket = readTelemetryByEntity.get(key);
+  if (!bucket) {
+    bucket = emptyReadTelemetryBucket();
+    readTelemetryByEntity.set(key, bucket);
+  }
+  return bucket;
+}
+function readTelemetryEntityName(entity, label) {
+  for (const prop of ["_entityName", "entityName", "entity_name", "name"]) {
+    const value = entity?.[prop];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return label || "unknown";
+}
+function readTelemetryInflight(bucket, delta) {
+  bucket.inflight = Math.max(0, bucket.inflight + delta);
+  readTelemetryTotal.inflight = Math.max(0, readTelemetryTotal.inflight + delta);
+  if (delta > 0) {
+    if (bucket.inflight > bucket.maxInflight) bucket.maxInflight = bucket.inflight;
+    if (readTelemetryTotal.inflight > readTelemetryTotal.maxInflight) {
+      readTelemetryTotal.maxInflight = readTelemetryTotal.inflight;
+    }
+  }
+}
+function readTelemetryDevWarn() {
+  try {
+    const flag = globalThis.__READ_BUDGET_TELEMETRY;
+    if (flag === true) return true;
+    if (flag === false) return false;
+  } catch {
+  }
+  try {
+    const proc = globalThis.process;
+    return !!proc?.env && proc.env.NODE_ENV !== "production";
+  } catch {
+    return false;
+  }
+}
+function recordReadTelemetry(key, label, pages, rows, ms, inflight) {
+  const call = { at: (/* @__PURE__ */ new Date()).toISOString(), label, pages, rows, ms, inflight };
+  const bucket = readTelemetryBucketFor(key);
+  for (const target of [readTelemetryTotal, bucket]) {
+    target.calls += 1;
+    target.pages += pages;
+    target.rows += rows;
+    target.totalMs += ms;
+    if (pages > target.maxPagesPerCall) target.maxPagesPerCall = pages;
+    if (rows > target.maxRowsPerCall) target.maxRowsPerCall = rows;
+    target.lastCall = call;
+  }
+  if (readTelemetryDevWarn()) {
+    console.warn(
+      `[read-budget] ${key}: ${pages} page(s), ${rows} rows, ${ms}ms` + (inflight > 1 ? ` (inflight=${inflight})` : "")
+    );
+  }
+}
 function rowIdentity(row, index) {
   const id = String(row?.id || "").trim();
   return id || `__row_${index}`;
@@ -74,22 +175,41 @@ async function loadAllEntityRows({
   const rows = [];
   const seen = /* @__PURE__ */ new Set();
   let skip = 0;
-  while (skip < safeMaxRows) {
-    const page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip, fields || void 0) : await entity.list(sort || void 0, safePageSize, skip, fields || void 0);
-    if (!Array.isArray(page)) {
-      throw new Error(`${label} could not be verified completely.`);
+  const telemetryKey = readTelemetryEntityName(entity, label);
+  const telemetryBucket = readTelemetryBucketFor(telemetryKey);
+  const telemetryStart = Date.now();
+  let telemetryPages = 0;
+  readTelemetryInflight(telemetryBucket, 1);
+  try {
+    while (skip < safeMaxRows) {
+      telemetryPages += 1;
+      const page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip, fields || void 0) : await entity.list(sort || void 0, safePageSize, skip, fields || void 0);
+      if (!Array.isArray(page)) {
+        throw new Error(`${label} could not be verified completely.`);
+      }
+      for (let index = 0; index < page.length; index += 1) {
+        const row = page[index];
+        const key = rowIdentity(row, skip + index);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push(row);
+      }
+      if (page.length < safePageSize) return rows;
+      skip += safePageSize;
     }
-    for (let index = 0; index < page.length; index += 1) {
-      const row = page[index];
-      const key = rowIdentity(row, skip + index);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      rows.push(row);
-    }
-    if (page.length < safePageSize) return rows;
-    skip += safePageSize;
+    throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record verification safety limit.`);
+  } finally {
+    const telemetryInflightNow = telemetryBucket.inflight;
+    readTelemetryInflight(telemetryBucket, -1);
+    recordReadTelemetry(
+      telemetryKey,
+      label,
+      telemetryPages,
+      rows.length,
+      Date.now() - telemetryStart,
+      telemetryInflightNow
+    );
   }
-  throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record verification safety limit.`);
 }
 
 // base44/shared/constantTime.ts
