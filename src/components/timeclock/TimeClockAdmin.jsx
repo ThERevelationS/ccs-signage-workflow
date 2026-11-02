@@ -295,7 +295,7 @@ export default function TimeClockAdmin() {
         throw adminActionError(data, "Time Clock admin data could not be verified.");
       }
       const collections = data.collections;
-      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices", "admin_notes"]) {
+      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices"]) {
         if (!Array.isArray(collections[key])) {
           throw new Error("Time Clock admin data could not be verified.");
         }
@@ -308,7 +308,7 @@ export default function TimeClockAdmin() {
       const corrections = collections.correction_requests;
       const punchExceptionRows = collections.punch_exceptions;
       const deviceRows = collections.devices;
-      const adminNoteRows = collections.admin_notes;
+      const adminNoteRows = collections.admin_notes || [];
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
