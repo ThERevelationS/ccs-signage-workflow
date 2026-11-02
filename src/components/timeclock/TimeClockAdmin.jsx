@@ -41,7 +41,8 @@ import {
   LockKeyhole,
   Eye,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageSquare
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths, startOfDay, endOfDay, addDays, subDays } from "date-fns";
 // xlsx (~1MB) loads on demand inside the export handler ??? not at page load.
@@ -218,7 +219,21 @@ export default function TimeClockAdmin() {
       if (r?.data?.success) { setSwapRequests((cur) => cur.filter((x) => x.id !== requestId)); }
     } catch { /* leave row retryable */ }
   };
+  const ackAdminNote = async (note) => {
+    if (!sessionToken || !note?.id || !note?.updated_date) return;
+    try {
+      const r = await base44.functions.invoke("timeClockAction", {
+        action: "acknowledge_admin_note",
+        session_token: sessionToken,
+        note_id: note.id,
+        expected_updated_date: note.updated_date,
+        request_id: newRequestId(),
+      });
+      if (r?.data?.success) setAdminNotes((cur) => cur.filter((x) => x.id !== note.id));
+    } catch { /* leave row retryable */ }
+  };
   const [punchExceptions, setPunchExceptions] = useState([]);
+  const [adminNotes, setAdminNotes] = useState([]);
   const [devices, setDevices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState("");
@@ -280,7 +295,7 @@ export default function TimeClockAdmin() {
         throw adminActionError(data, "Time Clock admin data could not be verified.");
       }
       const collections = data.collections;
-      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices"]) {
+      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices", "admin_notes"]) {
         if (!Array.isArray(collections[key])) {
           throw new Error("Time Clock admin data could not be verified.");
         }
@@ -293,6 +308,7 @@ export default function TimeClockAdmin() {
       const corrections = collections.correction_requests;
       const punchExceptionRows = collections.punch_exceptions;
       const deviceRows = collections.devices;
+      const adminNoteRows = collections.admin_notes;
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
@@ -302,6 +318,7 @@ export default function TimeClockAdmin() {
       loadSwapRequests();
       setPunchExceptions(punchExceptionRows);
       setDevices(deviceRows || []);
+      setAdminNotes(adminNoteRows || []);
       const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
       setPendingApprovalRecovery(recovery);
     } catch (err) {
@@ -1897,6 +1914,24 @@ export default function TimeClockAdmin() {
                 <div className="flex gap-1">
                   <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "approve")} className="h-6 px-2 text-[10px] text-emerald-700">Approve swap</Button>
                   <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "reject")} className="h-6 px-2 text-[10px] text-red-600">Reject</Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </AdminSection>
+      )}
+      {adminNotes.length > 0 && (
+        <AdminSection title="Employee notes" icon={MessageSquare} tone="blue" count={adminNotes.length}>
+          <ul className="mt-1 space-y-1">
+            {adminNotes.map((note) => (
+              <li key={note.id} className="rounded border border-blue-100 bg-white/70 px-2 py-1.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">{note.user_name || note.user_email}</span>
+                  <span className="text-[10px] text-gray-400">{note.requested_at ? new Date(note.requested_at).toLocaleString() : ""}</span>
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">{note.note}</p>
+                <div className="mt-1.5 flex justify-end">
+                  <Button type="button" size="sm" variant="outline" onClick={() => ackAdminNote(note)} className="h-6 px-2 text-[10px] text-emerald-700">Acknowledge</Button>
                 </div>
               </li>
             ))}
