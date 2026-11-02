@@ -149,10 +149,22 @@ export function flattenQueueRows(workOrders = [], { dueField = "product_due_date
   return rows;
 }
 
+// C-08 — a possibly multi-valued closed-enum filter ("a,b" = a OR b). An
+// empty/absent value or an "all" token anywhere means no filter. A single
+// value is a one-token list, so scalar callers see identical behavior; the
+// comma-list form only ever reaches here from the URL parser (parseQueueFilters)
+// or a hand-built state — "all" wins outright either way.
+const enumFilterTokens = (v) => String(v ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+const enumCellMatch = (cell, filterValue) => {
+  const toks = enumFilterTokens(filterValue);
+  if (!toks.length || toks.includes("all")) return true;
+  return toks.includes(String(cell ?? ""));
+};
+
 export function filterQueueRows(rows = [], filters = DEFAULT_QUEUE_FILTERS, now = new Date()) {
   const f = { ...DEFAULT_QUEUE_FILTERS, ...(filters || {}) };
   return (rows || []).filter((r) => {
-    if (f.status !== "all" && r.status !== f.status) return false;
+    if (!enumCellMatch(r.status, f.status)) return false;
     if (f.substatus && !norm(r.substatus).includes(norm(f.substatus))) return false;
     if (f.designer !== "all" && r.designer !== f.designer) return false;
     if (f.responsibility !== "all" && r.responsibility !== f.responsibility) return false;
@@ -164,11 +176,16 @@ export function filterQueueRows(rows = [], filters = DEFAULT_QUEUE_FILTERS, now 
     if ((f.part ?? "all") !== "all" && r.part !== f.part) return false;
     if ((f.salesperson ?? "all") !== "all" && r.salesperson !== f.salesperson) return false;
     if ((f.enteredBy ?? "all") !== "all" && r.enteredBy !== f.enteredBy) return false;
+    // C-08 extensions — fulfillment/proof are closed enums and accept comma
+    // lists ("a,b" = OR); scalar states compare exactly as before.
+    if (!enumCellMatch(r.fulfillment, f.fulfillment)) return false;
+    if (!enumCellMatch(r.proof, f.proof)) return false;
     if (f.duePreset === "hard_due_only" && !r.hardDue) return false;
-    // "rush" is a row flag, not a date window — an undated rush job still matches.
-    if (f.duePreset === "rush") {
-      if (!r.rush) return false;
-    } else if (!duePresetMatch(r.due || r.woDue, f.duePreset, now)) return false;
+    // "rush" is a row flag, not a date window — an undated rush job still
+    // matches. It can arrive via the CB "Rush Jobs" due preset or the
+    // standalone rush flag (?rush=1); both AND against the other filters.
+    if ((f.duePreset === "rush" || f.rush === true) && !r.rush) return false;
+    if (f.duePreset !== "rush" && !duePresetMatch(r.due || r.woDue, f.duePreset, now)) return false;
     const q = norm(f.search);
     if (q && ![r.ref, r.company, r.productName, r.substatus].some((field) => norm(field).includes(q))) return false;
     return true;
@@ -199,6 +216,65 @@ export function sortQueueRows(rows = [], sortKey = "default") {
 
 const DUE_PRESET_KEYS = new Set(DUE_PRESETS.map((d) => d.key));
 const QUEUE_SORT_KEYS = new Set(QUEUE_SORTS.map((s) => s.key));
+// "rush" is the CB "Rush Jobs" preset — QueueFilterBar emits it on duePreset
+// but it lives outside DUE_PRESETS (a row-flag filter, not a date window).
+const DUE_PARAM_KEYS = new Set([...DUE_PRESET_KEYS, "rush"]);
+// Proof values mirror PROOF_STATUS_VALUES (workOrderConversion) — the model
+// stays import-free so the set is duplicated here; keep in sync.
+const PROOF_FILTER_KEYS = new Set(["none", "draft", "sent", "awaiting_approval", "approved", "revision_requested"]);
+const FULFILLMENT_FILTER_KEYS = new Set(["none", ...Object.keys(FULFILLMENT_LABELS)]);
+// `assigned` carries the my-queue marker only — MY_QUEUE_TOKEN ("me") from
+// myQueueModel; a literal assignee belongs in `assignedTo`.
+const ASSIGNED_TOKENS = new Set(["me"]);
+
+// ── C-08: full filter state <-> URL query params ─────────────────────────
+// Every filter key serializes to a query param so a queue URL is
+// deep-linkable and back-safe.
+//
+//   key              param        rule
+//   search           q            trimmed text
+//   status           status       caller-validated tokens, comma-list OR,
+//                                 "all" wildcard anywhere
+//   substatus        substatus    trimmed text (substring match)
+//   designer         designer     select value or "all"
+//   responsibility   responsibility "
+//   assignedTo       assignedTo   "
+//   category         category     "
+//   moduleKey        moduleKey    "
+//   machine          machine      " (CB extension key)
+//   part             part         "
+//   salesperson      salesperson  "
+//   enteredBy        enteredBy (+ entered_by read alias)  "
+//   duePreset        due          DUE_PRESETS ∪ {rush}
+//   fulfillment      fulfillment  FULFILLMENT_LABELS ∪ {none}, comma-list OR
+//   proof            proof        PROOF set, comma-list OR
+//   rush             rush         "1"/"true" flag
+//   assigned         assigned     {"me"} — myQueueModel MY_QUEUE_TOKEN
+//   sort             sort         QUEUE_SORTS
+//   pageSize         size         PAGE_SIZES
+//   includeFulfilled fulfilled    "1"
+//   view             view         verbatim preserved token (e.g. named view)
+//
+// Conventions: only non-default values serialize (serialize(defaults) ===
+// {}). Multi-value keys use comma lists (the CustomFilterDialog convention)
+// and ALSO accept repeated params on parse — restricted to closed-enum keys
+// (status/fulfillment/proof) so free-select keys like person names
+// ("Last, First") are never corrupted by a comma. `?view=`/`?assigned=me`
+// are preserved pass-through tokens. `queue` is page-owned (the
+// ProductQueues tab selector) and deliberately never consumed here —
+// components keep it via their URLSearchParams merge.
+
+// Param tokens for a key: every repeated value, each split on commas —
+// both multi-value spellings parse identically.
+const paramTokens = (searchParams, key) => {
+  const raw = searchParams?.getAll
+    ? searchParams.getAll(key)
+    : [searchParams?.get ? searchParams.get(key) : ""];
+  return (raw || [])
+    .flatMap((v) => String(v || "").split(","))
+    .map((s) => s.trim())
+    .filter(Boolean);
+};
 
 export function parseQueueFilters(searchParams) {
   const get = (k) => (searchParams?.get ? searchParams.get(k) : "") || "";
@@ -207,29 +283,76 @@ export function parseQueueFilters(searchParams) {
     const v = norm(get(key));
     return allowed.includes(v) ? v : fallback;
   };
+  // Scalar select key — trimmed, "all" or blank reads as no filter.
+  const scalarOr = (key) => {
+    const v = get(key).trim();
+    return v && v !== "all" ? v : "all";
+  };
+  // Closed-enum multi key — normalized tokens, deduped, "all" anywhere wins
+  // outright; unknown tokens are dropped and a fully-unknown list falls back.
+  const enumMulti = (key, allowed) => {
+    const toks = paramTokens(searchParams, key).map(norm);
+    if (!toks.length || toks.includes("all")) return "all";
+    const valid = [...new Set(toks.filter((t) => allowed.has(t)))];
+    return valid.length ? valid.join(",") : "all";
+  };
   // status is validated by the caller against OPERATIONAL_STATUS_VALUES; any
-  // non-empty value passes through so unknown values simply filter to nothing.
-  const status = norm(get("status"));
-  if (status && status !== "all") filters.status = status;
+  // non-empty value passes through so unknown values simply filter to
+  // nothing. Multi-value: comma lists / repeated params OR together.
+  const statusToks = paramTokens(searchParams, "status").map(norm);
+  filters.status = statusToks.length && !statusToks.includes("all")
+    ? [...new Set(statusToks)].join(",")
+    : "all";
   filters.substatus = get("substatus").trim();
-  filters.designer = get("designer").trim() || "all";
-  filters.responsibility = get("responsibility").trim() || "all";
-  filters.assignedTo = get("assignedTo").trim() || "all";
-  filters.category = get("category").trim() || "all";
-  filters.moduleKey = get("moduleKey").trim() || "all";
-  const due = enumOr("due", [...DUE_PRESET_KEYS], "all");
+  filters.designer = scalarOr("designer");
+  filters.responsibility = scalarOr("responsibility");
+  filters.assignedTo = scalarOr("assignedTo");
+  filters.category = scalarOr("category");
+  filters.moduleKey = scalarOr("moduleKey");
+  // CB extension keys — absent param === "all" (filterQueueRows reads them
+  // with ?? "all"). Emitted only when non-default so parse output stays a
+  // minimal, round-trip-stable object.
+  const machine = scalarOr("machine");
+  if (machine !== "all") filters.machine = machine;
+  const part = scalarOr("part");
+  if (part !== "all") filters.part = part;
+  const salesperson = scalarOr("salesperson");
+  if (salesperson !== "all") filters.salesperson = salesperson;
+  // `entered_by` is accepted as a snake-case alias; camelCase wins when both
+  // are present.
+  const enteredBy = scalarOr("enteredBy");
+  const enteredByAlias = scalarOr("entered_by");
+  if (enteredBy !== "all" || enteredByAlias !== "all") {
+    filters.enteredBy = enteredBy !== "all" ? enteredBy : enteredByAlias;
+  }
+  const due = enumOr("due", [...DUE_PARAM_KEYS], "all");
   filters.duePreset = due;
   filters.sort = enumOr("sort", [...QUEUE_SORT_KEYS], DEFAULT_QUEUE_FILTERS.sort);
   filters.search = get("q").trim();
   const size = Number(get("size"));
   if (PAGE_SIZES.includes(size)) filters.pageSize = size;
   filters.includeFulfilled = get("fulfilled") === "1";
+  // C-08 additions — all absent-by-default, emitted only when meaningful.
+  const fulfillment = enumMulti("fulfillment", FULFILLMENT_FILTER_KEYS);
+  if (fulfillment !== "all") filters.fulfillment = fulfillment;
+  const proof = enumMulti("proof", PROOF_FILTER_KEYS);
+  if (proof !== "all") filters.proof = proof;
+  if (get("rush") === "1" || norm(get("rush")) === "true") filters.rush = true;
+  const assigned = norm(get("assigned"));
+  if (ASSIGNED_TOKENS.has(assigned)) filters.assigned = assigned;
+  const view = get("view").trim();
+  if (view) filters.view = view;
   return filters;
 }
 
 export function serializeQueueFilters(filters = {}) {
   const f = { ...DEFAULT_QUEUE_FILTERS, ...(filters || {}) };
   const out = {};
+  // Non-"all"/non-blank select value → trimmed param; "all"/blank → omitted.
+  const sel = (v) => {
+    const s = String(v ?? "").trim();
+    return s && s !== "all" ? s : "";
+  };
   if (f.status !== DEFAULT_QUEUE_FILTERS.status) out.status = f.status;
   if (f.substatus) out.substatus = f.substatus;
   if (f.designer !== "all") out.designer = f.designer;
@@ -237,11 +360,20 @@ export function serializeQueueFilters(filters = {}) {
   if (f.assignedTo !== "all") out.assignedTo = f.assignedTo;
   if (f.category !== "all") out.category = f.category;
   if (f.moduleKey !== "all") out.moduleKey = f.moduleKey;
+  for (const k of ["machine", "part", "salesperson", "enteredBy", "fulfillment", "proof"]) {
+    const v = sel(f[k]);
+    if (v) out[k] = v;
+  }
   if (f.duePreset !== "all") out.due = f.duePreset;
+  if (f.rush === true) out.rush = "1";
   if (f.sort && f.sort !== DEFAULT_QUEUE_FILTERS.sort) out.sort = f.sort;
   if (f.search) out.q = f.search;
   if (f.pageSize !== DEFAULT_QUEUE_FILTERS.pageSize) out.size = String(f.pageSize);
   if (f.includeFulfilled) out.fulfilled = "1";
+  // Preserved tokens — the my-queue marker serializes to its canonical
+  // spelling; a view token round-trips verbatim.
+  if (norm(f.assigned) === "me") out.assigned = "me";
+  if (String(f.view ?? "").trim()) out.view = String(f.view).trim();
   return out;
 }
 
