@@ -47,10 +47,11 @@ Deno.serve(async (req) => {
     }
 
     if (isLogout) {
+      let logoutWarning = "";
       await base44.asServiceRole.entities.AuthorizedEmail.update(user.id, {
         session_not_before: new Date().toISOString(),
-      }).catch(() => null);
-      return Response.json({ valid: true, logged_out: true });
+      }).catch((e) => { logoutWarning = String(e?.message || e); return null; });
+      return Response.json({ valid: true, logged_out: true, logout_warning: logoutWarning || undefined });
     }
     return Response.json({
       valid: true,
