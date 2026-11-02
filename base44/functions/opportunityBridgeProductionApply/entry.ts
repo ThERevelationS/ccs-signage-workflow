@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { buildOpportunityBridgeDryRunPlan, bridgeSourceSnapshotsEqual } from "../../shared/opportunityBridgeDryRunPlanner.mjs";
 import {
   OPPORTUNITY_BRIDGE_PRODUCTION_POLICY,
@@ -107,7 +108,7 @@ function publicCandidate(row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const actor = await base44.auth.me().catch(() => null);
     if (!actor || actor.role !== "admin") {
       return Response.json({ success:false, error:"Admin access required." }, { status:403 });
