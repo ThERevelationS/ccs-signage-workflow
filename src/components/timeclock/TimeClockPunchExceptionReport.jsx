@@ -19,6 +19,7 @@ function formatDateTime(value) {
 function typeLabel(type) {
   if (type === "late_clock_in") return "Missed Clock In";
   if (type === "missed_clock_out") return "Missed Clock Out";
+  if (type === "missed_shift") return "Missed Shift";
   return String(type || "Punch Exception").replaceAll("_", " ");
 }
 
@@ -41,6 +42,11 @@ function reportDetail(row) {
     return row.claimed_clock_in
       ? `Employee reported arrival: ${formatDateTime(row.claimed_clock_in)}. The reconstructed shift remains subject to manager approval.`
       : "Employee reported a missing Clock In. The reconstructed shift remains subject to manager approval.";
+  }
+  if (row.exception_type === "missed_shift") {
+    return row.claimed_clock_in && row.claimed_clock_out
+      ? `Employee reported a fully missed shift: ${formatDateTime(row.claimed_clock_in)} to ${formatDateTime(row.claimed_clock_out)}. Approving adds those hours without manual entry.`
+      : "Employee reported a fully missed shift. Approving the linked shift adds the reported hours.";
   }
   if (row.status === "worked_through") {
     return "Employee confirmed the long-running shift was continuous work. No Clock Out was invented or changed.";
@@ -122,7 +128,7 @@ export default function TimeClockPunchExceptionReport({
             const entry = entryById.get(row.time_entry_id) || null;
             const linkedCorrection = correctionById.get(row.correction_request_id) || correctionByPunchExceptionId.get(row.id) || null;
             const canReviewCorrection = ACTIONABLE_STATUSES.has(row.status) && linkedCorrection && ["pending", "reviewing"].includes(linkedCorrection.status) && typeof onReviewCorrection === "function";
-            const canApproveLateClockIn = row.exception_type === "late_clock_in" && row.status === "pending_manager_review" &&
+            const canApproveLateClockIn = ["late_clock_in", "missed_shift"].includes(row.exception_type) && row.status === "pending_manager_review" &&
               entry?.status === "clocked_out" && entry?.approval_status === "needs_review" && !entry?.pay_period_id && typeof onApproveEntry === "function";
             return (
               <div key={row.id || row.case_key} className="rounded-xl border bg-white p-3">
