@@ -86,8 +86,9 @@ async function listAll(Announcement: any) {
   return loadAllEntityRows({ entity: Announcement, sort: '-updated_date', label: 'Announcement history' });
 }
 
-// The live feed is identical for every caller (including anonymous viewers),
-// so one short module-scope cache collapses the per-viewer fan-out.
+// The live row set is shared by every caller, so one short module-scope cache
+// collapses the per-viewer fan-out. Targeting and field projection are
+// applied per caller on top of it (see feedForViewer).
 const ACTIVE_FEED_CACHE_MS = 30_000;
 let activeFeedCache: { value: any; expiresAt: number } | null = null;
 let activeFeedInFlight: Promise<any> | null = null;
@@ -113,7 +114,35 @@ async function computeActiveFeed(Announcement: any) {
     feed.push(row);
   }
   feed.sort(comparePublication);
-  return { announcements: feed.slice(0, 3), live_count: feed.length };
+  return feed;
+}
+
+// Only display fields leave the backend. Audience lists (target_users,
+// acknowledged_viewers, customer_ids), the sender and the admin template name
+// stay server-side so feed consumers never see staff emails.
+const FEED_FIELDS = [
+  'id', 'title', 'message', 'image_url', 'sound_type', 'custom_sound_url', 'display_pages',
+  'duration_seconds', 'background_color', 'priority', 'expires_at', 'scheduled_for', 'sent_at',
+  'display_mode', 'repeat_interval_minutes', 'requires_ack',
+];
+
+function projectFeedRow(row: any) {
+  const out: Record<string, any> = {};
+  for (const field of FEED_FIELDS) if (row?.[field] !== undefined) out[field] = row[field];
+  return out;
+}
+
+function targetedAtViewer(row: any, viewerEmail: string) {
+  const targets = Array.isArray(row?.target_users) ? row.target_users : [];
+  if (targets.length === 0) return true;
+  if (!viewerEmail) return false;
+  return targets.some((email: any) => String(email || '').trim().toLowerCase() === viewerEmail);
+}
+
+function feedForViewer(rows: any[], actor: any) {
+  const viewerEmail = String(actor?.email || '').trim().toLowerCase();
+  const visible = (rows || []).filter((row) => targetedAtViewer(row, viewerEmail));
+  return { announcements: visible.slice(0, 3).map(projectFeedRow), live_count: visible.length };
 }
 
 async function getActiveFeed(Announcement: any) {
@@ -218,10 +247,11 @@ Deno.serve(async (req) => {
     const Announcement = base44.asServiceRole.entities.Announcement;
 
     // Server-enforced live feed: scheduled announcements are withheld until
-    // their start time and expired broadcasts are lazily deactivated here so
-    // stale records can never keep re-appearing on viewer devices.
+    // their start time, expired broadcasts are lazily deactivated here so
+    // stale records can never keep re-appearing on viewer devices, and
+    // targeted announcements reach only their verified recipients.
     if (action === 'active_feed') {
-      return Response.json(await getActiveFeed(Announcement));
+      return Response.json(feedForViewer(await getActiveFeed(Announcement), actor));
     }
 
     // Viewer acknowledgement is a best-effort append. The client also
