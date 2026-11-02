@@ -1,0 +1,124 @@
+{
+  "name": "BroadcastMessage",
+  "display_name": "Broadcast Message",
+  "description": "Staff-composed cohort-targeted banner broadcasts (masterplan H-11): one row per send \u2014 Everyone/Design/Production/Sales/Managers/Individual cohorts resolved server-side from AuthorizedEmail (sales_roles + role + is_deactivated) via shared/broadcastModel.ts; recipients get a banner until they ack/dismiss or expires_at passes. RLS is backend-only on ALL four ops (unlike Announcement's open read): a cohort-targeted row must never reach a non-recipient, and staff EmailGate sessions cannot satisfy entity RLS anyway \u2014 ALL access flows through a session-authenticated function (manageBroadcasts); do NOT add to the staffDataRead allowlist. Receipt model is embedded arrays (acked_user_ids/dismissed_user_ids, CAS-appended via updateMany({id,updated_date},{$set}) like manageAnnouncements.acknowledge) \u2014 a separate receipt entity was rejected: staff rosters are tens of users and one row read yields banner + ack state, halving poll-cycle entity reads against the shared read budget.",
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "Banner headline (required, \u2264500 chars)."
+    },
+    "body": {
+      "type": "string",
+      "description": "Banner body text (required, \u226420k chars)."
+    },
+    "cohort": {
+      "type": "string",
+      "enum": [
+        "everyone",
+        "design",
+        "production",
+        "sales",
+        "managers",
+        "individual"
+      ],
+      "description": "Audience cohort \u2014 resolved server-side via broadcastModel.COHORT_ROLE_MAP: design=sales_roles\u220b'Designer'; production=\u2229{Installer,Fabricator,CNC Router Operator,CNC Laser Operator,Painter}; sales=\u2229{Estimator,'Task Assigned'}; managers=role==='admin' OR \u2229{'Project Manager','Office Administration'}; individual=target_user_ids membership. Deactivated staff are excluded from every cohort."
+    },
+    "target_user_ids": {
+      "type": "array",
+      "description": "cohort='individual' targets \u2014 lowercase AuthorizedEmail emails (entity ids also matched by the model for picker convenience). Kept EMPTY for cohort sends so a stale list can never silently narrow a broadcast.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Composing staff member's email (lowercased actor email)."
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Composing staff member's display name."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Send timestamp \u2014 the banner sort anchor (newest first)."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Banner stops showing after this instant \u2014 REQUIRED at send time (must be after created_at; mirrors the manageAnnouncements publish gate)."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "urgent"
+      ],
+      "default": "normal",
+      "description": "urgent sorts ahead of normal in the banner stack."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "cancelled"
+      ],
+      "default": "sent",
+      "description": "cancelled = retracted by sender/admin (hidden from every surface, row kept for audit)."
+    },
+    "requires_ack": {
+      "type": "boolean",
+      "default": false,
+      "description": "UI hint \u2014 true: banner offers only the Acknowledge button (compliance reads); false: Dismiss also hides it. Either action removes the viewer's copy via the embedded lists."
+    },
+    "audience_size": {
+      "type": "number",
+      "default": 0,
+      "description": "Recipient count resolved at send time (broadcastModel.audienceEstimate) \u2014 powers 'N of M acknowledged' reporting without recounting the roster."
+    },
+    "acked_user_ids": {
+      "type": "array",
+      "description": "Lowercase staff emails that pressed Acknowledge \u2014 embedded receipt list (Announcement.acknowledged_viewers convention), CAS-appended, capped 500.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "dismissed_user_ids": {
+      "type": "array",
+      "description": "Lowercase staff emails that dismissed the banner \u2014 hides without counting as an acknowledgement for requires_ack reporting.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "subject",
+    "body",
+    "cohort"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__broadcast_message_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__broadcast_message_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__broadcast_message_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__broadcast_message_backend_only__"
+      }
+    }
+  }
+}
