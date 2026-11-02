@@ -97,6 +97,7 @@ import PermittingTestSuite from "@/components/permitting/PermittingTestSuite";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import WorkflowSchedulesPanel from "@/components/admin/WorkflowSchedulesPanel";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
+import IntegrationsPanel from "@/components/admin/IntegrationsPanel";
 import {
   getStoredAdminSettingsCapability,
   getStoredAdminSettingsCapabilityExpiry,
@@ -370,7 +371,7 @@ const TRIGGER_HELP = {
 const GROUP_HELP = {
   workflow: "Workflow: automation rules, task assignments, calendar, and the activity feed",
   people: "People: users and permissions, time clock, and resource capacity",
-  integrations: "Integrations: Smartsheet sync, CoreBridge history, and conflict review",
+  integrations: "Integrations: service status, Smartsheet sync, CoreBridge history, and conflict review",
   permitting: "Permitting: completeness dashboards, rule review, and test results",
   system: "System: backend tools (backup, trash, imports, jobs, export) and fleet settings",
 };
@@ -619,6 +620,7 @@ const ADMIN_TAB_ICONS = {
   corebridge: Bot,
   opportunity_bridge: GitBranch,
   sync_conflicts: AlertTriangle,
+  integrations: Braces,
   smartsheet: GitBranch,
   resources: Users,
   permitting_completeness: ClipboardCheck,
@@ -631,6 +633,22 @@ const ADMIN_TAB_ICONS = {
 };
 
 const AUTOMATION_DRAFT_KEY = "admin-automation-editor-draft";
+
+// K-08 — page-local registration of the Integrations status tab. The shared
+// ADMIN_TAB_GROUPS registry lives in adminTabNavigation.js (outside this
+// change's scope), so the tab is appended to the Integrations group here.
+// It is admin-only like every sibling in that group; the resolver overrides
+// below keep deep links (?tab=integrations) and group selection working even
+// though the shared registry does not list the value.
+const ADMIN_INTEGRATIONS_TAB = { value: "integrations", label: "Integrations" };
+const withAdminIntegrationsTab = (groups, isAdminFlag) => {
+  if (!isAdminFlag || !Array.isArray(groups)) return groups;
+  return groups.map((group) => (
+    group.id === "integrations" && !group.tabs.some((t) => t.value === ADMIN_INTEGRATIONS_TAB.value)
+      ? { ...group, tabs: [ADMIN_INTEGRATIONS_TAB, ...group.tabs] }
+      : group
+  ));
+};
 
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
@@ -668,8 +686,15 @@ export default function AdminSettings() {
   const savedNavigation = !searchParams.has("tab") && isUnlocked
     ? readAdminNavigation(browserStorage, navigationKey, isAdmin, currentUser)
     : null;
-  const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
-    resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
+  const resolvedAdminNavigation = resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
+  // K-08: the Integrations tab value is unknown to the shared registry, so a
+  // direct ?tab=integrations deep link would sanitize to 'automations'. Admit
+  // it here for admins only; non-admins keep the fail-closed fallback.
+  const selectedAdminTab =
+    isAdmin && searchParams.get("tab") === ADMIN_INTEGRATIONS_TAB.value
+      ? ADMIN_INTEGRATIONS_TAB.value
+      : resolvedAdminNavigation.tab;
+  const selectedAdminSubtab = resolvedAdminNavigation.subtab;
 
   useEffect(() => {
     if (isUnlocked && navigationKey) {
@@ -698,13 +723,17 @@ export default function AdminSettings() {
       .filter((g) => Array.isArray(g?.emails) && g.emails.map((e) => String(e).toLowerCase()).includes(email))
       .flatMap((g) => Array.isArray(g?.permission_sections) ? g.permission_sections : []))];
   }, [currentUser?.email, emailGroups]);
-  const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser, userTeamSections);
+  const availableAdminGroups = withAdminIntegrationsTab(
+    getAccessibleAdminGroups(isAdmin, currentUser, userTeamSections), isAdmin);
   const requestedDeepLinkTab = searchParams.get("tab");
   const requestedDeepLinkSubtab = searchParams.get("subtab");
   const deniedDeepLinkTab = isUnlocked && requestedDeepLinkTab && requestedDeepLinkTab !== selectedAdminTab;
   const deniedDeepLinkSubtab = isUnlocked && !deniedDeepLinkTab && requestedDeepLinkSubtab && requestedDeepLinkSubtab !== selectedAdminSubtab;
   const resolvedTabLabel = availableAdminGroups.flatMap((g) => g.tabs).find((t) => t.value === selectedAdminTab)?.label || selectedAdminTab;
-  const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
+  // The page-local Integrations tab is absent from the shared registry, so
+  // resolve the active group against the augmented list first.
+  const activeAdminGroupId = availableAdminGroups.find((group) => group.tabs.some((t) => t.value === selectedAdminTab))?.id
+    || getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const categoryScrollerRef = useRef(null);
   const adminScrollRef = useRef(null);
@@ -830,7 +859,9 @@ export default function AdminSettings() {
     };
   }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
-    if (getAccessibleAdminTab(nextTab, isAdmin, currentUser) !== nextTab) return;
+    // Page-local Integrations tab is admin-only and unregistered upstream.
+    const pageLocalTab = nextTab === ADMIN_INTEGRATIONS_TAB.value && isAdmin;
+    if (!pageLocalTab && getAccessibleAdminTab(nextTab, isAdmin, currentUser) !== nextTab) return;
     const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab, currentUser) === nextSubtab
       ? nextSubtab
       : null;
@@ -867,7 +898,7 @@ export default function AdminSettings() {
     window.addEventListener("online", on); window.addEventListener("offline", off);
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
-  const RECENTLY_CHANGED_TABS = new Set(["automations", "task_assignments", "users", "timeclock", "activity", "sync_conflicts", "corebridge", "permitting_rules", "backend"]);
+  const RECENTLY_CHANGED_TABS = new Set(["automations", "task_assignments", "users", "timeclock", "activity", "sync_conflicts", "corebridge", "permitting_rules", "backend", "integrations"]);
   const [tourSeen, setTourSeen] = useState(() => {
     try { return localStorage.getItem("admin_tour_seen") === "1"; } catch { return true; }
   });
@@ -2798,6 +2829,9 @@ export default function AdminSettings() {
                 <PermittingTestSuite />
               </AdminPanelContent>
 
+              <AdminPanelContent value="integrations">
+                <IntegrationsPanel sessionToken={sessionToken} />
+              </AdminPanelContent>
               <AdminPanelContent value="smartsheet">
                 <SmartsheetSyncSettings sessionToken={sessionToken} />
               </AdminPanelContent>
