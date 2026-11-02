@@ -26,6 +26,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   MachineRate: new Set(['create', 'updateMany', 'delete']),
   PermitLocality: new Set(['create', 'update']),
   SourceCollectionQueue: new Set(['create', 'updateMany']),
+  PermitResolutionRule: new Set(['create', 'update', 'updateMany']),
   LegacyMigrationMap: new Set(['create']),
   // CRM event queue rows live on OpportunityActivity: staff create typed
   // contact events and close them out with the same single-record
@@ -69,6 +70,7 @@ const ADMIN_ONLY_WRITE = new Set([
   'COGSAccount',
   'IncomeAccount',
   'TaxAgency',
+  'PermitResolutionRule',
   'CatalogPartGroup',
   'CrmEventType',
   'GlobalPricingTier',
