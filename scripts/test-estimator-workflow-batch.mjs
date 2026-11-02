@@ -9,15 +9,23 @@ import { create, act } from 'react-test-renderer';
 const here = dirname(fileURLToPath(import.meta.url));
 const temp = mkdtempSync(resolve(here, '.tmp-estimator-batch-'));
 const calls = [];
+// Minimal browser shim — bundled UI deps (Radix/react-remove-scroll et al.)
+// touch window/document at module-eval; the harness only asserts pure logic.
+if (typeof globalThis.window === 'undefined') {
+  globalThis.window = globalThis;
+  if (!globalThis.document) globalThis.document = { documentElement: {}, body: {}, createElement: () => ({ style: {} }), addEventListener: () => {}, removeEventListener: () => {} };
+  try { if (!globalThis.navigator) globalThis.navigator = {}; } catch { /* navigator is a getter-only global in Node */ }
+  if (!globalThis.self) globalThis.self = globalThis;
+  if (!globalThis.top) globalThis.top = globalThis;
+}
 globalThis.__estimatorBatchInvoke = async (name, payload) => {
   calls.push({ name, payload });
+  if (name === 'generateDocNumber') return { data: { number: 'EST-SYN-1' } };
   return { data: { estimate: { id: 'synthetic-copy' } } };
 };
 const stubs = {
-  '@/api/base44Client': 'export const base44 = { entities: {}, functions: { invoke: (...args) => globalThis.__estimatorBatchInvoke(...args) } };',
+  '@/api/base44Client': 'export const base44 = { entities: {}, functions: { invoke: (...args) => globalThis.__estimatorBatchInvoke(...args) } }; export const isRetryableFunction = () => false;',
   '@/functions/sendGmail': 'export const sendGmail = () => { throw new Error("No real email in unit tests"); };',
-  '@/functions/generateDocNumber': 'export const generateDocNumber = async () => ({ data: { number: "EST-T-1" } });',
-  '@/components/staff/staffEntities': 'export const staffEntities = new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) });',
   '@/components/estimator/moduleRegistry': 'export const ESTIMATOR_MODULES = []; export const getModuleLabel = () => "Custom";',
   '@/components/estimator/customerPricing': 'export const acceptedCustomerUnitPrice = () => 10;',
   '@/components/estimator/aioPricing': 'export const money = (value) => String(value);',
@@ -25,6 +33,8 @@ const stubs = {
   './ProductRow': 'export default function ProductRow() { return null; }',
   './CustomerSearchDialog': 'export default function CustomerSearchDialog() { return null; }',
   './NewCustomerDialog': 'export default function NewCustomerDialog() { return null; }',
+  'react-dom': 'export const createPortal = (node) => node; export const flushSync = (fn) => fn(); export default { createPortal: (node) => node };',
+  'react-dom/client': 'export const createRoot = () => ({ render: () => {}, unmount: () => {} }); export default { createRoot };',
 };
 let bundleNumber = 0;
 async function load(relative) {
@@ -32,7 +42,8 @@ async function load(relative) {
   await build({
     entryPoints: [resolve(here, '..', relative)],
     bundle: true, format: 'esm', platform: 'node', outfile,
-    external: ['react', 'react-test-renderer'],
+    banner: { js: 'import { createRequire as __cr } from "module"; const require = __cr(import.meta.url);' },
+    external: ['react', 'react-test-renderer', 'react-dom'],
     jsx: 'automatic', logLevel: 'silent',
     plugins: [{
       name: 'synthetic-estimator-dependencies',
@@ -99,8 +110,9 @@ try {
       await creation.splitEstimate({ source, lineItemIds: ['one'], sessionToken: 'synthetic', creationKey: 'split-retry' });
       await creation.duplicateEstimate({ source, sessionToken: 'synthetic', creationKey: 'duplicate-retry' });
     }
-    assert.deepEqual(calls.map(({ payload }) => payload.creation_key), ['split-retry', 'duplicate-retry', 'split-retry', 'duplicate-retry']);
-    assert.ok(calls.every(({ name }) => name === 'ensureNewEstimate'));
+    const creates = calls.filter(({ name }) => name === 'ensureNewEstimate');
+    assert.deepEqual(creates.map(({ payload }) => payload.creation_key), ['split-retry', 'duplicate-retry', 'split-retry', 'duplicate-retry']);
+    assert.equal(calls.filter(({ name }) => name === 'generateDocNumber').length, 1);
   });
 
   const { default: Products } = await load('src/components/estimator/aio/EstimateProductsList.jsx');
