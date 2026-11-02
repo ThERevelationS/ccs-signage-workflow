@@ -20,6 +20,13 @@
 //   customer_tier     (chart row pinning the customer's assigned tier)
 //   global_default    (weakest: category/blank chart row, else defaultMarkupPct)
 //
+// WITHIN the two chart-row layers the winning row follows legacy
+// matchSpecificity (src/components/pricing/pricingEngine.js resolveMatrixRow):
+// cat+tier (3) > cat-only (2) > tier-only (1) > blank (0) — so a
+// category-pinned default row still outranks a bare customer_tier row even
+// though it lives in the "weaker" ladder layer (F-27 parity). Part/machine
+// descriptors keep the strict ladder ordering above the chart.
+//
 // Money semantics mirror src/components/pricing/pricingEngine.js:
 //   markup_pct is a PERCENT over cost (50 = cost x 1.50); market mode stores a
 //   retail price minus a discount percent; per_unit_breaks are qty thresholds
@@ -37,7 +44,9 @@ const normStr = (v: unknown): string => String(v ?? '').trim().toLowerCase();
 export const round2 = (n: unknown): number => Math.round((num(n) + Number.EPSILON) * 100) / 100;
 export const round4 = (n: unknown): number => Math.round((num(n) + Number.EPSILON) * 10000) / 10000;
 
-// Weakest -> strongest. resolveTier walks this order and the LAST hit wins.
+// Weakest -> strongest. resolveTier walks this order for the OVERRIDE layers
+// (part/machine); the two chart-row layers beneath them compete on legacy
+// row specificity instead of raw layer order (see the header block above).
 export const TIER_PRECEDENCE = Object.freeze([
   'global_default',
   'customer_tier',
@@ -256,9 +265,12 @@ export function applyFormulaModifiers(unitPrice: unknown, modifiers: any): { uni
 const marketKind = (row: any): boolean => {
   const pm = normStr(row?.pricing_mode);
   // 'market' is the engine token; 'market_based' is the entity/admin spelling
-  // of the same chart family — both require a finite market_retail.
+  // of the same chart family — both require a POSITIVE finite market_retail.
+  // Legacy parity (F-27): retail <= 0 / non-finite is treated as absent — the
+  // row falls back to its markup path exactly like resolveEffectivePrice's
+  // `retail > 0` gate (pricingEngine.js).
   return (pm === PRICING_MODES.MARKET || pm === PRICING_MODES.MARKET_BASED)
-    && Number.isFinite(Number(row?.market_retail));
+    && Number.isFinite(Number(row?.market_retail)) && Number(row?.market_retail) > 0;
 };
 
 // A chart row / override descriptor opts its qty-break chart into interpolated
@@ -437,8 +449,17 @@ export function resolveTier({
       detail: machineRule ? machineRule.kind : 'no machine override' },
   ];
 
-  let winner = ladder[0];
-  for (const step of ladder) if (step.hit && step.rule) winner = step;
+  // Chart-row layers compete on legacy matchSpecificity, NOT ladder order
+  // (F-27 parity with resolveMatrixRow): cat+tier (3) > cat-only (2) >
+  // tier-only (1) > blank (0). Scores never tie across layers (tier adds 1,
+  // category adds 2), and each layer's row is already its best by the shared
+  // tie-break (scoped > unscoped, then effective_from -> updated_date -> id).
+  // The implicit defaultMarkupPct rule only wins when no chart row matched.
+  const tierRowSpec = tierRow ? (tierRowScoped ? 3 : 1) : -1;
+  const defaultRowSpec = catRow ? 2 : blankRow ? 0 : -1;
+  let winner = tierRowSpec > defaultRowSpec ? ladder[1] : ladder[0];
+  // Part/machine descriptors still override the winning chart layer in order.
+  for (const step of ladder.slice(2)) if (step.hit && step.rule) winner = step;
 
   return {
     source: winner.source as TierSource,
@@ -470,10 +491,12 @@ export function resolveTier({
 //   now             effective-window override
 //
 // Returns a fully-traced breakdown. Never throws on bad numbers — non-finite
-// inputs coerce to 0 and extensions on qty <= 0 stay 0 (minimums never fire).
+// inputs coerce to 0. Legacy parity (F-27): qty/unitCost pass through
+// UNCLAMPED exactly like pricingEngine.js num() — a negative qty or cost
+// yields a negative extension (minimums still never fire on extension <= 0).
 export function pricePart(input: any = {}): any {
-  const qty = Math.max(0, num(input.qty ?? input.quantity, 0));
-  const unitCost = Math.max(0, num(input.unitCost ?? input.cost ?? input.costBase));
+  const qty = num(input.qty ?? input.quantity, 0);
+  const unitCost = num(input.unitCost ?? input.cost ?? input.costBase);
   const tier = resolveTier(input);
   const rule = tier.rule || { kind: 'markup', markupPct: 0 };
 
