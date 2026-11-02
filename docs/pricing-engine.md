@@ -101,11 +101,14 @@ Rules and edge cases:
   out-of-window (`effective_from`/`effective_to`) rows never compete.
   In-layer ties break by latest `effective_from` → latest `updated_date` →
   lowest id (fully deterministic).
-- **Refinement vs the flat matrix**: the frontend engine's single-ladder
-  specificity (`cat+tier > cat > tier > blank`) is split here — tier-pinning
-  rows form the `customer_tier` layer and always outrank non-tier rows,
-  matching the CB precedence statement (a category default is *not* a
-  customer price). A cat-only row is a `global_default` sub-source.
+- **Chart-layer competition (F-27 parity)**: the winner across the
+  `customer_tier`/`global_default` chart layers is chosen by specificity
+  score, matching legacy `resolveMatrixRow.matchSpecificity` — a
+  category+tier row (score 3) beats a category-only row (2), which beats a
+  bare `customer_tier` row (1), which beats blank (0). Within each layer the
+  shared tie-break still applies (scoped > unscoped → effective_from →
+  updated_date → lowest id). Part/machine descriptor layers still override
+  chart layers in ladder order.
 - **Dangling `tier_ref`** still claims its layer (kind `markup`, pct 0) and
   reports `danglingTierRef` — a misconfigured override must not silently
   fall through to a cheaper/weaker layer.
