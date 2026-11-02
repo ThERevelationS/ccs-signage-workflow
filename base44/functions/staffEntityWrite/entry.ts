@@ -142,6 +142,13 @@ Deno.serve(async (req) => {
     rejectOperatorKeys(data);
     // Identity/system fields are never client-supplied.
     for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
+    // SavedQueueView ownership is server-authoritative — the session email is
+    // stamped, never trusted from the payload, so one staff session cannot
+    // create views in another user's name.
+    if (entityName === 'SavedQueueView' && op === 'create') {
+      (data as any).owner_email = String(user.email);
+      (data as any).user_email = String(user.email);
+    }
 
     if (entityName === 'MarkupTier' && (op === 'create' || op === 'update')) {
       const tierNum = Math.floor(Number(data?.tier_number));
@@ -220,6 +227,23 @@ Deno.serve(async (req) => {
     if (!id) throw bad('Record id is required.');
     const current = await entity.get(id).catch(() => null);
     if (!current?.id) return Response.json({ error: 'Record not found.' }, { status: 404 });
+
+    // SavedQueueView mutations are owner-only (admins excepted) — shared views
+    // stay readable by every session but only their owner may edit or delete.
+    if (entityName === 'SavedQueueView') {
+      const owner = String((current as any)?.owner_email || (current as any)?.user_email || '').trim().toLowerCase();
+      if (owner && owner !== String(user.email).toLowerCase() && user.role !== 'admin') {
+        return Response.json({ error: 'Saved queue views can only be changed by their owner.' }, { status: 403 });
+      }
+      // Ownership is fixed at create — never rewritable through an update or a
+      // $set patch, or a view could be "transferred" onto another user.
+      delete (data as any).owner_email;
+      delete (data as any).user_email;
+      if (body?.update?.$set && typeof body.update.$set === 'object') {
+        delete (body.update.$set as any).owner_email;
+        delete (body.update.$set as any).user_email;
+      }
+    }
 
     if (op === 'update') {
       const expected = String(body?.expected_updated_date || '').trim();
