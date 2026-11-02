@@ -87,7 +87,11 @@ Deno.serve(async (req) => {
 
     return fail(`Unknown action "${action}".`);
   } catch (error: any) {
-    const status = Number(error?.statusCode) || 500;
-    return fail(error?.message || 'Workspace preferences request failed.', status === 500 ? 500 : status);
+    // SDK rate-limit failures carry .status (not .statusCode); without it the
+    // 429 degenerates to a 500 and the browser governor treats it as fatal
+    // instead of retrying with backoff.
+    const limited = Number(error?.status) === 429 || /rate limit|traffic volume/i.test(String(error?.message || error?.data?.message || ''));
+    const status = limited ? 429 : (Number(error?.statusCode) || Number(error?.status) || 500);
+    return fail(limited ? 'Rate limited. Please retry.' : (error?.message || 'Workspace preferences request failed.'), status);
   }
 });
