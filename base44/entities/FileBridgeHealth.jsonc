@@ -1,28 +1,97 @@
 {
   "name": "FileBridgeHealth",
+  "type": "object",
   "description": "One row per agent — heartbeat, role, index stats, spool depth, drift. Read-failover decisions use last_seen_ms vs 90s window.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "agent_id": { "type": "string", "description": "Stable agent identity (env AGENT_ID or minted)." },
-    "display_name": { "type": "string" },
-    "role": { "type": "string", "enum": ["primary", "backup", "observer"], "default": "observer" },
-    "state": { "type": "string", "enum": ["online", "stale", "offline"], "default": "offline" },
-    "last_seen_ms": { "type": "number" },
-    "agent_version": { "type": "string" },
-    "agent_host": { "type": "string", "description": "e.g. 'TOWER' / 'TOWER-BACKUP'." },
-    "index_stats": { "type": "object", "additionalProperties": true, "description": "{files,dirs,bytes,hot_rows,fts_rows}." },
-    "roots_ok": { "type": "boolean", "default": true },
-    "spool_depth": { "type": "number", "description": "Undelivered outbound payloads." },
-    "drift_seconds": { "type": "number", "description": "Backup replication lag estimate." },
-    "last_scan_at": { "type": "string" },
-    "config_version": { "type": "number" },
-    "error": { "type": "string" }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Stable agent identity (env AGENT_ID or minted)."
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "backup",
+        "observer"
+      ],
+      "default": "observer"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "online",
+        "stale",
+        "offline"
+      ],
+      "default": "offline"
+    },
+    "last_seen_ms": {
+      "type": "number"
+    },
+    "agent_version": {
+      "type": "string"
+    },
+    "agent_host": {
+      "type": "string",
+      "description": "e.g. 'TOWER' / 'TOWER-BACKUP'."
+    },
+    "index_stats": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "{files,dirs,bytes,hot_rows,fts_rows}."
+    },
+    "roots_ok": {
+      "type": "boolean",
+      "default": true
+    },
+    "spool_depth": {
+      "type": "number",
+      "description": "Undelivered outbound payloads."
+    },
+    "drift_seconds": {
+      "type": "number",
+      "description": "Backup replication lag estimate."
+    },
+    "last_scan_at": {
+      "type": "string"
+    },
+    "config_version": {
+      "type": "number"
+    },
+    "error": {
+      "type": "string"
+    }
   },
-  "required": ["agent_id"],
+  "required": [
+    "agent_id"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
