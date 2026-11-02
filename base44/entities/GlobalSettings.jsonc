@@ -9,15 +9,108 @@
     "setting_value": {
       "type": "object",
       "description": "The setting value as JSON object"
+    },
+    "hoursOfOperation": {
+      "type": "object",
+      "description": "Two clocks for deadline vs follow-up math (sales center vs production)",
+      "properties": {
+        "sales_center_hours": {
+          "type": "array",
+          "description": "Sales center operating-hours entries (e.g. per-day open/close windows) used for follow-up math",
+          "items": {
+            "type": "object"
+          }
+        },
+        "production_hours": {
+          "type": "array",
+          "description": "Production shop operating-hours entries used for deadline math",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "emailDelivery": {
+      "type": "object",
+      "description": "Outbound email delivery defaults",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Master switch for outbound email delivery"
+        },
+        "default_from": {
+          "type": "string",
+          "description": "Default from-address for outgoing email"
+        },
+        "authorized_domains": {
+          "type": "array",
+          "description": "Domains authorized to send email",
+          "items": {
+            "type": "string"
+          }
+        },
+        "from_salesperson_toggle": {
+          "type": "boolean",
+          "description": "Allow sending from the salesperson's address"
+        }
+      }
+    },
+    "deadlineRules": {
+      "type": "object",
+      "description": "Deadline recalculation rules",
+      "properties": {
+        "recalc_on_proof_approval": {
+          "type": "boolean",
+          "description": "Recalculate deadlines when a proof is approved"
+        },
+        "respect_hard_dates": {
+          "type": "boolean",
+          "description": "Never move dates flagged as hard deadlines"
+        }
+      }
+    },
+    "creditTermsDefaults": {
+      "type": "object",
+      "description": "Default credit terms for new customer accounts",
+      "properties": {
+        "terms_days": {
+          "type": "number",
+          "description": "Default payment terms in days (e.g. 30)"
+        },
+        "credit_limit": {
+          "type": "number",
+          "description": "Default credit limit in dollars"
+        }
+      }
+    },
+    "autoInactiveMonths": {
+      "type": "number",
+      "description": "Months without activity before a record is auto-marked inactive"
     }
   },
   "required": [
     "setting_key"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__globalsettings_backend_only__" } },
-    "read": { "user_condition": { "role": "__globalsettings_backend_only__" } },
-    "update": { "user_condition": { "role": "__globalsettings_backend_only__" } },
-    "delete": { "user_condition": { "role": "__globalsettings_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__globalsettings_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__globalsettings_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__globalsettings_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__globalsettings_backend_only__"
+      }
+    }
   }
 }
