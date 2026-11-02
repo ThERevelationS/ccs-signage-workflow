@@ -242,6 +242,9 @@ const METHODS = {
     let stopped = false;
     let last = "";
     const check = async () => {
+      // M-05: no entity traffic while the tab is hidden — this one guard covers
+      // every subscribe() consumer app-wide (WO board, SalesFilter, etc.).
+      if (typeof document !== "undefined" && document.hidden) return;
       if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
       try {
         // -updated_date puts mutations into the 50 most-recently-updated rows —
