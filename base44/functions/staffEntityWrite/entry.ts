@@ -41,7 +41,45 @@ const WRITE_OPS: Record<string, Set<string>> = {
   WorkOrder: new Set(['create', 'updateMany']),
   TaxGroup: new Set(['create', 'update', 'delete']),
   MarkupTier: new Set(['create', 'update']),
+
+  // Estimator/queue registries (masterplan A-29). Reference-data writes are
+  // admin-gated below; audit/timer rows are staff-writeable because the
+  // surfaces that emit them run under any staff session.
+  CatalogPartGroup: new Set(['create', 'updateMany', 'delete']),
+  CrmEventType: new Set(['create', 'updateMany', 'delete']),
+  GlobalPricingTier: new Set(['create', 'updateMany', 'delete']),
+  Machine: new Set(['create', 'updateMany', 'delete']),
+  ModifierOption: new Set(['create', 'updateMany', 'delete']),
+  OriginationNode: new Set(['create', 'updateMany', 'delete']),
+  PricingModifier: new Set(['create', 'updateMany', 'delete']),
+  PricingTemplate: new Set(['create', 'updateMany', 'delete']),
+  ProductActivity: new Set(['create']),
+  ProductSubstatus: new Set(['create', 'updateMany', 'delete']),
+  Responsibility: new Set(['create', 'updateMany', 'delete']),
+  WorkOrderTimeEntry: new Set(['create', 'updateMany']),
+  COGSAccount: new Set(['create', 'updateMany', 'delete']),
+  IncomeAccount: new Set(['create', 'updateMany', 'delete']),
+  TaxAgency: new Set(['create', 'updateMany', 'delete']),
 };
+
+// Registry/config entities whose writes are restricted to admins (GL accounts,
+// tax agencies, pricing configuration, queue reference data). Reads stay
+// staff-tier in staffDataRead; mutation is admin-only like TaxGroup.
+const ADMIN_ONLY_WRITE = new Set([
+  'COGSAccount',
+  'IncomeAccount',
+  'TaxAgency',
+  'CatalogPartGroup',
+  'CrmEventType',
+  'GlobalPricingTier',
+  'Machine',
+  'ModifierOption',
+  'OriginationNode',
+  'PricingModifier',
+  'PricingTemplate',
+  'ProductSubstatus',
+  'Responsibility',
+]);
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
   if (!value || typeof value !== 'object') return;
@@ -75,8 +113,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
     }
     // Tax rates feed every quote's tax_percent — admin-gated like jurisdictions.
-    if ((entityName === 'TaxGroup' || entityName === 'MarkupTier') && user.role !== 'admin') {
-      return Response.json({ error: 'Only administrators can manage tax groups.' }, { status: 403 });
+    if ((entityName === 'TaxGroup' || entityName === 'MarkupTier' || ADMIN_ONLY_WRITE.has(entityName)) && user.role !== 'admin') {
+      return Response.json({ error: `Only administrators can manage ${entityName} records.` }, { status: 403 });
     }
     if (entityName === 'SalesLocation' && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage locations.' }, { status: 403 });
