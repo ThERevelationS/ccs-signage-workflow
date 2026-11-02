@@ -256,7 +256,7 @@ export default function TaskAssignmentRules() {
     try {
       const [record, usersData, escalation] = await Promise.all([
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: "Task assignment rules" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Task assignment authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "Task assignment authorized users" }),
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: ESCALATION_KEY, label: "Escalation contacts" })
       ]);
       setSettingRecord(record);
