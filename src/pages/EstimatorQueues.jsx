@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers, History } from "lucide-react";
+import { ListFilter, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers } from "lucide-react";
 import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from "@/components/estimator/estimateConversionService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
@@ -15,7 +15,12 @@ import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
-import { estimateMatchesSearch, pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
+import { estimateMatchesSearch, useEstimateDeepLink } from "@/components/estimator/deepLinks";
+import QueueFilterBar from "@/components/queues/QueueFilterBar";
+import {
+  DEFAULT_QUEUE_FILTERS,
+  filterQueueRows,
+} from "@/components/queues/productQueueModel";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -106,7 +111,12 @@ export default function EstimatorQueues() {
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [query, setQuery] = useState(params.get("q") || "");
+  // C-01 — the shared queue filter bar owns the search box + filter selects
+  // now; its `search` key is seeded from ?q= so deep links keep working.
+  const [queueFilters, setQueueFilters] = useState(() => ({
+    ...DEFAULT_QUEUE_FILTERS,
+    search: params.get("q") || "",
+  }));
   const [sort, setSort] = useState(params.get("sort") || "newest");
   const [trashBusyId, setTrashBusyId] = useState("");
   const [trashError, setTrashError] = useState("");
@@ -125,10 +135,6 @@ export default function EstimatorQueues() {
   const importEstRef = useRef(null);
   // #302 — /EstimatorQueues?estimate=<id> forwards to the estimate detail.
   useEstimateDeepLink();
-  // #313 — last-5 searches per user, dropdown under the search input.
-  const [recentOpen, setRecentOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches("estimator_queues", myEmail));
-  const commitRecentSearch = (v) => setRecentSearches(pushRecentSearch("estimator_queues", myEmail, v));
   // Per-row retry anchors for the inline quick actions — a retried duplicate
   // reuses its creation key instead of minting a second estimate.
   const quickKeysRef = useRef({});
@@ -286,6 +292,13 @@ export default function EstimatorQueues() {
       if (value && value !== "newest") next.set(key, value); else next.delete(key);
       window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
     } catch {}
+  };
+
+  // QueueFilterBar is stateless — the page owns the filter object and keeps
+  // ?q= write-back for the search key (same convention the old input used).
+  const handleQueueFiltersChange = (next) => {
+    setQueueFilters(next);
+    if ((next?.search || "") !== (queueFilters.search || "")) writeParams("q", next?.search || "");
   };
 
   useEffect(() => {
@@ -479,12 +492,61 @@ export default function EstimatorQueues() {
     return by;
   }, [estimates]);
 
-  const q = query.trim().toLowerCase();
-  const [visibleCount, setVisibleCount] = useState(40);
-  const PAGE = 40;
+  const q = queueFilters.search.trim().toLowerCase();
+
+  // C-01 — estimates mapped onto the product-queue row contract so the shared
+  // QueueFilterBar keys run through the same filterQueueRows model (status and
+  // free search stay page-owned: status pills + estimateMatchesSearch cover
+  // line items, pseudo-statuses and the trash bucket the model can't express).
+  const queueRows = useMemo(() => (estimates || []).map((e) => ({
+    workOrderId: e.id, // reuses the row→record id slot for the id set
+    ref: e.estimate_number || e.project_name || e.job_name || e.id,
+    company: e.client_name || "",
+    productName: e.project_name || "",
+    status: e.deleted === true ? "trash" : (e.pipeline_sync_pending === true ? "sync_issues" : (e.status || "draft")),
+    substatus: "",
+    designer: "",
+    assignedTo: e.assigned_to || "",
+    responsibility: "",
+    category: "",
+    moduleKey: e.source_module || "",
+    due: e.due_date || e.target_install_date || "",
+    woDue: "",
+    hardDue: false,
+    machine: "",
+    part: "",
+    salesperson: e.salesperson_email || e.salesperson || "",
+    enteredBy: e.created_by || "",
+    rush: String(e.priority || "").trim().toLowerCase() === "rush",
+  })), [estimates]);
+
+  const queueOptions = useMemo(() => {
+    const uniq = (key) =>
+      [...new Set(queueRows.map((r) => r[key]).filter((v) => String(v || "").trim()))]
+        .sort((a, b) => String(a).localeCompare(String(b)))
+        .map((v) => ({ value: v, label: v }));
+    return {
+      assignees: uniq("assignedTo"),
+      salespeople: uniq("salesperson"),
+      enteredBys: uniq("enteredBy"),
+      moduleKeys: uniq("moduleKey"),
+    };
+  }, [queueRows]);
+
+  // Bar selects/due presets pass through the model; search + status are
+  // forced inert here because the page's own controls own them.
+  const barFilteredIds = useMemo(
+    () => new Set(
+      filterQueueRows(queueRows, { ...queueFilters, search: "", status: "all" }).map((r) => r.workOrderId)
+    ),
+    [queueRows, queueFilters]
+  );
+
+  const [visibleCount, setVisibleCount] = useState(() => DEFAULT_QUEUE_FILTERS.pageSize);
+  const PAGE = queueFilters.pageSize;
   // Incremental render-window (#404-408): large queues render the first PAGE
   // rows and grow on "Load more" — resets whenever the filters change.
-  useEffect(() => { setVisibleCount(PAGE); }, [status, query, sort, mine]);
+  useEffect(() => { setVisibleCount(PAGE); }, [status, queueFilters, sort, mine]);
   const rows = useMemo(() => {
     let list = status === "trash"
       ? estimates.filter((e) => e?.deleted === true)
@@ -497,6 +559,9 @@ export default function EstimatorQueues() {
       const mineEmail = String(me.email).toLowerCase();
       list = list.filter((e) => String(e.salesperson_email || e.created_by || "").toLowerCase() === mineEmail);
     }
+    // C-01 — bar selects (salesperson/entered-by/assigned/module) + due
+    // presets incl. "Rush Jobs" narrow the bucket via the queue model.
+    list = list.filter((e) => barFilteredIds.has(e.id));
     // #301 — global estimate search: header fields + notes + every loaded
     // line item (title/name/description/module_key — see deepLinks.js).
     if (q) {
@@ -510,7 +575,7 @@ export default function EstimatorQueues() {
     else if (sort === "expiring") sorted.sort((a, b) => exp(a).localeCompare(exp(b)));
     else sorted.sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)));
     return sorted;
-  }, [estimates, status, q, sort, mine, me]);
+  }, [estimates, status, q, sort, mine, me, barFilteredIds]);
 
   const visibleTotal = rows.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
@@ -631,40 +696,16 @@ export default function EstimatorQueues() {
           </Link>
         </div>
 
+        <QueueFilterBar
+          compact
+          filters={queueFilters}
+          onChange={handleQueueFiltersChange}
+          options={queueOptions}
+          pageSize={queueFilters.pageSize}
+          onPageSizeChange={(n) => setQueueFilters((f) => ({ ...f, pageSize: n }))}
+        />
+
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-48">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(e) => { const v = e.target.value; setQuery(v); writeParams("q", v); }}
-              aria-label="Search estimates"
-              onFocus={() => { setRecentSearches(readRecentSearches("estimator_queues", myEmail)); setRecentOpen(true); }}
-              onBlur={() => { commitRecentSearch(query); window.setTimeout(() => setRecentOpen(false), 150); }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { commitRecentSearch(query); setRecentOpen(false); }
-                else if (e.key === "Escape") setRecentOpen(false);
-              }}
-              placeholder="Search project, client, estimate #, notes or products…"
-              className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300"
-            />
-            {recentOpen && recentSearches.length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
-                  <History className="h-3 w-3" aria-hidden="true" /> Recent searches
-                </div>
-                {recentSearches.map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onMouseDown={(e) => { e.preventDefault(); setQuery(term); writeParams("q", term); commitRecentSearch(term); setRecentOpen(false); }}
-                    className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-red-50"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             <select
@@ -679,10 +720,10 @@ export default function EstimatorQueues() {
           <SavedViews
             storageKey="views.estimator_queues"
             autoApply={!status && !params.get("q") && !params.get("sort") && !mine}
-            getState={() => ({ q: query, status, sort, mine })}
+            getState={() => ({ q: queueFilters.search, status, sort, mine })}
             onApply={(s) => {
               const nextQ = s?.q || ""; const nextSort = s?.sort || "newest"; const nextStatus = s?.status || "";
-              setQuery(nextQ); setSort(nextSort);
+              setQueueFilters((f) => ({ ...f, search: nextQ })); setSort(nextSort);
               const p = new URLSearchParams();
               if (nextStatus) p.set("status", nextStatus);
               if (nextQ) p.set("q", nextQ);
