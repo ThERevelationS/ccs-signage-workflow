@@ -1,6 +1,6 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
-import { createRequestGovernor, isGovernorCallTimeout, isPlatformRateLimit, retryAfterMs } from './requestGovernor.mjs';
+import { createRequestGovernor, isPlatformRateLimit, retryAfterMs } from './requestGovernor.mjs';
 import { noteRateLimit, noteRateLimitSuccess } from './rateLimitCooldown.js';
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
@@ -50,7 +50,16 @@ function isReadFunctionInvocation(fnName, payload) {
 // their own 429s after doing real work (login lockouts, sync budget), so
 // retrying anything else could duplicate a mutation.
 export function isRetryableFunction(fnName, payload) {
-  return isReadFunctionInvocation(fnName, payload);
+  if (isReadFunctionInvocation(fnName, payload)) return true;
+  // timeClockAction mutations are request-id gated end to end: the backend
+  // requires a valid request_id before any write dispatch and replays or
+  // dedupes the same request. A 429 retry carrying the identical payload is
+  // the designed recovery path, so it cannot double-apply a punch.
+  if (fnName === 'timeClockAction') {
+    const id = String(payload?.request_id || '').trim();
+    if (id.length >= 8 && id.length <= 128) return true;
+  }
+  return false;
 }
 
 // Pure reads: concurrency-limited, cooldown-aware and de-duplicated while in
@@ -158,7 +167,7 @@ function wrapEntity(name, target) {
       const isWrite = !READ_METHODS.has(String(prop));
       return (...args) => {
         if (isWrite) governor.bumpEpoch();
-        const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite, shouldRetry: (err, attempt) => !isWrite && attempt < 1 && isGovernorCallTimeout(err), timeoutMs: isWrite ? 150000 : 60000 });
+        const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
         // Feed the app-wide breaker after the governor's own retry decides.
         const tracked = pending.then(
           (r) => { noteRateLimitSuccess(); return r; },
@@ -208,14 +217,11 @@ const functionsProxy = new Proxy(rawClient.functions, {
           pool: 'read',
           respectCooldown: read,
           retryOnRateLimit: isRetryableFunction(fnName, payload),
-          shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : isGovernorCallTimeout,
+          shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
           // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-          maxAttempts: fnName === 'verifyLogin' ? 2 : 1,
-          // A stalled invoke must release its read-pool slot — a handful of
-          // hung sockets deadlocks the whole pool and every read queues forever
-          // (the Time Tracker chip stuck on "Loading clock..."). One retry
-          // (maxAttempts 1) lands on a fresh connection.
-          timeoutMs: read ? 60000 : 0,
+          // Other invokes use the governor default — read-pool calls and
+          // request-id-gated writes are both safe to retry on a 429.
+          maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
         });
         // One rate-limit note per invocation: dedupe followers share exec, so
         // they must not each note the same 429.
