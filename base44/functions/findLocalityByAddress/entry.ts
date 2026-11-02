@@ -325,16 +325,27 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
   async function query(kind, url) {
     const params = new URLSearchParams({ f: "json", where: "1=1", geometry: JSON.stringify({ x: point.lng, y: point.lat, spatialReference: { wkid: 4326 } }), geometryType: "esriGeometryPoint", inSR: "4326", spatialRel: "esriSpatialRelIntersects", distance: "25", units: "esriSRUnit_Meter", outFields: "*", returnGeometry: "true", outSR: "4326", resultRecordCount: "10" }), source = url + "/query?" + params;
     await onProgress({ kind: "boundary_query", url: source, detail: `Checking ${kind} boundaries at ${point.lat}, ${point.lng}.` });
-    const data = await fetchJSON(source);
-    if (data.error || data.exceededTransferLimit || !Array.isArray(data.features) || data.features.length > 10 || data.features.length && data.spatialReference?.wkid !== 4326) throw Error(`${kind} boundary service returned incomplete or invalid data.`);
+    let data;
+    try {
+      data = await fetchJSON(source);
+    } catch (fetchErr) {
+      const errTxt = String(fetchErr.message || fetchErr).slice(0, 200);
+      base.sources.push({ kind, url: source, checked_at: base.checked_at, source_error: errTxt });
+      return { features: [], failed: true, kind, error: errTxt };
+    }
+    if (data.error || data.exceededTransferLimit || !Array.isArray(data.features) || data.features.length > 10 || data.features.length && data.spatialReference?.wkid !== 4326) {
+      base.sources.push({ kind, url: source, checked_at: base.checked_at, source_error: "incomplete or invalid data" });
+      return { features: [], failed: true, kind, error: "incomplete or invalid data" };
+    }
     base.sources.push({ kind, url: source, checked_at: base.checked_at });
-    return data.features.map((f) => ({ ...f, ...boundaryPosition(f.geometry?.rings, point), source_url: source, kind }));
+    return { features: data.features.map((f) => ({ ...f, ...boundaryPosition(f.geometry?.rings, point), source_url: source, kind })), failed: false, kind };
   }
   try {
     const keys = [["county", LOCATION_SOURCES.county], ["municipality", LOCATION_SOURCES.place], ["state municipality", state === "OH" ? LOCATION_SOURCES.oh_city : LOCATION_SOURCES.ky_city]];
     const rows = await Promise.all(keys.map(([kind, url]) => query(kind, url)));
-    const [counties, places, statePlaces] = rows;
+    const [counties, places, statePlaces] = rows.map((r) => r.features);
     let townships = [], stateTownships = [];
+    if (rows[1].failed && rows[2].failed) throw Error("Municipal boundary services are unavailable \u2014 retryable.");
     const county = counties.filter((f) => f.inside);
     if (county.length !== 1) {
       const countyCands = counties.filter((f) => String(f.attributes.STATE) === fips).map((f) => ({ name: f.attributes.NAME, state, type: "county", geoid: String(f.attributes.GEOID || ""), county: f.attributes.NAME, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Census county boundary"] }));
@@ -383,7 +394,10 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       }
       target = { name: c.attributes.NAME.replace(/\s+(city|village|town)$/i, ""), state, type: "municipality", geoid: c.attributes.GEOID, county: countyName, county_geoid: countyId, geometry: c.geometry, source_url: s.source_url };
     } else if (state === "OH") {
-      [townships, stateTownships] = await Promise.all([query("township", LOCATION_SOURCES.township), query("state township", LOCATION_SOURCES.oh_township)]);
+      const twpRows = await Promise.all([query("township", LOCATION_SOURCES.township), query("state township", LOCATION_SOURCES.oh_township)]);
+      townships = twpRows[0].features;
+      stateTownships = twpRows[1].features;
+      if (twpRows[0].failed && twpRows[1].failed) throw Error("Township boundary services are unavailable \u2014 retryable.");
       const t = townships.filter((f) => f.inside && /\btownship$/i.test(f.attributes.NAME)), s = stateTownships.filter((f) => f.inside);
       if (t.length !== 1 || s.length !== 1 || String(t[0].attributes.STATE) !== fips || !new RegExp("^" + countyId + "[0-9]{5}$").test(String(t[0].attributes.GEOID)) || norm(t[0].attributes.NAME) !== norm(s[0].attributes.TOWNSHIP) || norm(countyName) !== norm(s[0].attributes.COUNTY)) {
         const twpCands = [...townships.filter((f) => /\btownship$/i.test(f.attributes.NAME)).map((f) => ({ name: f.attributes.NAME, state, type: "township", geoid: String(f.attributes.GEOID || ""), county: countyName, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Census township boundary"], inside_sources: f.inside ? ["Census township boundary"] : [] })), ...stateTownships.map((f) => ({ name: String(f.attributes.TOWNSHIP || "").trim(), state, type: "township", geoid: "", county: countyName, inside: !!f.inside, distance_m: Math.round(f.distance_m || 0), supported_by: ["Ohio state township boundary"], inside_sources: f.inside ? ["Ohio state township boundary"] : [] }))].filter((c) => c.name);
