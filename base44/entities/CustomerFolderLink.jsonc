@@ -1,28 +1,100 @@
 {
   "name": "CustomerFolderLink",
+  "type": "object",
   "description": "Canonical link between a Customer and their server folder. Confidence-scored; suggested links need human confirm, never auto-attach ambiguous. Broken links heal via reconcile.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "creation_request_key": { "type": "string" },
-    "customer_id": { "type": "string" },
-    "customer_name": { "type": "string" },
-    "agent_id": { "type": "string", "description": "Primary agent hosting the folder." },
-    "root_key": { "type": "string" },
-    "folder_path": { "type": "string", "description": "Root-relative folder path." },
-    "confidence": { "type": "number", "description": "0-1 match confidence." },
-    "signals": { "type": "array", "items": { "type": "string" }, "description": "Which match signals fired." },
-    "status": { "type": "string", "enum": ["suggested", "confirmed", "rejected", "broken"], "default": "suggested" },
-    "auto": { "type": "boolean", "default": false, "description": "True if machine-matched (>=auto threshold + confirmed by rule)." },
-    "confirmed_by": { "type": "string" },
-    "confirmed_at": { "type": "string" },
-    "rejected_sticky": { "type": "boolean", "default": false, "description": "Rejected folders never re-suggest." },
-    "broken_candidate": { "type": "string", "description": "Fuzzy re-match suggestion when folder went missing." }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Primary agent hosting the folder."
+    },
+    "root_key": {
+      "type": "string"
+    },
+    "folder_path": {
+      "type": "string",
+      "description": "Root-relative folder path."
+    },
+    "confidence": {
+      "type": "number",
+      "description": "0-1 match confidence."
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Which match signals fired."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "suggested",
+        "confirmed",
+        "rejected",
+        "broken"
+      ],
+      "default": "suggested"
+    },
+    "auto": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if machine-matched (>=auto threshold + confirmed by rule)."
+    },
+    "confirmed_by": {
+      "type": "string"
+    },
+    "confirmed_at": {
+      "type": "string"
+    },
+    "rejected_sticky": {
+      "type": "boolean",
+      "default": false,
+      "description": "Rejected folders never re-suggest."
+    },
+    "broken_candidate": {
+      "type": "string",
+      "description": "Fuzzy re-match suggestion when folder went missing."
+    }
   },
-  "required": ["customer_id", "agent_id", "root_key", "folder_path"],
+  "required": [
+    "customer_id",
+    "agent_id",
+    "root_key",
+    "folder_path"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }

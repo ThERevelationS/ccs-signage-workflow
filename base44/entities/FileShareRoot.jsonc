@@ -1,29 +1,100 @@
 {
   "name": "FileShareRoot",
+  "type": "object",
   "description": "Configured Unraid share root for the File Bridge. One row per (agent_id, root_key). All access via fileBridgeIngest/fileBridgeAction — backend-only.",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "agent_id": { "type": "string", "description": "Owning agent/server (primary or backup)." },
-    "root_key": { "type": "string", "description": "Stable short key e.g. 'customer_files'." },
-    "display_name": { "type": "string" },
-    "rel_root": { "type": "string", "description": "Server-relative mount path e.g. 'share/Customer Files' (never /mnt/user in UI)." },
-    "unc_path": { "type": "string", "description": "Optional UNC for Open-in-Explorer e.g. '\\\\\\\\TOWER\\\\share\\\\Customer Files'." },
-    "purpose": { "type": "string", "enum": ["customer_folders", "general", "inbound"], "default": "general" },
-    "enabled": { "type": "boolean", "default": true },
-    "inbound_restricted": { "type": "boolean", "default": false, "description": "HR/sensitive inbound: admin-only tray." },
-    "scan_priority": { "type": "number", "default": 100, "description": "Lower scans first." },
-    "extraction_enabled": { "type": "boolean", "default": false, "description": "FTS5 content extraction opt-in per root." },
-    "dir_size_bytes": { "type": "number", "description": "Scan-rollup total." },
-    "file_count": { "type": "number" },
-    "dir_count": { "type": "number" },
-    "last_scan_at": { "type": "string" },
-    "last_error": { "type": "string" }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Owning agent/server (primary or backup)."
+    },
+    "root_key": {
+      "type": "string",
+      "description": "Stable short key e.g. 'customer_files'."
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "rel_root": {
+      "type": "string",
+      "description": "Server-relative mount path e.g. 'share/Customer Files' (never /mnt/user in UI)."
+    },
+    "unc_path": {
+      "type": "string",
+      "description": "Optional UNC for Open-in-Explorer e.g. '\\\\\\\\TOWER\\\\share\\\\Customer Files'."
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "customer_folders",
+        "general",
+        "inbound"
+      ],
+      "default": "general"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "inbound_restricted": {
+      "type": "boolean",
+      "default": false,
+      "description": "HR/sensitive inbound: admin-only tray."
+    },
+    "scan_priority": {
+      "type": "number",
+      "default": 100,
+      "description": "Lower scans first."
+    },
+    "extraction_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "FTS5 content extraction opt-in per root."
+    },
+    "dir_size_bytes": {
+      "type": "number",
+      "description": "Scan-rollup total."
+    },
+    "file_count": {
+      "type": "number"
+    },
+    "dir_count": {
+      "type": "number"
+    },
+    "last_scan_at": {
+      "type": "string"
+    },
+    "last_error": {
+      "type": "string"
+    }
   },
-  "required": ["agent_id", "root_key"],
+  "required": [
+    "agent_id",
+    "root_key"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
