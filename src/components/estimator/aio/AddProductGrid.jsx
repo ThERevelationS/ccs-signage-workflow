@@ -20,6 +20,8 @@ import { listQuickProducts } from "@/components/estimator/products/quickProductS
 import { listInventoryKits, kitLabel } from "@/components/estimator/products/kitService";
 import { money } from "@/components/estimator/aioPricing";
 
+const EMPTY_COUNTS = {};
+
 const META = {
   channel_letters: {
     icon: Type,
@@ -105,7 +107,7 @@ const getMeta = (key) =>
     keywords: "",
   };
 
-export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, onAddKit, className = "" }) {
+export default function AddProductGrid({ counts = EMPTY_COUNTS, onAdd, onAddCustom, onAddQuickProduct, onAddKit, className = "" }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
