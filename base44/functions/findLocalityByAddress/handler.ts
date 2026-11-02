@@ -53,11 +53,12 @@ async function loadCatalogs(base44:any,stateFilter:any){
  if(hit&&Date.now()-hit.ts<CATALOG_TTL_MS)return hit.data;
  if(catalogInflight.has(key))return catalogInflight.get(key);
  const p=(async()=>{
-  const [localities,profiles]=await Promise.all([
+  const [localities,profiles,rules]=await Promise.all([
    loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
-   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'})]);
-  catalogCache.set(key,{ts:Date.now(),data:{localities,profiles}});
-  return {localities,profiles};
+   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'}),
+   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitResolutionRule,query:{active:true},sort:'created_date',label:'Resolution rules'}).catch(()=>[])]);
+  catalogCache.set(key,{ts:Date.now(),data:{localities,profiles,rules}});
+  return {localities,profiles,rules};
  })().finally(()=>catalogInflight.delete(key));
  catalogInflight.set(key,p);
  return p;
@@ -193,22 +194,22 @@ Deno.serve(async req=>{
  if(!geocode&&googleVague){geocode=googleVague;await reporter.emit({kind:'geocode_service_result',detail:'Falling back to Google\'s approximate area result after the free locators found no street match.'});}
  if(diagnostic)return addressResponse({success:true,diagnostic_only:true,geocode,geocoding_service:geocodingService,authority_established:false,apply_allowed:false,llm_calls:0,record_writes:0});
   await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact?'Street and building coordinates matched.':'Approximate or corrected address; review required.'}`:'No map location found.'},{stage:'Checking government boundaries',indeterminate:true});
-  const resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress});
-  const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
-  if(hasServiceIssue)resolution.reason=geocodingService.message;
-  await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
-  const stateFilter=resolution.state?{state:resolution.state}:null;
-  // The office-match read must never kill an otherwise-resolved address —
-  // retry it once, and if the entity service is still saturated, return the
-  // verified jurisdiction with the office match honestly deferred instead of
-  // a 500 that erases work the boundary services already proved.
-  let catalogs=null;
-  try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e1){
-    await new Promise(r=>setTimeout(r,2500));
-    try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e2){catalogs=null;}
-  }
-  const {localities,profiles}=catalogs||{localities:[],profiles:[]};
-  const officeCheckDeferred=!catalogs;
+   // Catalogs (incl. staff review rules) load BEFORE the spatial pass — rules
+ // are consulted inside resolution gates. Cached ~5min; a catalog outage
+ // degrades to rule-free resolution, never a 500.
+ const geoState=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase();
+ const stateFilter=geoState?{state:geoState}:null;
+ let catalogs=null;
+ try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e1){
+   await new Promise(r=>setTimeout(r,2500));
+   try{catalogs=await loadCatalogs(base44,stateFilter);}catch(e2){catalogs=null;}
+ }
+ const resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress,rules:catalogs?.rules||[],enteredAddress:address});
+ const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
+ if(hasServiceIssue)resolution.reason=geocodingService.message;
+ await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
+ const {localities,profiles}=catalogs||{localities:[],profiles:[]};
+ const officeCheckDeferred=!catalogs;
   const matched=catalogs?exactConfiguredLocality(localities,resolution,profiles):null;
   await reporter.emit({kind:'catalog_check',detail:catalogs?`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`:'The saved-office record service was busy — the office match is deferred to the next lookup, not lost.'});
   // Never ask an LLM to choose a locality ID; never write research into approved
