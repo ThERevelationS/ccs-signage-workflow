@@ -167,14 +167,14 @@ const PAYMENTS = [
 // ===========================================================================
 // 1a. toCents/fromCents conversions.
 A.equal(gl.toCents(10.005), 1001, 'toCents half-up at the penny (10.005)');
-// KNOWN DEFECT N-05.2: 'round-half-away at the penny via Math.round' is the
-// documented contract, but 1.005 is stored as 100.49999… so Math.round gives
-// 100, not 101. Asserting the OBSERVED value — a fix (scaled-decimal or
-// epsilon rounding) flips this to 101.
-A.equal(gl.toCents(1.005), 100, 'KNOWN DEFECT N-05.2: toCents(1.005) IEEE754 rounds DOWN to 100, not 101');
+// FIXED DEFECT N-05.2: 'round-half-away at the penny' is the documented
+// contract — 1.005 stored as 100.4999… used to Math.round DOWN to 100.
+// The epsilon+sign-normalized fix lands 101 (and -1.005 → -101).
+A.equal(gl.toCents(1.005), 101, 'N-05.2 fixed: toCents(1.005) rounds half-away to 101');
 A.equal(gl.toCents('2.5'), 250, 'toCents coerces strings');
 A.equal(gl.toCents('junk'), 0, 'toCents non-finite → 0');
 A.equal(gl.toCents(-2.5), -250, 'toCents signed');
+A.equal(gl.toCents(-1.005), -101, 'N-05.2 fixed: negative half rounds away from zero');
 A.equal(gl.fromCents(12345), 123.45, 'fromCents dollars');
 
 // 1b. Account resolution chain line → part → category → invoice default.
@@ -638,16 +638,13 @@ A.equal(CTX1.opening_balance + CTX1.invoiced - CTX1.paid + CTX1.adjustments, CTX
   ]), 270, 'ledger truth: net collected after partial refund = $270');
 
   const ctx2 = stmt.customerStatementContext({ customer: CUSTOMERS[1], invoices: INVOICES, payments: PAYMENTS, period: PERIOD });
-  // Expected (consistent with invoice truth): paid 27000 net, closing 3000,
-  // line_items [INV-006 balance 3000], c2 appears in candidates.
-  // OBSERVED: the 'refunded' reversal row is VOIDISH → counted in `paid`
-  // (−3000) then reversed through `adjustments` (−3000) → net 0; the
-  // original 'recorded' row still counts its full +30000 → paid shows 27000
-  // (the net is a coincidence of this fixture: −paid contributes +3000 and
-  // adjustments cancels it, so the reopened $30 never surfaces).
-  A.equal(ctx2.paid, 27000, 'KNOWN DEFECT N-05.1 (observed): paid nets 27000 (reversal counted then backed out)');
-  A.equal(ctx2.closing_balance, 0, 'KNOWN DEFECT N-05.1 (observed): closing shows $0 — should be 3000 (reopened AR)');
-  A.equal(ctx2.line_items.length, 0, 'KNOWN DEFECT N-05.1 (observed): reopened invoice never lists — should show balance 3000');
+  // FIXED DEFECT N-05.1: the 'refunded' reversal leg is now a live money row
+  // (isVoidPayment = void/cancel only) → net collected 27000 surfaces the
+  // reopened $30 as AR: closing 3000, INV-006 listed with balance 3000.
+  A.equal(ctx2.paid, 27000, 'N-05.1 fixed: paid nets 27000 (leg counted live)');
+  A.equal(ctx2.closing_balance, 3000, 'N-05.1 fixed: closing reopens $30 AR');
+  A.equal(ctx2.line_items.length, 1, 'N-05.1 fixed: reopened invoice lists');
+  A.equal(ctx2.line_items[0].balance, 3000, 'N-05.1 fixed: line balance = reopened $30');
   // Contrast: a fully-refunded ORIGINAL (status flipped to 'refunded') is
   // also net-0 — same rule, correct outcome there.
   const fullRefund = stmt.customerStatementContext({
@@ -659,17 +656,20 @@ A.equal(CTX1.opening_balance + CTX1.invoiced - CTX1.paid + CTX1.adjustments, CTX
     ],
   });
   A.equal(fullRefund.closing_balance, 10000, 'fully-refunded payment → AR fully restored (same rule, correct here)');
-  A.equal(fullRefund.line_items[0].balance, 10000, 'original flipped to refunded → excluded from applied');
+  A.equal(fullRefund.line_items[0].balance, 10000, 'full refund nets applied to 0 → full balance reopens');
 }
 
 // 3e. Candidates — closing>0 gate, missing-email flag, deterministic sort.
+// Post-N-05.1: c2's reopened $30 makes it a candidate (real AR, correctly).
 const CANDS = stmt.statementCandidates({ customers: CUSTOMERS, invoices: INVOICES, payments: PAYMENTS, period: PERIOD, now: NOW });
-A.equal(CANDS.length, 2, 'only positive-balance customers (c4 zero + c5 credit + c2 defective-zero excluded)');
-A.deepEqual(CANDS.map((c) => c.customer.id), ['c1', 'c3'], 'sorted by company name');
+A.equal(CANDS.length, 3, 'positive-balance customers (c2 reopened + c1 + c3; c4 zero + c5 credit excluded)');
+A.deepEqual(CANDS.map((c) => c.customer.id), ['c1', 'c2', 'c3'], 'sorted by company name');
 A.equal(CANDS[0].missing_email, false);
-A.equal(CANDS[1].missing_email, true, 'no billing email → missing_email flag, still a candidate');
-A.equal(CANDS[1].context.closing_balance, 7500);
-A.deepEqual(CANDS[1].context.aging, { current: 0, b1_30: 7500, b31_60: 0, b61_90: 0, b90p: 0 }, 'i9 30 days past due → b1_30');
+A.equal(CANDS[1].missing_email, false, 'c2 resolves email via fallback');
+A.equal(CANDS[1].context.closing_balance, 3000, 'c2 candidate balance = reopened $30');
+A.equal(CANDS[2].missing_email, true, 'no billing email → missing_email flag, still a candidate');
+A.equal(CANDS[2].context.closing_balance, 7500);
+A.deepEqual(CANDS[2].context.aging, { current: 0, b1_30: 7500, b31_60: 0, b61_90: 0, b90p: 0 }, 'i9 30 days past due → b1_30');
 // Zero and credit balances prove the gate.
 A.equal(stmt.customerStatementContext({ customer: CUSTOMERS[3], invoices: INVOICES, payments: PAYMENTS, period: PERIOD }).closing_balance, 0, 'c4 settles to zero');
 A.equal(stmt.customerStatementContext({ customer: CUSTOMERS[4], invoices: INVOICES, payments: PAYMENTS, period: PERIOD }).closing_balance, -500, 'c5 overpaid + credit memo → credit balance −500, skipped');
@@ -678,16 +678,16 @@ A.equal(stmt.customerStatementContext({ customer: CUSTOMERS[4], invoices: INVOIC
 A.equal(stmt.statementDedupeKey(CUSTOMERS[0], PERIOD), 'stmt:c1:2026-10-01', 'dedupe key = stmt:<cust>:<period_start>');
 A.equal(stmt.statementDedupeKey('c1', '2026-10-01'), 'stmt:c1:2026-10-01', 'bare-string forms resolve');
 const PLAN = stmt.statementBatchPlan(CANDS);
-A.equal(PLAN.length, 2);
-A.deepEqual(PLAN.map((r) => r.dedupe_key), ['stmt:c1:2026-10-01', 'stmt:c3:2026-10-01']);
+A.equal(PLAN.length, 3);
+A.deepEqual(PLAN.map((r) => r.dedupe_key), ['stmt:c1:2026-10-01', 'stmt:c2:2026-10-01', 'stmt:c3:2026-10-01']);
 A.equal(PLAN[0].customer_id, 'c1');
-A.equal(PLAN[1].missing_email, true, 'missing_email rides the plan row');
+A.equal(PLAN[2].missing_email, true, 'missing_email rides the plan row');
 // Rerun against persisted keys → everything deduped (idempotent delivery).
 A.equal(stmt.statementBatchPlan(CANDS, { existingKeys: PLAN.map((r) => r.dedupe_key) }).length, 0, 'rerun with existing keys emits nothing');
-A.equal(stmt.statementBatchPlan(CANDS, { existingKeys: { 'stmt:c1:2026-10-01': true } }).length, 1, 'object-map keys also dedupe');
+A.equal(stmt.statementBatchPlan(CANDS, { existingKeys: { 'stmt:c1:2026-10-01': true } }).length, 2, 'object-map keys also dedupe');
 // Duplicate customer inside one plan only emits once.
 const dup = stmt.statementBatchPlan([...CANDS, CANDS[0]]);
-A.equal(dup.length, 2, 'same-plan duplicates deduped');
+A.equal(dup.length, 3, 'same-plan duplicates deduped');
 // Unkeyable rows skipped: a bare as-of period leaves period_start '' → key
 // ends ':' → skipped rather than generating an undedupable statement.
 const unkeyed = stmt.statementBatchPlan([{ customer: { id: 'c9' }, context: { customer_id: 'c9', period_start: '' }, missing_email: false }]);
