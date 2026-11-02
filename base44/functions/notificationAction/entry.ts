@@ -217,10 +217,11 @@ Deno.serve(async (req) => {
       const targets = list(rows).filter((n: any) =>
         !clean(n?.read_at) && (!category || clean(n?.category).toLowerCase() === category));
       let marked = 0;
+      let markReadWarning = "";
       for (const n of targets.slice(0, 500)) {
-        await Notification.update(n.id, { read_at: iso() }).then(() => { marked += 1; }).catch(() => {});
+        await Notification.update(n.id, { read_at: iso() }).then(() => { marked += 1; }).catch((e: any) => { markReadWarning = String(e?.message || e); });
       }
-      return Response.json({ success: true, action, marked, unread_total: targets.length });
+      return Response.json({ success: true, action, marked, unread_total: targets.length, mark_read_warning: markReadWarning || undefined });
     }
 
     if (action === "snooze") {
@@ -424,8 +425,9 @@ Deno.serve(async (req) => {
           created_by: "daily_digest",
         });
       }
-      await Pref.update(row.id, { last_digest_date: today }).catch(() => {});
-      return Response.json({ success: true, action, notification, reused: false, date: today });
+      let digestStampWarning = "";
+      await Pref.update(row.id, { last_digest_date: today }).catch((e: any) => { digestStampWarning = String(e?.message || e); });
+      return Response.json({ success: true, action, notification, reused: false, date: today, digest_warning: digestStampWarning || undefined });
     }
 
     // ---- Trigger evaluation ----------------------------------------------------
@@ -690,11 +692,13 @@ Deno.serve(async (req) => {
         });
         if (saved) created += 1;
       }
-      if (prefRow?.id) await Pref.update(prefRow.id, { last_evaluated_at: iso() }).catch(() => {});
+      let evalStampWarning = "";
+      if (prefRow?.id) await Pref.update(prefRow.id, { last_evaluated_at: iso() }).catch((e: any) => { evalStampWarning = String(e?.message || e); });
       return Response.json({
         success: true, action, throttled: false, created,
         candidates: candidates.length, deferred: Math.max(0, candidates.length - MAX_CREATES_PER_EVAL),
         errors: errors.slice(0, 5), evaluated_at: iso(),
+        eval_stamp_warning: evalStampWarning || undefined,
       });
     }
 
