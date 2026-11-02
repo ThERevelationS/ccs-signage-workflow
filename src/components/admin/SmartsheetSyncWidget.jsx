@@ -9,6 +9,7 @@ import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const STATUS_KEYS = {
   orders: 'smartsheetOrderSyncStatus',
@@ -38,16 +39,15 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
 
   const loadStatus = useCallback(async () => {
     try {
-      const [orderRecords, salesRecords, legacyRecords, configRecords] = await Promise.all([
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.orders }),
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.sales }),
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.legacy }),
-        base44.entities.GlobalSettings.filter({ setting_key: CONFIG_KEY }),
+      const [orderRecord, salesRecord, legacyRecord, configRecord] = await Promise.all([
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.orders, label: "Smartsheet order sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.sales, label: "Smartsheet sales sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATUS_KEYS.legacy, label: "Smartsheet legacy sync status" }),
+        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: "Smartsheet sync config" }),
       ]);
-      const orderValue = (Array.isArray(orderRecords) ? orderRecords[0] : orderRecords)?.setting_value || null;
-      const salesValue = (Array.isArray(salesRecords) ? salesRecords[0] : salesRecords)?.setting_value || null;
-      const legacyValue = (Array.isArray(legacyRecords) ? legacyRecords[0] : legacyRecords)?.setting_value || null;
-      const configRecord = Array.isArray(configRecords) ? configRecords[0] : configRecords;
+      const orderValue = orderRecord?.setting_value || null;
+      const salesValue = salesRecord?.setting_value || null;
+      const legacyValue = legacyRecord?.setting_value || null;
       // Order Form reads only its own coordinator so a Sales review can never
       // look like an Order problem. Other consumers see an active run first,
       // otherwise the most recently updated dataset status; the legacy shared
