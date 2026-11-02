@@ -1,25 +1,94 @@
 {
   "name": "FileBridgeInventory",
+  "type": "object",
   "description": "Full-inventory run report — per-extension openability map, totals, scan cursors. Drives the viewer/renderer matrix work (openability is measured, not guessed).",
   "properties": {
-    "schema_version": { "type": "number", "default": 1 },
-    "run_id": { "type": "string" },
-    "agent_id": { "type": "string" },
-    "status": { "type": "string", "enum": ["running", "completed", "failed", "paused"], "default": "running" },
-    "roots": { "type": "array", "items": { "type": "string" } },
-    "totals": { "type": "object", "additionalProperties": true, "description": "{files,dirs,bytes}." },
-    "ext_map": { "type": "object", "additionalProperties": true, "description": "{ext:{count,bytes,kind,open_state}} — the openability matrix." },
-    "top_dirs": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
-    "cursor": { "type": "object", "additionalProperties": true, "description": "Resumable scan position." },
-    "errors": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
-    "started_at": { "type": "string" },
-    "finished_at": { "type": "string" }
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "completed",
+        "failed",
+        "paused"
+      ],
+      "default": "running"
+    },
+    "roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "{files,dirs,bytes}."
+    },
+    "ext_map": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "{ext:{count,bytes,kind,open_state}} — the openability matrix."
+    },
+    "top_dirs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "cursor": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Resumable scan position."
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string"
+    }
   },
-  "required": ["run_id", "agent_id"],
+  "required": [
+    "run_id",
+    "agent_id"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "read": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "update": { "user_condition": { "role": "__filebridge_backend_only__" } },
-    "delete": { "user_condition": { "role": "__filebridge_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
   }
 }
