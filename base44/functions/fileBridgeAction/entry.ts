@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
   const action = String(body?.action || '').trim();
   const isAdmin = user.role === 'admin';
 
-  const settingsRow = await sr.entities.GlobalSettings.filter({ key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
-  const settings = normalizeFileBridgeSettings(settingsRow?.[0]?.value);
+  const settingsRow = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+  const settings = normalizeFileBridgeSettings(settingsRow?.[0]?.setting_value);
   if (!settings.enabled && action !== 'admin_settings') {
     return Response.json({ error: 'File Bridge is not enabled yet.' }, { status: 503 });
   }
@@ -305,9 +305,9 @@ Deno.serve(async (req) => {
     if (!isAdmin) return Response.json({ error: 'Admin required' }, { status: 403 });
     const next = normalizeFileBridgeSettings({ ...settings, ...(body.settings || {}) });
     if (settingsRow?.[0]?.id) {
-      await sr.entities.GlobalSettings.update(settingsRow[0].id, { value: next });
+      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });
     } else {
-      await sr.entities.GlobalSettings.create({ key: 'fileBridge', value: next });
+      await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next });
     }
     return Response.json({ ok: true, settings: next });
   }
