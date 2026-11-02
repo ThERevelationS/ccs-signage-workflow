@@ -203,7 +203,7 @@ const firstText = (...vals: any[]): string => {
 const toCents = (v: any): number => {
   if (v === null || v === undefined || v === '') return 0;
   const n = looseNum(v);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 const fromCents = (c: any): number => Math.round(num(c)) / 100;
 
@@ -380,7 +380,7 @@ const incomeBaseCents = (inv: any): number => {
       if (!isObj(fee)) continue;
       const amount = num(fee.amount, 0);
       const signed = norm(fee.kind) === 'discount' && amount > 0 ? -amount : amount;
-      cents += Math.round(signed * 100);
+      cents += Math.sign(signed) * Math.round(Math.abs(signed) * 100 + 1e-9);
     }
   }
   return cents;
@@ -410,7 +410,7 @@ const incomeSplitsOf = (inv: any): Array<{ account_code: string; amount_cents: n
       else {
         const n = looseNum(raw.amount);
         if (!Number.isFinite(n)) continue;
-        cents = Math.round(n * 100);
+        cents = Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9);
       }
       if (cents === 0) continue;
       if (merged.has(account)) merged.set(account, (merged.get(account) || 0) + cents);
@@ -1680,9 +1680,9 @@ export const FINANCIAL_REPORTS = [
           account_code: 'Total',
           account_name: '',
           invoice_count: rows.reduce((s, r) => s + num(r.invoice_count), 0),
-          income: Math.round(income * 100) / 100,
-          cogs: Math.round(cogs * 100) / 100,
-          gross_profit: Math.round(profit * 100) / 100,
+          income: Math.sign(income) * Math.round(Math.abs(income) * 100 + 1e-9) / 100,
+          cogs: Math.sign(cogs) * Math.round(Math.abs(cogs) * 100 + 1e-9) / 100,
+          gross_profit: Math.sign(profit) * Math.round(Math.abs(profit) * 100 + 1e-9) / 100,
           margin: income > 0 ? profit / income : null,
         },
       };
@@ -1797,9 +1797,9 @@ export const FINANCIAL_REPORTS = [
             built_count: rows.reduce((s, r) => s + num(r.built_count), 0),
             order_count: rows.reduce((s, r) => s + num(r.order_count), 0),
             quantity: Math.round(rows.reduce((s, r) => s + num(r.quantity), 0) * 1000) / 1000,
-            value: Math.round(value * 100) / 100,
-            cost: Math.round(cost * 100) / 100,
-            gross_profit: Math.round(profit * 100) / 100,
+            value: Math.sign(value) * Math.round(Math.abs(value) * 100 + 1e-9) / 100,
+            cost: Math.sign(cost) * Math.round(Math.abs(cost) * 100 + 1e-9) / 100,
+            gross_profit: Math.sign(profit) * Math.round(Math.abs(profit) * 100 + 1e-9) / 100,
             margin: value > 0 ? profit / value : null,
           },
         };
@@ -1812,9 +1812,9 @@ export const FINANCIAL_REPORTS = [
           product_type: '',
           salesperson: '',
           quantity: Math.round(rows.reduce((s, r) => s + num(r.quantity), 0) * 1000) / 1000,
-          value: Math.round(value * 100) / 100,
-          cost: Math.round(cost * 100) / 100,
-          gross_profit: Math.round(profit * 100) / 100,
+          value: Math.sign(value) * Math.round(Math.abs(value) * 100 + 1e-9) / 100,
+          cost: Math.sign(cost) * Math.round(Math.abs(cost) * 100 + 1e-9) / 100,
+          gross_profit: Math.sign(profit) * Math.round(Math.abs(profit) * 100 + 1e-9) / 100,
           margin: value > 0 ? profit / value : null,
         },
       };
