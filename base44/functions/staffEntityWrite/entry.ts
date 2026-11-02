@@ -61,6 +61,10 @@ const WRITE_OPS: Record<string, Set<string>> = {
   COGSAccount: new Set(['create', 'updateMany', 'delete']),
   IncomeAccount: new Set(['create', 'updateMany', 'delete']),
   TaxAgency: new Set(['create', 'updateMany', 'delete']),
+  // J-02 report catalog: definition rows (FeatureReport rows carrying
+  // report_key) are admin-managed reference data — same CAS write lane as
+  // the other registries. Reads stay admin-tier in staffDataRead.
+  FeatureReport: new Set(['create', 'updateMany', 'deleteMany']),
 };
 
 // Registry/config entities whose writes are restricted to admins (GL accounts,
@@ -81,6 +85,7 @@ const ADMIN_ONLY_WRITE = new Set([
   'PricingTemplate',
   'ProductSubstatus',
   'Responsibility',
+  'FeatureReport',
 ]);
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
