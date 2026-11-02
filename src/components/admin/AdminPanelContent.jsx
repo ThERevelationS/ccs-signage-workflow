@@ -12,12 +12,21 @@ const panelLabels = new Map([
 // Only the affected panel is reset. Never display exception details, which may
 // contain customer data or integration credentials, in the Admin interface.
 export class AdminPanelErrorBoundary extends Component {
-  state = { failed: false, retryVersion: 0 };
+  state = { failed: false, retryVersion: 0, diag: "" };
   retryButtonRef = createRef();
   retryRequested = false;
 
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+
+  componentDidCatch(error, info) {
+    // Surface enough to identify the failure without leaking record data:
+    // the error type and first line of its message only, never values.
+    const diag = `${error?.name || "Error"}: ${String(error?.message || "").split("\n")[0].slice(0, 160)}`;
+    this.setState({ diag });
+    try { sessionStorage.setItem("admin_panel_error", JSON.stringify({ label: this.props.label, diag, at: new Date().toISOString() })); } catch {}
+    console.error(`Admin panel "${this.props.label}" failed:`, error, info?.componentStack || "");
   }
 
   componentDidUpdate(previousProps, previousState) {
@@ -51,6 +60,7 @@ export class AdminPanelErrorBoundary extends Component {
                   This Admin panel encountered an error. Other Admin sections are still available.
                   No changes were retried automatically.
                 </p>
+                {this.state.diag && <p className="mt-1 font-mono text-[11px] text-amber-800/80">{this.state.diag}</p>}
               </div>
               <button type="button" ref={this.retryButtonRef} type="button" onClick={this.retry}
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-500 bg-white px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
