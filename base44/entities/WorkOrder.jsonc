@@ -184,6 +184,11 @@
       "default": "estimating",
       "description": "Current workflow stage"
     },
+    "manual_stage_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, product-driven stage derivation (B-13) does not move current_stage; set/cleared by manual stage UI"
+    },
     "priority": {
       "type": "number",
       "description": "Priority order"
