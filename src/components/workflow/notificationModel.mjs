@@ -111,6 +111,12 @@ export const NOTIFICATION_PREF_DEFAULTS = {
   sound_on: true,
   digest_opt_in: false,
   last_digest_date: "",
+  // K-03 — H-12 alert subscriptions ride the same preference row. Kept
+  // verbatim here (bounded): the canonical normalization lives in
+  // base44/shared/alertSubscriptionsModel.ts and its frontend parity copy
+  // src/components/account/userPrefsModel.js — this model must stay
+  // import-free, so it preserves rather than re-derives the shape.
+  subscriptions: [],
 };
 
 // Tolerates a raw NotificationPreference row, a partial blob, or junk.
@@ -131,6 +137,11 @@ export function normalizeNotificationPrefs(raw) {
     sound_on: p.sound_on !== false,
     digest_opt_in: p.digest_opt_in === true,
     last_digest_date: clean(p.last_digest_date).slice(0, 10),
+    // Pass-through, not re-normalized — see NOTIFICATION_PREF_DEFAULTS note.
+    // Bounded so a hostile/buggy blob cannot grow the shared cache forever.
+    subscriptions: (Array.isArray(p.subscriptions) ? p.subscriptions : [])
+      .filter((s) => s && typeof s === "object").slice(0, 200)
+      .map((s) => ({ ...s })),
   };
 }
 
