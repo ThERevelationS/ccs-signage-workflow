@@ -35,6 +35,7 @@ import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } fr
 import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
+import VendorCostBadge from "@/components/estimator/VendorCostBadge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) =>
@@ -116,6 +117,13 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           </div>
         </button>
       </div>
+
+      {/* F-21: vended-part vendor cost/markup strip — renders only when the
+          part resolves as vended; Edit reuses the row's own edit path. */}
+      <VendorCostBadge
+        part={part}
+        onEdit={readOnly ? null : () => (isIndependent ? setOverrideOpen(true) : setWarningOpen(true))}
+      />
 
       {open && (
         <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
