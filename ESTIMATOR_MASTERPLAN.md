@@ -97,9 +97,10 @@ EVIDENCE: final message = {files_touched, verify_output, deviations, open_questi
 - Rotation verified via response-shape markers (observed ~50min worst case), never by timing.
 
 #### Live telemetry (drives the dashboard)
-- Orchestrator appends one JSON row per action to `.masterplan-claims/events.jsonl` (append-only): `{ts, type, item, detail, note}` where `type` ∈ `dispatch|integrate|verify|deploy|checkpoint|live_call|warning|fail|scope_violation|phase_gate`.
-- The dashboard (`node scripts/masterplan-serve.mjs` → http://localhost:5170) reads claims + events + the ledger: worker cards, per-workstream bars, event feed, git churn. Keep it running for live visibility; it refreshes every 4s.
-- Event emission is cheap and mandatory — every dispatch/return/deploy/checkpoint/failure gets a row. If the dashboard shows silence during a busy phase, telemetry (not work) is what's broken.
+- Orchestrator appends one JSON row per action to `.masterplan-claims/events.jsonl` (append-only): `{ts, type, item, ws, detail, note}` where `type` ∈ `dispatch|integrate|verify|deploy|checkpoint|live_call|warning|fail|scope_violation|phase_gate` (`ws` is derived from the item letter when omitted).
+- **Workers append one plain-text progress line per meaningful step to `.masterplan-claims/worker-<id>.log`** — the ONLY file in `.masterplan-claims/` a worker may write, and only its own. Format: `HH:MM:SS <item> :: <what I'm doing>` (e.g. `14:32:07 A-07 :: read tierMatrix.mjs, starting TDD for precedence`). This is what makes the dashboard show real live activity rather than just claim events — treat it like narrating your work; a line on every read/write/verify milestone. The orchestrator truncates the file to its last ~20 lines on each integration so logs stay bounded.
+- The dashboard (`node scripts/masterplan-serve.mjs` → http://localhost:5170) reads claims + events + worker logs + the ledger: per-workstream live consoles (last 4 lines each), worker cards, bars, event feed — pushed over SSE on every file change, so what you see is what just happened.
+- Event/log emission is cheap and mandatory — every dispatch/return/deploy/checkpoint/failure gets a row and every worker step gets a line. If a workstream's console goes quiet mid-run, that worker is silent — investigate, don't assume it's working.
 
 #### Shared-choke-point serialization
 Only the orchestrator (or a worker EXPLICITLY briefed for that file) edits: `base44/shared/*` existing files (new shared files are worker-safe), `src/pages/App.jsx`/`pagesConfig`/nav files (route registration choke point), `ESTIMATOR_MASTERPLAN.md`, `PROGRESS_LOG.md`, `.masterplan-claims/**`, `AGENTS.md`, `.devin/**`. Route registration for worker-built pages is an orchestrator integration step.
