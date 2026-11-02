@@ -55,7 +55,9 @@ export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProf
 
 // Resolve identity before reconciliation or creation; ambiguous existing rows require review.
 export function resolveResearchProfile(row = {}, profiles = []) {
-  const matches = profiles.filter(p => norm(p.name) === norm(row.jurisdiction_name) && norm(p.state) === norm(row.state));
+  // Superseded duplicates / historical records are dead identity — never match or count them.
+  const live = profiles.filter(p => !String(p.duplicate_of || '').trim() && norm(p.verification_status) !== 'historical');
+  const matches = live.filter(p => norm(p.name) === norm(row.jurisdiction_name) && norm(p.state) === norm(row.state));
   const eligible = matches.filter(p => profileMatchesQueueRow(row, p, matches));
   if (eligible.length === 1) return { profile: eligible[0], conflict: false };
   const parent = researchParent(row.parent_county_name);
