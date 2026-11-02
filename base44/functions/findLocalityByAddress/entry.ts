@@ -586,7 +586,7 @@ Deno.serve(async (req) => {
     }
     const address = typeof body.address === "string" ? body.address.trim() : "";
     if (!address || address.length > 500) return addressResponse({ success: false, error: "Enter a full street address of 500 characters or fewer." }, { status: 400 });
-    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: "address-lookup", targetName: address, kind: "address", label: `Find jurisdiction for ${address}` });
+    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: "address-lookup", targetName: address, kind: "address", label: `Find jurisdiction for ${address}` }).catch(() => silentScanReporter);
     const progress = async (event) => {
       const { progress: progress2, ...item } = event;
       await reporter.emit(item, progress2 || {});
