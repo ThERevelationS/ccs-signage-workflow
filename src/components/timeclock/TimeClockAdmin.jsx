@@ -268,40 +268,31 @@ export default function TimeClockAdmin() {
     setDataLoadError("");
     try {
       if (!sessionToken) throw new Error("A signed-in administrator session is required.");
-      const loadAdminCollection = async (collection) => {
-        const rows = [];
-        let skip = 0;
-        while (skip < 50000) {
-          const response = await base44.functions.invoke("timeClockAction", {
-            action: "admin_load_data",
-            session_token: sessionToken,
-            collection,
-            skip,
-          });
-          const data = functionData(response);
-          if (!data?.success || !Array.isArray(data.rows) || !Number.isInteger(data.next_skip) ||
-              typeof data.has_more !== "boolean") {
-            throw adminActionError(data, "Time Clock admin data could not be verified.");
-          }
-          rows.push(...data.rows);
-          if (!data.has_more) return rows;
-          if (data.next_skip !== skip + data.rows.length || data.rows.length === 0) {
-            throw new Error("Time Clock admin data paging could not be verified.");
-          }
-          skip = data.next_skip;
+      // One invoke for the whole panel — the backend pages each collection
+      // internally, so a single rate-limit retry covers the entire load
+      // instead of eight independent calls each burning one.
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_load_all",
+        session_token: sessionToken,
+      });
+      const data = functionData(response);
+      if (!data?.success || !data.collections || typeof data.collections !== "object") {
+        throw adminActionError(data, "Time Clock admin data could not be verified.");
+      }
+      const collections = data.collections;
+      for (const key of ["entries", "states", "breaks", "work_pauses", "labor_segments", "correction_requests", "punch_exceptions", "devices"]) {
+        if (!Array.isArray(collections[key])) {
+          throw new Error("Time Clock admin data could not be verified.");
         }
-        throw new Error("Time Clock admin data exceeds the 50,000-record safety limit.");
-      };
-      const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows, deviceRows] = await Promise.all([
-        loadAdminCollection("entries"),
-        loadAdminCollection("states"),
-        loadAdminCollection("breaks"),
-        loadAdminCollection("work_pauses"),
-        loadAdminCollection("labor_segments"),
-        loadAdminCollection("correction_requests"),
-        loadAdminCollection("punch_exceptions"),
-        loadAdminCollection("devices").catch(() => []),
-      ]);
+      }
+      const entries = collections.entries;
+      const states = collections.states;
+      const breaks = collections.breaks;
+      const workPauses = collections.work_pauses;
+      const laborSegments = collections.labor_segments;
+      const corrections = collections.correction_requests;
+      const punchExceptionRows = collections.punch_exceptions;
+      const deviceRows = collections.devices;
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
