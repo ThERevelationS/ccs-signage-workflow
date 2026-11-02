@@ -284,6 +284,10 @@
       "default": false,
       "description": "When true, orders for this customer require a purchase order number (CoreBridge 'PO Required'). Parallel to require_purchase_order."
     },
+    "po_required_note": {
+      "type": "string",
+      "description": "Free-text detail about this customer's PO requirement (e.g. \"PO required on all orders\") \u2014 surfaced to estimators when the PO gate blocks quote send or approval."
+    },
     "shipping_account": {
       "type": "string"
     },
