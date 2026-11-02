@@ -23,6 +23,8 @@ import {
   GitBranch
 } from "lucide-react";
 
+const EMPTY_DEPS = [];
+
 export default function TaskDependencyManager({ 
   tasks, 
   currentTaskId, 
@@ -33,7 +35,7 @@ export default function TaskDependencyManager({
   const [isOpen, setIsOpen] = useState(false);
   
   const currentTask = tasks.find(t => t.id === currentTaskId) || tasks[currentTaskIndex];
-  const currentDeps = currentTask?.depends_on || [];
+  const currentDeps = currentTask?.depends_on || EMPTY_DEPS;
   
   // Get available tasks (all except current)
   const availableTasks = useMemo(() => {
