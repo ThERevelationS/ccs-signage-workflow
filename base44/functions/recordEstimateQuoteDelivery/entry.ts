@@ -254,12 +254,13 @@ Deno.serve(async (req) => {
         delivery_events: [{ at: new Date(sentAt).toISOString(), outcome: 'failed', transport, detail: failureReason || 'send failed' }],
         telemetry_note: DELIVERY_TELEMETRY_NOTE,
       };
-      const createdAttempt = await Delivery.create(attemptRow).catch(() => null);
+      let createAttemptError = "";
+      const createdAttempt = await Delivery.create(attemptRow).catch((e: any) => { createAttemptError = String(e?.message || e); return null; });
       await new Promise((resolve) => setTimeout(resolve, 50));
       const verifyAttempts = await Delivery.filter({ idempotency_key: attemptKey }).catch(() => []);
       const attempt = createdAttempt?.id ? createdAttempt : (Array.isArray(verifyAttempts) ? verifyAttempts[0] : null);
       if (!attempt?.id) {
-        throw new Error('Quote delivery attempt audit could not be created or verified.');
+        throw new Error(`Quote delivery attempt audit could not be created or verified.${createAttemptError ? ` ${createAttemptError}` : ""}`);
       }
       return Response.json({ delivery: attempt, attempted: true, reused: !createdAttempt?.id });
     }
@@ -319,7 +320,10 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.Customer.updateMany(
           { id: customerId },
           { last_contacted_at: new Date().toISOString() }
-        ).catch(() => null);
+        ).catch((e: any) => {
+          payload.contact_warning = [payload.contact_warning, `last_contacted_at update failed: ${String(e?.message || e)}`].filter(Boolean).join(" ");
+          return null;
+        });
       }
       return Response.json(payload);
     };
