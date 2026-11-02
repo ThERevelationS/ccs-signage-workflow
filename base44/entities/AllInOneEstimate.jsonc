@@ -714,6 +714,58 @@
     },
     "deleted_by": {
       "type": "string"
+    },
+    "entered_by_display": {
+      "type": "string",
+      "description": "Display name of the staff member who entered the order (CoreBridge 'Entered By')."
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled sales follow-up date (YYYY-MM-DD)."
+    },
+    "payment_terms_label": {
+      "type": "string",
+      "description": "Payment terms display label printed on documents (e.g. 'Balance Due Upon Receipt'). Complements the payment_terms/terms text fields."
+    },
+    "internal_discount": {
+      "type": "number",
+      "description": "Internal (non-customer-facing) discount amount tracked for margin reporting; separate from the customer-facing discount_percent waterfall."
+    },
+    "fee_lines": {
+      "type": "array",
+      "description": "Canonical OrderFee lines (shipping, postage, discount, misc fee) carried through order-to-invoice. Each line: {label, kind, amount, taxable, income_account_code}. Mirrored identically on AllInOneEstimate and Invoice.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Display label for the fee line."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "shipping",
+              "postage",
+              "discount",
+              "fee"
+            ],
+            "description": "Fee classification."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount; discounts are negative."
+          },
+          "taxable": {
+            "type": "boolean",
+            "description": "Whether this line is included in the taxable base."
+          },
+          "income_account_code": {
+            "type": "string",
+            "description": "GL income account code for accounting export."
+          }
+        }
+      }
     }
   },
   "required": [
