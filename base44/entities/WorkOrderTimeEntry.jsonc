@@ -1,0 +1,100 @@
+{
+  "name": "WorkOrderTimeEntry",
+  "type": "object",
+  "description": "Product-scoped job time tracking (CoreBridge parity): one row per labor session a staff member logs against a single product inside a WorkOrder \u2014 started/stopped timestamps, department bucket (design|production|fabrication|installation), computed duration, and a timer|manual provenance. Rows with empty stopped_at are live running timers; stopped rows carry duration_seconds. Corrections void a row (status=voided) rather than editing history. Backend-only \u2014 created/read/updated via service-role functions; frontends never touch the entity facade directly.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one timer session \u2014 `${work_order_id}:${product_id}:${user_email}:${yyyymmddhhmm}` bucket \u2014 so a double-click or a lost create response never double-writes a session."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Parent WorkOrder id \u2014 the primary filter/grouping key for a job's time entries (queries always filter on this first)."
+    },
+    "product_id": {
+      "type": "string",
+      "description": "id inside WorkOrder.products[] (or the linked BuilderProduct id) the labor session was logged against."
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the staff member who ran the timer / logged the manual entry."
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "design",
+        "production",
+        "fabrication",
+        "installation"
+      ],
+      "description": "Department bucket the labor counts against \u2014 drives the products[] design_time_seconds / production_time_seconds rollup."
+    },
+    "started_at": {
+      "type": "string",
+      "description": "ISO timestamp the session began."
+    },
+    "stopped_at": {
+      "type": "string",
+      "description": "ISO timestamp the session ended; EMPTY means the timer is still running (at most one running row per user+product)."
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Elapsed seconds, computed when the timer stops (stopped_at - started_at). 0 while running or for zero-length sessions."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "timer",
+        "manual"
+      ],
+      "default": "timer",
+      "description": "How the entry was recorded \u2014 live timer Start/Stop, or a manual time log."
+    },
+    "note": {
+      "type": "string",
+      "description": "Free-form context \u2014 what the staff member worked on."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "voided"
+      ],
+      "default": "active",
+      "description": "Lifecycle state \u2014 active rows count in rollups; voided rows are kept for audit but contribute no time."
+    }
+  },
+  "required": [
+    "work_order_id",
+    "product_id",
+    "user_email",
+    "department",
+    "started_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__work_order_time_entry_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__work_order_time_entry_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__work_order_time_entry_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__work_order_time_entry_backend_only__"
+      }
+    }
+  }
+}
