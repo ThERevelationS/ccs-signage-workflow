@@ -19,6 +19,12 @@ const DAY_MS = 86400000;
 const VOIDISH = new Set(["void", "refunded", "cancelled", "canceled"]);
 export const isVoidStatus = (status) => VOIDISH.has(clean(status).toLowerCase());
 
+// N-05.1: for PAYMENTS, 'refunded' is a real money movement (reversal leg +
+// refunded original net each other), not an erasure — only void/cancelled
+// rows never happened. Mirrors statementBatchModel.isVoidPayment.
+const VOID_PAYMENT = new Set(["void", "cancelled", "canceled"]);
+const isVoidPayment = (p) => VOID_PAYMENT.has(clean(p?.status).toLowerCase());
+
 export const PAYMENT_METHOD_LABELS = {
   cash: "Cash",
   check: "Check",
@@ -208,7 +214,7 @@ export function buildStatement({ customer, invoices, payments, asOfDate } = {}) 
   for (const p of pays) {
     const date = toDay(p.paid_date || p.created_date);
     if (!date || date > asOf) continue;
-    const voided = isVoidStatus(p.status);
+    const voided = isVoidPayment(p);
     const inv = linkedInvoice(p);
     const amount = money(p.amount);
     const status = clean(p.status).toLowerCase() || "recorded";
@@ -244,7 +250,7 @@ export function buildStatement({ customer, invoices, payments, asOfDate } = {}) 
   const appliedTo = (inv) =>
     money(
       pays
-        .filter((p) => !isVoidStatus(p.status))
+        .filter((p) => !isVoidPayment(p))
         .filter((p) => toDay(p.paid_date || p.created_date) <= asOf)
         .filter((p) => matchInvoice(p, inv))
         .reduce((s, p) => s + num(p.amount), 0)
@@ -323,7 +329,8 @@ function paymentDescription(p, inv, status) {
   const voided = isVoidStatus(status);
   const base = `${method} payment${target ? ` — applied to ${target}` : " — unapplied credit"}`;
   const extra = clean(p.notes);
-  return `${voided ? "VOID — " : ""}${base}${extra ? ` (${extra})` : ""}`;
+  const tag = status === "refunded" ? "REFUND — " : voided ? "VOID — " : "";
+  return `${tag}${base}${extra ? ` (${extra})` : ""}`;
 }
 
 /**
