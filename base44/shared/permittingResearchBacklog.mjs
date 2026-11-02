@@ -1,4 +1,10 @@
 const norm = (value) => String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+// Loose jurisdiction-name equivalence: official sources spell the same place
+// differently (St./Saint, Ft./Fort, Mt./Mount, spacing like "Sugar Creek" vs
+// "Sugarcreek"). Matching treats those as one name so spelling variants can
+// never mint duplicate queue rows or profiles.
+const loose = (value) => norm(value).replace(/\bst\.?\b/g, 'saint').replace(/\bft\.?\b/g, 'fort').replace(/\bmt\.?\b/g, 'mount').replace(/[^a-z0-9]/g, '');
+const sameJ = (a, b) => { const x = norm(a), y = norm(b); return Boolean(x && y && (x === y || loose(a) === loose(b))); };
 
 export const normalizeResearchJurisdictionType = (value) => {
   const type = norm(value);
@@ -23,7 +29,7 @@ export const profileHasResearchEvidence = (profile = {}) => {
 export function queueResearchIdentity(row = {}) {
   const type = normalizeResearchJurisdictionType(row.jurisdiction_type);
   const parent = type === 'county' ? '' : norm(row.parent_county_name);
-  return [norm(row.jurisdiction_name), norm(row.state), type, parent].join('|');
+  return [loose(row.jurisdiction_name), norm(row.state), type, parent].join('|');
 }
 
 function researchParent(value) {
@@ -36,7 +42,7 @@ function profileParent(profile = {}) {
 }
 
 export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProfiles = []) {
-  if (norm(row.jurisdiction_name) !== norm(profile.name) || norm(row.state) !== norm(profile.state)) return false;
+  if (!sameJ(row.jurisdiction_name, profile.name) || norm(row.state) !== norm(profile.state)) return false;
 
   const queueType = norm(row.jurisdiction_type);
   const profileType = norm(profile.type);
@@ -57,9 +63,25 @@ export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProf
 export function resolveResearchProfile(row = {}, profiles = []) {
   // Superseded duplicates / historical records are dead identity — never match or count them.
   const live = profiles.filter(p => !String(p.duplicate_of || '').trim() && norm(p.verification_status) !== 'historical');
-  const matches = live.filter(p => norm(p.name) === norm(row.jurisdiction_name) && norm(p.state) === norm(row.state));
+  const matches = live.filter(p => sameJ(p.name, row.jurisdiction_name) && norm(p.state) === norm(row.state));
   const eligible = matches.filter(p => profileMatchesQueueRow(row, p, matches));
   if (eligible.length === 1) return { profile: eligible[0], conflict: false };
+  if (eligible.length > 1) {
+    // Same-name record collision — the jurisdiction identity is already
+    // resolved; this is record hygiene. Deterministic canonical pick:
+    // parent-county match > staff-verified > research evidence > oldest.
+    // Only genuinely-distinct parents (different counties) stay conflicting.
+    const parents = new Set(eligible.map((p) => profileParent(p)).filter(Boolean));
+    if (parents.size <= 1) {
+      const queueParent = researchParent(row.parent_county_name);
+      const rank = (p) =>
+        (queueParent && profileParent(p) === queueParent ? 4 : 0) +
+        (norm(p.verification_status) === 'verified' ? 2 : 0) +
+        (profileHasResearchEvidence(p) ? 1 : 0);
+      const sorted = [...eligible].sort((a, b) => rank(b) - rank(a) || String(a.created_date || '').localeCompare(String(b.created_date || '')));
+      return { profile: sorted[0], conflict: false };
+    }
+  }
   const parent = researchParent(row.parent_county_name);
   const nearby = matches.filter(p => !parent || !profileParent(p) || parent === profileParent(p));
   return { profile: null, conflict: eligible.length > 1 || nearby.length > 0 };
@@ -87,7 +109,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], identityPro
 
   const byNameState = new Map();
   for (const profile of profiles) {
-    const key = `${norm(profile?.name)}|${norm(profile?.state)}`;
+    const key = `${loose(profile?.name)}|${norm(profile?.state)}`;
     if (!byNameState.has(key)) byNameState.set(key, []);
     byNameState.get(key).push(profile);
   }
@@ -117,7 +139,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], identityPro
       identityReview.push({queue_id:row.id,eligible:false,reason:'automatic_profile_held_for_review',authority_verified:false});
       continue;
     }
-    const nameState = `${norm(row?.jurisdiction_name)}|${norm(row?.state)}`;
+    const nameState = `${loose(row?.jurisdiction_name)}|${norm(row?.state)}`;
     const matchingProfiles = byNameState.get(nameState) || [];
     if (matchingProfiles.some((profile) => profileMatchesQueueRow(row, profile, matchingProfiles))) {
       reconcile.push(row);
