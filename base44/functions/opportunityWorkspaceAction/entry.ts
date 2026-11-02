@@ -1701,7 +1701,7 @@ Deno.serve(async (req) => {
         await replaceFoundationFieldsIfUnchanged({
           entity: Opportunity,
           recordId: clean(opportunity.id),
-          expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? "" },
+          expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? null },
           nextFields: { source_primary_intake_id: clean(intake.id) },
           label: "Opportunity primary intake link",
         }).catch(() => null);
@@ -2097,7 +2097,7 @@ Deno.serve(async (req) => {
         request = await replaceEstimatingRequestFieldsIfUnchanged({
           entity: EstimatingRequest,
           recordId: clean(request.id),
-          expectedFields: { status: request.status, estimate_id: request.estimate_id ?? "" },
+          expectedFields: { status: request.status, estimate_id: request.estimate_id ?? null },
           nextFields: { status: "in_progress", estimate_id: clean(estimate.id) },
           label: "Estimating Request estimate link",
         });
