@@ -620,7 +620,9 @@ Deno.serve(async (req) => {
         googleDeniedUntil = 0;
         googleDeniedService = null;
         const g = data.results[0];
-        geocode = { lat: g.geometry?.location?.lat, lon: g.geometry?.location?.lng, display_name: g.formatted_address, location_exact: strictGeocode(data.results, address), address_parts: (g.address_components || []).reduce((a, c) => {
+        const exact = strictGeocode(data.results, address);
+        const streetish = exact || (g.types || []).some((t) => ["street_address", "premise", "subpremise", "route", "intersection"].includes(t)) || g.geometry?.location_type === "ROOFTOP";
+        geocode = { lat: g.geometry?.location?.lat, lon: g.geometry?.location?.lng, display_name: g.formatted_address, location_exact: exact, ...exact || !streetish ? {} : { approximate_source: "google_approx" }, address_parts: (g.address_components || []).reduce((a, c) => {
           for (const t of c.types || []) a[t] = c.long_name;
           return a;
         }, {}) };
