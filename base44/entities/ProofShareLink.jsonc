@@ -1,0 +1,74 @@
+{
+  "name": "ProofShareLink",
+  "type": "object",
+  "description": "External proof-share links (E-09): an opaque-token row per shared proof, created by staff, resolved by a backend function (asServiceRole) so unauthenticated third parties can view the pinned proof version + disclaimer. Backend-only RLS \u2014 NEVER exposed through staffDataRead; the public proof-share page resolves tokens via a dedicated function. Revocation and 30-day-max expiry are enforced by proofShareLinkModel.canViewShareLink.",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Opaque share token (ps_<hex>); prod callers mint with a CSPRNG \u2014 deterministic shareToken(seed) is for tests/dev."
+    },
+    "entity_type": {
+      "type": "string",
+      "default": "proof_share",
+      "description": "Discriminator \u2014 always 'proof_share'."
+    },
+    "product_id": {
+      "type": "string",
+      "description": "WorkOrder.products[] row id the shared proof belongs to."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Parent WorkOrder id \u2014 join key for the pinned proof render."
+    },
+    "proof_version": {
+      "type": "number",
+      "description": "Version PINNED at link creation; a newer product proof_version renders the link 'superseded' not invalid."
+    },
+    "disclaimer_text": {
+      "type": "string",
+      "description": "Legal/review disclaimer rendered on the share page (settings.proof_share_disclaimer override)."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Staff user/email who minted the link."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "now + ttl clamped to (0, 30d]; expired links reject."
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_by": {
+      "type": "string"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "first_viewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_viewed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "token",
+    "entity_type",
+    "product_id",
+    "work_order_id"
+  ]
+}
