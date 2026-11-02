@@ -3470,8 +3470,43 @@ Deno.serve(async (req) => {
       return Response.json(liteResult);
     }
 
+    const adminCollections: Record<string, { entity: any; query: any; sort: string | null; label: string }> = {
+      entries: { entity: entryEntity, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: '-clock_in', label: 'Time Clock admin entries' },
+      states: { entity: stateEntity, query: {}, sort: null, label: 'Time Clock employee states' },
+      breaks: { entity: breakEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active breaks' },
+      work_pauses: { entity: workPauseEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active Work Pauses' },
+      labor_segments: { entity: laborEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active labor segments' },
+      correction_requests: { entity: correctionRequestEntity, query: { status: { $in: ['pending', 'reviewing'] } }, sort: '-requested_at', label: 'Time Clock active correction requests' },
+      punch_exceptions: { entity: punchExceptionEntity, query: {}, sort: '-detected_at', label: 'Time Clock punch exception reports' },
+      devices: { entity: deviceEntity, query: {}, sort: '-last_seen_at', label: 'Time Clock devices' },
+    };
+    const requireAdmin = () => actor.role === 'admin' && !String(actor.id).startsWith('badge:');
+
+    if (action === 'admin_load_all') {
+      // One invoke for the whole panel — sequential verified paging keeps the
+      // reads paced and a single 429 retry covers every collection.
+      if (!requireAdmin()) {
+        return Response.json({ success: false, error: 'Administrator session is required to load Time Clock review data.' }, { status: 403 });
+      }
+      const collections: Record<string, any[]> = {};
+      for (const key of Object.keys(adminCollections)) {
+        const c = adminCollections[key];
+        const rows = await loadAllEntityRows({
+          entity: c.entity, query: c.query, sort: c.sort, pageSize: 200,
+          maxRows: 50_000, label: c.label,
+        }).catch((error) => {
+          // Devices are advisory — a hiccup there must not blank the panel.
+          if (key === 'devices') return [];
+          throw error;
+        });
+        if (!Array.isArray(rows)) throw new Error(`${c.label} could not be verified completely.`);
+        collections[key] = rows;
+      }
+      return Response.json({ success: true, collections });
+    }
+
     if (action === 'admin_load_data') {
-      if (actor.role !== 'admin' || String(actor.id).startsWith('badge:')) {
+      if (!requireAdmin()) {
         return Response.json({ success: false, error: 'Administrator session is required to load Time Clock review data.' }, { status: 403 });
       }
       const collection = String(body?.collection || '').trim();
@@ -3480,17 +3515,7 @@ Deno.serve(async (req) => {
       if (!Number.isSafeInteger(skip) || skip < 0 || skip >= 50_000) {
         return Response.json({ success: false, error: 'Time Clock admin data page is outside the supported range.' }, { status: 400 });
       }
-      const collections: Record<string, { entity: any; query: any; sort: string | null; label: string }> = {
-        entries: { entity: entryEntity, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: '-clock_in', label: 'Time Clock admin entries' },
-        states: { entity: stateEntity, query: {}, sort: null, label: 'Time Clock employee states' },
-        breaks: { entity: breakEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active breaks' },
-        work_pauses: { entity: workPauseEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active Work Pauses' },
-        labor_segments: { entity: laborEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active labor segments' },
-        correction_requests: { entity: correctionRequestEntity, query: { status: { $in: ['pending', 'reviewing'] } }, sort: '-requested_at', label: 'Time Clock active correction requests' },
-        punch_exceptions: { entity: punchExceptionEntity, query: {}, sort: '-detected_at', label: 'Time Clock punch exception reports' },
-        devices: { entity: deviceEntity, query: {}, sort: '-last_seen_at', label: 'Time Clock devices' },
-      };
-      const selected = collections[collection];
+      const selected = adminCollections[collection];
       if (!selected) return Response.json({ success: false, error: 'Unknown Time Clock admin data collection.' }, { status: 400 });
       const rows = await selected.entity.filter(selected.query, selected.sort, pageSize, skip);
       if (!Array.isArray(rows)) throw new Error(`${selected.label} could not be verified completely.`);
