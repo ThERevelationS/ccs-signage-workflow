@@ -90,7 +90,8 @@
         "server",
         "legacy_client",
         "admin_correction",
-        "employee_attested_missed_clock_in"
+        "employee_attested_missed_clock_in",
+        "employee_attested_missed_shift"
       ],
       "description": "Authority/source used for punch timestamps"
     },
@@ -292,6 +293,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when an employee reported a missing Clock In and supplied the reconstructed start"
+    },
+    "missed_shift_reported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an employee reported an entirely missed shift and supplied attested start/end times"
     },
     "punch_resolution_pending_at": {
       "type": "string",
