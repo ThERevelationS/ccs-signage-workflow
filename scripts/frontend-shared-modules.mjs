@@ -15,6 +15,13 @@ const names = new Set([
   'salesOpportunityHistory.mjs', 'salesSaveAcknowledgmentGuard.mjs',
   'pricingEngine.ts', 'modifierPricing.ts', 'pricingVariables.ts', 'formulaEval.ts',
   'templateRender.ts', 'followUpMachine.ts', 'delivery.ts', 'setupFeeCompose.ts',
+  'proofTransitionModel.ts', 'proofChangeRequestModel.ts', 'proofShareLinkModel.ts',
+  'proofDueRecalcModel.ts', 'glSplitModel.ts', 'taxLiabilityModel.ts',
+  'arAgingReports.ts', 'customerReports.ts', 'paymentRegisterModel.ts',
+  'accountingExportModel.ts', 'customerTierModel.ts', 'catalogImportModel.ts',
+  'customerImportModel.ts', 'vendorNotifyModel.ts', 'readyTriggerModel.ts',
+  'alertSubscriptionsModel.ts', 'salesReports.ts', 'productionReports.ts',
+  'estimateReports.ts', 'financialReports.ts',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
