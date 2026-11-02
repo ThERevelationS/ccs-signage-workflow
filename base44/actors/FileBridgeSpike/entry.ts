@@ -5,6 +5,8 @@ import { Actor } from 'base44:runtime/actors';
 export default class extends Actor {
   conns = new Map<string, any>();
 
+  async handleTick() {}
+
   async handleConnect(conn: any) {
     // Record identity for the spike report (anonymous vs authenticated).
     this.conns.set(conn.id, {
