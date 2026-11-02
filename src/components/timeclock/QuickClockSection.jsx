@@ -8,6 +8,7 @@ import {
   Clock,
   Clock3,
   Loader2,
+  LogOut,
   QrCode,
   User,
   X,
@@ -25,6 +26,13 @@ import {
   createFaceScanSession,
   loadFaceModelsOnce,
 } from '@/components/timeclock/faceScanRuntime';
+import {
+  IDENTIFY_CAMERA_BLURB,
+  IDENTIFY_QR_BADGE_BLURB,
+  IDENTIFY_QR_BADGE_BLURB_FACE,
+  IDENTIFY_QR_ONLY_BLURB,
+  IDENTIFY_QR_UNSUPPORTED,
+} from '@/components/timeclock/timeClockIdentifyCopy';
 // html5-qrcode (~300KB) loads on demand when QR mode is picked — most
 // clock-ins use face or PIN, so it isn't fetched at page load.
 
@@ -222,15 +230,6 @@ export default function QuickClockSection({
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const lastPunchRef = useRef({ email: "", at: 0 });
-  // Per-device large-text mode for shared kiosks (gloves / distance viewing).
-  const [largeText, setLargeText] = useState(() => {
-    try { return localStorage.getItem("ccs_kiosk_large_text") === "1"; } catch { return false; }
-  });
-  const toggleLargeText = () => setLargeText((v) => {
-    const next = !v;
-    try { localStorage.setItem("ccs_kiosk_large_text", next ? "1" : "0"); } catch {}
-    return next;
-  });
   // First-run kiosk tutorial strip; dismisses per device forever.
   const [showKioskTutorial, setShowKioskTutorial] = useState(() => {
     try { return localStorage.getItem("ccs_kiosk_tutorial_seen") !== "1"; } catch { return false; }
@@ -839,6 +838,16 @@ export default function QuickClockSection({
           setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in - no missed Clock In to report.`);
           return;
         }
+        if (identifyIntentRef.current === "missed_clock_out") {
+          identifyIntentRef.current = "clock_in";
+          // Still-open shift that never tripped the stale flag - the audited
+          // missed-Clock-Out path only exists on flagged shifts, so this one
+          // is simply clocked out now.
+          setClockOutDismissed(status?.entry?.id, false);
+          setShowClockOut(true);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, this shift is still open - clock out now. For an older shift that ended wrong, request a correction on your Time Clock page.`);
+          return;
+        }
         // Deliberate identification while clocked in is the Clock Out path:
         // surface the shift panel once even if it was dismissed before.
         setClockOutDismissed(status?.entry?.id, false);
@@ -847,10 +856,21 @@ export default function QuickClockSection({
         return;
       }
       if (resolvedStatus === "punch_resolution") {
-        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
+        if (identifyIntentRef.current === "missed_clock_out") {
+          identifyIntentRef.current = "clock_in";
+          setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email} - tell us when you actually left and we'll send the fix to your manager.`);
+        } else {
+          setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
+        }
         return;
       }
       if (resolvedStatus === "transition") return;
+
+      if (identifyIntentRef.current === "missed_clock_out") {
+        identifyIntentRef.current = "clock_in";
+        setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, there's no open shift to fix. To correct a finished shift, use Request a correction on your Time Clock page.`);
+        return;
+      }
 
       if (identifyIntentRef.current === "missed_clock_in") {
         // The employee explicitly chose the missed Clock In flow; the
@@ -986,11 +1006,11 @@ export default function QuickClockSection({
 
       if (!faceEnabled || !modelsReady) {
         setRecognitionStatus("BarcodeDetector" in window
-          ? "Hold your QR badge up to the camera."
-          : "QR scanning needs a supported browser - use Username instead.");
+          ? IDENTIFY_QR_ONLY_BLURB
+          : IDENTIFY_QR_UNSUPPORTED);
         return;
       }
-      setRecognitionStatus("Look at the camera or hold up your QR badge.");
+      setRecognitionStatus(IDENTIFY_CAMERA_BLURB);
 
       // Same shared scan session as the reusable FaceRecognition component -
       // one cadence, quality gate, brightness check, and voter for every
@@ -1067,9 +1087,7 @@ export default function QuickClockSection({
     setRecognitionStatus("Starting QR camera...");
     setUsernameError("");
 
-    const qrPrompt = canUseFace
-      ? "Show your face or scan your secure Time Clock QR badge."
-      : "Scan your secure Time Clock QR badge.";
+    const qrPrompt = canUseFace ? IDENTIFY_QR_BADGE_BLURB_FACE : IDENTIFY_QR_BADGE_BLURB;
     try {
       await startQrScannerWithFacingMode("environment");
       setRecognitionStatus(qrPrompt);
@@ -1719,15 +1737,10 @@ export default function QuickClockSection({
         </div>
       )}
 
-      <div className="clay-card p-6 mb-6" style={{ zoom: gloveMode ? 1.5 : largeText ? 1.18 : 1 }}>
+      <div className="clay-card p-6 mb-6" style={{ zoom: gloveMode ? 1.5 : 1 }}>
         <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
-          <button
-            type="button" onClick={toggleLargeText}
-            className={`ml-auto rounded-md border px-2 py-0.5 text-[10px] font-bold ${largeText ? "border-purple-300 bg-purple-50 text-purple-700" : "border-slate-200 text-slate-400"}`}
-            title="Large text mode for the kiosk"
-          >A+</button>
         </h2>
 
         {(() => {
@@ -1851,6 +1864,18 @@ export default function QuickClockSection({
               Forgot to Clock In? Set arrival time
               <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
             </button>
+            <button
+              type="button"
+              onClick={() => { identifyIntentRef.current = "missed_clock_out"; startRecognition(); }}
+              disabled={isLoading}
+              className="group relative w-72 sm:w-80 flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 via-white/95 to-amber-100/90 px-4 py-3 text-sm font-bold text-amber-900 shadow-lg shadow-amber-900/10 backdrop-blur-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-900/15 motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 touch-manipulation"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-200/70 ring-1 ring-amber-300/80 transition-transform duration-200 group-hover:scale-110">
+                <LogOut className="w-4 h-4" />
+              </span>
+              Forgot to Clock Out? Report it
+              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
+            </button>
             <CrystalShiftButton
               onClockIn={startRecognition}
               onClockOut={startRecognition}
@@ -1946,7 +1971,7 @@ export default function QuickClockSection({
             <div className="px-4 py-2 rounded-full mb-4 bg-purple-100 text-purple-700 text-center">
               <p className="font-medium flex items-center justify-center gap-2">
                 {(recognitionMethod === "face" || recognitionMethod === "camera" || recognitionMethod === "qr" || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
-                {recognitionStatus || "Look at the camera or hold up your QR badge."}
+                {recognitionStatus || IDENTIFY_CAMERA_BLURB}
               </p>
             </div>
 
