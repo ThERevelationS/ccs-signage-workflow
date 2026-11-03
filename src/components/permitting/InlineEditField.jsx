@@ -35,17 +35,16 @@ export default function InlineEditField({
     return (
       <div
         className={`flex items-center gap-1 ${textSizeClass} flex-shrink-0 min-w-0`}
-        style={{ maxWidth }}
         onClick={e => e.stopPropagation()}
       >
         {icon}
-        {label && <span className="text-gray-500">{label}</span>}
+        {label && <span className="text-gray-500 flex-shrink-0">{label}</span>}
         <Select
           value={value || ""}
           onValueChange={(v) => !disabled && onSave(v === "__clear__" ? "" : v)}
           disabled={disabled}
         >
-          <SelectTrigger className={`h-6 ${textSizeClass} px-1.5 border-none shadow-none bg-transparent hover:bg-white/60 focus:bg-white w-auto min-w-0 gap-1 [&>svg]:ml-0.5 [&>svg]:opacity-50`}>
+          <SelectTrigger className={`h-6 ${textSizeClass} px-1.5 border-none shadow-none bg-transparent hover:bg-white/60 focus:bg-white w-auto min-w-0 max-w-[280px] gap-1 [&>svg]:ml-0.5 [&>svg]:opacity-50`}>
             <SelectValue placeholder={placeholder}>
               <span className="truncate" title={value || placeholder}>
                 {value || <span className="text-gray-400">{placeholder}</span>}
