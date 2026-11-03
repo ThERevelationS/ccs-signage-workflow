@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
