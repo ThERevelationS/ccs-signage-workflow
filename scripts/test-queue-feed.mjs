@@ -530,7 +530,10 @@ for (const field of [
     assert.ok(GENERAL_TASK_FIELDS.includes(field), `GT projection covers page read gt.${field}`);
   }
   // The page no longer reads entities directly — the composed feed carries them.
-  assert.ok(!/loadAllEntityRows|loadSingleGlobalSetting|staffEntities/.test(pageSrc), 'page dropped the gateway reads');
+  // staffEntities stays imported as the WRITE handle for GeneralTask CAS
+  // mutations (backend-only RLS; the gateway is the permitted write path).
+  assert.ok(!/loadAllEntityRows|loadSingleGlobalSetting/.test(pageSrc), 'page dropped the gateway reads');
+  assert.ok(pageSrc.includes('staffEntities.GeneralTask'), 'page writes GeneralTask via the staff gateway');
   for (const needle of ['fetchMyWorkflowBundle', 'fetchMyWorkflowTasks', 'applyOrderRows', 'loadMyWorkflow']) {
     assert.ok(pageSrc.includes(needle), `page wires ${needle}`);
   }
