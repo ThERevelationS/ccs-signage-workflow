@@ -78,6 +78,7 @@ import __Layout from './Layout.jsx';
 const SOP = lazyPage(() => import('./pages/SOP'));
 const SIPs = lazyPage(() => import('./pages/SIPs'));
 const SalesPipeline = lazyPage(() => import('./pages/SalesPipeline'));
+const ServerFiles = lazyPage(() => import('./pages/ServerFiles'));
 const TemplateBuilder = lazyPage(() => import('./pages/TemplateBuilder'));
 const TimeClock = lazyPage(() => import('./pages/TimeClock'));
 const UserSettings = lazyPage(() => import('./pages/UserSettings'));
@@ -113,6 +114,7 @@ export const PAGES = {
     "SOP": SOP,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
+    "ServerFiles": ServerFiles,
     "TemplateBuilder": TemplateBuilder,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
