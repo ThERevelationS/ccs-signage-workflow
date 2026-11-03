@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Project, Settings } from "@/api/gatedEntities";
-import { base44 } from "@/api/base44Client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

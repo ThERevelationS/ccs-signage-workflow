@@ -95,6 +95,8 @@ async function pendingCommands(sr: any, agentId: string, limit = 10) {
   return rows.slice(0, limit);
 }
 
+const BUNDLE_REV = 'fb-ingest-2026-11-03a';
+
 Deno.serve(async (req) => {
   const rawBody = await req.text();
   const client = createClientFromRequest(req);
@@ -135,7 +137,7 @@ Deno.serve(async (req) => {
     return Response.json({ ok: !writeErr, existed: exists, settings: next, ...(writeErr ? { error: `settings write failed: ${writeErr}` } : {}) }, { status: writeErr ? 503 : 200 });
   }
 
-  if (!settings.enabled) return Response.json({ error: 'fileBridge disabled' }, { status: 503 });
+  if (!settings.enabled) return Response.json({ error: 'fileBridge disabled', rev: BUNDLE_REV }, { status: 503 });
 
   // ---------- handshake ----------
   if (action === 'handshake') {
