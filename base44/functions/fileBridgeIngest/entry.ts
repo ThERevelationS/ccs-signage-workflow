@@ -242,6 +242,25 @@ Deno.serve(async (req) => {
       status: to, result: body.result || {}, error: body.error || '',
       progress: body.progress || undefined, updated_ts: now(),
     });
+    // upload_apply completion stamps the permanent provenance ledger.
+    if (cmd.type === 'upload_apply' && cmd.args?.upload_id) {
+      await sr.entities.FileBridgeUpload.update(cmd.args.upload_row || '', {
+        status: to === 'completed' ? 'applied' : 'failed',
+        applied_at: to === 'completed' ? new Date().toISOString() : undefined,
+        error: to === 'completed' ? '' : String(body.error || 'apply failed').slice(0, 300),
+        path: body.result?.path || undefined,
+      }).catch(async () => {
+        const rows = await sr.entities.FileBridgeUpload.filter({ upload_id: cmd.args.upload_id }, '-updated_date', 1).catch(() => []);
+        if (rows?.[0]) {
+          await sr.entities.FileBridgeUpload.update(rows[0].id, {
+            status: to === 'completed' ? 'applied' : 'failed',
+            applied_at: to === 'completed' ? new Date().toISOString() : undefined,
+            error: to === 'completed' ? '' : String(body.error || 'apply failed').slice(0, 300),
+            path: body.result?.path || undefined,
+          }).catch(() => null);
+        }
+      });
+    }
     return Response.json({ ok: true });
   }
 
