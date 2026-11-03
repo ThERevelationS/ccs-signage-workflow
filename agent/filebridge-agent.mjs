@@ -254,6 +254,11 @@ const scanDir = async (root, rel, scanId, stats) => {
       entity_id: prev?.entity_id || null, last_seen_scan: scanId, missing: 0,
     };
     upsertFile(row);
+    // inbound roots: everything in the drop zone is bridge-FILED (movable into
+    // customer folders) but stays origin:external — never deletable.
+    if (root.purpose === 'inbound' && !manifestGet(row.path_key)) {
+      manifestSet(row.path_key, { origin: 'external', managed_by: 'bridge', inbound_ts: Date.now() });
+    }
     if (changed) {
       stats.batch.push({
         root_key: root.root_key, path: nrel, is_dir: isDir, size: row.size,
@@ -725,15 +730,39 @@ const executors = {
     if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
     const root = rootFor(args.root_key);
     const srcRel = root ? normRel(args.src || '') : null;
-    const dstRel = root ? normRel(args.dst || '') : null;
+    // spec: dest_dir is a directory — the file keeps its basename (collision-safe)
+    const destDir = root ? normRel(args.dest_dir ?? args.dst ?? '') : null;
+    const dstRel = destDir !== null
+      ? (destDir ? `${destDir}/${path.posix.basename(srcRel || '')}` : path.posix.basename(srcRel || ''))
+      : null;
     const src = srcRel !== null ? resolveInRoot(root, srcRel) : null;
-    const dst = dstRel !== null ? resolveInRoot(root, dstRel) : null;
-    if (!root || !src || !dst) return { ok: false, error: 'bad root/path' };
-    if (!canMoveLocal(pathKeyLocal(root.root_key, srcRel))) return { ok: false, error: 'not bridge-managed — refusing' };
+    let dst = dstRel ? resolveInRoot(root, dstRel) : null;
+    if (!root || !srcRel || !src || !dst || !dstRel) return { ok: false, error: 'bad root/path' };
+    if (dstRel === srcRel) return { ok: true, result: { src: srcRel, dst: dstRel, noop: true } };
+    const srcPk = pathKeyLocal(root.root_key, srcRel);
+    if (!canMoveLocal(srcPk)) return { ok: false, error: 'not bridge-managed — refusing' };
+    if (!(await fs.promises.stat(src).catch(() => null))) return { ok: false, error: 'src not found' };
+    // never overwrite — collision → "name (n).ext" like upload_apply
+    if (fs.existsSync(dst)) {
+      const ext = path.posix.extname(dstRel); const stem = dstRel.slice(0, dstRel.length - ext.length);
+      let n = 1; let alt = '';
+      do { alt = `${stem} (${n})${ext}`; n += 1; if (n > 99) return { ok: false, error: 'no free filename' }; }
+      while (fs.existsSync(resolveInRoot(root, alt)));
+      dst = resolveInRoot(root, alt);
+      if (!dst) return { ok: false, error: 'bad dest' };
+      const drel = alt;
+      await fs.promises.mkdir(path.posix.dirname(dst), { recursive: true });
+      await fs.promises.rename(src, dst);
+      manifestSet(pathKeyLocal(root.root_key, drel), { ...(manifestGet(srcPk) || { managed_by: 'bridge' }), moved_ts: Date.now() });
+      manifest[srcPk] = undefined; manifestSave();
+      if (db) db.prepare('UPDATE files SET missing=1 WHERE path_key=?').run(srcPk);
+      return { ok: true, result: { src: srcRel, dst: drel, renamed: true } };
+    }
     await fs.promises.mkdir(path.posix.dirname(dst), { recursive: true });
     await fs.promises.rename(src, dst);
-    manifestSet(pathKeyLocal(root.root_key, dstRel), { ...(manifestGet(pathKeyLocal(root.root_key, srcRel)) || { managed_by: 'bridge' }) });
-    manifest[pathKeyLocal(root.root_key, srcRel)] = undefined; manifestSave();
+    manifestSet(pathKeyLocal(root.root_key, dstRel), { ...(manifestGet(srcPk) || { managed_by: 'bridge' }), moved_ts: Date.now() });
+    manifest[srcPk] = undefined; manifestSave();
+    if (db) db.prepare('UPDATE files SET missing=1 WHERE path_key=?').run(srcPk);
     return { ok: true, result: { src: srcRel, dst: dstRel } };
   },
 
