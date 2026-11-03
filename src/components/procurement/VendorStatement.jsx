@@ -78,7 +78,7 @@ export default function VendorStatement({ sessionToken, vendorName, onClose }) {
       const trimmed = mine.slice(0, DETAIL_CAP);
       const out = [];
       for (let i = 0; i < trimmed.length; i += DETAIL_BATCH) {
-        // eslint-disable-next-line no-await-in-loop -- intentional small batches
+         
         const chunk = await Promise.all(trimmed.slice(i, i + DETAIL_BATCH).map((p) =>
           invokeAction(sessionToken, { action: "get_purchase_order", purchase_order_id: p.id })
             .then((d) => d?.purchase_order || null)
