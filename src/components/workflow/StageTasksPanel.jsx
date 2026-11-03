@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 // Displays general office tasks assigned to a specific workflow stage page,
 // so the team working that stage sees stage-tagged tasks alongside their work orders.
