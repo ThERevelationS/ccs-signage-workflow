@@ -9,7 +9,7 @@
 // #461 (standalone quote HTML), #465 (change orders CSV), #468 (backup file),
 // #474 (job-costing breakdown CSV).
 
-import { csvCell, downloadCsv } from "@/components/shared/exportCsv";
+import { downloadCsv } from "@/components/shared/exportCsv";
 
 const safeFilePart = (value, fallback) => {
   const cleaned = String(value || "")
