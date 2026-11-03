@@ -248,15 +248,52 @@
         }
       },
       "description": "Audit trail of edits to this jurisdiction \u2014 server-appended on each gateway update: {at, by, changed_fields}."
+    },
+    "pending_applies": {
+      "type": "array",
+      "description": "Deferred office applies \u2014 Apply-when-verified queues {work_order_id, requested_by, requested_at, exclude_electrical} here; the verification worker creates the permit lines the moment sign+zoning verify, then removes the entry.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "work_order_id": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "requested_at": {
+            "type": "string"
+          },
+          "exclude_electrical": {
+            "type": "boolean"
+          }
+        }
+      }
     }
   },
   "required": [
     "name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlocality_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    }
   }
 }
