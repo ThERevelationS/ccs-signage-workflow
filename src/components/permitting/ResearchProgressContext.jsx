@@ -5,7 +5,7 @@ export const ResearchProgressContext=createContext(null);
 export function ResearchProgressProvider({children}){
  const statusVersions=useRef(new Map()),dismissedActions=useRef(new Set()),savedRuns=useRef(new Map());
  const nextStatusVersion=useCallback(id=>{const version=(statusVersions.current.get(id)||0)+1;statusVersions.current.set(id,version);return version;},[]);
- const [actions,setActions]=useState(()=>{try{return Object.fromEntries(JSON.parse(sessionStorage.getItem('permitting_scan_actions') || '[]').map(row=>[row.id,{...row,status:'unknown',stage:'Restoring saved action status',indeterminate:true,events:[]}]))}catch{return {}}});const legacy=useRef(null);
+ const [actions,setActions]=useState(()=>{try{return Object.fromEntries(JSON.parse(sessionStorage.getItem('permitting_scan_actions') || '[]').filter(row=>!/^Looking up\b/i.test(String(row?.label||''))).map(row=>[row.id,{...row,status:'unknown',stage:'Restoring saved action status',indeterminate:true,events:[]}]))}catch{return {}}});const legacy=useRef(null);
  const put=useCallback((id,patch)=>setActions(prev=>dismissedActions.current.has(id)?prev:({...prev,[id]:{...prev[id],...patch}})),[]);
  const startResearch=useCallback((total,label='Locality research batch')=>{const id=crypto.randomUUID();legacy.current=id;put(id,{id,label,local_batch:true,total,processed:0,updated:0,skipped:0,status:'running',stage:'Starting',events:[],indeterminate:false});return id;},[put]);
  const updateProgress=useCallback((updates,id=legacy.current)=>{if(id)put(id,{...updates,stage:updates.currentJurisdiction || updates.stage || 'Researching'});},[put]);
