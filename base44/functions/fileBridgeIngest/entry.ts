@@ -98,7 +98,49 @@ async function pendingCommands(sr: any, agentId: string, limit = 10) {
   return rows.slice(0, limit);
 }
 
-const BUNDLE_REV = 'fb-ingest-2026-11-03a';
+const BUNDLE_REV = 'fb-ingest-2026-11-03b';
+
+// Assemble staged FileBridgeChunk rows for a command → UploadFile → stamp
+// FileIndex.delivered_url → purge chunks → complete command. Shared by
+// deliver_chunk (last-arriving seq) and deliver_stitch (explicit retry after
+// a partial stage, e.g. a worker died mid-assembly). Caller must ensure cmd
+// is not terminal.
+async function stitchStaged(sr: any, cmd: any, ordered: any[], agentId: string, opts: { file_sha256?: string; name?: string }) {
+  const parts: Uint8Array[] = [];
+  for (const c of ordered) {
+    const resp = await fetch(String(c.file_url));
+    if (!resp.ok) return { ok: false as const, status: 503, body: { error: `chunk fetch ${c.seq} failed`, retry: true } };
+    parts.push(new Uint8Array(await resp.arrayBuffer()));
+  }
+  const size = parts.reduce((n, p) => n + p.length, 0);
+  if (size > 256 * 1024 * 1024) return { ok: false as const, status: 413, body: { error: 'assembled over 256MB cap', needs_proxy: true } };
+  const whole = new Uint8Array(size);
+  let off = 0; for (const p of parts) { whole.set(p, off); off += p.length; }
+  const wholeSha = await sha256Hex(whole);
+  if (opts.file_sha256 && opts.file_sha256 !== wholeSha) {
+    await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
+    return { ok: false as const, status: 409, body: { error: 'assembled sha256 mismatch — chunks purged, re-deliver', retry: true } };
+  }
+  const file = new File([whole], String(opts.name || 'delivery.bin'));
+  const up = await sr.integrations.Core.UploadFile({ file });
+  if (cmd.args?.root_key && cmd.args?.path) {
+    const pk = pathKey(cmd.agent_id || agentId, cmd.args.root_key, cmd.args.path);
+    const ir = await sr.entities.FileIndex.filter({ path_key: pk }, '-updated_date', 1).catch(() => []);
+    if (ir?.[0]) {
+      await sr.entities.FileIndex.update(ir[0].id, {
+        delivered_url: up.file_url, delivered_at_ms: now(), sha256: wholeSha,
+      }).catch(() => null);
+    }
+  }
+  await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
+  if (!isTerminal(cmd.status)) {
+    await sr.entities.FileBridgeCommand.update(cmd.id, {
+      status: 'completed', updated_ts: now(),
+      result: { file_url: up.file_url, bytes: size, sha256: wholeSha },
+    });
+  }
+  return { ok: true as const, status: 200, body: { ok: true, file_url: up.file_url, bytes: size, sha256: wholeSha, assembled: true } };
+}
 
 Deno.serve(async (req) => {
   const rawBody = await req.text();
@@ -449,40 +491,38 @@ Deno.serve(async (req) => {
 
     // ---- assemble ----
     const ordered = (have || []).slice().sort((a: any, b: any) => a.seq - b.seq);
-    const parts: Uint8Array[] = [];
-    for (const c of ordered) {
-      const resp = await fetch(String(c.file_url));
-      if (!resp.ok) return Response.json({ error: `chunk fetch ${c.seq} failed`, retry: true }, { status: 503 });
-      parts.push(new Uint8Array(await resp.arrayBuffer()));
+    const st = await stitchStaged(sr, cmd, ordered, agentId, { file_sha256: body.file_sha256, name: body.name });
+    return Response.json(st.body, { status: st.status });
+  }
+
+  // ---------- deliver_stitch (explicit re-assembly — no new bytes) ----------
+  // Recovery path for a command whose chunks all staged but assembly never ran
+  // (worker died between last chunk and assemble). Idempotent: re-checks the
+  // staged set against `total` (body or cmd.progress.total) and stitches.
+  if (action === 'deliver_stitch') {
+    const cid = String(body.command_id || '');
+    if (!cid) return Response.json({ error: 'bad command_id' }, { status: 400 });
+    const cmdRows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((cmdRows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const cmd = cmdRows?.[0];
+    if (!cmd) return Response.json({ error: 'unknown command' }, { status: 404 });
+    if (isTerminal(cmd.status)) return Response.json({ ok: true, already: true, file_url: cmd.result?.file_url });
+    const total = Number(body.total) || Number(cmd.progress?.total) || 0;
+    const have = await sr.entities.FileBridgeChunk.filter({ command_id: cid }, 'seq', 64)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((have as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const staged = (have || []) as any[];
+    if (!total || staged.length < total) {
+      return Response.json({ ok: true, assembled: false, received: staged.length, total }, { status: 200 });
     }
-    const size = parts.reduce((n, p) => n + p.length, 0);
-    if (size > 256 * 1024 * 1024) return Response.json({ error: 'assembled over 256MB cap', needs_proxy: true }, { status: 413 });
-    const whole = new Uint8Array(size);
-    let off = 0; for (const p of parts) { whole.set(p, off); off += p.length; }
-    const wholeSha = await sha256Hex(whole);
-    if (body.file_sha256 && body.file_sha256 !== wholeSha) {
-      await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
-      return Response.json({ error: 'assembled sha256 mismatch — chunks purged, re-deliver', retry: true }, { status: 409 });
+    const seqs = new Set(staged.map((c: any) => c.seq));
+    for (let i = 0; i < total; i++) {
+      if (!seqs.has(i)) return Response.json({ ok: true, assembled: false, missing_seq: i, received: staged.length, total });
     }
-    const file = new File([whole], String(body.name || 'delivery.bin'));
-    const up = await sr.integrations.Core.UploadFile({ file });
-    if (cmd.args?.root_key && cmd.args?.path) {
-      const pk = pathKey(cmd.agent_id || agentId, cmd.args.root_key, cmd.args.path);
-      const ir = await sr.entities.FileIndex.filter({ path_key: pk }, '-updated_date', 1).catch(() => []);
-      if (ir?.[0]) {
-        await sr.entities.FileIndex.update(ir[0].id, {
-          delivered_url: up.file_url, delivered_at_ms: now(), sha256: wholeSha,
-        }).catch(() => null);
-      }
-    }
-    await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
-    if (!isTerminal(cmd.status)) {
-      await sr.entities.FileBridgeCommand.update(cmd.id, {
-        status: 'completed', updated_ts: now(),
-        result: { file_url: up.file_url, bytes: size, sha256: wholeSha },
-      });
-    }
-    return Response.json({ ok: true, file_url: up.file_url, bytes: size, sha256: wholeSha, assembled: true });
+    const ordered = staged.slice().sort((a: any, b: any) => a.seq - b.seq);
+    const st = await stitchStaged(sr, cmd, ordered, agentId, { file_sha256: body.file_sha256, name: body.name });
+    return Response.json(st.body, { status: st.status });
   }
 
   // ---------- event ----------
@@ -527,6 +567,97 @@ Deno.serve(async (req) => {
       upload_id: u.upload_id, uploaded_by: u.uploaded_by, created_ts: u.created_ts || 0,
     }));
     return Response.json({ ok: true, entries });
+  }
+
+  // ---------- manifest_sync (drift check: agent manifest vs server ledger) ----------
+  // Agent sends a digest of its local manifest.json; server digests the
+  // FileBridgeUpload ledger the same way and reports in_sync. Canonical form:
+  // sorted 'root_key|path|origin|managed_by' lines, sha256 hex.
+  if (action === 'manifest_sync') {
+    const rows = await sr.entities.FileBridgeUpload.filter(
+      { agent_id: agentId }, 'created_date', 2000,
+    ).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const lines = (rows || []).filter((u: any) => u.status !== 'failed')
+      .map((u: any) => `${u.root_key}|${u.path}|bridge|bridge`).sort();
+    const serverDigest = await sha256Hex(new TextEncoder().encode(lines.join('\n')));
+    const agentDigest = String(body.digest || '');
+    const agentCount = Number(body.count) || 0;
+    return Response.json({
+      ok: true,
+      in_sync: agentDigest === serverDigest && agentCount === lines.length,
+      server_digest: serverDigest, server_count: lines.length,
+      drift: agentDigest === serverDigest ? lines.length - agentCount : null,
+    });
+  }
+
+  // ---------- inventory_report (per-ext openability + totals snapshot) ----------
+  if (action === 'inventory_report') {
+    const runId = String(body.run_id || `inv-${agentId}-${now()}`);
+    const status = ['running', 'completed', 'failed', 'paused'].includes(body.status) ? body.status : 'completed';
+    const existing = await sr.entities.FileBridgeInventory.filter(
+      { run_id: runId, agent_id: agentId }, '-updated_date', 1,
+    ).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((existing as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const row = {
+      run_id: runId, agent_id: agentId, status,
+      roots: Array.isArray(body.roots) ? body.roots.map(String).slice(0, 50) : [],
+      totals: body.totals && typeof body.totals === 'object' ? body.totals : {},
+      ext_map: body.ext_map && typeof body.ext_map === 'object' ? body.ext_map : {},
+      top_dirs: Array.isArray(body.top_dirs) ? body.top_dirs.slice(0, 100) : [],
+      cursor: body.cursor && typeof body.cursor === 'object' ? body.cursor : {},
+      errors: Array.isArray(body.errors) ? body.errors.slice(0, 50) : [],
+      ...(body.started_at ? { started_at: String(body.started_at) } : {}),
+      ...(status === 'completed' || status === 'failed' ? { finished_at: new Date(now()).toISOString() } : {}),
+    };
+    if (existing?.[0]) {
+      await sr.entities.FileBridgeInventory.update(existing[0].id, row).catch(() => null);
+      return Response.json({ ok: true, run_id: runId, updated: true });
+    }
+    const c = await sr.entities.FileBridgeInventory.create(row).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((c as any)?.__err) return Response.json({ error: 'write_unavailable', retry: true }, { status: 503 });
+    return Response.json({ ok: true, run_id: runId });
+  }
+
+  // ---------- become_primary (failover promotion — mutating) ----------
+  // Backup agent asks to take primary. Allowed when: no primary configured,
+  // this agent already is primary, the configured primary is stale/offline,
+  // or `force:true`. Updates settings + health role; emits a failover event.
+  if (action === 'become_primary') {
+    const current = String(settings.primary_agent_id || '');
+    if (current === agentId) {
+      return Response.json({ ok: true, role: 'primary', already: true });
+    }
+    if (current && !body.force) {
+      const rows = await sr.entities.FileBridgeHealth.filter({ agent_id: current }, '-updated_date', 1)
+        .catch((e: any) => ({ __err: String(e?.message || e) }));
+      if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+      const cur = rows?.[0];
+      const fresh = cur && now() - (cur.last_seen_ms || 0) < FB_HEALTHY_AGE_MS;
+      if (fresh) {
+        await ev(sr, { event_type: 'failover_refused', agent_id: agentId, actor: agentId, severity: 'warn', details: { primary: current, primary_state: cur.state } });
+        return Response.json({ error: `primary '${current}' still healthy`, primary: current, primary_last_seen_ms: cur.last_seen_ms }, { status: 409 });
+      }
+    }
+    // promote: settings row update (find it first — bootstrap guarantees it exists)
+    const gs = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((gs as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    if (!gs?.[0]) return Response.json({ error: 'settings row missing — run bootstrap_settings' }, { status: 503 });
+    const nextSettings = normalizeFileBridgeSettings({ ...settings, primary_agent_id: agentId });
+    const u = await sr.entities.GlobalSettings.update(gs[0].id, { setting_value: nextSettings })
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if (u?.__err) return Response.json({ error: 'write_unavailable', retry: true }, { status: 503 });
+    settingsCache = { v: null, at: 0 };
+    await upsertHealth(sr, agentId, { role: 'primary', state: 'online' });
+    if (current) await upsertHealth(sr, current, { role: 'backup', state: 'demoted' }).catch(() => null);
+    await ev(sr, { event_type: 'failover_promoted', agent_id: agentId, actor: agentId, severity: 'warn', details: { previous_primary: current || null, forced: !!body.force } });
+    const roots = await sr.entities.FileShareRoot.filter({ agent_id: agentId }, 'root_key', 50).catch(() => []);
+    return Response.json({
+      ok: true, role: 'primary', previous_primary: current || null,
+      config_version: nextSettings.config_version,
+      config: { roots: roots || [], exclude_patterns: nextSettings.exclude_patterns },
+    });
   }
 
   return Response.json({ error: `unknown action '${action}'` }, { status: 400 });
