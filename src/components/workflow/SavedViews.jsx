@@ -64,7 +64,7 @@ export default function SavedViews({
   // keep working; warn once so new mount points notice.
   useEffect(() => {
     if (ownerEmail && !pageKey && storageKey) {
-      // eslint-disable-next-line no-console
+       
       console.warn(`SavedViews: pageKey prop missing — scoping views to storageKey "${storageKey}". Pass an explicit pageKey.`);
     }
   }, [ownerEmail, pageKey, storageKey]);
@@ -121,7 +121,7 @@ export default function SavedViews({
     if (!view) return;
     autoAppliedRef.current = true;
     onApply(view.state, view.name);
-  }, [autoApply, views, defaultName, serverMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoApply, views, defaultName, serverMode]);  
 
   useEffect(() => {
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setNaming(false); setRenamingId(null); } };
