@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Info, Wrench } from 'lucide-react';
+import { Plus, Trash2, Wrench } from 'lucide-react';
 
 function EquipmentCard({ equipment, selectedEquipment, onUpdate, onRemove, allAttachments, allSubAttachments, showMiscAttachments }) {
   const eq = equipment; // the inventory item
