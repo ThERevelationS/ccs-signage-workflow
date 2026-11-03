@@ -167,14 +167,31 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   // county-subdivision claim — flags only a genuine multi-township conflict.
   const twpCands=[];const addTwp=(f,nm,src)=>{const name=String(nm||'').trim();if(!name)return;const ex=twpCands.find(c=>sameJ(c.name,name));if(ex){if(!ex.supported_by.includes(src))ex.supported_by.push(src);if(f.inside&&!ex.inside_sources.includes(src))ex.inside_sources.push(src);ex.inside=ex.inside||!!f.inside;ex.geoid=ex.geoid||String(f.attributes.GEOID||'');ex.distance_m=Math.min(ex.distance_m,Math.round(f.distance_m||0));}else twpCands.push({name,state,type:'township',geoid:String(f.attributes.GEOID||''),county:countyName,inside:!!f.inside,distance_m:Math.round(f.distance_m||0),supported_by:[src],inside_sources:f.inside?[src]:[]});};
   townships.filter(f=>/\btownship$/i.test(f.attributes.NAME)).forEach(f=>addTwp(f,f.attributes.NAME,'Census township boundary'));stateTownships.forEach(f=>addTwp(f,f.attributes.TOWNSHIP,'Ohio state township boundary'));
+  // Stale-name merge: one pin sits in exactly one township, so a Census-inside
+  // candidate and an OGRIP-inside candidate under DIFFERENT names describe the
+  // same township — the 1983 state layer keeps pre-rename names (Union → West
+  // Chester, 2000). Fold the OGRIP name in as an alias so the pick carries the
+  // fresher TIGER name. Only merges when exactly one Census candidate claims
+  // inside — ambiguous edges stay candidates for the consensus/review path.
+  {const censusInside=twpCands.filter(c=>c.inside&&c.inside_sources.includes('Census township boundary'));
+   if(censusInside.length===1){const t=censusInside[0];
+    for(const o of twpCands){
+     if(o===t||o.merged_into)continue;
+     if(o.inside&&o.inside_sources.includes('Ohio state township boundary')){
+      (t.aliases=t.aliases||[]).push(o.name);
+      for(const s of o.supported_by)if(!t.supported_by.includes(s))t.supported_by.push(s);
+      for(const s of o.inside_sources)if(!t.inside_sources.includes(s))t.inside_sources.push(s);
+      o.merged_into=t.name;o.inside=false;o.supported_by=[];
+     }}}};
   const insideTwp=twpCands.filter(c=>c.inside&&c.inside_sources.length);let twpPick=null;
   if(twpCands.length===1&&insideTwp.length)twpPick=twpCands[0];
   else if(insideTwp.length===1)twpPick=insideTwp[0];
   else if(insideTwp.length>1){const stOnly=insideTwp.filter(c=>c.inside_sources.includes('Ohio state township boundary'));if(stOnly.length===1)twpPick=stOnly[0];else{const hit=insideTwp.find(c=>sameJ(c.name,geoTwp));if(hit)twpPick=hit;}}
-  if(!twpPick){const tr=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,candidates:twpCands});if(tr)twpPick=tr.pick;}
-  if(!twpPick){if(twpCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the township here. Pick the correct jurisdiction below.',candidates:twpCands,target:null};throw Error('Township location is missing or conflicting.');}
+  const liveTwpCands=twpCands.filter(c=>!c.merged_into);
+  if(!twpPick){const tr=applyResolutionRules(rules,{enteredCity,enteredAddr:enteredAddress,state,countyName,candidates:liveTwpCands});if(tr)twpPick=tr.pick;}
+  if(!twpPick){if(liveTwpCands.length)return {...base,status:'needs_review',reason:'Official boundary sources disagree about the township here. Pick the correct jurisdiction below.',candidates:liveTwpCands,target:null};throw Error('Township location is missing or conflicting.');}
   const tf=[...townships,...stateTownships].find(f=>f.inside&&sameJ(String(f.attributes.NAME||f.attributes.TOWNSHIP||''),twpPick.name)),censT=townships.find(f=>sameJ(String(f.attributes.NAME||''),twpPick.name));
-  target={name:twpPick.name,state,type:'township',geoid:String(censT?.attributes.GEOID||twpPick.geoid||''),county:countyName,county_geoid:countyId,geometry:(tf||censT)?.geometry,source_url:(tf||censT)?.source_url,resolved_by:'source_consensus'};}
+  target={name:twpPick.name,state,type:'township',geoid:String(censT?.attributes.GEOID||twpPick.geoid||''),county:countyName,county_geoid:countyId,geometry:(tf||censT)?.geometry,source_url:(tf||censT)?.source_url,resolved_by:'source_consensus',...(twpPick.aliases?.length?{aliases:twpPick.aliases}:{})};}
  else target={name:countyName,state,type:'county',geoid:countyId,county:countyName,county_geoid:countyId,geometry:countyRow.geometry,source_url:countyRow.source_url};
  // County-authority layer: a county_gis_layer rule registers the county's own
  // GIS boundary service for a decision level (e.g. civil townships). Counties
@@ -258,7 +275,10 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
 }
 export function exactConfiguredLocality(localities,resolution,profiles=[]){
  if(resolution?.status!=='location_verified'||!resolution.target)return null;const target=resolution.target;
- const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state||!sameJ(row.name,target.name))return false;
+ const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state)return false;
+  // Alias-aware: records filed under a source layer's stale name (e.g. OGRIP's
+  // pre-rename township names) still match the fresher canonical target.
+  if(!sameJ(row.name,target.name)&&!(target.aliases||[]).some(a=>sameJ(row.name,a)))return false;
   const township=/township/i.test(row.name),county=/county$/i.test(String(row.name).trim());if(target.type==='county'&&!county||target.type!=='county'&&county)return false;if(target.type==='township'&&!township||target.type!=='township'&&township)return false;
   if(row.geographic_identity?.geoid)return row.geographic_identity.geoid===target.geoid;
   if(target.type!=='county'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.parent_county?.name || profile?.parent_county?.name;return sameJ(county,target.county);}
