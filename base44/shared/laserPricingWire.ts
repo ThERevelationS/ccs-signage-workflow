@@ -257,10 +257,17 @@ const nonEmptyArrayField = (rec: Record<string, unknown>, fields: readonly strin
 const anyFiniteField = (rec: Record<string, unknown>, fields: readonly string[]): boolean =>
   fields.some((f) => firstFinite(rec, [f]) !== null);
 
+// Field families the engine only fires on above zero — a persisted 0 is an
+// unset/default artifact, not authored config. markup is the exception: an
+// explicit markup_pct:0 pins sell-at-cost, so markup fields stay any-finite.
+const anyPositiveField = (rec: Record<string, unknown>, fields: readonly string[]): boolean =>
+  fields.some((f) => { const v = firstFinite(rec, [f]); return v !== null && v > 0; });
+
 /** Machine descriptors count only when they carry override content themselves. */
 const machineHasConfig = (v: unknown): boolean => {
   if (!isRecord(v)) return false;
-  return anyFiniteField(v, [...FIXED_FIELDS, ...MARKUP_FIELDS, ...MARKET_FIELDS, ...MIN_FIELDS])
+  return anyPositiveField(v, [...FIXED_FIELDS, ...MARKET_FIELDS, ...MIN_FIELDS])
+    || anyFiniteField(v, MARKUP_FIELDS)
     || nonEmptyArrayField(v, [...BREAK_FIELDS, ...FORMULA_FIELDS])
     || MODE_FIELDS.some((f) => isEngineModeToken(v[f]))
     || TIER_REF_FIELDS.some((f) => asString(v[f]) !== '');
@@ -274,7 +281,7 @@ const machineHasConfig = (v: unknown): boolean => {
  */
 export function descriptorHasPricingContent(d: unknown): boolean {
   if (!isRecord(d)) return false;
-  if (anyFiniteField(d, [...FIXED_FIELDS, ...MARKET_FIELDS, ...MARKET_DISCOUNT_FIELDS, ...MARKUP_FIELDS, ...MIN_FIELDS, ...SETUP_FIELDS])) return true;
+  if (anyPositiveField(d, [...FIXED_FIELDS, ...MARKET_FIELDS, ...MARKET_DISCOUNT_FIELDS, ...MIN_FIELDS, ...SETUP_FIELDS]) || anyFiniteField(d, MARKUP_FIELDS)) return true;
   if (nonEmptyArrayField(d, [...BREAK_FIELDS, ...FORMULA_FIELDS, ...EMBEDDED_RULE_FIELDS, ...EMBEDDED_TEMPLATE_FIELDS, ...EMBEDDED_TIER_CATALOG_FIELDS])) return true;
   if (MODE_FIELDS.some((f) => isEngineModeToken(d[f]))) return true;
   if (TIER_REF_FIELDS.some((f) => asString(d[f]) !== '')) return true;
