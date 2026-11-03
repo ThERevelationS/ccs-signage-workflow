@@ -59,7 +59,6 @@ import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
 import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
 
-import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
@@ -117,9 +116,9 @@ export default function WorkOrderDetailsDialog({
   isOpen,
   onClose,
   workOrder,
-  onEdit,
-  onMove,
-  onSplit,
+  onEdit: _onEdit,
+  onMove: _onMove,
+  onSplit: _onSplit,
   onComplete,
   onRestore,
   onUpdate,
@@ -136,7 +135,7 @@ export default function WorkOrderDetailsDialog({
   const [deletingWorkOrder, setDeletingWorkOrder] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
-  const [isEditingDependency, setIsEditingDependency] = useState(false);
+  const [_isEditingDependency, setIsEditingDependency] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
   // Edit states
@@ -242,7 +241,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleAddDependency = async () => {
+  const _handleAddDependency = async () => {
     if (!newDependency.trigger_value || !newDependency.action_value) return;
 
     const dependencyToAdd = { ...newDependency, id: Date.now() };
@@ -272,7 +271,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleDeleteDependency = async (depId) => {
+  const _handleDeleteDependency = async (depId) => {
     const dependencyToDelete = dependencies.find((dependency) => dependency.id === depId);
     if (!dependencyToDelete) {
       setInlineEditError("The dependency could not be identified safely. Reload before deleting it.");
@@ -750,7 +749,7 @@ export default function WorkOrderDetailsDialog({
   };
 
   // Local state to force re-render when notes change
-  const [localNotesVersion, setLocalNotesVersion] = useState(0);
+  const [_localNotesVersion, setLocalNotesVersion] = useState(0);
 
   const handleDeleteWorkNote = async (noteId) => {
     try {
@@ -769,7 +768,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleAddSubTask = async (noteId, subTaskText) => {
+  const _handleAddSubTask = async (noteId, subTaskText) => {
     const newSubTask = {
       id: Date.now(),
       text: subTaskText,
@@ -797,7 +796,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleToggleSubTask = async (noteId, subTaskId) => {
+  const _handleToggleSubTask = async (noteId, subTaskId) => {
     const originalSubTask = workNotes.find((note) => note.id === noteId)?.sub_tasks?.find((subTask) => subTask.id === subTaskId);
     if (!originalSubTask) return;
     const targetCompleted = !originalSubTask.completed;
@@ -823,7 +822,7 @@ export default function WorkOrderDetailsDialog({
     }
   };
 
-  const handleDeleteSubTask = async (noteId, subTaskId) => {
+  const _handleDeleteSubTask = async (noteId, subTaskId) => {
     try {
       const saved = await mutateWorkOrderArrayField({
         workOrderId: workOrder.id,
@@ -2016,7 +2015,7 @@ export default function WorkOrderDetailsDialog({
                       title={!relatedDataVerified ? "Related Work Orders must be verified before duplicate checking is available." : undefined}
                       onClick={() => {
                         // Copy all fields from current work order for duplicating
-                        const { id, created_date, updated_date, created_by, notes, work_notes, follow_up, ...dataWithoutId } = workOrder;
+                        const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, notes: _n, work_notes: _wn, follow_up: _fu, ...dataWithoutId } = workOrder;
                         setDuplicateData({
                           ...dataWithoutId,
                           title: "", // Clear title so user must enter new one
@@ -2182,7 +2181,7 @@ export default function WorkOrderDetailsDialog({
         isOpen={showCreateRiderDialog}
         onClose={() => setShowCreateRiderDialog(false)}
         parentWorkOrder={workOrder}
-        onCreated={(rider) => {
+        onCreated={(_rider) => {
           if (onUpdate) onUpdate();
           loadRelatedData();
         }}
