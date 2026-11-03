@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ESTIMATOR_TABS, ESTIMATOR_RIGHT_TABS } from "@/components/estimator/navConfig";
 
-function TabMenu({ tab, isActive, open, onOpen, onToggle, onClose, align = "left" }) {
+function TabMenu({ tab, isActive, open, onOpen, onClose, align = "left" }) {
   return (
     <div
       className="relative"
