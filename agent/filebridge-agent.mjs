@@ -145,6 +145,7 @@ try {
   } catch { log('warn', 'fts5_unavailable', {}); }
   try { db.exec(`ALTER TABLE files ADD COLUMN miss_count INTEGER DEFAULT 0`); } catch { /* present */ }
   try { db.exec(`ALTER TABLE files ADD COLUMN extracted_ms INTEGER DEFAULT 0`); } catch { /* present */ }
+  try { db.exec(`ALTER TABLE files ADD COLUMN thumb_pushed_ms INTEGER DEFAULT 0`); } catch { /* present */ }
 } catch (e) {
   log('warn', 'sqlite_unavailable', { err: String(e.message || e).slice(0, 120) });
 }
@@ -279,6 +280,31 @@ const extractCandidates = async (root, stats) => {
   }
 };
 
+// ---- passthrough thumbnails (P3): small images/SVGs render fine at any
+// size — push the file itself as the thumb (no resize deps). ≤50 per scan so
+// thumbs never compete with index batches; failures go to the durable spool.
+const THUMB_EXTS = new Set('jpg jpeg png gif webp svg bmp avif'.split(' '));
+const THUMB_MAX = 2 * 1024 * 1024;
+const THUMB_PER_SCAN = 50;
+const pushThumbs = async (stats) => {
+  if (!stats.thumbs.length) return;
+  const mark = db ? db.prepare('UPDATE files SET thumb_pushed_ms=? WHERE rowid=?') : null;
+  let sent = 0;
+  for (const t of stats.thumbs) {
+    if (sent >= THUMB_PER_SCAN) break;
+    sent += 1;
+    try {
+      const bytes = await fs.promises.readFile(t.abs);
+      const r = await post('thumb_push', { path_key: t.path_key, bytes_b64: bytes.toString('base64') }).catch(() => null);
+      if (r?.status === 200) { mark?.run(t.mtime_ms, t.rowid); stats.thumbs_pushed += 1; }
+      // 404 = index row not landed yet (batch may be spooled) → retry next
+      // scan. Other 4xx = permanent rejection → don't retry.
+      else if (r?.status && r.status !== 404 && r.status < 500) { mark?.run(t.mtime_ms, t.rowid); }
+      else { spoolPush('thumb_push', { path_key: t.path_key, bytes_b64: bytes.toString('base64') }); mark?.run(t.mtime_ms, t.rowid); }
+    } catch { /* next scan retries */ }
+  }
+};
+
 const scanDir = async (root, rel, scanId, stats) => {
   const abs = resolveInRoot(root, rel);
   if (!abs) { stats.skipped += 1; return 0; }
@@ -333,6 +359,15 @@ const scanDir = async (root, rel, scanId, stats) => {
           stats.extract.push({ rowid: cur.rowid, abs: path.posix.join(abs, e.name), size: st.size, mtime_ms: Math.floor(st.mtimeMs) });
         }
       }
+      // thumb candidates: image ext, ≤2MB, never pushed for this mtime.
+      // Dedupes itself via thumb_pushed_ms; only primary pushes (backup reads
+      // shouldn't double-write thumb_url on shared index rows).
+      if (THUMB_EXTS.has(row.ext) && st.size > 0 && st.size <= THUMB_MAX && state.role === 'primary') {
+        const cur = prev || knownRow(root.root_key, nrel);
+        if (cur && cur.thumb_pushed_ms !== Math.floor(st.mtimeMs)) {
+          stats.thumbs.push({ rowid: cur.rowid, path_key: row.path_key, abs: path.posix.join(abs, e.name), mtime_ms: Math.floor(st.mtimeMs) });
+        }
+      }
     }
     if (stats.batch.length >= SCAN_BATCH) { await flushIndexBatch(stats.batch.splice(0), scanId); }
   }
@@ -345,7 +380,7 @@ const scanDir = async (root, rel, scanId, stats) => {
 };
 
 const scanRoot = async (root, scanId, prefix = '') => {
-  const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, batch: [], recent: [], extract: [], extractOn: extractionOn(root) };
+  const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, thumbs_pushed: 0, batch: [], recent: [], extract: [], thumbs: [], extractOn: extractionOn(root) };
   const queue = [prefix.replace(/\/+$/, '')];
   let guard = 0;
   while (queue.length && guard < 200_000) {
@@ -356,6 +391,7 @@ const scanRoot = async (root, scanId, prefix = '') => {
   }
   await flushIndexBatch(stats.batch.splice(0), scanId);
   await extractCandidates(root, stats);
+  await pushThumbs(stats);
   if (stats.recent.length) {
     for (let i = 0; i < stats.recent.length; i += 300) {
       const payload = { items: stats.recent.slice(i, i + 300) };
