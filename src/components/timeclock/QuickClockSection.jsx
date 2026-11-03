@@ -1039,9 +1039,9 @@ export default function QuickClockSection({
       healthTimerRef.current = setTimeout(healthTick, 2000);
 
       if (!faceEnabled || !modelsReady) {
-        setRecognitionStatus(supportsInlineQrDetection()
-          ? IDENTIFY_QR_ONLY_BLURB
-          : IDENTIFY_QR_BUTTON_PROMPT);
+        const qrHint = supportsInlineQrDetection() ? IDENTIFY_QR_ONLY_BLURB : IDENTIFY_QR_BUTTON_PROMPT;
+        const faceHint = authoritativeSessionToken && !canUseFace ? " Face scan is unavailable right now - retrying in the background." : "";
+        setRecognitionStatus(qrHint + faceHint);
         return;
       }
       setRecognitionStatus(IDENTIFY_CAMERA_BLURB);
