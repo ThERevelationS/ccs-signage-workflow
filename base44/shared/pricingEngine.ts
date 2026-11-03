@@ -550,10 +550,15 @@ export function pricePart(input: any = {}): any {
   }
 
   const baseUnitPrice = unitPrice;
-  const modResult = applyFormulaModifiers(unitPrice, [
-    ...(Array.isArray(rule.formulaModifiers) ? rule.formulaModifiers : []),
-    ...(Array.isArray(input.modifiers) ? input.modifiers : []),
-  ]);
+  // Caller modifiers identical to rule-borne ones must not double-apply — a
+  // caller that forwards a part's own formula_modifiers as input.modifiers
+  // would otherwise run the same adjustment twice. Dedupe by (type, value);
+  // distinct modifiers still stack in order.
+  const ruleMods = Array.isArray(rule.formulaModifiers) ? rule.formulaModifiers : [];
+  const ruleModKeys = new Set(ruleMods.map((m: any) => `${normStr(m?.type)}|${Number(m?.value)}`));
+  const callerMods = (Array.isArray(input.modifiers) ? input.modifiers : [])
+    .filter((m: any) => !ruleModKeys.has(`${normStr(m?.type)}|${Number(m?.value)}`));
+  const modResult = applyFormulaModifiers(unitPrice, [...ruleMods, ...callerMods]);
   unitPrice = modResult.unitPrice;
 
   const extension = round2(unitPrice * qty);
