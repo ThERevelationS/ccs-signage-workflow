@@ -84,8 +84,12 @@ async function getHealth(sr: any, agentId: string) {
 
 async function upsertHealth(sr: any, agentId: string, patch: Record<string, any>) {
   const row = await getHealth(sr, agentId);
-  if (row) return sr.entities.FileBridgeHealth.update(row.id, { ...patch, last_seen_ms: now() });
-  return sr.entities.FileBridgeHealth.create({ agent_id: agentId, last_seen_ms: now(), state: 'online', ...patch });
+  // index_stats is the free-object field — merge rather than replace so
+  // handshake-written keys (e.g. detected_shares) survive heartbeat stats.
+  const merged = { ...patch };
+  if (patch.index_stats && row?.index_stats) merged.index_stats = { ...row.index_stats, ...patch.index_stats };
+  if (row) return sr.entities.FileBridgeHealth.update(row.id, { ...merged, last_seen_ms: now() });
+  return sr.entities.FileBridgeHealth.create({ agent_id: agentId, last_seen_ms: now(), state: 'online', ...merged });
 }
 
 async function pendingCommands(sr: any, agentId: string, limit = 10) {
@@ -200,6 +204,7 @@ Deno.serve(async (req) => {
     await upsertHealth(sr, agentId, {
       role, state: 'online', agent_version: body.agent_version || '', agent_host: body.host || '',
       display_name: body.display_name || agentId, spool_depth: body.spool_depth || 0,
+      index_stats: { detected_shares: body.detected_shares || null },
     });
     const roots = await sr.entities.FileShareRoot.filter({ agent_id: agentId }, 'root_key', 50).catch(() => []);
     return Response.json({
