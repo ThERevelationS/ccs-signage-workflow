@@ -32,7 +32,7 @@ export async function listEstimateRevisions(estimateId, { strict = false } = {})
   }
 }
 
-export async function startEstimateRevision({ estimate, reason, quoteTotal, internalCost, sessionToken = "" }) {
+export async function startEstimateRevision({ estimate, reason, sessionToken = "" }) {
   if (!estimate?.id) throw new Error("Estimate is required to start a revision.");
   const cleanReason = String(reason || "").trim();
   if (!cleanReason) throw new Error("A revision reason is required.");
