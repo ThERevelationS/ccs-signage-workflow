@@ -103,6 +103,15 @@ Deno.serve(async (req) => {
     });
   }
 
+  // ---------- get_inventory — latest completed scan report (openability matrix) ----------
+  if (action === 'get_inventory') {
+    const rows = await sr.entities.FileBridgeInventory.filter(
+      { status: 'completed' }, '-finished_at', 1,
+    ).catch(() => []);
+    const inv = rows?.[0] || null;
+    return Response.json({ ok: true, inventory: inv });
+  }
+
   // ---------- search_hot (FileIndex hot-scope only) ----------
   if (action === 'search_hot') {
     const { text, filters } = parseQualifiers(String(body.query || ''));
