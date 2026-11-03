@@ -122,11 +122,17 @@ Deno.serve(async (req) => {
       enabled: true, primary_agent_id: agentId, key_id: String(body.key_id || 'fbk1'),
       ...(body.settings && typeof body.settings === 'object' ? body.settings : {}),
     });
-    if (exists) await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: next });
-    else await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next });
+    let writeErr = '';
+    if (exists) {
+      const u = await sr.entities.GlobalSettings.update(rows[0].id, { setting_value: next }).catch((e: any) => ({ __err: String(e?.message || e) }));
+      if (u?.__err) writeErr = u.__err;
+    } else {
+      const c = await sr.entities.GlobalSettings.create({ setting_key: 'fileBridge', setting_value: next }).catch((e: any) => ({ __err: String(e?.message || e) }));
+      if (c?.__err) writeErr = c.__err;
+    }
     settingsCache = { v: null, at: 0 };
-    await ev(sr, { event_type: 'bootstrap_settings', agent_id: agentId, actor: agentId, details: { existed: exists } });
-    return Response.json({ ok: true, existed: exists, settings: next });
+    await ev(sr, { event_type: 'bootstrap_settings', agent_id: agentId, actor: agentId, details: { existed: exists, writeErr } });
+    return Response.json({ ok: !writeErr, existed: exists, settings: next, ...(writeErr ? { error: `settings write failed: ${writeErr}` } : {}) }, { status: writeErr ? 503 : 200 });
   }
 
   if (!settings.enabled) return Response.json({ error: 'fileBridge disabled' }, { status: 503 });
