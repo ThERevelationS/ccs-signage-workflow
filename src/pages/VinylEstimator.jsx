@@ -9,7 +9,6 @@ import {
   VinylProject, VinylInventory, VinylMachine,
   Settings, ChannelLetterInstallEquipment,
 } from "@/api/gatedEntities";
-import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
