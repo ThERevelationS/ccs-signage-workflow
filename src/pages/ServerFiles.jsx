@@ -38,6 +38,7 @@ export default function ServerFiles() {
   const [uploads, setUploads] = useState([]);
   const [viewer, setViewer] = useState(null); // {url,name,ext,size,sha256}
   const [attachRow, setAttachRow] = useState(null);
+  const [selected, setSelected] = useState(() => new Set());
   const fileInput = useRef(null);
   const { currentUser } = useAuth();
 
@@ -58,6 +59,7 @@ export default function ServerFiles() {
   }, [rootKey]);
 
   useEffect(() => { loadHealth(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setSelected(new Set()); }, [rootKey, dir]);
 
   const loadDir = useCallback(async (rk = rootKey, p = dir, refresh = false) => {
     if (!rk) return;
@@ -167,6 +169,27 @@ export default function ServerFiles() {
     const r = await fbCall("queue_restore", { root_key: rootKey, path: row.path });
     const d = r?.data ?? r;
     if (d?.command_id) { await waitForCommand(d.command_id, { timeoutMs: 60_000 }); loadDir(); }
+  };
+
+  const toggleSelect = (row) => {
+    setSelected((s) => { const n = new Set(s); if (n.has(row.path)) n.delete(row.path); else n.add(row.path); return n; });
+  };
+
+  const packageSelected = async () => {
+    if (!selected.size) return;
+    setBusy((b) => ({ ...b, pkg: `zipping ${selected.size} file${selected.size > 1 ? "s" : ""}…` }));
+    try {
+      const r = await fbCall("queue_package", { root_key: rootKey, paths: [...selected], archive_name: "files.zip" });
+      const d = r?.data ?? r;
+      if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
+      const c = await waitForCommand(d.command_id, { timeoutMs: 300_000 });
+      if (c?.status !== "completed" || !c?.result?.file_url) throw new Error(c?.error || `packaging ${c?.status}`);
+      window.open(c.result.file_url, "_blank", "noopener");
+      setSelected(new Set());
+      setBusy((b) => { const n = { ...b }; delete n.pkg; return n; });
+    } catch (e) {
+      setBusy((b) => ({ ...b, pkg: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 80)}` }));
+    }
   };
 
   const mkdir = async () => {
@@ -322,6 +345,19 @@ export default function ServerFiles() {
         ))}
       </div>
 
+      {/* selection → package */}
+      {selected.size > 0 && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-sm flex items-center justify-between gap-3">
+          <span>{selected.size} file{selected.size > 1 ? "s" : ""} selected</span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={packageSelected} disabled={!!busy.pkg}>
+              <Archive className="h-4 w-4 mr-1" /> {busy.pkg || "Download as zip"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+          </div>
+        </div>
+      )}
+
       {/* uploads */}
       {uploads.length > 0 && (
         <div className="rounded border divide-y text-sm">
@@ -359,6 +395,7 @@ export default function ServerFiles() {
             <EntryTable entries={entries} busy={busy} canDelete={canDelete}
               onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile} onEmail={emailFile}
               onAttach={isInbound && !inboundBlocked ? (r) => setAttachRow(r) : null}
+              selected={selected} onToggle={toggleSelect}
               onNavigate={(p) => setDir(p)} />
           )}
         </div>
@@ -373,7 +410,7 @@ export default function ServerFiles() {
   );
 }
 
-function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, onEmail, canDelete }) {
+function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, onEmail, canDelete, selected, onToggle }) {
   return (
     <div className="divide-y">
       {entries.map((r) => {
@@ -382,6 +419,10 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
         const openBusy = busy[`open:${r.path}`]; const delBusy = busy[`del:${r.path}`];
         return (
           <div key={r.path_key || r.path} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/40 group">
+            {onToggle && !r.is_dir && !r.missing && (
+              <input type="checkbox" className="h-4 w-4 shrink-0 accent-emerald-600"
+                checked={selected?.has(r.path) || false} onChange={() => onToggle(r)} />
+            )}
             <Icon className={`h-5 w-5 shrink-0 ${r.is_dir ? "text-amber-500" : "text-slate-500"}`} />
             <button className="font-medium text-sm truncate hover:underline text-left flex-1 min-w-0"
               onClick={() => (r.is_dir ? onNavigate(r.path) : onOpen(r))}>
