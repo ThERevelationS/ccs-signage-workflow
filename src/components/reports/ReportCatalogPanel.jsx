@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -344,7 +344,7 @@ function CatalogResultTable({ result }) {
         <tbody>
           {rows.map((row, i) => (
             <tr key={i} className="border-t border-slate-100 odd:bg-white even:bg-slate-50/60 dark:border-slate-800 dark:odd:bg-slate-900 dark:even:bg-slate-800/40">
-              {columns.map((c, ci) => {
+              {columns.map((c) => {
                 const cell = formatCellValue(row?.[c.key], c) || "—";
                 const link = cellDrillLink(row, c.key);
                 return (
@@ -421,7 +421,7 @@ export default function ReportCatalogPanel({ sessionToken: sessionTokenProp, isA
       setDefVia(via);
     });
     return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-time read only
+     
   }, []);
 
   const catalog = useMemo(
