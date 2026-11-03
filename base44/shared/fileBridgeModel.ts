@@ -362,7 +362,9 @@ export function mergeServerCopies<T extends { agent_id?: string; path_key?: stri
 ): Array<T & { copies: number }> {
   const groups = new Map<string, Array<T & { copies: number }>>();
   for (const r of rows) {
-    const k = String(r.path_key || '').split('|').slice(1).join('|');
+    const k = r.path_key
+      ? String(r.path_key).split('|').slice(1).join('|')
+      : ` solo:${(r as any).id ?? JSON.stringify(r)}`;
     const g = groups.get(k) || [];
     g.push({ ...r, copies: 0 });
     groups.set(k, g);
