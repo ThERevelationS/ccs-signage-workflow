@@ -26,12 +26,10 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -59,7 +57,7 @@ export default function WorkOrderForm({
   lockedStage = null,
   initialData = null, // For duplicating - prefill form with this data
   existingWorkOrders = [], // For duplicate detection
-  key // Force re-render when duplicating
+  key: _key // Force re-render when duplicating
 }) {
   const { currentUser, sessionToken } = useAuth();
   const [authorizedUsers, setAuthorizedUsers] = useState([]);
@@ -171,7 +169,7 @@ export default function WorkOrderForm({
     
     // If initialData provided (for duplicating), merge it
     if (initialData) {
-      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, ...dataWithoutId } = initialData;
       let notes = dataWithoutId.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
@@ -203,7 +201,7 @@ export default function WorkOrderForm({
   // Reset form when dialog opens with new initialData (for duplicating)
   useEffect(() => {
     if (isOpen && initialData && !workOrder) {
-      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      const { id: _id, created_date: _cd, updated_date: _ud, created_by: _cb, ...dataWithoutId } = initialData;
       let notes = dataWithoutId.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
