@@ -56,7 +56,7 @@ export default function MatrixSuggestPanel({ estimate, lines = [], onApplyLine, 
   // Lazy-load the pricing catalog the first time the panel is expanded.
   useEffect(() => {
     if (open && !catalog && !loading) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [open]);
 
   // The estimate carries pricing_tier (a MarkupTier.tier_number). Once the
