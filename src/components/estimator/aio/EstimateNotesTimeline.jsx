@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Plus, StickyNote } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 
