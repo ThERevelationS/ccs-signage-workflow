@@ -116,7 +116,7 @@ export default function CloseBatchDialog({ sessionToken, invoke, locations = [],
 
   // Mount: unfiltered pool (also seeds the location options). Filter edits
   // re-query server-side; the selection resets to the new result set.
-  useEffect(() => { load({}); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load({});   }, []);
 
   const applyFilters = (next = {}) => {
     load({ locationId: locKey, method, dateStart, dateEnd, ...next });
