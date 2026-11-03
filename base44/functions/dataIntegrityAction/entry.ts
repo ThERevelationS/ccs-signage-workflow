@@ -61,7 +61,7 @@ async function scanEntityRows(entity: any, query: any = null) {
   return { rows, scanned, truncated };
 }
 
-export async function handler(request: Request) {
+Deno.serve(async (request: Request) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(request));
     const body = await request.json().catch(() => ({}));
@@ -250,4 +250,4 @@ export async function handler(request: Request) {
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'Integrity scan failed' }, { status: e?.status || 500 });
   }
-}
+});
