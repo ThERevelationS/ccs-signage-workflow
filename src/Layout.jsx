@@ -42,6 +42,7 @@ import {
   ChevronsRight,
   ChevronsUp,
   ChevronsDown,
+  HardDrive,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -93,6 +94,7 @@ const navigationItems = [
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, accent: "#C084FC" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, accent: "#FB923C" },
   { title: "SOP", url: createPageUrl("SOP"), icon: BookOpen, accent: "#F472B6" },
+  { title: "Server Files", url: createPageUrl("ServerFiles"), icon: HardDrive, accent: "#94A3B8" },
   { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, accent: "#34D399" },
   { title: "Estimator", url: createPageUrl("Estimator"), icon: Calculator, accent: "#F87171" },
   { title: "Fleet", url: createPageUrl("FleetOverview"), icon: NavigationIcon, accent: "#22D3EE" },
