@@ -136,7 +136,7 @@
 //     pricing_tier_name|tier_set_name                      tier-set refs
 //   market_retail|retail|retail_price|list_price           >0 market retail
 //   market_discount_pct|retail_discount_pct
-//   markup_pct|markup|markup_percent                       nonzero only
+//   markup_pct|markup|markup_percent                       any finite (0 sells at cost)
 //   minimum_charge|min_charge|minimum|setup_fee_floor      extension floor
 //   setup_fee|setupFee|setup_fee_flat                      flat sell fee
 //   formula_modifiers|modifiers                            ordered unit-price ops
@@ -548,7 +548,7 @@ const machineHasConfig = (v: unknown): boolean => {
   const markup = firstFinite(v, MARKUP_FIELDS);
   return (fixed !== null && fixed > 0)
     || (retail !== null && retail > 0)
-    || (markup !== null && markup !== 0)
+    || (markup !== null)
     || firstFinite(v, MIN_FIELDS) !== null
     || nonEmptyArrayField(v, [...BREAK_FIELDS, ...FORMULA_FIELDS])
     || MODE_FIELDS.some((f) => isEngineModeToken(v[f]))
@@ -558,7 +558,8 @@ const machineHasConfig = (v: unknown): boolean => {
 /**
  * Does this resolved descriptor actually carry pricing content the engine can
  * act on? Wire thresholds (brick parity): fixed_price must be POSITIVE, markup
- * must be NONZERO (an explicit markup_pct:0 is not config), market retail must
+ * must be FINITE (an explicit markup_pct:0 IS config — it pins the component
+ * at cost, engine parity with vinyl/cnc), market retail must
  * be positive, chart/registry fields must be non-empty, mode tokens must be
  * recognized engine spellings. An empty pricing block, a unit-enum
  * pricing_mode ('per_cy'), or a bare machine name must NOT flip the component
@@ -575,8 +576,10 @@ export function descriptorHasPricingContent(d: unknown): boolean {
   const discount = firstFinite(d, MARKET_DISCOUNT_FIELDS);
   if (discount !== null && discount !== 0) return true;
   if (MODE_FIELDS.some((f) => isEngineModeToken(d[f]))) return true;
+  // Any finite markup is authored config — an explicit markup_pct:0 pins the
+  // component at cost (0% markup), not "no config" (F-23 markup-0 signal).
   const markup = firstFinite(d, MARKUP_FIELDS);
-  if (markup !== null && markup !== 0) return true;
+  if (markup !== null) return true;
   if (nonEmptyArrayField(d, FORMULA_FIELDS)) return true;
   if (firstFinite(d, MIN_FIELDS) !== null) return true;
   if (firstFinite(d, SETUP_FIELDS) !== null) return true;
