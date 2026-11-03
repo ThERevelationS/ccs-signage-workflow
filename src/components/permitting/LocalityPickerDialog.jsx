@@ -36,7 +36,7 @@ import {
   normalizeState,
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
-import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
+import { summarizeMatchedLocalityAuthority, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
 const AUTHORITY_ROLE_LABELS = {
   sign_permit: "Sign permit",
@@ -610,7 +610,7 @@ function LocalityPickerSession({
         const auth = summarizeMatchedLocalityAuthority(loc);
         const allowed = auth.verified_roles.includes('sign_permit') && auth.verified_roles.includes('zoning');
         const roles = (prof?.office_research?.roles || []).length;
-        setOfficeWatch({ roles, offices: (loc.offices || []).length });
+        setOfficeWatch({ roles, offices: (loc.offices || []).length, line: officeResearchStatusLine(loc, prof) });
         setResult(prev => prev ? {
           ...prev,
           authority_review: auth,
@@ -1092,7 +1092,7 @@ function LocalityPickerSession({
                         {addressNeedsCheck && (
                           <p className="mt-1 flex items-center gap-1 text-amber-800">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            Live — watching for updates{officeWatch.roles ? `, ${officeWatch.roles} office role${officeWatch.roles === 1 ? '' : 's'} found` : ''}{officeWatch.offices ? `, ${officeWatch.offices} office${officeWatch.offices === 1 ? '' : 's'} saved` : ''}. This updates automatically.
+                            {officeWatch.line || 'Watching for updates — this updates automatically.'}
                           </p>
                         )}
                         {addressAuthority?.status === 'staff_verified_roles' ? (
@@ -1382,10 +1382,7 @@ function LocalityPickerSession({
             {addressNeedsCheck && officeResearchMsg && (
               <span className="block text-xs font-medium text-amber-700 mb-0.5">
                 <Loader2 className="inline h-3 w-3 animate-spin mr-1 -mt-0.5" />
-                {officeResearchMsg}
-                {(officeWatch.roles > 0 || officeWatch.offices > 0) && (
-                  <span className="text-amber-800"> {officeWatch.roles > 0 && `${officeWatch.roles} office role${officeWatch.roles === 1 ? '' : 's'} found`}{officeWatch.roles > 0 && officeWatch.offices > 0 ? ' — ' : ''}{officeWatch.offices > 0 && `${officeWatch.offices} saved`}.</span>
-                )}
+                {officeWatch.line || officeResearchMsg}
               </span>
             )}
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
