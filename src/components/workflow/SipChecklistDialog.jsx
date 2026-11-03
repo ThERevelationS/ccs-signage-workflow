@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect } from "react";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Check, X, Plus, Trash2, Pencil, Save, 
   ClipboardList, FileText, Copy, Star 
@@ -14,7 +12,7 @@ import {
 const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 
 // Default checklist items if no template exists
-const DEFAULT_CHECKLIST = [
+const _DEFAULT_CHECKLIST = [
   { id: 1, text: "Design Approved" },
   { id: 2, text: "Materials Ordered" },
   { id: 3, text: "Permit Submitted" },
@@ -36,7 +34,7 @@ export default function SipChecklistDialog({
   onSave,
   isRegistered,
   title = "SIP Checklist",
-  checklistField = "sip_checklist",
+  checklistField: _checklistField = "sip_checklist",
   accentColor = "blue"
 }) {
   const [activeTab, setActiveTab] = useState("checklist");
