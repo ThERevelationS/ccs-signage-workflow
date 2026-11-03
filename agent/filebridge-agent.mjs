@@ -20,6 +20,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
+import zlib from 'node:zlib';
 
 const ENV = process.env;
 const APP_URL = (ENV.FB_APP_URL || '').replace(/\/+$/, '');
@@ -241,7 +242,10 @@ const flushIndexBatch = async (items, scanId) => {
 const EXTRACTABLE_EXTS = new Set(
   'txt md log csv tsv json jsonl xml html htm css js mjs cjs ts tsx jsx ini cfg conf yaml yml env sh bat ps1 sql graphql svg srt vtt'.split(' '),
 );
+// binary containers parsed by dedicated extractors (separate size caps)
+const EXTRACT_BINARY_EXTS = new Set('pdf docx xlsx pptx'.split(' '));
 const EXTRACT_MAX_FILE = 2 * 1024 * 1024;  // bytes read
+const EXTRACT_MAX_BIN = 16 * 1024 * 1024;  // pdf/office read cap
 const EXTRACT_MAX_TEXT = 64 * 1024;        // chars kept
 const EXTRACT_PER_SCAN = 500;
 const extractionOn = (root) =>
@@ -256,6 +260,120 @@ const looksBinary = (buf) => {
   }
   return bad / Math.max(1, n) > 0.05;
 };
+// ---- binary-container extractors (zero-dep) ----
+// PDF: inflate FlateDecode content streams, pull Tj/TJ string ops. Honest
+// limits: no ToUnicode cmap mapping — simple WinAnsi/UTF-16 text only.
+const pdfLitStr = (s) => {
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '\\' && i + 1 < s.length) {
+      const n = s[i + 1];
+      if ('nrtbf'.includes(n)) { out += { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f' }[n]; i += 1; continue; }
+      if (/[0-7]/.test(n)) {
+        const m = s.slice(i + 1).match(/^[0-7]{1,3}/);
+        if (m) { out += String.fromCharCode(parseInt(m[0], 8) & 0xff); i += m[0].length; continue; }
+      }
+      out += n; i += 1; continue;
+    }
+    out += c;
+  }
+  return out;
+};
+const extractPdfText = (buf) => {
+  const out = [];
+  const raw = buf.toString('latin1');
+  const streamRe = /stream\r?\n/g;
+  let m;
+  while ((m = streamRe.exec(raw)) && out.join(' ').length < EXTRACT_MAX_TEXT * 2) {
+    const end = raw.indexOf('endstream', m.index);
+    if (end < 0) break;
+    const slice = buf.subarray(m.index + m[0].length, end);
+    // strip possible trailing EOL before endstream
+    let body = slice;
+    if (body.length > 2 && body[body.length - 2] === 0x0d && body[body.length - 1] === 0x0a) body = body.subarray(0, body.length - 2);
+    else if (body.length > 1 && (body[body.length - 1] === 0x0a || body[body.length - 1] === 0x0d)) body = body.subarray(0, body.length - 1);
+    let data;
+    try { data = zlib.inflateSync(body); } catch { data = body; }
+    const s = data.toString('latin1');
+    // literal strings: (...)Tj / [...]TJ / ' / "
+    const strRe = /\(((?:\\.|[^\\()])*)\)\s*(?:Tj|'|")|\[((?:\\.|[^\]])*)\]\s*TJ|<([0-9A-Fa-f\s]+)>\s*Tj/g;
+    let sm;
+    while ((sm = strRe.exec(s))) {
+      if (sm[1] !== undefined) out.push(pdfLitStr(sm[1]));
+      else if (sm[2] !== undefined) {
+        for (const lm of sm[2].matchAll(/\(((?:\\.|[^\\()])*)\)|<([0-9A-Fa-f\s]+)>/g)) {
+          if (lm[1] !== undefined) out.push(pdfLitStr(lm[1]));
+          else if (lm[2]) out.push(hexToText(lm[2]));
+        }
+      } else if (sm[3]) out.push(hexToText(sm[3]));
+    }
+  }
+  return out.join(' ').replace(/\s+/g, ' ').trim();
+};
+const hexToText = (h) => {
+  const hex = h.replace(/\s+/g, '');
+  if (hex.length < 2 || hex.length % 2) return '';
+  const b = Buffer.from(hex, 'hex');
+  // UTF-16BE markers or mostly-zero high bytes → decode as UTF-16BE
+  let zeros = 0;
+  for (let i = 0; i < Math.min(b.length, 40); i += 2) if (b[i] === 0) zeros += 1;
+  if (zeros > 8 && b.length >= 4) {
+    let s = '';
+    for (let i = 0; i + 1 < b.length; i += 2) s += String.fromCharCode((b[i] << 8) | b[i + 1]);
+    return s;
+  }
+  return b.toString('latin1');
+};
+// Office Open XML: zip container — parse EOCD → central directory → inflate
+// the XML member(s) that carry text, strip tags. Text lives in document.xml
+// (docx), sharedStrings.xml (xlsx), slides/*.xml (pptx).
+const zipMembers = (buf, nameRe, maxOut = 4 * 1024 * 1024) => {
+  const tail = buf.subarray(Math.max(0, buf.length - 65536));
+  let eocd = -1;
+  for (let i = tail.length - 22; i >= 0; i--) {
+    if (tail[i] === 0x50 && tail[i + 1] === 0x4b && tail[i + 2] === 0x05 && tail[i + 3] === 0x06) { eocd = i; break; }
+  }
+  if (eocd < 0) return [];
+  const cdCount = tail.readUInt16LE(eocd + 10);
+  let cdOff = tail.readUInt32LE(eocd + 16);
+  const out = [];
+  for (let i = 0; i < cdCount && cdOff + 46 <= buf.length; i++) {
+    if (buf.readUInt32LE(cdOff) !== 0x02014b50) break;
+    const method = buf.readUInt16LE(cdOff + 10);
+    const csize = buf.readUInt32LE(cdOff + 20);
+    const nlen = buf.readUInt16LE(cdOff + 28);
+    const elen = buf.readUInt16LE(cdOff + 30);
+    const clen = buf.readUInt16LE(cdOff + 32);
+    const lhoff = buf.readUInt32LE(cdOff + 42);
+    const name = buf.subarray(cdOff + 46, cdOff + 46 + nlen).toString('latin1');
+    cdOff += 46 + nlen + elen + clen;
+    if (!nameRe.test(name) || out.reduce((n, b) => n + b.length, 0) > maxOut) continue;
+    if (lhoff + 30 > buf.length || buf.readUInt32LE(lhoff) !== 0x04034b50) continue;
+    const lnlen = buf.readUInt16LE(lhoff + 26);
+    const lelen = buf.readUInt16LE(lhoff + 28);
+    const dataOff = lhoff + 30 + lnlen + lelen;
+    const raw = buf.subarray(dataOff, Math.min(buf.length, dataOff + csize));
+    try { out.push(method === 8 ? zlib.inflateRawSync(raw) : method === 0 ? Buffer.from(raw) : null); }
+    catch { out.push(null); }
+  }
+  return out.filter(Boolean);
+};
+const stripXml = (s) => s
+  .replace(/<w:tab\s*\/>/g, '\t').replace(/<\/w:p>/g, '\n').replace(/<a:br\s*\/>/g, '\n')
+  .replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/\s+/g, ' ').trim();
+const OFFICE_PARTS = {
+  docx: /^word\/document\.xml$/,
+  xlsx: /^xl\/sharedStrings\.xml$/,
+  pptx: /^ppt\/slides\/slide\d+\.xml$/,
+};
+const extractOfficeText = (buf, ext) => {
+  const re = OFFICE_PARTS[ext];
+  if (!re) return '';
+  const parts = zipMembers(buf, re);
+  return parts.map((p) => stripXml(p.toString('utf8'))).join(' ').replace(/\s+/g, ' ').trim();
+};
 const extractCandidates = async (root, stats) => {
   if (!fts || !stats.extract.length) return;
   let done = 0;
@@ -268,11 +386,18 @@ const extractCandidates = async (root, stats) => {
     try {
       const fh = await fs.promises.open(c.abs, 'r');
       try {
-        const buf = Buffer.alloc(Math.min(c.size, EXTRACT_MAX_FILE));
+        const buf = Buffer.alloc(Math.min(c.size, c.bin ? EXTRACT_MAX_BIN : EXTRACT_MAX_FILE));
         await fh.read(buf, 0, buf.length, 0);
-        if (looksBinary(buf)) { mark.run(-1, c.rowid); continue; }
-        let text = buf.toString('utf8').replaceAll(String.fromCharCode(0),' ');
+        let text;
+        if (c.bin === 'pdf') text = extractPdfText(buf);
+        else if (c.bin) text = extractOfficeText(buf, c.bin);
+        else {
+          if (looksBinary(buf)) { mark.run(-1, c.rowid); continue; }
+          text = buf.toString('utf8').replaceAll(String.fromCharCode(0), ' ');
+        }
         if (text.length > EXTRACT_MAX_TEXT) text = text.slice(0, EXTRACT_MAX_TEXT);
+        // parsed-empty (encrypted/image-only/corrupt) — mark -2, retried on mtime change
+        if (text.length < 8) { mark.run(-2, c.rowid); continue; }
         del.run(c.rowid); ins.run(c.rowid, text); mark.run(c.mtime_ms, c.rowid);
         stats.extracted += 1;
       } finally { await fh.close(); }
@@ -353,10 +478,11 @@ const scanDir = async (root, rel, scanId, stats) => {
       dirSize += st.size; stats.files += 1;
       // extraction candidates: extractable ext, size-capped, and new/changed
       // since last extraction (extracted_ms !== mtime_ms covers both).
-      if (stats.extractOn && EXTRACTABLE_EXTS.has(row.ext) && st.size > 0 && st.size <= EXTRACT_MAX_FILE) {
+      if (stats.extractOn && (EXTRACTABLE_EXTS.has(row.ext) && st.size > 0 && st.size <= EXTRACT_MAX_FILE
+          || EXTRACT_BINARY_EXTS.has(row.ext) && st.size > 0 && st.size <= EXTRACT_MAX_BIN)) {
         const cur = prev || knownRow(root.root_key, nrel);
         if (cur && cur.extracted_ms !== Math.floor(st.mtimeMs)) {
-          stats.extract.push({ rowid: cur.rowid, abs: path.posix.join(abs, e.name), size: st.size, mtime_ms: Math.floor(st.mtimeMs) });
+          stats.extract.push({ rowid: cur.rowid, abs: path.posix.join(abs, e.name), size: st.size, mtime_ms: Math.floor(st.mtimeMs), bin: EXTRACT_BINARY_EXTS.has(row.ext) ? row.ext : null });
         }
       }
       // thumb candidates: image ext, ≤2MB, never pushed for this mtime.
