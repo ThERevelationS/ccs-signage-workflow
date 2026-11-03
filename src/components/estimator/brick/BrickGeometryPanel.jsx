@@ -22,7 +22,7 @@ export default function BrickGeometryPanel({ project, materials, derived, onChan
       const m = materials.find((x) => x.id === last);
       if (m) onChange({ selected_material_id: m.id, material_name: m.material_name || "", material_dimensions: { length: m.length, width: m.width, height: m.height } });
     } catch { /* storage unavailable */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   return (
