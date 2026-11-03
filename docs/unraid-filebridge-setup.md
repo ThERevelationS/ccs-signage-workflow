@@ -165,7 +165,9 @@ In the app, open **Server Files** (hard-drive nav item):
   (`Customer folders` for the auto-match pipeline, `Inbound drop zone` for
   the attach tray, `General` otherwise), and save. Root changes reach the
   agent on its next handshake (≤2 min). Enable **Content extraction** on
-  roots whose text files should be deep-searchable.
+  roots whose files should be deep-searchable — the agent extracts
+  text files (34 extensions) plus **pdf, docx, xlsx, pptx** natively
+  (no extra tools needed; ≤16MB per binary file, ≤64KB of text kept).
 - **Admins:** the **Bridge agents** panel shows both servers' health and
   the promote/demote controls.
 - First index takes a few minutes per ~50k files — entries fill in
@@ -211,6 +213,8 @@ a `backup` badge when that's happening.
 | Stop serving | `docker stop filebridge-agent` — reads fail over to backup; writes queue for up to TTL |
 | Rebuild provenance | after reinstall: queue `rebuild_manifest` — it re-stamps `manifest.json` from the app's upload ledger. The agent also digest-checks hourly (`manifest_sync`) and logs `manifest_drift` if the ledger and local manifest diverge |
 | Manage roots | Server Files → **Share roots** (admin) — no SSH needed; changes propagate via `config_version` |
+| Restore a deleted file | Server Files → **Trash** toggle — lists `.ccs_trash` tombstones (bridge-deleted files only); Restore puts the file back, collision-suffixed if the name was reused |
+| Restrict a root's files | Share roots → set **Restricted** on the root (or `secure_download_roots` in settings) — delivered files then transit the app's `secure_download` proxy as session-checked bytes instead of a shareable storage link; email-share is refused on restricted roots |
 
 ## Troubleshooting
 
