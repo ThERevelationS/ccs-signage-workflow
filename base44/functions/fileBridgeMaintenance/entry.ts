@@ -7,8 +7,12 @@ import {
 // fileBridgeMaintenance — scheduled hands-off sweeps (workflow: every 5 min).
 // 1. Expire queued commands past expires_at_ms; requeue stale leases once.
 // 2. Mark agent health stale/offline from last_seen_ms.
-// 3. TTL-sweep FileBridgeEvent (90d), FileBridgeRecent (ring cap), FileBridgeChunk (1h).
-// 4. delivered_url dereference sweep is P3 (keep_delivered_max_mb gate).
+// 3. TTL-sweep FileBridgeEvent (90d), FileBridgeRecent (ring cap), FileBridgeChunk (1h),
+//    FileBridgeCommand (24h terminal).
+// 4. delivered_url dereference sweep — keep newest within keep_delivered_max_mb
+//    (no storage delete API; deref only). Files re-deliver on next open.
+// 5. link_match — auto-match top-level customer_folders dirs to Customers.
+// 6. link_reconcile — heal broken links + re-derive FileIndex.customer_ids.
 
 const now = () => Date.now();
 const DAY = 86_400_000;
@@ -92,6 +96,24 @@ Deno.serve(async (req) => {
     events_deleted: oldEvents?.length || 0, recent_deleted: recentDeleted,
     chunks_deleted: oldChunks?.length || 0, commands_deleted: oldCmds?.length || 0,
   };
+
+  // ---- delivered_url dereference sweep ----
+  // UploadFile has no delete API — delivered blobs accumulate. Keep the newest
+  // deliveries within keep_delivered_max_mb; deref the rest (file re-delivers
+  // on next open — the blob stays orphaned but the index stops pointing at it).
+  const capBytes = (settings.keep_delivered_max_mb || 4096) * 1024 * 1024;
+  const delivered = await sr.entities.FileIndex.filter(
+    { delivered_at_ms: { $gt: 0 } }, '-delivered_at_ms', 500,
+  ).catch(() => []);
+  let derefed = 0, keptBytes = 0;
+  for (const row of delivered || []) {
+    keptBytes += Number(row.size || 0);
+    if (keptBytes > capBytes) {
+      await sr.entities.FileIndex.update(row.id, { delivered_url: '', delivered_at_ms: 0 }).catch(() => null);
+      derefed += 1;
+    }
+  }
+  out.sweeps.delivered = { rows: delivered?.length || 0, kept_mb: Math.round(keptBytes / 1048576), derefed };
 
   // ---- customer folder link matching ----
   // Top-level dirs on purpose:'customer_folders' roots vs Customer.company_name.
