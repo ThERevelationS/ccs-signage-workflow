@@ -428,7 +428,7 @@ export default function PermitClientGroup({
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
-          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office…</Button></div>}
+          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office(s)…</Button></div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> find which town or township issues this job's permits.</span>
@@ -439,7 +439,7 @@ export default function PermitClientGroup({
                 variant="outline"
                 className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
               >
-                <MapPin className="w-3.5 h-3.5" /> Find the right office…
+                <MapPin className="w-3.5 h-3.5" /> Find the right office(s)…
               </Button>
             </div>
           ) : (
