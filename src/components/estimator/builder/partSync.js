@@ -322,7 +322,7 @@ function makePart({
   };
 }
 
-function extractChannel(project, catalogs = {}) {
+function extractChannel(project) {
   const parts = [];
   const hasNumber = (value) => value !== null && value !== undefined && Number.isFinite(Number(value));
   const itemLabel = (item, fallback) => item?.description?.trim() || fallback;
@@ -2506,7 +2506,7 @@ function extractFoundation(project, catalogs) {
         pricingBasis: { pricing_mode: "pickup_delivery" },
       }));
     }
-    breakdown.attachmentCosts.forEach((entry, attachmentIndex) => {
+    breakdown.attachmentCosts.forEach((entry) => {
       if (!entry.id) return;
       parts.push(makePart({
         key: `foundation:equipment:${index}:attachment:${entry.id}`,
