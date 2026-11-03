@@ -72,14 +72,6 @@ import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 const WorkOrder = staffEntities.WorkOrder;
 const GlobalSettings = staffEntities.GlobalSettings;
 
-// TEMP-DIAG: per-effect fire counter — at a #301 crash, whichever count
-// tracks the render count names the looping effect.
-const __eff = (k) => {
-  if (typeof window !== "undefined" && window.__spDiag) {
-    window.__spDiag.eff[k] = (window.__spDiag.eff[k] || 0) + 1;
-  }
-};
-
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100" },
   { value: "quoted", label: "Quoted", color: "bg-yellow-100" },
@@ -270,7 +262,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
-    __eff("resize");
     const handler = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
@@ -371,7 +362,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   // Repair only the retired virtual-stage choice in a user-local header filter.
   // Preserve other selected statuses, direction, and the remaining layout.
   useEffect(() => {
-    __eff("sortGuard");
     if (sortConfig.key !== "sales_status" || sortConfig.customFilter?.filterType !== "selected") return;
     const selected = sortConfig.customFilter.selectedValues || [];
     if (!selected.includes("needs_stage")) return;
@@ -390,7 +380,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   });
 
   useEffect(() => {
-    __eff("colHdr");
     onColumnHeaderFilterChange?.(activeColumnHeaderFilter);
   }, [activeColumnHeaderFilter, onColumnHeaderFilterChange]);
 
@@ -415,7 +404,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   });
   const liveViewSessionKeyRef = useRef(liveViewSessionKey);
   useEffect(() => {
-    __eff("liveKey");
     if (liveViewSessionKeyRef.current === liveViewSessionKey) return;
     liveViewSessionKeyRef.current = liveViewSessionKey;
     releaseLiveEditPins();
@@ -464,13 +452,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [taskAssignmentRules, setTaskAssignmentRules] = useState([]);
 
   useEffect(() => {
-    __eff("gsMount");
     loadGlobalSettings();
     loadTaskAssignmentRules();
   }, []);
 
   useEffect(() => {
-    __eff("scopeLoad");
     // Invalidate the previous workspace immediately. Without this, a slow
     // request from the old scope can briefly repopulate the new workspace.
     const scopeChanged = activeRecordScopeRef.current !== recordScope;
@@ -502,7 +488,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   });
 
   useEffect(() => {
-    __eff("woSub");
     if (!sessionToken) return undefined;
 
     let unsubscribe = null;
@@ -572,7 +557,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [sessionToken]);
 
   useEffect(() => {
-    __eff("viewMode");
     if (!["insights", "daily"].includes(viewMode)) return;
     // Insights and Daily are task/report surfaces rather than the row-detail
     // queue that opened these dialogs. Do not carry a row-bound action over
@@ -2987,27 +2971,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (fieldName === "sales_status") return;
     updateWorkOrder(woId, fieldName, "");
   };
-
-  // TEMP-DIAG: render identity tracker — records which state/prop changes each render.
-  if (typeof window !== "undefined") {
-    const __s = (window.__spDiag = window.__spDiag || { n: 0, last: {}, changes: [], eff: {}, pageRenders: 0 });
-    __s.t = Date.now();
-    const snap = {
-      isLoading, loadError, workOrders, filteredWorkOrders, pipelineSummary,
-      sortConfig, liveEditPinVersion, users, selectedRows, focusedRowId,
-      openDatePopover, sessionToken, currentUser, searchTerm, filterStatus,
-      recordScope, attentionFilter, customFilters, activeColumnPreset,
-      onSummaryChange, onColumnHeaderFilterChange, sortedWorkOrders,
-      scopedWorkOrders, taskDescriptions, leadSources, projectTypes,
-    };
-    const changed = Object.keys(snap).filter((k) => snap[k] !== __s.last[k]);
-    if (changed.length || __s.n < 3) {
-      __s.changes.push(`${__s.n}:${changed.join(",")}`);
-      if (__s.changes.length > 600) __s.changes.shift();
-    }
-    Object.assign(__s.last, snap);
-    __s.n += 1;
-  }
 
   if (isLoading) {
     return (
