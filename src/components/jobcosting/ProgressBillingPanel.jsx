@@ -8,7 +8,6 @@ import {
   buildEstimateBillingPayload,
   buildMilestoneInvoicePayload,
   deriveBillingState,
-  money,
   normalizeSchedule,
   scheduleFromEntity,
   scheduleToEntity,
@@ -150,7 +149,7 @@ export default function ProgressBillingPanel({ sessionToken, job, workOrder, onC
     if (!loadCachedSchedule(workOrderId).length) return;
     migratedRef.current = true;
     persistRef.current(schedule);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [workOrder?.billing_schedule, workOrderId]);
 
   const startEdit = () => {
