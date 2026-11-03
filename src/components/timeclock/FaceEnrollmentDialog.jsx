@@ -8,11 +8,39 @@ import {
   Loader2
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
+import { descriptorDistance } from "./faceScanRuntime";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 import { triggerNotification } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
+
+// Stacking: every enrollment session merges its captures into the stored
+// template set instead of replacing it - repeated enrollments over time build
+// real pose/lighting coverage. 0.10 (looser than the capture-time 0.08) is the
+// cross-session near-duplicate cutoff; the set is capped and the oldest
+// templates roll off first.
+const FACE_TEMPLATE_MERGE_DISTANCE = 0.10;
+const FACE_TEMPLATE_MAX = 40;
+
+// Merges a capture batch into stored descriptors: near-duplicates of an
+// already-stored template are skipped, then the set is capped by dropping the
+// oldest entries. Returns counts so the dialog can show the growing profile.
+function mergeFaceDescriptors(existing = [], batch = []) {
+  const merged = existing
+    .filter(v => (Array.isArray(v) || ArrayBuffer.isView(v)) && v.length === 128)
+    .map(v => Array.from(v));
+  const stored = merged.length;
+  let added = 0;
+  for (const d of batch || []) {
+    if (!merged.some(e => descriptorDistance(e, d) < FACE_TEMPLATE_MERGE_DISTANCE)) {
+      merged.push(Array.from(d));
+      added += 1;
+    }
+  }
+  const dropped = Math.max(0, merged.length - FACE_TEMPLATE_MAX);
+  return { merged: dropped ? merged.slice(dropped) : merged, added, stored, dropped };
+}
 
 export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess }) {
   const [faceDescriptors, setFaceDescriptors] = useState([]);
@@ -20,6 +48,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [saved, setSaved] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [mergeInfo, setMergeInfo] = useState(null);
   const saveSeqRef = useRef(0);
   const capturedForRef = useRef("");
   const completionTimerRef = useRef(null);
@@ -71,8 +100,16 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
       setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
       return;
     }
-    if (enrollGrade?.grade === "D" || enrollGrade?.grade === "F") {
-      setSaveError(`Enrollment quality ${enrollGrade.grade}: ${enrollGrade.tip}. Recapture with more pose/distance variation.`);
+    const { merged, added, stored, dropped } = mergeFaceDescriptors(user?.face_descriptors, faceDescriptors);
+    if (!added) {
+      setSaveError(stored
+        ? "These captures match templates already stored - vary your angle, distance, or lighting for new coverage."
+        : "Every capture was a near-duplicate. Vary your pose between captures.");
+      return;
+    }
+    const mergedGrade = gradeFor(merged);
+    if (mergedGrade.grade === "F" || (mergedGrade.grade === "D" && !stored)) {
+      setSaveError(`Enrollment quality ${mergedGrade.grade}: ${mergedGrade.tip}. Recapture with more pose/distance variation.`);
       return;
     }
     const requestSeq = ++saveSeqRef.current;
@@ -83,12 +120,13 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
       await updateAuthorizedEmailIfUnchanged({
         entity: AuthorizedEmail,
         record: user,
-        nextFields: { face_descriptors: faceDescriptors },
+        nextFields: { face_descriptors: merged },
         exactVersion: false,
         enforceIdentity: false,
         label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
       });
       if (!current()) return;
+      setMergeInfo({ added, total: merged.length, dropped });
       triggerNotification("user_face_enrolled", null, {
         recordData: user,
         eventDescription: "User face ID enrolled",
@@ -116,6 +154,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     completionTimerRef.current = null;
     capturedForRef.current = "";
     setFaceDescriptors([]);
+    setMergeInfo(null);
     setSaved(false);
     onClose();
   };
@@ -143,6 +182,11 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
             <p className="text-sm text-gray-500 mt-1">
               {user?.full_name} can now clock in using facial recognition.
             </p>
+            {mergeInfo && (
+              <p className="text-xs text-gray-400 mt-1">
+                Added {mergeInfo.added} new template{mergeInfo.added === 1 ? "" : "s"} - {mergeInfo.total} stored{mergeInfo.dropped ? ` (${mergeInfo.dropped} oldest rolled off)` : ""}.
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -155,6 +199,17 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
               isEnrollment={true}
               onEnrollCapture={handleCapture}
             />
+
+            {(() => {
+              const { added: previewAdded, stored: previewStored } = mergeFaceDescriptors(user?.face_descriptors, faceDescriptors);
+              return (
+                <div className="text-xs text-gray-500 text-center">
+                  {previewStored > 0
+                    ? `${previewStored} template${previewStored === 1 ? "" : "s"} already stored - new captures stack on top${previewAdded ? ` (+${previewAdded} new)` : ""}.`
+                    : "First enrollment - captures from multiple angles build the profile."}
+                </div>
+              );
+            })()}
 
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={handleClose} className="flex-1">
