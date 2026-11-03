@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt } from "@/components/files/fileBridgeClient";
 import AgentFailoverPanel from "@/components/files/AgentFailoverPanel";
+import RootSetupWizard from "@/components/files/RootSetupWizard";
 import FileViewerDialog from "@/components/files/FileViewerDialog";
 import InboundAttachDialog from "@/components/files/InboundAttachDialog";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -276,6 +277,8 @@ export default function ServerFiles() {
       )}
 
       <AgentFailoverPanel agents={agents} settings={health?.settings}
+        isAdmin={currentUser?.role === "admin"} fbCall={fbCall} onChanged={loadHealth} />
+      <RootSetupWizard agents={agents} roots={roots}
         isAdmin={currentUser?.role === "admin"} fbCall={fbCall} onChanged={loadHealth} />
 
       {/* link review queue */}
