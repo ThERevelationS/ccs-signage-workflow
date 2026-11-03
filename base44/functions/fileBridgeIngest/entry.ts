@@ -420,10 +420,10 @@ Deno.serve(async (req) => {
       const csha = String(body.sha256 || '') || await sha256Hex(bytes);
       const file = new File([bytes], `${cid}.part${seq}`);
       const up = await sr.integrations.Core.UploadFile({ file });
-      await sr.entities.FileBridgeChunk.create({
+      const created = await sr.entities.FileBridgeChunk.create({
         command_id: cid, seq, file_url: up.file_url, bytes: bytes.length, sha256: csha, received_at: now(),
       }).catch(() => null);
-      have.push({ seq, file_url: up.file_url, bytes: bytes.length, sha256: csha });
+      have.push({ id: created?.id, seq, file_url: up.file_url, bytes: bytes.length, sha256: csha });
     }
     const received = (have || []).length;
     if (!isTerminal(cmd.status)) {
