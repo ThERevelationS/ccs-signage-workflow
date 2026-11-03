@@ -1222,7 +1222,9 @@ const executors = {
     const row = db?.prepare('SELECT entity_id, is_dir FROM files WHERE path_key=?').get(pathKeyLocal(root.root_key, rel));
     await flushIndexBatch([{
       root_key: root.root_key, path: rel, is_dir: row?.is_dir || false,
-      pinned: args.pinned !== false, entity_id: row?.entity_id || undefined,
+      pinned: args.pinned !== false,
+      ...(args.pinned !== false ? { hot: true } : {}), // pin ⇒ guaranteed hot; unpin leaves usage promotion alone
+      entity_id: row?.entity_id || undefined,
     }], Number(metaGet('last_scan_id', 0)) || 0);
     return { ok: true, result: { path: rel, pinned: args.pinned !== false } };
   },
