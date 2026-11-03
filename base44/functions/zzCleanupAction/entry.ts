@@ -189,6 +189,17 @@ Deno.serve(async (request: Request) => {
       return Response.json({ success: true, cleared, kept, patched: Object.keys(patch).length, row });
     }
 
+    // get_row — read-only single row fetch for cleanup verification.
+    if (action === 'get_row') {
+      const ent = String(body?.entity || '');
+      const id = String(body?.id || '');
+      if (!ent || !id) return Response.json({ success: false, error: 'entity and id required' }, { status: 400 });
+      const rows = await base44.asServiceRole.entities[ent].filter({ id }, null, 1);
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (!row) return Response.json({ success: false, error: `No ${ent} row ${id}` }, { status: 404 });
+      return Response.json({ success: true, row });
+    }
+
     // delete_orphan_by_id — removes ONE row only when provably orphaned:
     // every populated link field must dangle (target row missing). A row that
     // still links to any live parent is refused — no blind deletes.
