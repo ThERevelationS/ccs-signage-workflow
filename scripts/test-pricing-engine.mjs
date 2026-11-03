@@ -50,10 +50,10 @@ eq(t.rule.minimumCharge, 25, 'row minimum carried into rule');
 eq(t.matchedRow.id, 'r-tier', 'matched row echoed for audit');
 
 t = resolveTier({ tierRules: RULES, category: 'shirts', customerTier: tierGold });
-eq(t.source, 'customer_tier', 'tier-only row wins when no category+tier row');
-eq(t.rule.markupPct, 40, 'tier-only markup used (layer outranks category default 30)');
+eq(t.source, 'customer_tier', 'tier-only row wins when no category row fits');
+eq(t.rule.markupPct, 40, 'tier-only markup used (banner cat row does not fit shirts)');
 
-t = resolveTier({ tierRules: RULES, category: 'banner', customerTier: { tier_number: 2 } });
+t = resolveTier({ tierRules: RULES, category: 'shirts', customerTier: { tier_number: 2 } });
 eq(t.source, 'customer_tier', 'bare tier_number still reaches the tier layer');
 eq(t.rule.markupPct, 40, 'tier key matches on tier_number (number-keyed row)');
 t = resolveTier({ tierRules: RULES, customerTier: 't1' });
@@ -92,6 +92,35 @@ t = resolveTier({ part: { tier_ref: 'ghost-tier' }, customerTier: tierGold, tier
 eq(t.source, 'part_tier', 'dangling part tier ref still claims the layer');
 eq(t.rule.danglingTierRef, 'ghost-tier', 'dangling ref reported, not silently dropped');
 
+// --- F-27 k1 parity locks: chart rows resolve on legacy matchSpecificity -----
+// cat+tier (3) > cat-only (2) > tier-only (1) > blank (0) — a category row
+// outranks a BARE customer_tier row (the old engine reversed this pair).
+t = resolveTier({ tierRules: RULES, category: 'banner', customerTier: { tier_number: 2 } });
+eq(t.source, 'global_default', 'F-27 k1: cat-only row outranks tier-only row');
+eq(t.rule.markupPct, 30, 'F-27 k1: category markup 30 wins, not tier markup 40');
+eq(t.matchedRow.id, 'r-cat', 'F-27 k1: matched row echoed is the category row');
+t = resolveTier({
+  tierRules: [
+    { id: 'a-cat', category: 'banner', markup_pct: 30 },
+    { id: 'z-tier', customer_tier: 'Gold', markup_pct: 99, effective_from: '2026-01-01' },
+  ],
+  category: 'banner', customerTier: tierGold, now: '2026-06-01',
+});
+eq(t.rule.markupPct, 30, 'F-27 k1: newer tier-only row still loses to category row');
+t = resolveTier({ tierRules: RULES, category: 'banner', customerTier: tierGold });
+eq(t.matchedRow.id, 'r-tier', 'F-27 k1: cat+tier (3) still outranks cat-only (2)');
+
+// F-23 markup-0: an explicit markup_pct:0 part descriptor is a REAL override —
+// sell at cost (0% markup), beating chart tiers and the shop default markup.
+t = resolveTier({ part: { markup_pct: 0 }, customerTier: tierGold, category: 'banner', tierRules: RULES });
+eq(t.rule.markupPct, 0, 'explicit markup_pct 0 -> 0% markup rule');
+eq(t.source, 'part_tier', 'part markup layer claims the win over the tier chart');
+eq(t.trace.find((s) => s.layer === 'part').hit, true, 'part layer marked hit');
+
+t = resolveTier({ machine: { markup_pct: 0 }, part: { markup_pct: 50 }, tierRules: RULES });
+eq(t.rule.markupPct, 0, 'machine markup_pct 0 overrides part markup');
+eq(t.source, 'machine_override');
+
 // --- pricePart: markup / fixed / breaks / market --------------------------------
 let p = pricePart({ qty: 4, unitCost: 10, tierRules: RULES, defaultMarkupPct: 10 });
 eq(p.unitPrice, 12, 'blank-row markup: 10 x 1.20');
@@ -103,6 +132,32 @@ p = pricePart({ qty: 2, unitCost: 10, customerTier: tierGold, category: 'banner'
 eq(p.unitPrice, 15, 'tier markup 50% -> 15');
 eq(p.extended, 30);
 eq(p.minimumApplied, false, 'extension 30 >= minimum 25 -> no floor');
+
+// markup_pct:0 on the part descriptor pins the unit price at cost — the
+// explicit sell-at-cost signal replaces (not blends with) the tier chart.
+p = pricePart({ qty: 2, unitCost: 10, part: { markup_pct: 0 }, customerTier: tierGold, category: 'banner', tierRules: RULES });
+eq(p.unitPrice, 10, 'explicit markup_pct 0 sells at cost, not tier markup 50%');
+eq(p.priceSource, 'markup');
+eq(p.tier.source, 'part_tier', 'part_tier provenance');
+eq(p.extended, 20, 'extension = raw cost');
+
+// A bare markup_pct:0 descriptor against an empty chart: cost passthrough of
+// the sell price via the markup rule (0% = cost, still an authored override).
+p = pricePart({ qty: 1, unitCost: 10, part: { markup_pct: 0 }, tierRules: [], defaultMarkupPct: 75 });
+eq(p.unitPrice, 10, 'markup_pct 0 beats the shop default markup too');
+eq(p.tier.source, 'part_tier');
+
+// Wire spelling parity (F-23 residual): the detection layer counts markup /
+// markup_percent as config — the engine must PRICE them identically or a
+// descriptor carrying a tolerated spelling repriced at the default markup.
+p = pricePart({ qty: 1, unitCost: 10, part: { markup: 25 }, tierRules: [], defaultMarkupPct: 75 });
+eq(p.unitPrice, 12.5, 'markup spelling prices at 25%, not default 75%');
+eq(p.priceSource, 'markup');
+p = pricePart({ qty: 1, unitCost: 10, part: { markup_percent: 40 }, tierRules: [], defaultMarkupPct: 75 });
+eq(p.unitPrice, 14, 'markup_percent spelling prices at 40%, not default 75%');
+eq(p.priceSource, 'markup');
+p = pricePart({ qty: 1, unitCost: 10, part: { markup: 0 }, tierRules: [], defaultMarkupPct: 75 });
+eq(p.unitPrice, 10, 'markup:0 spelling also pins sell-at-cost');
 
 p = pricePart({ qty: 1, unitCost: 10, customerTier: tierGold, category: 'banner', tierRules: RULES });
 eq(p.extension, 15);
@@ -160,6 +215,21 @@ const MKT_EXPENSIVE_BREAK = [{
 p = pricePart({ qty: 5, unitCost: 10, customerTier: tierGold, tierRules: MKT_EXPENSIVE_BREAK });
 eq(p.priceSource, 'market', 'break above market price loses');
 eq(p.unitPrice, 18);
+
+// --- F-27 k2 parity locks: market_retail <= 0 / non-finite is absent ---------
+// Legacy requires retail > 0 to take the market path; a zero/negative retail
+// falls back to the row's markup — never prices the unit at $0.
+p = pricePart({ qty: 2, unitCost: 10, tierRules: [{ id: 'mz0', pricing_mode: 'market', market_retail: 0, market_discount_pct: 10, markup_pct: 30 }] });
+eq(p.priceSource, 'markup', 'F-27 k2: market_retail 0 treated as absent');
+eq(p.unitPrice, 13, 'F-27 k2: markup_pct 30 prices the unit, not $0 retail');
+p = pricePart({ qty: 2, unitCost: 10, tierRules: [{ id: 'mzn', pricing_mode: 'market', market_retail: -50, markup_pct: 30 }] });
+eq(p.priceSource, 'markup', 'F-27 k2: negative market_retail also absent');
+eq(p.unitPrice, 13);
+p = pricePart({ qty: 2, unitCost: 10, part: { pricing_mode: 'market', market_retail: 0, markup_pct: 25 } });
+eq(p.priceSource, 'markup', 'F-27 k2: part-descriptor retail 0 falls to markup');
+eq(p.unitPrice, 12.5);
+p = pricePart({ qty: 2, unitCost: 10, tierRules: [{ id: 'mzx', pricing_mode: 'market', market_retail: 'x', markup_pct: 30 }] });
+eq(p.priceSource, 'markup', 'F-27 k2: non-finite market_retail absent too');
 
 // --- modifiers ------------------------------------------------------------------
 let m = applyFormulaModifiers(100, [
@@ -221,7 +291,20 @@ const input = { qty: 12, unitCost: 3.33, customerTier: tierGold, category: 'bann
 assert.deepEqual(pricePart(input), pricePart(input), 'same input -> identical output'); n += 1;
 p = pricePart({ qty: 'x', unitCost: 'y', tierRules: RULES });
 eq(p.total, 0, 'non-finite inputs coerce to 0, never NaN');
-ok(Number.isFinite(pricePart({ qty: -5, unitCost: 10 }).total), 'negative qty clamps');
+
+// --- F-27 k3 parity locks: negative qty/cost pass through unclamped ----------
+// Legacy num() never clamps — a negative qty (or cost) produces a negative
+// extension; minimums still never fire on extension <= 0.
+p = pricePart({ qty: -5, unitCost: 10 });
+eq(p.extended, -50, 'F-27 k3: negative qty -> negative extension');
+eq(p.qty, -5, 'F-27 k3: qty echoed unclamped');
+eq(p.minimumApplied, false, 'F-27 k3: minimum never fires on negative extension');
+ok(Number.isFinite(p.total), 'F-27 k3: negative extension stays finite, never NaN');
+p = pricePart({ qty: 5, unitCost: -10 });
+eq(p.extended, -50, 'F-27 k3: negative unitCost passes through too');
+p = pricePart({ qty: -5, unitCost: 10, minimumCharge: 100 });
+eq(p.extended, -50, 'F-27 k3: caller minimum still never fires on qty <= 0');
+eq(p.minimumApplied, false);
 eq(round2(2.675), 2.68, 'round2 cents');
 eq(round4(1.23456), 1.2346, 'round4 unit precision');
 
