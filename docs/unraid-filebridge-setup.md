@@ -176,6 +176,10 @@ In the app, open **Server Files** (hard-drive nav item):
   runs (every 5 min): confirm correct ones, reject wrong ones — rejected
   folders never re-suggest.
 - Small images (≤2MB) get row thumbnails automatically as scans run.
+- **Optional — office file previews in the app viewer:** add
+  `RUN apk add --no-cache libreoffice` to the agent `Dockerfile` and rebuild.
+  The agent auto-detects it and renders docx/xlsx/pptx → PDF during scans
+  (≤10/scan); without it those files simply download instead of previewing.
 
 ## Step 7 — The backup server (optional but recommended)
 
