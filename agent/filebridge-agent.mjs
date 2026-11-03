@@ -921,9 +921,15 @@ const executors = {
     const rec = manifestGet(pk);
     if (!rec?.trash_path) return { ok: false, error: 'no tombstone recorded' };
     const src = resolveInRoot(root, rec.trash_path.replace(/^\//, ''));
-    const dest = resolveInRoot(root, rel);
+    let dest = resolveInRoot(root, rel);
     if (!src || !dest) return { ok: false, error: 'path outside root' };
-    await fs.promises.rename(src, dest);
+    await fs.promises.mkdir(path.posix.dirname(dest), { recursive: true }).catch(() => null);
+    // never overwrite — restore colliding with an existing file gets a suffix
+    for (let n = 1; fs.existsSync(dest) && n < 50; n++) {
+      const dot = rel.lastIndexOf('.');
+      const alt = dot > 0 ? `${rel.slice(0, dot)} (restored-${n})${rel.slice(dot)}` : `${rel} (restored-${n})`;
+      dest = resolveInRoot(root, alt);
+    }
     manifestSet(pk, { trash_path: null, restored_ts: Date.now() });
     if (db) db.prepare('UPDATE files SET missing=0 WHERE path_key=?').run(pk);
     return { ok: true, result: { path: rel, restored: true } };
