@@ -340,7 +340,8 @@ export function computeProductDueDate({
   let maxDesign = 0;
   let productOwner: any = null;
   let designOwner: any = null;
-  partList.forEach((part: any, index: number) => {
+  (Array.isArray(parts) ? parts : []).forEach((part: any, index: number) => {
+    if (!part || typeof part !== "object") return;
     const design = resolvePartLead(part, "design", tier);
     const product = resolvePartLead(part, "product", tier);
     trace.push({
@@ -408,11 +409,12 @@ export function computeOrderDueDate({
     return holdResult(existing, "", trace);
   }
 
-  const list = (Array.isArray(products) ? products : []).filter((p) => p && typeof p === "object");
+  const list = (Array.isArray(products) ? products : []);
   let best = "";
   let bestIndex = -1;
   let bestId = "";
   list.forEach((product: any, index: number) => {
+    if (!product || typeof product !== "object") return;
     const raw = date_field
       ? product?.[date_field]
       : product?.due_date || product?.product_due_date;
