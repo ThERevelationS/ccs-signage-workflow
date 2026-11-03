@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -34,6 +34,8 @@ export default function PermitClientGroup({
   onUpdateNotes,
   onUpdateLocality,
   onSelectLocalityForWorkOrder,
+  onQueueLocalityApply,
+  onRemoveLocality,
   onLinkLegacyOffice,
   onOpenWorkOrder,
   onShowLocalityInfo,
@@ -63,6 +65,7 @@ export default function PermitClientGroup({
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
+  const [removeOfficeOpen, setRemoveOfficeOpen] = useState(false);
   const expanded = controlledExpanded ?? internalExpanded;
   const setExpanded = (nextExpanded) => {
     if (onExpandedChange) onExpandedChange(nextExpanded);
@@ -70,6 +73,11 @@ export default function PermitClientGroup({
   };
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
+  // The job's applied office — only defined when every line shares one
+  // locality, which is what "remove the office from this job" means.
+  const lineLocalityIds = [...new Set(group.lines.map(li => String(li.locality_id || '')).filter(Boolean))];
+  const appliedLocality = lineLocalityIds.length === 1 ? (localities || []).find(l => l.id === lineLocalityIds[0]) : null;
+  const pendingLocalityName = String(wo?.pending_permit_locality_name || '').trim();
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
   const progress = getPermitGroupProgress(group, today);
   const authorityCoverage = summarizePermitGroupAuthorityCoverage(group.lines, localities);
@@ -428,7 +436,20 @@ export default function PermitClientGroup({
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
-          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office(s)…</Button></div>}
+          {pendingLocalityName && (
+            <div className="px-4 py-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                <Clock className="w-3 h-3" /> {pendingLocalityName} — applying automatically when its offices verify
+              </span>
+            </div>
+          )}
+          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office(s)…</Button>
+            {appliedLocality && onRemoveLocality && (
+              <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
+                <Trash2 className="w-3 h-3" /> Remove {appliedLocality.name}
+              </Button>
+            )}
+          </div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> find which town or township issues this job's permits.</span>
@@ -536,8 +557,34 @@ export default function PermitClientGroup({
           onApply={(localityId, opts) => {
             onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
           }}
+          onPendingApply={(localityId, opts) => {
+            onQueueLocalityApply?.(group.work_order_id, localityId, opts);
+          }}
         />
       )}
+
+      {/* Remove this job's applied office — deletes only this job's permit
+          lines for that locality; the office record itself is untouched, so
+          searching the address again re-suggests the same office. */}
+      <AlertDialog open={removeOfficeOpen} onOpenChange={setRemoveOfficeOpen}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {appliedLocality?.name || 'this office'} from this job?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deletes {group.lines.length} permit line{group.lines.length === 1 ? '' : 's'} linked to {appliedLocality?.name || 'this office'} on this job only — the office record itself stays saved, so searching the address again will find it if it is still the right one.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep office</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => { setRemoveOfficeOpen(false); appliedLocality && onRemoveLocality(group.work_order_id, appliedLocality.id); }}
+            >
+              Remove office
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
