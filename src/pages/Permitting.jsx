@@ -509,12 +509,17 @@ export default function Permitting() {
     if (!wo) return;
 
     // Prefer new offices[] model; fall back to legacy workflow_steps/categories
-    // Each office can have multiple office_types (new) or a single office_type (legacy)
+    // office_types must hold canonical role codes (staffEntityWrite validates
+    // the array) — display labels like "Permitting"/"Building" belong on
+    // office_type only. authority_roles is the canonical source.
+    const KNOWN_ROLES = new Set(["sign_permit", "zoning", "building", "electrical", "electrical_permit", "electrical_inspection", "right_of_way", "historic_review", "planning", "transportation", "other"]);
     const normalizeTypes = (o) => {
-      if (Array.isArray(o?.office_types) && o.office_types.length) return o.office_types;
-      if (o?.office_type) return [o.office_type];
-      return [];
+      const roles = (Array.isArray(o?.authority_roles) ? o.authority_roles : []).filter(r => KNOWN_ROLES.has(r));
+      if (roles.length) return roles;
+      const declared = Array.isArray(o?.office_types) && o.office_types.length ? o.office_types : o?.office_type ? [o.office_type] : [];
+      return declared.filter(t => KNOWN_ROLES.has(t));
     };
+    const displayType = (o, types) => o?.office_type || (Array.isArray(o?.office_types) && o.office_types[0]) || types[0] || "";
 
     const isElectrical = (types) => types.some(t => /electrical/i.test(t));
 
@@ -525,27 +530,30 @@ export default function Permitting() {
         return {
           name: o.name || types[0] || "Office",
           office_types: types,
-          office_type: types[0] || "",
+          office_type: displayType(o, types),
           office_id: o.id,
           steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
         };
       });
       if (excludeElectrical) {
-        officesToCreate = officesToCreate.filter(o => !isElectrical(o.office_types));
+        officesToCreate = officesToCreate.filter(o => !isElectrical(o.office_types) && !/electrical/i.test(o.office_type));
       }
     } else if (locality.workflow_steps?.length > 0) {
-      // Legacy data
+      // Legacy data — cats are display labels, so office_types stays empty
       const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
       officesToCreate = cats.map(cat => ({
         name: cat,
-        office_types: [cat],
+        office_types: [],
         office_type: cat,
         steps: (locality.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
       }));
+      if (excludeElectrical) {
+        officesToCreate = officesToCreate.filter(o => !/electrical/i.test(o.office_type));
+      }
     } else {
       officesToCreate = [{
         name: locality.name || "Office",
-        office_types: locality.office_type ? [locality.office_type] : [],
+        office_types: [],
         office_type: locality.office_type || "",
         steps: []
       }];
