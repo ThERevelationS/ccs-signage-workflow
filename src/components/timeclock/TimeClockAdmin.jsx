@@ -150,7 +150,7 @@ function shouldRetainAdminRequest(err) {
   if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
   if (err?.confirmedServerResponse === true) return false;
   const status = Number(err?.response?.status || 0);
-  return !err?.response || status >= 500;
+  return !err?.response || status >= 500 || status === 429;
 }
 
 function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen = false, count = 0, children }) {
@@ -278,9 +278,10 @@ export default function TimeClockAdmin() {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    setDataLoadError("");
+  const loadData = async (opts) => {
+    // Silent refreshes keep the review view mounted and preserve the last good data on failure.
+    const silent = opts?.silent === true;
+    if (!silent) { setIsLoading(true); setDataLoadError(""); }
     try {
       if (!sessionToken) throw new Error("A signed-in administrator session is required.");
       // One invoke for the whole panel — the backend pages each collection
@@ -321,11 +322,12 @@ export default function TimeClockAdmin() {
       setAdminNotes(adminNoteRows || []);
       const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
       setPendingApprovalRecovery(recovery);
+      setDataLoadError("");
     } catch (err) {
       console.error("Error loading data:", err);
-      setDataLoadError("Time Clock data could not be loaded. Shift review is unavailable until the data reloads successfully.");
+      if (!silent) setDataLoadError("Time Clock data could not be loaded. Shift review is unavailable until the data reloads successfully.");
     }
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
   // Calculate date range
@@ -584,7 +586,7 @@ export default function TimeClockAdmin() {
       setEditingClockInInput("");
       setEditingClockOutInput("");
       setCorrectionReason("");
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       console.error("Error saving entry:", err);
       const message = err?.response?.data?.error || err?.message || "This time entry changed in another session. The correction was not applied.";
@@ -594,7 +596,7 @@ export default function TimeClockAdmin() {
         clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
         setCorrectionRequestId("");
       }
-      await loadData();
+      await loadData({ silent: true });
     } finally {
       setSaveBusy(false);
     }
@@ -669,7 +671,7 @@ export default function TimeClockAdmin() {
     }
     setBulkApproveResult(failed.length ? `${cleanReviewEntries.length - failed.length} approved, ${failed.length} failed` : `${cleanReviewEntries.length} shifts approved`);
     setBulkApproveBusy(false);
-    await loadData();
+    await loadData({ silent: true });
   };
 
   const archiveOldEntries = async () => {
@@ -698,7 +700,7 @@ export default function TimeClockAdmin() {
     }
     setRetentionMsg(failed ? `${old.length - failed} archived, ${failed} failed` : `${old.length} old entries archived`);
     setRetentionBusy(false);
-    await loadData();
+    await loadData({ silent: true });
   };
 
   const handleApproval = async () => {
@@ -762,12 +764,13 @@ export default function TimeClockAdmin() {
       if (oppositeStoredRequestId) clearAdminRequestId(oppositeAction, approvalEntry.id, oppositeStoredRequestId);
       clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
       if (oppositeRetryRequestId) clearApprovalRetry(oppositeDecision, approvalEntry.id, oppositeRetryRequestId);
+      if (data?.entry?.id) setTimeEntries((cur) => cur.map((e) => (e.id === data.entry.id ? { ...e, ...data.entry } : e)));
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
       setApprovalRetryPayload(null);
       setPendingApprovalRecovery(null);
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       const data = err?.response?.data || {};
       const retainRequest = shouldRetainAdminRequest(err);
@@ -778,7 +781,7 @@ export default function TimeClockAdmin() {
         clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
         setApprovalRetryPayload(null);
         setPendingApprovalRecovery(null);
-        await loadData();
+        await loadData({ silent: true });
         setApprovalEntry(null);
         setApprovalNote("");
         setApprovalRequestId("");
@@ -805,7 +808,7 @@ export default function TimeClockAdmin() {
       });
       const data = functionData(response);
       if (data?.success !== true) throw new Error(data?.error || "Hold was not updated.");
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       setTimeEntryError(err?.message || "Payroll hold could not be updated.");
     }
@@ -855,7 +858,7 @@ export default function TimeClockAdmin() {
       setArchiveRequestId("");
       setDeleteConfirm(null);
       setArchiveReason("");
-      await loadData();
+      await loadData({ silent: true });
     } catch (err) {
       console.error("Error archiving entry:", err);
       const message = err?.response?.data?.error || err?.message || "This time entry changed in another session and was not archived.";
@@ -867,7 +870,7 @@ export default function TimeClockAdmin() {
         setDeleteConfirm(null);
         setArchiveReason("");
       }
-      await loadData();
+      await loadData({ silent: true });
     } finally {
       setDeleteBusy(false);
     }
@@ -1111,7 +1114,7 @@ export default function TimeClockAdmin() {
             <div className="font-medium">Time entry update blocked</div>
             <div className="mt-1 text-xs">{timeEntryError}</div>
           </div>
-          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData({ silent: true }); setTimeEntryError(""); }}>Reload latest</Button>
         </div>
       )}
 
@@ -1736,7 +1739,7 @@ export default function TimeClockAdmin() {
                   }
                   setBulkCloseResults({ closed, skipped, failed });
                   setBulkCloseBusy(false);
-                  await loadData();
+                  await loadData({ silent: true });
                 }}>
                 {bulkCloseBusy ? "Closing???" : "Close entries"}
               </Button>
@@ -1858,7 +1861,7 @@ export default function TimeClockAdmin() {
         onReviewEntry={handleEditEntry}
         onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
         onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-        onRefresh={loadData}
+        onRefresh={() => loadData({ silent: true })}
       />
       <div className="clay-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -1896,7 +1899,7 @@ export default function TimeClockAdmin() {
       <CorrectionRequestAdminPanel
         sessionToken={sessionToken}
         entries={timeEntries}
-        onEntriesChanged={loadData}
+        onEntriesChanged={() => loadData({ silent: true })}
         reviewRequestId={correctionReviewRequestId}
         onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
       />
@@ -2077,7 +2080,7 @@ export default function TimeClockAdmin() {
         sessionToken={sessionToken}
         timeEntries={timeEntries}
         correctionRequests={correctionRequests}
-        onEntriesChanged={loadData}
+        onEntriesChanged={() => loadData({ silent: true })}
         onInvestigateAudit={({ time_entry_id, evidence = [], mode = "conflict" }) => {
           const normalizedId = String(time_entry_id || "").trim();
           if (!normalizedId) return;
