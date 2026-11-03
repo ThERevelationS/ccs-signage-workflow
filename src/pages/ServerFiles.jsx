@@ -93,7 +93,7 @@ export default function ServerFiles() {
         const r = await fbCall("search_hot", { query: q, root_key: rootKey || undefined, limit: 100 });
         setSearchHits((r?.data ?? r)?.hits || []);
       } else {
-        const r = await fbCall("queue_deep_search", { query: q });
+        const r = await fbCall("queue_deep_search", { query: q, filters: rootKey ? { root: rootKey } : {} });
         const d = r?.data ?? r;
         if (d?.command_id) {
           const c = await waitForCommand(d.command_id, { timeoutMs: 120_000 });
@@ -430,8 +430,11 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
               ? <img src={r.thumb_url} alt="" className="h-8 w-8 shrink-0 rounded object-cover border" loading="lazy" />
               : <Icon className={`h-5 w-5 shrink-0 ${r.is_dir ? "text-amber-500" : "text-slate-500"}`} />}
             <button className="font-medium text-sm truncate hover:underline text-left flex-1 min-w-0"
-              onClick={() => (r.is_dir ? onNavigate(r.path) : onOpen(r))}>
+              onClick={() => (r.is_dir ? onNavigate(r.path) : onOpen(r))}
+              title={r.path}>
               {r.name}
+              {r.match === "content" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">content</Badge>}
+              {r.snip && <span className="block text-xs font-normal text-muted-foreground truncate">{r.snip}</span>}
             </button>
             {r.missing ? <Badge variant="outline" className="text-red-600 border-red-300">deleted</Badge> : null}
             <span className="text-xs text-muted-foreground w-20 text-right shrink-0">
