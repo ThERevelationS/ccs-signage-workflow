@@ -1,0 +1,41 @@
+{
+  "name": "File Bridge Maintenance",
+  "description": "Every 5 min: reap stale/expired FileBridgeCommand leases, mark stale agent health, sweep old events/recent/chunk rows. FileBridgeUpload is never reaped. Safe while disabled — all sweeps are no-ops when the bridge is off.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "file_bridge_maintenance",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_worker": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "fileBridgeMaintenance",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
