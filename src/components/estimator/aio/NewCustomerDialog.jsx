@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
 import { useAuth } from "@/components/auth/EmailGate";
