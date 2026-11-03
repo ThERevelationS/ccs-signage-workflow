@@ -1,1 +1,480 @@
-aW1wb3J0IHsgdXNlU3RhdGUsIHVzZUVmZmVjdCB9IGZyb20gInJlYWN0IjsNCmltcG9ydCB7IERpYWxvZywgRGlhbG9nQ29udGVudCwgRGlhbG9nSGVhZGVyLCBEaWFsb2dUaXRsZSwgRGlhbG9nRm9vdGVyIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2RpYWxvZyI7DQppbXBvcnQgeyBCdXR0b24gfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvYnV0dG9uIjsNCmltcG9ydCB7IElucHV0IH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2lucHV0IjsNCmltcG9ydCB7IExhYmVsIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2xhYmVsIjsNCmltcG9ydCB7IFNlbGVjdCwgU2VsZWN0Q29udGVudCwgU2VsZWN0SXRlbSwgU2VsZWN0VHJpZ2dlciwgU2VsZWN0VmFsdWUgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvc2VsZWN0IjsNCmltcG9ydCB7IFRleHRhcmVhIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL3RleHRhcmVhIjsNCmltcG9ydCB7IFBsdXMsIFRyYXNoMiwgQ2hldnJvbkRvd24sIENoZXZyb25SaWdodCwgTG9hZGVyMiwgQ2hlY2tDaXJjbGUyLCBVc2VyLCBCcmllZmNhc2UsIENsaXBib2FyZExpc3QgfSBmcm9tICJsdWNpZGUtcmVhY3QiOw0KaW1wb3J0IE11bHRpVXNlclNlbGVjdElubGluZSBmcm9tICJAL2NvbXBvbmVudHMvc2hhcmVkL011bHRpVXNlclNlbGVjdElubGluZSI7DQppbXBvcnQgeyB1c2VBdXRoIH0gZnJvbSAiQC9jb21wb25lbnRzL2F1dGgvRW1haWxHYXRlIjsNCmltcG9ydCB7IGZldGNoQWxsV29ya09yZGVycyB9IGZyb20gIkAvbGliL3dvcmtPcmRlckNhY2hlIjsNCmltcG9ydCB7IG11dGF0ZVdvcmtPcmRlckFycmF5RmllbGQgfSBmcm9tICJAL2NvbXBvbmVudHMvd29ya2Zsb3cvd29ya09yZGVyUGVyc2lzdGVuY2UiOw0KaW1wb3J0IHsgY3JlYXRlR2VuZXJhbFRhc2tXaXRoUmVjb3ZlcnkgfSBmcm9tICJAL2NvbXBvbmVudHMvd29ya2Zsb3cvZ2VuZXJhbFRhc2tQZXJzaXN0ZW5jZSI7DQppbXBvcnQgeyBsb2FkQXV0aG9yaXplZFVzZXJEaXJlY3RvcnkgfSBmcm9tICJAL2NvbXBvbmVudHMvdXNlci9hdXRob3JpemVkVXNlckRpcmVjdG9yeVBlcnNpc3RlbmNlIjsNCmltcG9ydCB7IHN0YWZmRW50aXRpZXMgfSBmcm9tICJAL2NvbXBvbmVudHMvc3RhZmYvc3RhZmZFbnRpdGllcyI7DQoNCmNvbnN0IEdlbmVyYWxUYXNrID0gc3RhZmZFbnRpdGllcy5HZW5lcmFsVGFzazsNCg0KY29uc3QgU1RBR0VfT1BUSU9OUyA9IFsNCiAgeyB2YWx1ZTogIiIsIGxhYmVsOiAiR2VuZXJhbCAvIE5vIHN0YWdlIiB9LA0KICB7IHZhbHVlOiAiZXN0aW1hdGluZyIsIGxhYmVsOiAiRXN0aW1hdGluZyIgfSwNCiAgeyB2YWx1ZTogInNhbGVzIiwgbGFiZWw6ICJTYWxlcyIgfSwNCiAgeyB2YWx1ZTogInBlcm1pdHRpbmciLCBsYWJlbDogIlBlcm1pdHRpbmciIH0sDQogIHsgdmFsdWU6ICJkZXNpZ24iLCBsYWJlbDogIkRlc2lnbiIgfSwNCiAgeyB2YWx1ZTogInByb2R1Y3Rpb24iLCBsYWJlbDogIlByb2R1Y3Rpb24iIH0sDQogIHsgdmFsdWU6ICJmYWJyaWNhdGlvbiIsIGxhYmVsOiAiRmFicmljYXRpb24iIH0sDQogIHsgdmFsdWU6ICJpbnN0YWxsYXRpb24iLCBsYWJlbDogIkluc3RhbGxhdGlvbiIgfSwNCl07DQoNCmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIEFkZFRhc2tEaWFsb2coeyBpc09wZW4sIG9uQ2xvc2UsIGxvY2tlZFdvcmtPcmRlcklkID0gbnVsbCB9KSB7DQogIGNvbnN0IHsgY3VycmVudFVzZXIsIHNlc3Npb25Ub2tlbiB9ID0gdXNlQXV0aCgpOw0KICBjb25zdCBbdXNlcnMsIHNldFVzZXJzXSA9IHVzZVN0YXRlKFtdKTsNCiAgY29uc3QgW3dvcmtPcmRlcnMsIHNldFdvcmtPcmRlcnNdID0gdXNlU3RhdGUoW10pOw0KICBjb25zdCBbaXNMb2FkaW5nLCBzZXRJc0xvYWRpbmddID0gdXNlU3RhdGUodHJ1ZSk7DQogIGNvbnN0IFtpc1NhdmluZywgc2V0SXNTYXZpbmddID0gdXNlU3RhdGUoZmFsc2UpOw0KICBjb25zdCBbc2F2ZVN1Y2Nlc3MsIHNldFNhdmVTdWNjZXNzXSA9IHVzZVN0YXRlKGZhbHNlKTsNCiAgDQogIC8vIFRhc2sgZm9ybSBzdGF0ZQ0KICBjb25zdCBbdGFza1RleHQsIHNldFRhc2tUZXh0XSA9IHVzZVN0YXRlKCIiKTsNCiAgY29uc3QgW2Fzc2lnbmVkVG8sIHNldEFzc2lnbmVkVG9dID0gdXNlU3RhdGUoW10pOw0KICBjb25zdCBbc2VsZWN0ZWRXb3JrT3JkZXIsIHNldFNlbGVjdGVkV29ya09yZGVyXSA9IHVzZVN0YXRlKCIiKTsNCiAgY29uc3QgW2lzR2VuZXJhbFRhc2ssIHNldElzR2VuZXJhbFRhc2tdID0gdXNlU3RhdGUoZmFsc2UpOw0KICBjb25zdCBbc3RhZ2UsIHNldFN0YWdlXSA9IHVzZVN0YXRlKCIiKTsNCiAgY29uc3QgW3N1YlRhc2tzLCBzZXRTdWJUYXNrc10gPSB1c2VTdGF0ZShbXSk7DQogIGNvbnN0IFtleHBhbmRlZFN1YlRhc2tzLCBzZXRFeHBhbmRlZFN1YlRhc2tzXSA9IHVzZVN0YXRlKHt9KTsNCg0KICB1c2VFZmZlY3QoKCkgPT4gew0KICAgIGlmIChpc09wZW4pIHsNCiAgICAgIGxvYWREYXRhKCk7DQogICAgICByZXNldEZvcm0oKTsNCiAgICAgIGlmIChsb2NrZWRXb3JrT3JkZXJJZCkgc2V0U2VsZWN0ZWRXb3JrT3JkZXIobG9ja2VkV29ya09yZGVySWQpOw0KICAgIH0NCiAgfSwgW2lzT3Blbiwgc2Vzc2lvblRva2VuLCBsb2NrZWRXb3JrT3JkZXJJZF0pOw0KDQogIGNvbnN0IGxvYWREYXRhID0gYXN5bmMgKCkgPT4gew0KICAgIHNldElzTG9hZGluZyh0cnVlKTsNCiAgICBpZiAoIXNlc3Npb25Ub2tlbikgew0KICAgICAgLy8gR3Vlc3RzIGNhbiBvcGVuIHRoZSBkaWFsb2cgYnV0IGV2ZXJ5IGRhdGEgc291cmNlIGhlcmUgaXMNCiAgICAgIC8vIHNlc3Npb24tYXV0aGVudGljYXRlZCDigJQgc2tpcCB0aGUgY2FsbHMgaW5zdGVhZCBvZiBsb2dnaW5nIHR3bw0KICAgICAgLy8gZ3VhcmFudGVlZCAic2lnbi1pbiByZXF1aXJlZCIgZmFpbHVyZXMgcGVyIG9wZW4uDQogICAgICBzZXRVc2VycyhbXSk7DQogICAgICBzZXRXb3JrT3JkZXJzKFtdKTsNCiAgICAgIHNldElzTG9hZGluZyhmYWxzZSk7DQogICAgICByZXR1cm47DQogICAgfQ0KICAgIHRyeSB7DQogICAgICBjb25zdCBbZGlyZWN0b3J5LCB3b3JrT3JkZXJzRGF0YV0gPSBhd2FpdCBQcm9taXNlLmFsbChbDQogICAgICAgIGxvYWRBdXRob3JpemVkVXNlckRpcmVjdG9yeSh7IHNlc3Npb25Ub2tlbiB9KSwNCiAgICAgICAgZmV0Y2hBbGxXb3JrT3JkZXJzKHsgcHJlZmVyU25hcHNob3Q6IHRydWUgfSkudGhlbigocm93cykgPT4NCiAgICAgICAgICAocm93cyB8fCBbXSkNCiAgICAgICAgICAgIC5maWx0ZXIoKHdvKSA9PiB3by5jb21wbGV0ZWQgIT09IHRydWUgJiYgd28uZGVsZXRlZCAhPT0gdHJ1ZSkNCiAgICAgICAgICAgIC5zb3J0KChhLCBiKSA9PiAoYS5jcmVhdGVkX2RhdGUgfHwgIiIpLmxvY2FsZUNvbXBhcmUoYi5jcmVhdGVkX2RhdGUgfHwgIiIpKSkNCiAgICAgIF0pOw0KICAgICAgc2V0VXNlcnMoZGlyZWN0b3J5LnVzZXJzKTsNCiAgICAgIHNldFdvcmtPcmRlcnMod29ya09yZGVyc0RhdGEuc29ydCgoYSwgYikgPT4gKGEuY2xpZW50X25hbWUgfHwgJycpLmxvY2FsZUNvbXBhcmUoYi5jbGllbnRfbmFtZSB8fCAnJykpKTsNCiAgICB9IGNhdGNoIChlcnJvcikgew0KICAgICAgY29uc29sZS5lcnJvcigiRXJyb3IgbG9hZGluZyBkYXRhOiIsIGVycm9yKTsNCiAgICB9DQogICAgc2V0SXNMb2FkaW5nKGZhbHNlKTsNCiAgfTsNCg0KICBjb25zdCByZXNldEZvcm0gPSAoKSA9PiB7DQogICAgc2V0VGFza1RleHQoIiIpOw0KICAgIHNldEFzc2lnbmVkVG8oW10pOw0KICAgIHNldFNlbGVjdGVkV29ya09yZGVyKCIiKTsNCiAgICBzZXRJc0dlbmVyYWxUYXNrKGZhbHNlKTsNCiAgICBzZXRTdGFnZSgiIik7DQogICAgc2V0U3ViVGFza3MoW10pOw0KICAgIHNldEV4cGFuZGVkU3ViVGFza3Moe30pOw0KICAgIHNldFNhdmVTdWNjZXNzKGZhbHNlKTsNCiAgfTsNCg0KICBjb25zdCBhZGRTdWJUYXNrID0gKCkgPT4gew0KICAgIGNvbnN0IG5ld0lkID0gYHN0XyR7RGF0ZS5ub3coKX1gOw0KICAgIHNldFN1YlRhc2tzKFsuLi5zdWJUYXNrcywgeyBpZDogbmV3SWQsIHRleHQ6ICIiLCBhc3NpZ25lZF90bzogW10sIGRldGFpbHM6IFtdIH1dKTsNCiAgICBzZXRFeHBhbmRlZFN1YlRhc2tzKHByZXYgPT4gKHsgLi4ucHJldiwgW25ld0lkXTogdHJ1ZSB9KSk7DQogIH07DQoNCiAgY29uc3QgdXBkYXRlU3ViVGFzayA9IChpZCwgdXBkYXRlcykgPT4gew0KICAgIHNldFN1YlRhc2tzKHN1YlRhc2tzLm1hcChzdCA9PiBzdC5pZCA9PT0gaWQgPyB7IC4uLnN0LCAuLi51cGRhdGVzIH0gOiBzdCkpOw0KICB9Ow0KDQogIGNvbnN0IHJlbW92ZVN1YlRhc2sgPSAoaWQpID0+IHsNCiAgICBzZXRTdWJUYXNrcyhzdWJUYXNrcy5maWx0ZXIoc3QgPT4gc3QuaWQgIT09IGlkKSk7DQogIH07DQoNCiAgY29uc3QgYWRkRGV0YWlsID0gKHN1YlRhc2tJZCkgPT4gew0KICAgIHNldFN1YlRhc2tzKHN1YlRhc2tzLm1hcChzdCA9PiB7DQogICAgICBpZiAoc3QuaWQgPT09IHN1YlRhc2tJZCkgew0KICAgICAgICByZXR1cm4gew0KICAgICAgICAgIC4uLnN0LA0KICAgICAgICAgIGRldGFpbHM6IFsuLi4oc3QuZGV0YWlscyB8fCBbXSksIHsgaWQ6IGBkXyR7RGF0ZS5ub3coKX1gLCB0ZXh0OiAiIiwgYXNzaWduZWRfdG86IFtdIH1dDQogICAgICAgIH07DQogICAgICB9DQogICAgICByZXR1cm4gc3Q7DQogICAgfSkpOw0KICB9Ow0KDQogIGNvbnN0IHVwZGF0ZURldGFpbCA9IChzdWJUYXNrSWQsIGRldGFpbElkLCB1cGRhdGVzKSA9PiB7DQogICAgc2V0U3ViVGFza3Moc3ViVGFza3MubWFwKHN0ID0+IHsNCiAgICAgIGlmIChzdC5pZCA9PT0gc3ViVGFza0lkKSB7DQogICAgICAgIHJldHVybiB7DQogICAgICAgICAgLi4uc3QsDQogICAgICAgICAgZGV0YWlsczogc3QuZGV0YWlscy5tYXAoZCA9PiBkLmlkID09PSBkZXRhaWxJZCA/IHsgLi4uZCwgLi4udXBkYXRlcyB9IDogZCkNCiAgICAgICAgfTsNCiAgICAgIH0NCiAgICAgIHJldHVybiBzdDsNCiAgICB9KSk7DQogIH07DQoNCiAgY29uc3QgcmVtb3ZlRGV0YWlsID0gKHN1YlRhc2tJZCwgZGV0YWlsSWQpID0+IHsNCiAgICBzZXRTdWJUYXNrcyhzdWJUYXNrcy5tYXAoc3QgPT4gew0KICAgICAgaWYgKHN0LmlkID09PSBzdWJUYXNrSWQpIHsNCiAgICAgICAgcmV0dXJuIHsNCiAgICAgICAgICAuLi5zdCwNCiAgICAgICAgICBkZXRhaWxzOiBzdC5kZXRhaWxzLmZpbHRlcihkID0+IGQuaWQgIT09IGRldGFpbElkKQ0KICAgICAgICB9Ow0KICAgICAgfQ0KICAgICAgcmV0dXJuIHN0Ow0KICAgIH0pKTsNCiAgfTsNCg0KICBjb25zdCB0b2dnbGVTdWJUYXNrRXhwYW5kZWQgPSAoaWQpID0+IHsNCiAgICBzZXRFeHBhbmRlZFN1YlRhc2tzKHByZXYgPT4gKHsgLi4ucHJldiwgW2lkXTogIXByZXZbaWRdIH0pKTsNCiAgfTsNCg0KICBjb25zdCBoYW5kbGVTYXZlID0gYXN5bmMgKCkgPT4gew0KICAgIGlmICghdGFza1RleHQudHJpbSgpKSB7DQogICAgICBhbGVydCgiUGxlYXNlIGVudGVyIGEgdGFzay4iKTsNCiAgICAgIHJldHVybjsNCiAgICB9DQogICAgaWYgKCFpc0dlbmVyYWxUYXNrICYmICFzZWxlY3RlZFdvcmtPcmRlcikgew0KICAgICAgYWxlcnQoIlBsZWFzZSBzZWxlY3QgYSB3b3JrIG9yZGVyLCBvciBjaGVjayBcIkdlbmVyYWwgb2ZmaWNlIHRhc2tcIi4iKTsNCiAgICAgIHJldHVybjsNCiAgICB9DQoNCiAgICBzZXRJc1NhdmluZyh0cnVlKTsNCiAgICB0cnkgew0KICAgICAgLy8gQnVpbGQgdGhlIG5ldyB0YXNrIHN0cnVjdHVyZSAoc2hhcmVkIHNoYXBlIGZvciBib3RoIHdvcmstb3JkZXIgYW5kIGdlbmVyYWwgdGFza3MpDQogICAgICBjb25zdCBuZXdUYXNrID0gew0KICAgICAgICBpZDogYHRhc2tfJHtEYXRlLm5vdygpfV8ke01hdGgucmFuZG9tKCkudG9TdHJpbmcoMzYpLnN1YnN0cigyLCA5KX1gLA0KICAgICAgICB0ZXh0OiB0YXNrVGV4dC50cmltKCksDQogICAgICAgIHRpbWVzdGFtcDogbmV3IERhdGUoKS50b0lTT1N0cmluZygpLA0KICAgICAgICBjb21wbGV0ZWQ6IGZhbHNlLA0KICAgICAgICBhc3NpZ25lZF90bzogYXNzaWduZWRUbyB8fCBbXSwNCiAgICAgICAgc3RhZ2U6IHN0YWdlIHx8IHVuZGVmaW5lZCwNCiAgICAgICAgc3ViX3Rhc2tzOiBzdWJUYXNrcw0KICAgICAgICAgIC5maWx0ZXIoc3QgPT4gc3QudGV4dC50cmltKCkpDQogICAgICAgICAgLm1hcChzdCA9PiAoew0KICAgICAgICAgICAgdGV4dDogc3QudGV4dC50cmltKCksDQogICAgICAgICAgICBjb21wbGV0ZWQ6IGZhbHNlLA0KICAgICAgICAgICAgYXNzaWduZWRfdG86IHN0LmFzc2lnbmVkX3RvIHx8IFtdLA0KICAgICAgICAgICAgZGV0YWlsczogKHN0LmRldGFpbHMgfHwgW10pDQogICAgICAgICAgICAgIC5maWx0ZXIoZCA9PiBkLnRleHQudHJpbSgpKQ0KICAgICAgICAgICAgICAubWFwKGQgPT4gKHsNCiAgICAgICAgICAgICAgICB0ZXh0OiBkLnRleHQudHJpbSgpLA0KICAgICAgICAgICAgICAgIGNvbXBsZXRlZDogZmFsc2UsDQogICAgICAgICAgICAgICAgYXNzaWduZWRfdG86IGQuYXNzaWduZWRfdG8gfHwgW10NCiAgICAgICAgICAgICAgfSkpDQogICAgICAgICAgfSkpDQogICAgICB9Ow0KDQogICAgICBpZiAoaXNHZW5lcmFsVGFzaykgew0KICAgICAgICAvLyBTYXZlIGFzIGEgc3RhbmRhbG9uZSBnZW5lcmFsIG9mZmljZSB0YXNrIChubyB3b3JrIG9yZGVyKQ0KICAgICAgICBhd2FpdCBjcmVhdGVHZW5lcmFsVGFza1dpdGhSZWNvdmVyeSh7DQogICAgICAgICAgZW50aXR5OiBHZW5lcmFsVGFzaywNCiAgICAgICAgICBkYXRhOiB7DQogICAgICAgICAgICB0ZXh0OiBuZXdUYXNrLnRleHQsDQogICAgICAgICAgICBzdGFnZTogbmV3VGFzay5zdGFnZSwNCiAgICAgICAgICAgIGFzc2lnbmVkX3RvOiBuZXdUYXNrLmFzc2lnbmVkX3RvLA0KICAgICAgICAgICAgc3ViX3Rhc2tzOiBuZXdUYXNrLnN1Yl90YXNrcywNCiAgICAgICAgICAgIGNvbXBsZXRlZDogZmFsc2UsDQogICAgICAgICAgICBjcmVhdGVkX2J5X25hbWU6IGN1cnJlbnRVc2VyPy5mdWxsX25hbWUgfHwgY3VycmVudFVzZXI/LmVtYWlsIHx8ICIiDQogICAgICAgICAgfSwNCiAgICAgICAgICBsYWJlbDogYEdlbmVyYWwgdGFzayAke25ld1Rhc2sudGV4dH1gLA0KICAgICAgICB9KTsNCiAgICAgIH0gZWxzZSB7DQogICAgICAgIGNvbnN0IHdvID0gd29ya09yZGVycy5maW5kKHcgPT4gdy5pZCA9PT0gc2VsZWN0ZWRXb3JrT3JkZXIpOw0KICAgICAgICBpZiAoIXdvKSByZXR1cm47DQogICAgICAgIGNvbnN0IHNhdmVkID0gYXdhaXQgbXV0YXRlV29ya09yZGVyQXJyYXlGaWVsZCh7DQogICAgICAgICAgd29ya09yZGVySWQ6IHNlbGVjdGVkV29ya09yZGVyLA0KICAgICAgICAgIGZpZWxkOiAibm90ZXMiLA0KICAgICAgICAgIGxhYmVsOiAiV29yayBPcmRlciB0YXNrIGxpc3QiLA0KICAgICAgICAgIG11dGF0ZTogKGN1cnJlbnROb3RlcykgPT4gY3VycmVudE5vdGVzLnNvbWUoKHRhc2spID0+IHRhc2s/LmlkID09PSBuZXdUYXNrLmlkKQ0KICAgICAgICAgICAgPyBjdXJyZW50Tm90ZXMNCiAgICAgICAgICAgIDogWy4uLmN1cnJlbnROb3RlcywgbmV3VGFza10sDQogICAgICAgIH0pOw0KICAgICAgICBzZXRXb3JrT3JkZXJzKChjdXJyZW50KSA9PiBjdXJyZW50Lm1hcCgocm93KSA9PiByb3cuaWQgPT09IHNhdmVkLmlkID8geyAuLi5yb3csIC4uLnNhdmVkIH0gOiByb3cpKTsNCiAgICAgIH0NCg0KICAgICAgc2V0U2F2ZVN1Y2Nlc3ModHJ1ZSk7DQogICAgICBzZXRUaW1lb3V0KCgpID0+IHsNCiAgICAgICAgcmVzZXRGb3JtKCk7DQogICAgICAgIHNldFNhdmVTdWNjZXNzKGZhbHNlKTsNCiAgICAgIH0sIDE1MDApOw0KICAgIH0gY2F0Y2ggKGVycm9yKSB7DQogICAgICBjb25zb2xlLmVycm9yKCJFcnJvciBzYXZpbmcgdGFzazoiLCBlcnJvcik7DQogICAgICBhbGVydCgiRmFpbGVkIHRvIHNhdmUgdGFzay4gUGxlYXNlIHRyeSBhZ2Fpbi4iKTsNCiAgICB9DQogICAgc2V0SXNTYXZpbmcoZmFsc2UpOw0KICB9Ow0KDQogIGlmIChpc0xvYWRpbmcpIHsNCiAgICByZXR1cm4gKA0KICAgICAgPERpYWxvZyBvcGVuPXtpc09wZW59IG9uT3BlbkNoYW5nZT17KCkgPT4ge319IG9uUG9pbnRlckRvd25PdXRzaWRlPXsoZSkgPT4gZS5wcmV2ZW50RGVmYXVsdCgpfSBvbkludGVyYWN0T3V0c2lkZT17KGUpID0+IGUucHJldmVudERlZmF1bHQoKX0+DQogICAgICAgIDxEaWFsb2dDb250ZW50IGNsYXNzTmFtZT0iY2xheS1jYXJkIGJvcmRlci1ub25lIj4NCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcC04Ij4NCiAgICAgICAgICAgIDxMb2FkZXIyIGNsYXNzTmFtZT0idy02IGgtNiBhbmltYXRlLXNwaW4gdGV4dC1ibHVlLTUwMCIgLz4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgPC9EaWFsb2dDb250ZW50Pg0KICAgICAgPC9EaWFsb2c+DQogICAgKTsNCiAgfQ0KDQogIHJldHVybiAoDQogICAgPERpYWxvZyBvcGVuPXtpc09wZW59IG9uT3BlbkNoYW5nZT17KCkgPT4ge319IG9uUG9pbnRlckRvd25PdXRzaWRlPXsoZSkgPT4gZS5wcmV2ZW50RGVmYXVsdCgpfSBvbkludGVyYWN0T3V0c2lkZT17KGUpID0+IGUucHJldmVudERlZmF1bHQoKX0+DQogICAgICA8RGlhbG9nQ29udGVudCBjbGFzc05hbWU9ImNsYXktY2FyZCBib3JkZXItbm9uZSBtYXgtdy0yeGwgbWF4LWgtWzg1dmhdIG92ZXJmbG93LWhpZGRlbiBmbGV4IGZsZXgtY29sIj4NCiAgICAgICAgPERpYWxvZ0hlYWRlcj4NCiAgICAgICAgICA8RGlhbG9nVGl0bGUgY2xhc3NOYW1lPSJ0ZXh0LXhsIGZvbnQtYm9sZCBmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMiI+DQogICAgICAgICAgICA8UGx1cyBjbGFzc05hbWU9InctNSBoLTUgdGV4dC1ibHVlLTYwMCIgLz4NCiAgICAgICAgICAgIEFkZCBOZXcgVGFzaw0KICAgICAgICAgIDwvRGlhbG9nVGl0bGU+DQogICAgICAgIDwvRGlhbG9nSGVhZGVyPg0KDQogICAgICAgIHtzYXZlU3VjY2VzcyA/ICgNCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBmbGV4LWNvbCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcHktMTIiPg0KICAgICAgICAgICAgPENoZWNrQ2lyY2xlMiBjbGFzc05hbWU9InctMTYgaC0xNiB0ZXh0LWdyZWVuLTUwMCBtYi00IiAvPg0KICAgICAgICAgICAgPGgzIGNsYXNzTmFtZT0idGV4dC1sZyBmb250LWJvbGQgdGV4dC1ncmVlbi03MDAiPlRhc2sgQWRkZWQgU3VjY2Vzc2Z1bGx5ITwvaDM+DQogICAgICAgICAgICA8cCBjbGFzc05hbWU9InRleHQtZ3JheS01MDAgbXQtMiI+QWRkIGFub3RoZXIgdGFzayBvciBjbG9zZSB0aGUgZGlhbG9nLjwvcD4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgKSA6ICgNCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleC0xIG92ZXJmbG93LXktYXV0byBzcGFjZS15LTQgcHItMSI+DQogICAgICAgICAgICB7LyogR2VuZXJhbCBvZmZpY2UgdGFzayB0b2dnbGUgKi99DQogICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIiPg0KICAgICAgICAgICAgICA8aW5wdXQNCiAgICAgICAgICAgICAgICB0eXBlPSJjaGVja2JveCINCiAgICAgICAgICAgICAgICBpZD0iZ2VuZXJhbFRhc2tUb2dnbGUiDQogICAgICAgICAgICAgICAgY2hlY2tlZD17aXNHZW5lcmFsVGFza30NCiAgICAgICAgICAgICAgICBvbkNoYW5nZT17KGUpID0+IHsNCiAgICAgICAgICAgICAgICAgIHNldElzR2VuZXJhbFRhc2soZS50YXJnZXQuY2hlY2tlZCk7DQogICAgICAgICAgICAgICAgICBpZiAoZS50YXJnZXQuY2hlY2tlZCkgc2V0U2VsZWN0ZWRXb3JrT3JkZXIoIiIpOw0KICAgICAgICAgICAgICAgIH19DQogICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJ3LTQgaC00IHJvdW5kZWQgYm9yZGVyLWdyYXktMzAwIHRleHQtYmx1ZS02MDAgZm9jdXM6cmluZy1ibHVlLTUwMCINCiAgICAgICAgICAgICAgLz4NCiAgICAgICAgICAgICAgPExhYmVsIGh0bWxGb3I9ImdlbmVyYWxUYXNrVG9nZ2xlIiBjbGFzc05hbWU9InRleHQtc20gZm9udC1tZWRpdW0gZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEgY3Vyc29yLXBvaW50ZXIiPg0KICAgICAgICAgICAgICAgIDxDbGlwYm9hcmRMaXN0IGNsYXNzTmFtZT0idy00IGgtNCB0ZXh0LXB1cnBsZS02MDAiIC8+DQogICAgICAgICAgICAgICAgR2VuZXJhbCBvZmZpY2UgdGFzayAobm8gd29yayBvcmRlcikNCiAgICAgICAgICAgICAgPC9MYWJlbD4NCiAgICAgICAgICAgIDwvZGl2Pg0KDQogICAgICAgICAgICB7LyogV29yayBPcmRlciBTZWxlY3Rpb24gKi99DQogICAgICAgICAgICB7IWlzR2VuZXJhbFRhc2sgJiYgKA0KICAgICAgICAgICAgICA8ZGl2Pg0KICAgICAgICAgICAgICAgIDxMYWJlbCBjbGFzc05hbWU9InRleHQtc20gZm9udC1tZWRpdW0gbWItMiBibG9jayBmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSI+DQogICAgICAgICAgICAgICAgICA8QnJpZWZjYXNlIGNsYXNzTmFtZT0idy00IGgtNCIgLz4NCiAgICAgICAgICAgICAgICAgIFNlbGVjdCBXb3JrIE9yZGVyICoNCiAgICAgICAgICAgICAgICA8L0xhYmVsPg0KICAgICAgICAgICAgICAgIDxTZWxlY3QgdmFsdWU9e3NlbGVjdGVkV29ya09yZGVyfSBvblZhbHVlQ2hhbmdlPXsodikgPT4geyBzZXRTZWxlY3RlZFdvcmtPcmRlcih2KTsgaWYgKCFzdGFnZSkgeyBjb25zdCB3byA9IHdvcmtPcmRlcnMuZmluZCh3ID0+IHcuaWQgPT09IHYpOyBpZiAod28/LmN1cnJlbnRfc3RhZ2UpIHNldFN0YWdlKHdvLmN1cnJlbnRfc3RhZ2UpOyB9IH19IGRpc2FibGVkPXshIWxvY2tlZFdvcmtPcmRlcklkfT4NCiAgICAgICAgICAgICAgICAgIDxTZWxlY3RUcmlnZ2VyIGNsYXNzTmFtZT0iaC0xMCI+DQogICAgICAgICAgICAgICAgICAgIDxTZWxlY3RWYWx1ZSBwbGFjZWhvbGRlcj0iQ2hvb3NlIGEgd29yayBvcmRlci4uLiIgLz4NCiAgICAgICAgICAgICAgICAgIDwvU2VsZWN0VHJpZ2dlcj4NCiAgICAgICAgICAgICAgICAgIDxTZWxlY3RDb250ZW50IGNsYXNzTmFtZT0ibWF4LWgtNjAiPg0KICAgICAgICAgICAgICAgICAgICB7d29ya09yZGVycy5tYXAod28gPT4gKA0KICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RJdGVtIGtleT17d28uaWR9IHZhbHVlPXt3by5pZH0+DQogICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9ImZvbnQtbWVkaXVtIj57d28uY2xpZW50X25hbWV9PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAge3dvLnRpdGxlICYmIDxzcGFuIGNsYXNzTmFtZT0idGV4dC1ncmF5LTUwMCBtbC0yIj4tIHt3by50aXRsZX08L3NwYW4+fQ0KICAgICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0SXRlbT4NCiAgICAgICAgICAgICAgICAgICAgKSl9DQogICAgICAgICAgICAgICAgICA8L1NlbGVjdENvbnRlbnQ+DQogICAgICAgICAgICAgICAgPC9TZWxlY3Q+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgKX0NCg0KICAgICAgICAgICAgey8qIFdvcmtmbG93IFN0YWdlIC8gUGFnZSAqL30NCiAgICAgICAgICAgIDxkaXY+DQogICAgICAgICAgICAgIDxMYWJlbCBjbGFzc05hbWU9InRleHQtc20gZm9udC1tZWRpdW0gbWItMiBibG9jayBmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSI+DQogICAgICAgICAgICAgICAgPENsaXBib2FyZExpc3QgY2xhc3NOYW1lPSJ3LTQgaC00IiAvPg0KICAgICAgICAgICAgICAgIFdvcmtmbG93IFN0YWdlIC8gUGFnZQ0KICAgICAgICAgICAgICA8L0xhYmVsPg0KICAgICAgICAgICAgICA8U2VsZWN0IHZhbHVlPXtzdGFnZSB8fCAibm9uZSJ9IG9uVmFsdWVDaGFuZ2U9eyh2KSA9PiBzZXRTdGFnZSh2ID09PSAibm9uZSIgPyAiIiA6IHYpfT4NCiAgICAgICAgICAgICAgICA8U2VsZWN0VHJpZ2dlciBjbGFzc05hbWU9ImgtMTAiPg0KICAgICAgICAgICAgICAgICAgPFNlbGVjdFZhbHVlIHBsYWNlaG9sZGVyPSJBc3NpZ24gdG8gYSB3b3JrZmxvdyBwYWdl4oCmIiAvPg0KICAgICAgICAgICAgICAgIDwvU2VsZWN0VHJpZ2dlcj4NCiAgICAgICAgICAgICAgICA8U2VsZWN0Q29udGVudD4NCiAgICAgICAgICAgICAgICAgIHtTVEFHRV9PUFRJT05TLm1hcChvcHQgPT4gKA0KICAgICAgICAgICAgICAgICAgICA8U2VsZWN0SXRlbSBrZXk9e29wdC52YWx1ZSB8fCAibm9uZSJ9IHZhbHVlPXtvcHQudmFsdWUgfHwgIm5vbmUifT57b3B0LmxhYmVsfTwvU2VsZWN0SXRlbT4NCiAgICAgICAgICAgICAgICAgICkpfQ0KICAgICAgICAgICAgICAgIDwvU2VsZWN0Q29udGVudD4NCiAgICAgICAgICAgICAgPC9TZWxlY3Q+DQogICAgICAgICAgICA8L2Rpdj4NCg0KICAgICAgICAgICAgey8qIE1haW4gVGFzayAqL30NCiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjbGF5LWNhcmQgcC00IGJnLWJsdWUtNTAvNTAiPg0KICAgICAgICAgICAgICA8TGFiZWwgY2xhc3NOYW1lPSJ0ZXh0LXNtIGZvbnQtYm9sZCBtYi0yIGJsb2NrIHRleHQtYmx1ZS04MDAiPk1haW4gVGFzayAqPC9MYWJlbD4NCiAgICAgICAgICAgICAgPFRleHRhcmVhDQogICAgICAgICAgICAgICAgdmFsdWU9e3Rhc2tUZXh0fQ0KICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gc2V0VGFza1RleHQoZS50YXJnZXQudmFsdWUpfQ0KICAgICAgICAgICAgICAgIHBsYWNlaG9sZGVyPSJFbnRlciB0YXNrIGRlc2NyaXB0aW9uLi4uIg0KICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0ibWluLWgtWzgwcHhdIG1iLTMiDQogICAgICAgICAgICAgIC8+DQogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMiI+DQogICAgICAgICAgICAgICAgPFVzZXIgY2xhc3NOYW1lPSJ3LTQgaC00IHRleHQtZ3JheS01MDAiIC8+DQogICAgICAgICAgICAgICAgPExhYmVsIGNsYXNzTmFtZT0idGV4dC1zbSI+QXNzaWduIHRvOjwvTGFiZWw+DQogICAgICAgICAgICAgICAgPE11bHRpVXNlclNlbGVjdElubGluZQ0KICAgICAgICAgICAgICAgICAgdXNlcnM9e3VzZXJzfQ0KICAgICAgICAgICAgICAgICAgc2VsZWN0ZWRVc2Vycz17YXNzaWduZWRUb30NCiAgICAgICAgICAgICAgICAgIG9uU2VsZWN0aW9uQ2hhbmdlPXtzZXRBc3NpZ25lZFRvfQ0KICAgICAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9IlNlbGVjdCB1c2Vycy4uLiINCiAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0iaC04IHctNDgiDQogICAgICAgICAgICAgICAgLz4NCiAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICA8L2Rpdj4NCg0KICAgICAgICAgICAgey8qIFN1Yi1UYXNrcyAqL30NCiAgICAgICAgICAgIDxkaXY+DQogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWJldHdlZW4gbWItMiI+DQogICAgICAgICAgICAgICAgPExhYmVsIGNsYXNzTmFtZT0idGV4dC1zbSBmb250LWJvbGQiPlN1Yi1UYXNrczwvTGFiZWw+DQogICAgICAgICAgICAgICAgPEJ1dHRvbg0KICAgICAgICAgICAgICAgICAgdHlwZT0iYnV0dG9uIg0KICAgICAgICAgICAgICAgICAgdmFyaWFudD0ib3V0bGluZSINCiAgICAgICAgICAgICAgICAgIHNpemU9InNtIg0KICAgICAgICAgICAgICAgICAgb25DbGljaz17YWRkU3ViVGFza30NCiAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0iaC03IHRleHQteHMiDQogICAgICAgICAgICAgICAgPg0KICAgICAgICAgICAgICAgICAgPFBsdXMgY2xhc3NOYW1lPSJ3LTMgaC0zIG1yLTEiIC8+DQogICAgICAgICAgICAgICAgICBBZGQgU3ViLVRhc2sNCiAgICAgICAgICAgICAgICA8L0J1dHRvbj4NCiAgICAgICAgICAgICAgPC9kaXY+DQoNCiAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9InNwYWNlLXktMiI+DQogICAgICAgICAgICAgICAge3N1YlRhc2tzLm1hcCgoc3QsIGluZGV4KSA9PiAoDQogICAgICAgICAgICAgICAgICA8ZGl2IGtleT17c3QuaWR9IGNsYXNzTmFtZT0iY2xheS1jYXJkIHAtMyBiZy1vcmFuZ2UtNTAvNTAgYm9yZGVyLWwtNCBib3JkZXItb3JhbmdlLTQwMCI+DQogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLXN0YXJ0IGdhcC0yIj4NCiAgICAgICAgICAgICAgICAgICAgICA8YnV0dG9uDQogICAgICAgICAgICAgICAgICAgICAgICB0eXBlPSJidXR0b24iDQogICAgICAgICAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiB0b2dnbGVTdWJUYXNrRXhwYW5kZWQoc3QuaWQpfQ0KICAgICAgICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJwLTEgaG92ZXI6Ymctb3JhbmdlLTEwMCByb3VuZGVkIG10LTEiDQogICAgICAgICAgICAgICAgICAgICAgPg0KICAgICAgICAgICAgICAgICAgICAgICAge2V4cGFuZGVkU3ViVGFza3Nbc3QuaWRdID8gKA0KICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hldnJvbkRvd24gY2xhc3NOYW1lPSJ3LTQgaC00IiAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgKSA6ICgNCiAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZXZyb25SaWdodCBjbGFzc05hbWU9InctNCBoLTQiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICApfQ0KICAgICAgICAgICAgICAgICAgICAgIDwvYnV0dG9uPg0KICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4LTEiPg0KICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIG1iLTIiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQteHMgZm9udC1ib2xkIHRleHQtb3JhbmdlLTcwMCBiZy1vcmFuZ2UtMjAwIHB4LTIgcHktMC41IHJvdW5kZWQiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIFN1Yi1UYXNrIHtpbmRleCArIDF9DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvc3Bhbj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHR5cGU9ImJ1dHRvbiINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB2YXJpYW50PSJnaG9zdCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBzaXplPSJzbSINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiByZW1vdmVTdWJUYXNrKHN0LmlkKX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBjbGFzc05hbWU9ImgtNiB3LTYgcC0wIHRleHQtcmVkLTUwMCBtbC1hdXRvIg0KICAgICAgICAgICAgICAgICAgICAgICAgICA+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRyYXNoMiBjbGFzc05hbWU9InctMyBoLTMiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvQnV0dG9uPg0KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgICAgICA8SW5wdXQNCiAgICAgICAgICAgICAgICAgICAgICAgICAgdmFsdWU9e3N0LnRleHR9DQogICAgICAgICAgICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gdXBkYXRlU3ViVGFzayhzdC5pZCwgeyB0ZXh0OiBlLnRhcmdldC52YWx1ZSB9KX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9IlN1Yi10YXNrIGRlc2NyaXB0aW9uLi4uIg0KICAgICAgICAgICAgICAgICAgICAgICAgICBjbGFzc05hbWU9Im1iLTIgaC04IHRleHQtc20iDQogICAgICAgICAgICAgICAgICAgICAgICAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPFVzZXIgY2xhc3NOYW1lPSJ3LTMgaC0zIHRleHQtZ3JheS00MDAiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDxNdWx0aVVzZXJTZWxlY3RJbmxpbmUNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB1c2Vycz17dXNlcnN9DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgc2VsZWN0ZWRVc2Vycz17QXJyYXkuaXNBcnJheShzdC5hc3NpZ25lZF90bykgPyBzdC5hc3NpZ25lZF90byA6IChzdC5hc3NpZ25lZF90byA/IFtzdC5hc3NpZ25lZF90b10gOiBbXSl9DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgb25TZWxlY3Rpb25DaGFuZ2U9eyh2YWwpID0+IHVwZGF0ZVN1YlRhc2soc3QuaWQsIHsgYXNzaWduZWRfdG86IHZhbCB9KX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBwbGFjZWhvbGRlcj0iQXNzaWduLi4uIg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0iaC03IHctNDAiDQogICAgICAgICAgICAgICAgICAgICAgICAgIC8+DQogICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCg0KICAgICAgICAgICAgICAgICAgICAgICAgey8qIERldGFpbHMgdW5kZXIgc3ViLXRhc2sgKi99DQogICAgICAgICAgICAgICAgICAgICAgICB7ZXhwYW5kZWRTdWJUYXNrc1tzdC5pZF0gJiYgKA0KICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibXQtMyBtbC00IGJvcmRlci1sLTIgYm9yZGVyLXB1cnBsZS0zMDAgcGwtMyBzcGFjZS15LTIiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHtzdC5kZXRhaWxzPy5tYXAoKGRldGFpbCwgZEluZGV4KSA9PiAoDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGtleT17ZGV0YWlsLmlkfSBjbGFzc05hbWU9ImJnLXB1cnBsZS01MCBwLTIgcm91bmRlZCI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMiBtYi0xIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQteHMgZm9udC1tZWRpdW0gdGV4dC1wdXJwbGUtNzAwIGJnLXB1cnBsZS0yMDAgcHgtMS41IHB5LTAuNSByb3VuZGVkIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIERldGFpbCB7ZEluZGV4ICsgMX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3NwYW4+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdHlwZT0iYnV0dG9uIg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmFyaWFudD0iZ2hvc3QiDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzaXplPSJzbSINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHJlbW92ZURldGFpbChzdC5pZCwgZGV0YWlsLmlkKX0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0iaC01IHctNSBwLTAgdGV4dC1yZWQtNTAwIG1sLWF1dG8iDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRyYXNoMiBjbGFzc05hbWU9InctMi41IGgtMi41IiAvPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvQnV0dG9uPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPElucHV0DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmFsdWU9e2RldGFpbC50ZXh0fQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gdXBkYXRlRGV0YWlsKHN0LmlkLCBkZXRhaWwuaWQsIHsgdGV4dDogZS50YXJnZXQudmFsdWUgfSl9DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9IkRldGFpbCBkZXNjcmlwdGlvbi4uLiINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjbGFzc05hbWU9ImgtNyB0ZXh0LXhzIG1iLTEiDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxNdWx0aVVzZXJTZWxlY3RJbmxpbmUNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB1c2Vycz17dXNlcnN9DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc2VsZWN0ZWRVc2Vycz17QXJyYXkuaXNBcnJheShkZXRhaWwuYXNzaWduZWRfdG8pID8gZGV0YWlsLmFzc2lnbmVkX3RvIDogKGRldGFpbC5hc3NpZ25lZF90byA/IFtkZXRhaWwuYXNzaWduZWRfdG9dIDogW10pfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG9uU2VsZWN0aW9uQ2hhbmdlPXsodmFsKSA9PiB1cGRhdGVEZXRhaWwoc3QuaWQsIGRldGFpbC5pZCwgeyBhc3NpZ25lZF90bzogdmFsIH0pfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHBsYWNlaG9sZGVyPSJBc3NpZ24uLi4iDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJoLTYgdy0zNiINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICkpfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxCdXR0b24NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHR5cGU9ImJ1dHRvbiINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZhcmlhbnQ9Imdob3N0Ig0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc2l6ZT0ic20iDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBhZGREZXRhaWwoc3QuaWQpfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJoLTYgdGV4dC14cyB0ZXh0LXB1cnBsZS02MDAiDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFBsdXMgY2xhc3NOYW1lPSJ3LTMgaC0zIG1yLTEiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICBBZGQgRGV0YWlsDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9CdXR0b24+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgICAgICAgICAgKX0NCiAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICApKX0NCg0KICAgICAgICAgICAgICAgIHtzdWJUYXNrcy5sZW5ndGggPT09IDAgJiYgKA0KICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9InRleHQtY2VudGVyIHB5LTQgdGV4dC1ncmF5LTQwMCB0ZXh0LXNtIGJvcmRlci0yIGJvcmRlci1kYXNoZWQgcm91bmRlZC1sZyI+DQogICAgICAgICAgICAgICAgICAgIE5vIHN1Yi10YXNrcyBhZGRlZC4gQ2xpY2sgIkFkZCBTdWItVGFzayIgdG8gY3JlYXRlIG9uZS4NCiAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgICl9DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgICl9DQoNCiAgICAgICAgPERpYWxvZ0Zvb3RlciBjbGFzc05hbWU9InB0LTQgYm9yZGVyLXQiPg0KICAgICAgICAgIDxCdXR0b24gdmFyaWFudD0ib3V0bGluZSIgb25DbGljaz17b25DbG9zZX0+DQogICAgICAgICAgICBDbG9zZQ0KICAgICAgICAgIDwvQnV0dG9uPg0KICAgICAgICAgIHshc2F2ZVN1Y2Nlc3MgJiYgKA0KICAgICAgICAgICAgPEJ1dHRvbg0KICAgICAgICAgICAgICBvbkNsaWNrPXtoYW5kbGVTYXZlfQ0KICAgICAgICAgICAgICBkaXNhYmxlZD17aXNTYXZpbmcgfHwgIXRhc2tUZXh0LnRyaW0oKSB8fCAoIWlzR2VuZXJhbFRhc2sgJiYgIXNlbGVjdGVkV29ya09yZGVyKX0NCiAgICAgICAgICAgICAgY2xhc3NOYW1lPSJiZy1ibHVlLTYwMCBob3ZlcjpiZy1ibHVlLTcwMCINCiAgICAgICAgICAgID4NCiAgICAgICAgICAgICAge2lzU2F2aW5nID8gKA0KICAgICAgICAgICAgICAgIDxMb2FkZXIyIGNsYXNzTmFtZT0idy00IGgtNCBhbmltYXRlLXNwaW4gbXItMiIgLz4NCiAgICAgICAgICAgICAgKSA6ICgNCiAgICAgICAgICAgICAgICA8UGx1cyBjbGFzc05hbWU9InctNCBoLTQgbXItMiIgLz4NCiAgICAgICAgICAgICAgKX0NCiAgICAgICAgICAgICAgQWRkIFRhc2sNCiAgICAgICAgICAgIDwvQnV0dG9uPg0KICAgICAgICAgICl9DQogICAgICAgIDwvRGlhbG9nRm9vdGVyPg0KICAgICAgPC9EaWFsb2dDb250ZW50Pg0KICAgIDwvRGlhbG9nPg0KICApOw0KfQ==
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase, ClipboardList } from "lucide-react";
+import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
+import { useAuth } from "@/components/auth/EmailGate";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
+import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const GeneralTask = staffEntities.GeneralTask;
+
+const STAGE_OPTIONS = [
+  { value: "", label: "General / No stage" },
+  { value: "estimating", label: "Estimating" },
+  { value: "sales", label: "Sales" },
+  { value: "permitting", label: "Permitting" },
+  { value: "design", label: "Design" },
+  { value: "production", label: "Production" },
+  { value: "fabrication", label: "Fabrication" },
+  { value: "installation", label: "Installation" },
+];
+
+export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = null }) {
+  const { currentUser, sessionToken } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [workOrders, setWorkOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  // Task form state
+  const [taskText, setTaskText] = useState("");
+  const [assignedTo, setAssignedTo] = useState([]);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState("");
+  const [isGeneralTask, setIsGeneralTask] = useState(false);
+  const [stage, setStage] = useState("");
+  const [subTasks, setSubTasks] = useState([]);
+  const [expandedSubTasks, setExpandedSubTasks] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      loadData();
+      resetForm();
+      if (lockedWorkOrderId) setSelectedWorkOrder(lockedWorkOrderId);
+    }
+  }, [isOpen, sessionToken, lockedWorkOrderId]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    if (!sessionToken) {
+      // Guests can open the dialog but every data source here is
+      // session-authenticated — skip the calls instead of logging two
+      // guaranteed "sign-in required" failures per open.
+      setUsers([]);
+      setWorkOrders([]);
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const [directory, workOrdersData] = await Promise.all([
+        loadAuthorizedUserDirectory({ sessionToken }),
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
+      ]);
+      setUsers(directory.users);
+      setWorkOrders(workOrdersData.sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '')));
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const resetForm = () => {
+    setTaskText("");
+    setAssignedTo([]);
+    setSelectedWorkOrder("");
+    setIsGeneralTask(false);
+    setStage("");
+    setSubTasks([]);
+    setExpandedSubTasks({});
+    setSaveSuccess(false);
+  };
+
+  const addSubTask = () => {
+    const newId = `st_${Date.now()}`;
+    setSubTasks([...subTasks, { id: newId, text: "", assigned_to: [], details: [] }]);
+    setExpandedSubTasks(prev => ({ ...prev, [newId]: true }));
+  };
+
+  const updateSubTask = (id, updates) => {
+    setSubTasks(subTasks.map(st => st.id === id ? { ...st, ...updates } : st));
+  };
+
+  const removeSubTask = (id) => {
+    setSubTasks(subTasks.filter(st => st.id !== id));
+  };
+
+  const addDetail = (subTaskId) => {
+    setSubTasks(subTasks.map(st => {
+      if (st.id === subTaskId) {
+        return {
+          ...st,
+          details: [...(st.details || []), { id: `d_${Date.now()}`, text: "", assigned_to: [] }]
+        };
+      }
+      return st;
+    }));
+  };
+
+  const updateDetail = (subTaskId, detailId, updates) => {
+    setSubTasks(subTasks.map(st => {
+      if (st.id === subTaskId) {
+        return {
+          ...st,
+          details: st.details.map(d => d.id === detailId ? { ...d, ...updates } : d)
+        };
+      }
+      return st;
+    }));
+  };
+
+  const removeDetail = (subTaskId, detailId) => {
+    setSubTasks(subTasks.map(st => {
+      if (st.id === subTaskId) {
+        return {
+          ...st,
+          details: st.details.filter(d => d.id !== detailId)
+        };
+      }
+      return st;
+    }));
+  };
+
+  const toggleSubTaskExpanded = (id) => {
+    setExpandedSubTasks(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleSave = async () => {
+    if (!taskText.trim()) {
+      alert("Please enter a task.");
+      return;
+    }
+    if (!isGeneralTask && !selectedWorkOrder) {
+      alert("Please select a work order, or check \"General office task\".");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Build the new task structure (shared shape for both work-order and general tasks)
+      const newTask = {
+        id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        text: taskText.trim(),
+        timestamp: new Date().toISOString(),
+        completed: false,
+        assigned_to: assignedTo || [],
+        stage: stage || undefined,
+        sub_tasks: subTasks
+          .filter(st => st.text.trim())
+          .map(st => ({
+            text: st.text.trim(),
+            completed: false,
+            assigned_to: st.assigned_to || [],
+            details: (st.details || [])
+              .filter(d => d.text.trim())
+              .map(d => ({
+                text: d.text.trim(),
+                completed: false,
+                assigned_to: d.assigned_to || []
+              }))
+          }))
+      };
+
+      if (isGeneralTask) {
+        // Save as a standalone general office task (no work order)
+        await createGeneralTaskWithRecovery({
+          entity: GeneralTask,
+          data: {
+            text: newTask.text,
+            stage: newTask.stage,
+            assigned_to: newTask.assigned_to,
+            sub_tasks: newTask.sub_tasks,
+            completed: false,
+            created_by_name: currentUser?.full_name || currentUser?.email || ""
+          },
+          label: `General task ${newTask.text}`,
+        });
+      } else {
+        const wo = workOrders.find(w => w.id === selectedWorkOrder);
+        if (!wo) return;
+        const saved = await mutateWorkOrderArrayField({
+          workOrderId: selectedWorkOrder,
+          field: "notes",
+          label: "Work Order task list",
+          mutate: (currentNotes) => currentNotes.some((task) => task?.id === newTask.id)
+            ? currentNotes
+            : [...currentNotes, newTask],
+        });
+        setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => {
+        resetForm();
+        setSaveSuccess(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error saving task:", error);
+      alert("Failed to save task. Please try again.");
+    }
+    setIsSaving(false);
+  };
+
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="clay-card border-none">
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="clay-card border-none max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Plus className="w-5 h-5 text-blue-600" />
+            Add New Task
+          </DialogTitle>
+        </DialogHeader>
+
+        {saveSuccess ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+            <h3 className="text-lg font-bold text-green-700">Task Added Successfully!</h3>
+            <p className="text-gray-500 mt-2">Add another task or close the dialog.</p>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {/* General office task toggle */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="generalTaskToggle"
+                checked={isGeneralTask}
+                onChange={(e) => {
+                  setIsGeneralTask(e.target.checked);
+                  if (e.target.checked) setSelectedWorkOrder("");
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Label htmlFor="generalTaskToggle" className="text-sm font-medium flex items-center gap-1 cursor-pointer">
+                <ClipboardList className="w-4 h-4 text-purple-600" />
+                General office task (no work order)
+              </Label>
+            </div>
+
+            {/* Work Order Selection */}
+            {!isGeneralTask && (
+              <div>
+                <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                  <Briefcase className="w-4 h-4" />
+                  Select Work Order *
+                </Label>
+                <Select value={selectedWorkOrder} onValueChange={(v) => { setSelectedWorkOrder(v); if (!stage) { const wo = workOrders.find(w => w.id === v); if (wo?.current_stage) setStage(wo.current_stage); } }} disabled={!!lockedWorkOrderId}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Choose a work order..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {workOrders.map(wo => (
+                      <SelectItem key={wo.id} value={wo.id}>
+                        <span className="font-medium">{wo.client_name}</span>
+                        {wo.title && <span className="text-gray-500 ml-2">- {wo.title}</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Workflow Stage / Page */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                <ClipboardList className="w-4 h-4" />
+                Workflow Stage / Page
+              </Label>
+              <Select value={stage || "none"} onValueChange={(v) => setStage(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Assign to a workflow page…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAGE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value || "none"} value={opt.value || "none"}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Main Task */}
+            <div className="clay-card p-4 bg-blue-50/50">
+              <Label className="text-sm font-bold mb-2 block text-blue-800">Main Task *</Label>
+              <Textarea
+                value={taskText}
+                onChange={(e) => setTaskText(e.target.value)}
+                placeholder="Enter task description..."
+                className="min-h-[80px] mb-3"
+              />
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-gray-500" />
+                <Label className="text-sm">Assign to:</Label>
+                <MultiUserSelectInline
+                  users={users}
+                  selectedUsers={assignedTo}
+                  onSelectionChange={setAssignedTo}
+                  placeholder="Select users..."
+                  className="h-8 w-48"
+                />
+              </div>
+            </div>
+
+            {/* Sub-Tasks */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-bold">Sub-Tasks</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addSubTask}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Sub-Task
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {subTasks.map((st, index) => (
+                  <div key={st.id} className="clay-card p-3 bg-orange-50/50 border-l-4 border-orange-400">
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleSubTaskExpanded(st.id)}
+                        className="p-1 hover:bg-orange-100 rounded mt-1"
+                      >
+                        {expandedSubTasks[st.id] ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </button>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-bold text-orange-700 bg-orange-200 px-2 py-0.5 rounded">
+                            Sub-Task {index + 1}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSubTask(st.id)}
+                            className="h-6 w-6 p-0 text-red-500 ml-auto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <Input
+                          value={st.text}
+                          onChange={(e) => updateSubTask(st.id, { text: e.target.value })}
+                          placeholder="Sub-task description..."
+                          className="mb-2 h-8 text-sm"
+                        />
+                        <div className="flex items-center gap-2">
+                          <User className="w-3 h-3 text-gray-400" />
+                          <MultiUserSelectInline
+                            users={users}
+                            selectedUsers={Array.isArray(st.assigned_to) ? st.assigned_to : (st.assigned_to ? [st.assigned_to] : [])}
+                            onSelectionChange={(val) => updateSubTask(st.id, { assigned_to: val })}
+                            placeholder="Assign..."
+                            className="h-7 w-40"
+                          />
+                        </div>
+
+                        {/* Details under sub-task */}
+                        {expandedSubTasks[st.id] && (
+                          <div className="mt-3 ml-4 border-l-2 border-purple-300 pl-3 space-y-2">
+                            {st.details?.map((detail, dIndex) => (
+                              <div key={detail.id} className="bg-purple-50 p-2 rounded">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-medium text-purple-700 bg-purple-200 px-1.5 py-0.5 rounded">
+                                    Detail {dIndex + 1}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeDetail(st.id, detail.id)}
+                                    className="h-5 w-5 p-0 text-red-500 ml-auto"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  </Button>
+                                </div>
+                                <Input
+                                  value={detail.text}
+                                  onChange={(e) => updateDetail(st.id, detail.id, { text: e.target.value })}
+                                  placeholder="Detail description..."
+                                  className="h-7 text-xs mb-1"
+                                />
+                                <MultiUserSelectInline
+                                  users={users}
+                                  selectedUsers={Array.isArray(detail.assigned_to) ? detail.assigned_to : (detail.assigned_to ? [detail.assigned_to] : [])}
+                                  onSelectionChange={(val) => updateDetail(st.id, detail.id, { assigned_to: val })}
+                                  placeholder="Assign..."
+                                  className="h-6 w-36"
+                                />
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => addDetail(st.id)}
+                              className="h-6 text-xs text-purple-600"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Add Detail
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {subTasks.length === 0 && (
+                  <div className="text-center py-4 text-gray-400 text-sm border-2 border-dashed rounded-lg">
+                    No sub-tasks added. Click "Add Sub-Task" to create one.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          {!saveSuccess && (
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !taskText.trim() || (!isGeneralTask && !selectedWorkOrder)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              Add Task
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
