@@ -31,6 +31,9 @@ const timingSafeEq = (a: string, b: string): boolean => {
 const uuid = () => crypto.randomUUID();
 const now = () => Date.now();
 
+const sha256Hex = async (bytes: Uint8Array): Promise<string> =>
+  toHex(await crypto.subtle.digest('SHA-256', bytes.slice().buffer));
+
 async function verifyAgent(req: Request, rawBody: string, sr: any) {
   const keyId = req.headers.get('x-fb-key-id') || '';
   const ts = Number(req.headers.get('x-fb-ts') || '0');
@@ -387,6 +390,85 @@ Deno.serve(async (req) => {
       });
     }
     return Response.json({ ok: true, file_url: up.file_url });
+  }
+
+  // ---------- deliver_chunk (>48MB staged delivery) ----------
+  // Agent posts raw chunks; each is UploadFile'd and staged in FileBridgeChunk.
+  // When all `total` seqs are present, chunks are fetched back, assembled,
+  // whole-file sha256 verified, uploaded, and the command completed.
+  // Re-posting a seq is idempotent (dedupe on command_id+seq).
+  if (action === 'deliver_chunk') {
+    const cid = String(body.command_id || '');
+    const seq = Number(body.seq);
+    const total = Number(body.total);
+    if (!cid || !Number.isInteger(seq) || !Number.isInteger(total) || seq < 0 || total < 1 || seq >= total || total > 64) {
+      return Response.json({ error: 'bad chunk envelope' }, { status: 400 });
+    }
+    const cmdRows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((cmdRows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const cmd = cmdRows?.[0];
+    if (!cmd) return Response.json({ error: 'unknown command' }, { status: 404 });
+    if (isTerminal(cmd.status)) return Response.json({ ok: true, already: true, file_url: cmd.result?.file_url });
+
+    const bytes = Uint8Array.from(atob(String(body.bytes_b64 || '')), (c) => c.charCodeAt(0));
+    if (bytes.length > 48 * 1024 * 1024) return Response.json({ error: 'chunk over inline cap' }, { status: 413 });
+
+    // stage this seq (dedupe)
+    const have = await sr.entities.FileBridgeChunk.filter({ command_id: cid }, 'seq', 64).catch(() => []);
+    if (!(have || []).some((c: any) => c.seq === seq)) {
+      const csha = String(body.sha256 || '') || await sha256Hex(bytes);
+      const file = new File([bytes], `${cid}.part${seq}`);
+      const up = await sr.integrations.Core.UploadFile({ file });
+      await sr.entities.FileBridgeChunk.create({
+        command_id: cid, seq, file_url: up.file_url, bytes: bytes.length, sha256: csha, received_at: now(),
+      }).catch(() => null);
+      have.push({ seq, file_url: up.file_url, bytes: bytes.length, sha256: csha });
+    }
+    const received = (have || []).length;
+    if (!isTerminal(cmd.status)) {
+      await sr.entities.FileBridgeCommand.update(cmd.id, {
+        progress: { done: received, total, label: 'receiving' }, updated_ts: now(),
+      }).catch(() => null);
+    }
+    if (received < total) return Response.json({ ok: true, received, total });
+
+    // ---- assemble ----
+    const ordered = (have || []).slice().sort((a: any, b: any) => a.seq - b.seq);
+    const parts: Uint8Array[] = [];
+    for (const c of ordered) {
+      const resp = await fetch(String(c.file_url));
+      if (!resp.ok) return Response.json({ error: `chunk fetch ${c.seq} failed`, retry: true }, { status: 503 });
+      parts.push(new Uint8Array(await resp.arrayBuffer()));
+    }
+    const size = parts.reduce((n, p) => n + p.length, 0);
+    if (size > 256 * 1024 * 1024) return Response.json({ error: 'assembled over 256MB cap', needs_proxy: true }, { status: 413 });
+    const whole = new Uint8Array(size);
+    let off = 0; for (const p of parts) { whole.set(p, off); off += p.length; }
+    const wholeSha = await sha256Hex(whole);
+    if (body.file_sha256 && body.file_sha256 !== wholeSha) {
+      await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
+      return Response.json({ error: 'assembled sha256 mismatch — chunks purged, re-deliver', retry: true }, { status: 409 });
+    }
+    const file = new File([whole], String(body.name || 'delivery.bin'));
+    const up = await sr.integrations.Core.UploadFile({ file });
+    if (cmd.args?.root_key && cmd.args?.path) {
+      const pk = pathKey(cmd.agent_id || agentId, cmd.args.root_key, cmd.args.path);
+      const ir = await sr.entities.FileIndex.filter({ path_key: pk }, '-updated_date', 1).catch(() => []);
+      if (ir?.[0]) {
+        await sr.entities.FileIndex.update(ir[0].id, {
+          delivered_url: up.file_url, delivered_at_ms: now(), sha256: wholeSha,
+        }).catch(() => null);
+      }
+    }
+    await sr.entities.FileBridgeChunk.deleteMany({ id: { $in: ordered.map((c: any) => c.id).filter(Boolean) } }).catch(() => null);
+    if (!isTerminal(cmd.status)) {
+      await sr.entities.FileBridgeCommand.update(cmd.id, {
+        status: 'completed', updated_ts: now(),
+        result: { file_url: up.file_url, bytes: size, sha256: wholeSha },
+      });
+    }
+    return Response.json({ ok: true, file_url: up.file_url, bytes: size, sha256: wholeSha, assembled: true });
   }
 
   // ---------- event ----------
