@@ -55,11 +55,16 @@ async function kickOfficeResearch(base44:any,matched:any,profiles:any[]){
   const rows=await loadAllEntityRows({entity:base44.asServiceRole.entities.SourceCollectionQueue,query:{jurisdiction_name:matched.name,state:matched.state},sort:'created_date',label:'Office research demand check'}).catch(()=>null);
   if(rows===null)return{state:'unknown'};
   const already=rows.some((q:any)=>ACTIVE_QUEUE_STATUSES.has(String(q.status||''))&&(!county||!q.parent_county_name||normCountyName(q.parent_county_name)===normCountyName(county)));
+  // Held profiles (auto_refresh off or a discovery-scan block) are refused by
+  // the engine's identity guard with a 409 — report it honestly instead of
+  // pretending research started. The queue row below still records the demand
+  // for the moment a reviewer clears the hold.
+  const held=!!profile&&(profile.auto_refresh===false||!!profile?.discovery_scan_state?.blocked);
   // Immediate research — the picker is open NOW, so launch the engine this
   // instant rather than waiting for fleet rotation. Fire-and-forget with a
   // short head-start so the request transmits; the queue row below is the
   // durable fallback if the invoke dies before landing.
-  if(profile){
+  if(profile&&!held){
    try{
     const kick=base44.functions.invoke('refreshJurisdiction',{jurisdiction_id:profile.id,defer_archive:true,automatic_research:true}).catch(()=>null);
     await Promise.race([kick,new Promise(r=>setTimeout(r,2000))]);
@@ -70,7 +75,7 @@ async function kickOfficeResearch(base44:any,matched:any,profiles:any[]){
    const jurisdictionType=typeMap[String(profile?.type||matched.jurisdiction_type||'city').toLowerCase()]||'city';
    await base44.asServiceRole.entities.SourceCollectionQueue.create({jurisdiction_name:matched.name,state:matched.state,jurisdiction_type:jurisdictionType,parent_county_name:county,status:'not_started',dispatch_rank:0,missing_next:'Office research — auto-queued by an address lookup that needed verified offices.'}).catch(()=>null);
   }
-  return{state:profile?'research_started':(already?'already_queued':'queued')};
+  return{state:held?'research_held':(profile?'research_started':(already?'already_queued':'queued'))};
  }catch{return{state:'unknown'};}
 }
 function addressResponse(data:any,init:any={}){
