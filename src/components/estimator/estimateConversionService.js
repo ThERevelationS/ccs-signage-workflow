@@ -330,7 +330,7 @@ export async function commitEstimateConversion({
   extraWorkOrderFields = {},
   idempotencyPrefix = "work_order_conversion",
   reason = "Converted approved estimate to Work Order",
-  skipCustomerResolution = false,
+
 } = {}) {
   const { Estimate, WorkOrder } = entities || defaultEntities();
   const src = estimateBefore || estimate;
@@ -505,7 +505,7 @@ export async function convertEstimatesToSharedWorkOrder({
   hooks = {},
 } = {}) {
   const ent = entities || defaultEntities();
-  const { Estimate, WorkOrder } = ent;
+  const { WorkOrder } = ent;
   const rows = (Array.isArray(estimates) ? estimates : []).filter((e) => e && e.id);
   if (rows.length < 2) throw new Error("Select at least two approved estimates to combine into one Work Order.");
 
