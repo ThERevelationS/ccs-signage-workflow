@@ -594,11 +594,20 @@ export function customerBalanceRows(invoices: any[] = [], opts: any = {}) {
   const groups = new Map<string, any>();
   for (const inv of Array.isArray(invoices) ? invoices : []) {
     if (!isOpenArInvoice(inv, asOf)) continue;
-    const cid = clean(inv.customer_id);
+    let cid = clean(inv.customer_id);
+    // N-07.2: invoices still keyed to a merged stub roll under the merge
+    // winner — a stub is an audit shell, never a live AR row.
+    let cust = customersById.get(cid) || null;
+    if (cust && clean(cust?.merged_into_customer_id)) {
+      const winner = customersById.get(clean(cust.merged_into_customer_id)) || null;
+      if (winner) {
+        cid = clean(winner.id);
+        cust = winner;
+      }
+    }
     const key = cid || '(unassigned)';
     let g = groups.get(key);
     if (!g) {
-      const cust = customersById.get(cid) || null;
       g = {
         key,
         customer_id: cust ? cid : '',
