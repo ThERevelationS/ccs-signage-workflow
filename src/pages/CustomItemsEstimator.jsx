@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
