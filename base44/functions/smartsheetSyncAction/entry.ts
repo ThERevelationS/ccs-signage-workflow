@@ -3750,7 +3750,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run', 'recover_stale_sales_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'recreate_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run', 'recover_stale_sales_run'],
         write_actions_available: true,
       });
     }
@@ -4475,6 +4475,112 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         smartsheet_sheet_id: sheetId, fields_changed: false,
         relinked_by: cleanText(adminActor?.email, 320),
         message: 'Permanent Smartsheet row link updated. Order fields, snapshot, and pending-sync marker are unchanged; the next pull or Save & Sync reconciles values by the new permanent row ID.',
+      });
+    }
+
+    if (action === 'recreate_order_smartsheet_row') {
+      // Admin-only recovery for an Order whose stored permanent Smartsheet row
+      // was deleted and never recreated. Verifies the stored row is truly absent
+      // from the configured sheet, releases the dead permanent identity through
+      // one conditional Base44 write, then drives the same guarded create path
+      // Save & Sync uses: write-ahead reservation, single no-retry POST, verified
+      // permanent link. The row is built from the Order's current fields exactly
+      // like a first Save & Sync push; a crash between the release and the POST
+      // leaves the Order honestly unlinked, where the next Save & Sync recreates
+      // it — never a duplicate row.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
+      }
+      const orderId = cleanText(body?.order_id, 100);
+      const deadRowId = cleanText(body?.expected_current_row_id, 40);
+      if (!orderId || !/^\d+$/.test(deadRowId) || body?.confirm_recreate !== true) {
+        return Response.json({ success: false,
+          error: 'Recreate requires order_id, expected_current_row_id, and confirm_recreate:true.' }, { status: 400 });
+      }
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile.smartsheet_sheet_id, 40);
+      const bindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+      if (duplicateCount !== 1 || !/^\d+$/.test(sheetId) || !Object.keys(bindings).length) {
+        return Response.json({ success: false,
+          error: 'The Order sheet configuration is missing or ambiguous. No link was changed.' }, { status: 409 });
+      }
+      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
+      if (!order?.id || order.deleted || String(order.smartsheet_sheet_id ?? '') !== sheetId) {
+        return Response.json({ success: false,
+          error: 'The Order does not exist or is not linked to the configured sheet. No link was changed.' }, { status: 409 });
+      }
+      if (String(order.smartsheet_row_id ?? '') !== deadRowId) {
+        return Response.json({ success: false,
+          error: 'The stored Smartsheet row link no longer matches. Reload the Order before recreating.',
+          stored_smartsheet_row_id: order.smartsheet_row_id ?? null }, { status: 409 });
+      }
+      const deadRowCheck = await smartsheetGet('/sheets/'+sheetId+'/rows/'+deadRowId, token).catch(() => null);
+      if (String(deadRowCheck?.body?.id ?? '') === deadRowId) {
+        return Response.json({ success: false,
+          error: 'The stored Smartsheet row still exists. Recreate only runs after that exact row is confirmed absent; no link was changed.' }, { status: 409 });
+      }
+      const claims = await base44.asServiceRole.entities.Order.filter({ smartsheet_row_id: deadRowId });
+      const extraClaims = (Array.isArray(claims) ? claims : claims ? [claims] : [])
+        .filter((record: any) => record?.id && String(record.id) !== orderId && record.deleted !== true);
+      if (extraClaims.length) {
+        return Response.json({ success: false,
+          error: 'Another active Order already links to that Smartsheet row. Review the duplicate permanent link before recreating.',
+          conflicting_order_ids: extraClaims.slice(0, 5).map((record: any) => String(record.id)) }, { status: 409 });
+      }
+      const cleared = await base44.asServiceRole.entities.Order.updateMany(
+        { id: orderId, smartsheet_row_id: deadRowId, updated_date: order.updated_date },
+        { $unset: { smartsheet_row_id: 1, smartsheet_sheet_id: 1 } },
+      );
+      if (!cleared || cleared.updated !== 1) {
+        return Response.json({ success: false,
+          error: 'The Order changed while its dead link was being released. Reload before retrying.' }, { status: 409 });
+      }
+      const released = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
+      if (!released || String(released.smartsheet_row_id ?? '') !== '' ||
+          String(released.smartsheet_sheet_id ?? '') !== '') {
+        return Response.json({ success: false,
+          error: 'The dead link could not be released. The Order was not recreated.' }, { status: 500 });
+      }
+      const createResult = await createOrderSmartsheetRowWithGuard({
+        entity: base44.asServiceRole.entities.Order,
+        record: released,
+        sheetId,
+        postRow: async (freshOrder: any) => {
+          const freshCells = buildCells(freshOrder, bindings, 'orders');
+          if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
+          const result = await smartsheetWriteNoTimeoutRetry('POST', '/sheets/'+sheetId+'/rows', token, [{
+            toTop: true,
+            cells: freshCells.map((c: any) => ({ columnId: c.columnId, value: c.value,
+              ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
+          }]);
+          return result.body;
+        },
+        makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
+        verifyCreatedRow: async ({ rowId, expectedSnapshot }: any) => {
+          const columnIds = [...new Set(Object.values(bindings)
+            .map((value: any) => cleanText(value, 40)).filter((value: string) => /^\d+$/.test(value)))];
+          const params = new URLSearchParams({
+            rowIds: String(rowId), columnIds: columnIds.join(','), exclude: 'nonexistentCells',
+          });
+          const result = await smartsheetGet('/sheets/'+sheetId+'?'+params.toString(), token);
+          if (String(result.body?.id ?? '') !== sheetId) return false;
+          const rows = normalizeSheetRows(result.body);
+          if (rows.length !== 1 || String(rows[0]?.id ?? '') !== String(rowId)) return false;
+          return !detectConflict(rows[0].cells, expectedSnapshot, bindings, 'orders');
+        },
+      });
+      return Response.json({
+        success: true, order_id: orderId,
+        previous_smartsheet_row_id: deadRowId,
+        smartsheet_row_id: createResult?.rowId ?? null,
+        smartsheet_sheet_id: sheetId,
+        recreated_by: cleanText(adminActor?.email, 320),
+        newer_local_edits_queued: createResult?.newerLocalEditsRemain === true,
+        message: 'A replacement Smartsheet row was created from the Order and permanently linked. The next pull or Save & Sync reconciles field values normally.',
       });
     }
 
