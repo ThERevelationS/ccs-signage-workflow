@@ -18,7 +18,7 @@ import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
-import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions } from "@/shared/permittingAddressLocality.js";
+import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",
@@ -102,9 +102,11 @@ export default function PermitClientGroup({
         if (!pendFiredRef.current) { pendFiredRef.current = true; onRefreshLines?.(); }
         return;
       }
-      const has = (r) => (loc.offices || []).some(o => o?.authority_verification_status === 'staff_verified' && (o.authority_roles || []).includes(r));
-      const ready = has('sign_permit') && has('zoning');
-      setPendStatus(ready ? 'offices verified — finishing the apply…' : 'researching offices — waiting for sign + zoning verification');
+      const prof = loc.jurisdiction_profile_id
+        ? await staffEntities.JurisdictionProfile.get(loc.jurisdiction_profile_id).catch(() => null)
+        : null;
+      if (dead) return;
+      setPendStatus(officeResearchStatusLine(loc, prof));
     };
     tick();
     const iv = setInterval(tick, 12000);
@@ -154,6 +156,19 @@ export default function PermitClientGroup({
 
         {/* Row 2: job metadata — fields wrap onto their own line instead of clipping */}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 pl-6">
+
+        {/* Live auto-apply indicator — visible collapsed AND expanded so
+            background work is always on screen, not buried in the body. */}
+        {pendingLocalityName && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 max-w-full"
+            onClick={e => e.stopPropagation()}
+            title={pendStatus || `Auto-applying ${pendingLocalityName} when its offices verify`}
+          >
+            <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+            <span className="truncate">{pendStatus || `${pendingLocalityName} — auto-applying when offices verify`}</span>
+          </span>
+        )}
 
         {/* Est/Inv # — editable text + external link */}
         <div className="flex items-center gap-1 text-[11px] flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -467,7 +482,7 @@ export default function PermitClientGroup({
             <div className="px-4 py-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                {pendingLocalityName} — applying automatically{pendStatus ? ` · ${pendStatus}` : ' when its offices verify'}
+                {pendStatus || `${pendingLocalityName} — applying automatically when its offices verify`}
               </span>
             </div>
           )}
