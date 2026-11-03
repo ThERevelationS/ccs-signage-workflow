@@ -224,6 +224,23 @@ const sell = (o) => W.wireChannelLineSell({ engine: ENGINE, ...o });
   eq(r.engine.modifiersApplied.length, 1, 'modifier trace recorded');
 }
 {
+  // Engine-level: a caller modifier identical to a rule modifier must not
+  // double-apply (wires already avoid forwarding dups; the engine dedupes too).
+  const priced = P.pricePart({
+    label: 'x', qty: 1, unitCost: 100,
+    part: { markup_pct: 50, formula_modifiers: [{ type: 'add_pct', value: 10 }] },
+    modifiers: [{ type: 'add_pct', value: 10 }],
+  });
+  eq(priced.unitPrice, 165, 'identical caller+rule modifier applies once');
+  eq(priced.modifiersApplied.length, 1, 'one modifier in the resolution trace');
+  const priced2 = P.pricePart({
+    label: 'x', qty: 1, unitCost: 100,
+    part: { markup_pct: 50, formula_modifiers: [{ type: 'add_pct', value: 10 }] },
+    modifiers: [{ type: 'add_pct', value: 10 }, { type: 'add_flat', value: 5 }],
+  });
+  eq(priced2.unitPrice, 170, 'distinct caller modifiers still stack after dedupe');
+}
+{
   const r = sell({ line: { setup_fee: 25 }, cost: 100 });
   eq(r.sellPrice, 125, 'setup_fee line is config -> engine adds it after floor');
 }
