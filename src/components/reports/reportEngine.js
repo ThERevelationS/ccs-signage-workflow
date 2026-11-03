@@ -47,7 +47,6 @@
 // Week convention: Monday-start weeks (same bucketing as ProductionSchedule,
 // ResourceAllocationView and opsReportModel.weekKey).
 
-const DAY = 86400000;
 const clean = (v) => String(v ?? "").trim();
 const norm = (v) => clean(v).toLowerCase();
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
