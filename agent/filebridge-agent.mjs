@@ -636,33 +636,52 @@ const executors = {
     } finally { await fs.promises.unlink(tmp).catch(() => null); }
   },
 
-  // name/path deep search — FTS5 when available, LIKE fallback. Content
-  // extraction is P5; this covers the high-value 80% (find it by name).
+  // name/path deep search — FTS5 when available, LIKE fallback. Supports
+  // qualifiers from the action (filters.ext[], filters.path[]), offset cursor
+  // paging, and a wall-clock cap with `partial` honesty. Content extraction
+  // is P5; this covers the high-value 80% (find it by name).
   deep_search: async (args) => {
     if (!db) return { ok: false, error: 'index unavailable' };
     const q = String(args.query || '').trim();
-    if (!q) return { ok: true, result: { hits: [], mode: fts ? 'fts' : 'like' } };
+    const filters = args.filters && typeof args.filters === 'object' ? args.filters : {};
+    const exts = (filters.ext || []).map((e) => String(e).toLowerCase().replace(/^\./, '')).filter(Boolean);
+    const paths = (filters.path || []).map((p) => String(p).replace(/^\/+|\/+$/g, '')).filter(Boolean);
+    const offset = Math.max(0, Number(String(args.cursor || '0').replace(/^o/, '')) || 0);
+    if (!q && !exts.length && !paths.length) return { ok: true, result: { hits: [], mode: fts ? 'fts' : 'like' } };
     const limit = Math.min(Number(args.limit) || 200, 1000);
     const t0 = Date.now(); const cap = Math.min(Number(args.time_cap_ms) || 8000, 20000);
+    const want = offset + limit + 1; // +1 row = next-cursor probe
     let rows = [];
     try {
-      if (fts && !/[*"']/.test(q)) {
+      if (q && fts && !/[*"']/.test(q)) {
         rows = db.prepare(
-          `SELECT f.root_key,f.path,f.name,f.is_dir,f.size,f.mtime_ms FROM files_fts x
+          `SELECT f.root_key,f.path,f.name,f.ext,f.is_dir,f.size,f.mtime_ms FROM files_fts x
            JOIN files f ON f.rowid=x.rowid WHERE files_fts MATCH ? AND f.missing=0
            ORDER BY rank LIMIT ?`
-        ).all(q.split(/\s+/).map((t) => `${t.replace(/[^\w.-]/g, '')}*`).filter(Boolean).join(' AND ') || '""', limit * 2);
+        ).all(q.split(/\s+/).map((t) => `${t.replace(/[^\w.-]/g, '')}*`).filter(Boolean).join(' AND ') || '""', want);
       }
       if (!rows.length) {
         const like = `%${q.toLowerCase()}%`;
         rows = db.prepare(
-          `SELECT root_key,path,name,is_dir,size,mtime_ms FROM files
+          `SELECT root_key,path,name,ext,is_dir,size,mtime_ms FROM files
            WHERE missing=0 AND (lower(name) LIKE ? OR lower(path) LIKE ?) LIMIT ?`
-        ).all(like, like, limit * 2);
+        ).all(like, like, q ? want : 5000);
       }
     } catch (e) { return { ok: false, error: `search failed: ${String(e.message || e).slice(0, 160)}` }; }
+    // qualifier post-filter (ext set + path prefixes)
+    if (exts.length) rows = rows.filter((r) => exts.includes(String(r.ext || '').toLowerCase()));
+    if (paths.length) rows = rows.filter((r) => paths.some((p) => r.path === p || String(r.path).startsWith(`${p}/`)));
+    const page = rows.slice(offset, offset + limit);
+    const hasMore = rows.length > offset + limit;
     const partial = Date.now() - t0 > cap;
-    return { ok: true, result: { hits: rows.slice(0, limit).map((r) => ({ ...r, is_dir: !!r.is_dir })), mode: fts ? 'fts_or_like' : 'like', partial } };
+    return {
+      ok: true,
+      result: {
+        hits: page.map((r) => ({ ...r, is_dir: !!r.is_dir })),
+        mode: fts ? 'fts_or_like' : 'like', partial,
+        next_cursor: hasMore ? `o${offset + limit}` : null,
+      },
+    };
   },
 
   index_now: async (args) => {
