@@ -261,6 +261,7 @@ export default function TimeClock() {
   const loginReportRunRef = useRef(0);
   const dataSeqRef = useRef(0);
   const dataScopeRef = useRef("");
+  const rosterRetryRef = useRef({ tries: 0, timer: null });
   // Update the data scope during render so a stale employee-session read that
   // resolves between a session-switch render and the effect cannot apply.
   const dataScope = `${timeClockSessionToken}|${String(loggedInUser?.email || "").toLowerCase()}`;
@@ -275,7 +276,8 @@ export default function TimeClock() {
   }, []);
 
   useEffect(() => {
-    loadAllUsers();
+    void loadAllUsers();
+    return () => { if (rosterRetryRef.current.timer) clearTimeout(rosterRetryRef.current.timer); };
   }, []);
 
   useEffect(() => {
@@ -293,8 +295,16 @@ export default function TimeClock() {
         label: "Time Clock authorized users",
       });
       setAllUsers(users);
+      rosterRetryRef.current.tries = 0;
     } catch (err) {
       console.error("Error loading users:", err);
+      // An empty roster silently disables face identify for the whole page
+      // lifetime - keep retrying while the page is open so a transient entity-
+      // budget 429 cannot kill face scan for the session.
+      rosterRetryRef.current.tries += 1;
+      if (rosterRetryRef.current.tries <= 12) {
+        rosterRetryRef.current.timer = setTimeout(() => { void loadAllUsers(); }, 10000);
+      }
     }
     setIsLoading(false);
   };
