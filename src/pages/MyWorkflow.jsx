@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -35,7 +35,7 @@ import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 const stageColors = {
   estimating: { bg: "#FEF3C7", text: "#92400E" },
