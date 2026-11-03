@@ -956,3 +956,55 @@ const main = async () => {
 };
 
 main();
+  if (r.status === 200 && Array.isArray(r.json.commands)) {
+        for (const c of r.json.commands) runCommand(c);
+      }
+      await spoolDrain();
+      if (state.sse_ok !== false) { /* prefer SSE when healthy */ }
+    } catch (e) {
+      log('warn', 'poll_err', { err: String(e.message || e).slice(0, 120) });
+    }
+    await new Promise((r) => setTimeout(r, POLL_MS));
+  }
+};
+
+const main = async () => {
+  log('info', 'agent_start', { agent_id: AGENT_ID, env_role: ROLE_ENV, version: VERSION, roots: ROOTS });
+  // FB_SCAN_ONLY=1: scan local mounts, report, exit — mount verification for
+  // the Unraid walkthrough; spool captures batches since ingest is offline.
+  if (ENV.FB_SCAN_ONLY === '1') {
+    const scanId = Date.now();
+    for (const mount of ROOTS) {
+      const root = { root_key: path.posix.basename(mount), _mount: mount };
+      const s = await scanRoot(root, scanId);
+      log('info', 'scan_only_root', { mount, ...s, batch: undefined, recent: undefined });
+    }
+    const counts = db ? {
+      rows: db.prepare('SELECT COUNT(*) c FROM files').get()?.c,
+      fts_rows: fts ? db.prepare('SELECT COUNT(*) c FROM files_fts').get()?.c : 'n/a',
+      spool: spoolDepth(),
+    } : { db: 'unavailable' };
+    log('info', 'scan_only_done', counts);
+    process.exit(0);
+  }
+  for (let attempt = 0; ; attempt += 1) {
+    try { await handshake(); break; }
+    catch (e) {
+      const backoff = Math.min(60_000, 1000 * 2 ** Math.min(attempt, 6)) * (0.7 + Math.random() * 0.6);
+      log('warn', 'handshake_retry', { err: String(e.message || e).slice(0, 160), backoff_ms: Math.round(backoff) });
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+  // SSE primary; poll always runs (cheap, drains spool, covers SSE gaps)
+  sseLoop();
+  pollLoop();
+  // periodic re-handshake for config/role changes
+  setInterval(() => handshake().catch(() => null), 120_000);
+  // scheduled re-scan: metadata sweep every 15min (config can retune later)
+  if (state.role !== 'observer') {
+    runScan().catch((e) => log('warn', 'scan_err', { err: String(e.message || e).slice(0, 120) }));
+    setInterval(() => runScan().catch((e) => log('warn', 'scan_err', { err: String(e.message || e).slice(0, 120) })), 15 * 60_000);
+  }
+};
+
+main();
