@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchCrmEventsBundle } from "@/components/queues/queueFeedClient";
 import {
   EmptyState,
@@ -67,7 +68,14 @@ function AddEventForm({ actor, customers, onCreated, onCancel }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [staff, setStaff] = useState([]);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Assignee stays free-text (non-staff entries like "City office" are legit)
+  // but suggests the staff directory — free-text typos were the K-03 defect.
+  useEffect(() => {
+    staffEntities.AuthorizedEmail.list().then(setStaff).catch(() => {});
+  }, []);
 
   const save = async () => {
     setSaving(true);
@@ -114,7 +122,10 @@ function AddEventForm({ actor, customers, onCreated, onCancel }) {
           {customers.map((c) => <option key={c.id} value={c.company_name} />)}
         </datalist></label>
       <label className="flex flex-col gap-0.5"><span className={lab}>Assigned to</span>
-        <input className={sel} value={form.assignedTo} onChange={(e) => set("assignedTo", e.target.value)} /></label>
+        <input className={sel} list="crm-assignee-list" value={form.assignedTo} onChange={(e) => set("assignedTo", e.target.value)} />
+        <datalist id="crm-assignee-list">
+          {staff.map((u) => <option key={u.id || u.email} value={u.full_name || u.email} />)}
+        </datalist></label>
       <label className="flex flex-col gap-0.5"><span className={lab}>Due date</span>
         <CcsDateField className={sel} value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} /></label>
       <label className="flex flex-col gap-0.5"><span className={lab}>Notes</span>
