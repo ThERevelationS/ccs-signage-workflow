@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
