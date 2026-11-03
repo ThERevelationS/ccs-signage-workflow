@@ -300,6 +300,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [reloadingSalesQuickEdits, setReloadingSalesQuickEdits] = useState(false);
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
+  // Ids whose last merged row object carries a local pending-edit overlay —
+  // such objects must never be reused as the "unchanged" identity, or a
+  // cleared-but-not-yet-confirmed edit would resurrect on screen.
+  const mergedOverlayIdsRef = useRef(new Set());
   const debounceTimers = useRef({});
   const liveEditPinsRef = useRef({});
   const [liveEditPinVersion, setLiveEditPinVersion] = useState(0);
@@ -703,12 +707,30 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     }
 
-    return [...mergedById.values()]
-      .map((order) => ({
-        ...order,
-        ...(pendingRecordScopesRef.current[order.id] === scope && !pendingSameTaskRepairRef.current.has(order.id) ? (pendingChangesRef.current[order.id] || {}) : {}),
-      }))
+    const prevOverlayIds = mergedOverlayIdsRef.current;
+    const currentById = new Map((currentRows || []).map((row) => [row?.id, row]));
+    const nextOverlayIds = new Set();
+    const result = [...mergedById.values()]
+      .map((order) => {
+        const overlay = pendingRecordScopesRef.current[order.id] === scope && !pendingSameTaskRepairRef.current.has(order.id)
+          ? (pendingChangesRef.current[order.id] || {})
+          : {};
+        if (Object.keys(overlay).length) {
+          nextOverlayIds.add(order.id);
+          return { ...order, ...overlay };
+        }
+        const current = currentById.get(order.id);
+        // Preserve object identity for unchanged rows — the memoized row
+        // comparator keys on `wo` reference, so a fresh object per poll
+        // forces every visible row to re-render even when nothing changed.
+        // Rows that last merged WITH an overlay are excluded: their stored
+        // fields may hold cleared local edits the server row no longer has.
+        if (current && !prevOverlayIds.has(order.id) && current.updated_date === order.updated_date) return current;
+        return order;
+      })
       .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+    mergedOverlayIdsRef.current = nextOverlayIds;
+    return result;
   };
 
   const loadWorkOrders = async (showLoading = true, scope = recordScope, requiredIds = []) => {
@@ -2883,14 +2905,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  // Virtual scrolling setup
+  // Virtual scrolling setup. Rows render ~33px (28px h-7 content + td
+  // padding + border); a focused row inflates (~49px: larger td padding and
+  // font) and emits two 12px gap bands that live OUTSIDE the measured row —
+  // so the estimate covers row+gaps (~73px) and focused rows skip DOM
+  // measurement. An underestimate of even 5px/row leaves the scroll range
+  // thousands of px short on a long pipeline — the scrollbar grows while
+  // scrolling, which reads as jitter/lazy-loading.
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: filteredWorkOrders.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-    overscan: 5,
+    // Key measurements by row id, not position — a re-sort or scope change
+    // keeps each row's measured height instead of inheriting its neighbor's.
+    getItemKey: (index) => filteredWorkOrders[index]?.id ?? index,
+    estimateSize: (index) => (filteredWorkOrders[index]?.id === focusedRowId ? 73 : 33),
+    overscan: 8,
   });
+  // Focus changes row heights — drop cached measurements so estimates and
+  // measured rows re-evaluate against the new layout.
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [focusedRowId, rowVirtualizer]);
 
   const visibleColumnIds = useMemo(
     () => getVisibleSalesColumnIds(activeColumnPreset),
@@ -3494,7 +3530,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} visibleColumnIds={visibleColumnIds} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onCompleteFollowUp={requestFollowUpCompletion} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} />
+          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} visibleColumnIds={visibleColumnIds} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onCompleteFollowUp={requestFollowUpCompletion} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} measureElement={rowVirtualizer.measureElement} />
           </table>
           </div>
 
