@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -21,7 +20,6 @@ import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDir
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
-const WorkOrder = base44.entities.WorkOrder;
 
 const SUBCONTRACTOR_KEY = "subcontractorDirectory";
 
@@ -189,7 +187,7 @@ export default function ResourceAllocationView({ compact = false }) {
     });
   }, [users, userCapacities, workOrders, selectedWeek]);
   
-  const getUtilizationColor = (percent) => {
+  const _getUtilizationColor = (percent) => {
     if (percent > 100) return "bg-red-500";
     if (percent > 85) return "bg-orange-500";
     if (percent > 50) return "bg-green-500";
