@@ -624,7 +624,10 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       }
     }
     base.targets = [{ ...target, geometry: void 0 }, { name: countyName, state, type: "county", geoid: countyId, county: countyName }].filter((t, i, all) => all.findIndex((other) => other.geoid === t.geoid) === i);
-    base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
+    base.boundaries = [
+      { type: "Feature", properties: { name: target.name, type: target.type, role: "target", source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } },
+      ...target.type === "county" || !countyRow?.geometry?.rings ? [] : [{ type: "Feature", properties: { name: countyName, type: "county", role: "context", source_url: countyRow.source_url }, geometry: { type: "MultiLineString", coordinates: countyRow.geometry.rings } }]
+    ];
     const featName = (f) => String(f.attributes.NAME || f.attributes.municipality || f.attributes.TOWNSHIP || "");
     const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []].filter((f) => !sameJ(featName(f), target.name));
     const nearCands = [];
@@ -759,6 +762,140 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
   return new Proxy(client, { get: (t, p) => p === "asServiceRole" ? serviceRole : t[p] });
 }
 
+// base44/shared/permittingLookupIndex.mjs
+var norm2 = (v) => String(v || "").trim().toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+function indexAddressKey(address) {
+  return norm2(String(address || "").replace(/\s+(apt|suite|unit|ste|#)\s*.*$/i, ""));
+}
+function streetKey(address) {
+  return norm2(String(address || "").split(",")[0].replace(/\s+(apt|suite|unit|ste|#)\s*.*$/i, ""));
+}
+var GH32 = "0123456789bcdefghjkmnpqrstuvwxyz";
+function geohash(lat, lng, precision = 7) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return "";
+  let lo = [-180, -90], hi = [180, 90], bits = 0, cur = 0, out = "", even = true;
+  while (out.length < precision) {
+    const mid = (lo[even ? 0 : 1] + hi[even ? 0 : 1]) / 2;
+    const v = even ? lng : lat;
+    cur = cur << 1 | (v >= mid ? 1 : 0);
+    if (v >= mid) lo[even ? 0 : 1] = mid;
+    else hi[even ? 0 : 1] = mid;
+    even = !even;
+    if (++bits === 5) {
+      out += GH32[cur];
+      bits = 0;
+      cur = 0;
+    }
+  }
+  return out;
+}
+function haversineM(a, b) {
+  if (!a || !b) return Infinity;
+  const R = 6371e3, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function rulesetFingerprint(rules) {
+  let newest = "";
+  for (const r of rules || []) {
+    const t = String(r?.updated_date || r?.created_date || "");
+    if (t > newest) newest = t;
+  }
+  return `${(rules || []).length}:${newest}`;
+}
+function indexEntity(base44) {
+  try {
+    return base44?.asServiceRole?.entities?.PermitLookupIndex || null;
+  } catch {
+    return null;
+  }
+}
+async function indexReadByAddress(base44, address) {
+  const ent = indexEntity(base44);
+  if (!ent) return null;
+  try {
+    const rows = await ent.filter({ address_key: indexAddressKey(address) }, null, 3).catch(() => null);
+    const row = Array.isArray(rows) ? rows[0] : null;
+    return row || null;
+  } catch {
+    return null;
+  }
+}
+async function indexReadByCell(base44, point, geohash7) {
+  const ent = indexEntity(base44);
+  if (!ent || !geohash7) return null;
+  try {
+    const rows = await ent.filter({ geohash7, pick_status: "verified" }, null, 10).catch(() => null);
+    if (!Array.isArray(rows)) return null;
+    for (const row of rows) {
+      if (row.edge || !Number.isFinite(row.boundary_distance_m)) continue;
+      if (haversineM(point, row.point) < row.boundary_distance_m) return row;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+function indexRowFresh(row, { revision, fingerprint }) {
+  if (!row) return false;
+  if (row.pick_status !== "verified" && row.pick_status !== "rejected") return false;
+  if (revision && row.lookup_revision && row.lookup_revision !== revision) return false;
+  if (fingerprint && row.ruleset_fingerprint && row.ruleset_fingerprint !== fingerprint) return false;
+  if (row.expires_at && Date.parse(row.expires_at) < Date.now()) return false;
+  return true;
+}
+function indexWrite(base44, entry) {
+  const ent = indexEntity(base44);
+  if (!ent || !entry?.address_key) return;
+  (async () => {
+    const existing = await ent.filter({ address_key: entry.address_key }, null, 1).catch(() => null);
+    const row = Array.isArray(existing) ? existing[0] : null;
+    const data = { ...entry, hit_count: row ? Number(row.hit_count) || 0 : 0 };
+    if (row?.id) await ent.update(row.id, data).catch(() => null);
+    else await ent.create(data).catch(() => null);
+  })().catch(() => {
+  });
+}
+function buildIndexEntry({ address, point, resolution, geocode, revision, fingerprint, source = "resolver", ttlDays = 30 }) {
+  const target = resolution?.target || {};
+  const status = resolution?.status === "location_verified" ? "verified" : resolution?.status === "invalid_input" ? "rejected" : null;
+  if (!status) return null;
+  const boundaryDistanceM = Number.isFinite(target?.distance_m) ? Math.round(target.distance_m) : null;
+  const now = /* @__PURE__ */ new Date();
+  return {
+    address_key: indexAddressKey(address),
+    street_key: streetKey(address),
+    geohash5: point ? geohash(point.lat, point.lng, 5) : "",
+    geohash6: point ? geohash(point.lat, point.lng, 6) : "",
+    geohash7: point ? geohash(point.lat, point.lng, 7) : "",
+    state: resolution?.state || "",
+    county: target?.county || "",
+    jurisdiction_name: target?.name || (status === "rejected" ? "(not an address)" : ""),
+    jurisdiction_type: target?.type || "",
+    geoid: target?.geoid || "",
+    pick_status: status,
+    edge: Number.isFinite(boundaryDistanceM) ? boundaryDistanceM < 120 : true,
+    boundary_distance_m: boundaryDistanceM,
+    point: point ? { lat: point.lat, lng: point.lng } : null,
+    geocode_snapshot: geocode ? { provider: geocode.provider || "", formatted: geocode.formatted_address || geocode.formatted || "", location_exact: !!geocode.location_exact } : null,
+    resolution: {
+      status: resolution?.status || "",
+      target,
+      targets: (resolution?.targets || []).map((t) => ({ ...t, geometry: void 0 })),
+      sources: (resolution?.sources || []).map((s) => ({ kind: s?.kind, url: s?.url, checked_at: s?.checked_at })),
+      reason: resolution?.reason || "",
+      corroborated_by: resolution?.corroborated_by || ""
+    },
+    office_refs: [],
+    lookup_revision: revision || "",
+    ruleset_fingerprint: fingerprint || "",
+    source,
+    resolved_at: resolution?.checked_at || now.toISOString(),
+    expires_at: new Date(now.getTime() + ttlDays * 864e5).toISOString(),
+    last_verified_at: now.toISOString()
+  };
+}
+
 // base44/functions/findLocalityByAddress/handler.ts
 async function fixedJSON(url, timeoutMs = 15e3) {
   const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
@@ -853,8 +990,25 @@ Deno.serve(async (req) => {
     };
     await reporter.emit({ kind: "address_lookup", detail: `Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.` }, { stage: "Finding the building on the map", indeterminate: true });
     let geocode = null, geocodingService = null, googleVague = null;
+    let resolution = null, catalogs = null;
+    if (!diagnostic) {
+      try {
+        const idxRow = await indexReadByAddress(base44, address);
+        if (idxRow) {
+          const earlyCatalogs = await loadCatalogs(base44, idxRow.state ? { state: idxRow.state } : null).catch(() => null);
+          if (earlyCatalogs && indexRowFresh(idxRow, { revision: ADDRESS_LOOKUP_REVISION, fingerprint: rulesetFingerprint(earlyCatalogs.rules || []) })) {
+            catalogs = earlyCatalogs;
+            resolution = { ...idxRow.resolution || {}, status: idxRow.pick_status === "rejected" ? "invalid_input" : idxRow.resolution?.status || "location_verified", state: idxRow.state, point: idxRow.point, checked_at: (/* @__PURE__ */ new Date()).toISOString(), index_hit: true };
+            if (!Array.isArray(resolution.targets) || !resolution.targets.length) resolution.targets = resolution.target ? [resolution.target] : [];
+            geocode = { lat: idxRow.point?.lat, lon: idxRow.point?.lng, display_name: idxRow.geocode_snapshot?.formatted || address, location_exact: !!idxRow.geocode_snapshot?.location_exact, address_parts: { administrative_area_level_1: idxRow.state } };
+            await reporter.emit({ kind: "index_hit", detail: `Served from the permitting lookup index (${idxRow.jurisdiction_name}, ${idxRow.state}) \u2014 geocode and boundary checks skipped.` });
+          }
+        }
+      } catch {
+      }
+    }
     const serviceFailure = (status, message, diagnostic_code) => geocodingService = { status, issue: true, message, ...diagnostic_code ? { diagnostic_code } : {} };
-    try {
+    if (!resolution) try {
       const key = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() || Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim();
       const keySource = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() ? "geocoding" : Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim() ? "maps" : "none";
       if (!key) {
@@ -963,18 +1117,32 @@ Deno.serve(async (req) => {
     await reporter.emit({ kind: "geocode_result", detail: geocode ? `Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact ? "Street and building coordinates matched." : "Approximate or corrected address; review required."}` : "No map location found." }, { stage: "Checking government boundaries", indeterminate: true });
     const geoState = normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase();
     const stateFilter = geoState ? { state: geoState } : null;
-    let catalogs = null;
-    try {
-      catalogs = await loadCatalogs(base44, stateFilter);
-    } catch (e1) {
-      await new Promise((r) => setTimeout(r, 2500));
+    if (!catalogs) {
       try {
         catalogs = await loadCatalogs(base44, stateFilter);
-      } catch (e2) {
-        catalogs = null;
+      } catch (e1) {
+        await new Promise((r) => setTimeout(r, 2500));
+        try {
+          catalogs = await loadCatalogs(base44, stateFilter);
+        } catch (e2) {
+          catalogs = null;
+        }
       }
     }
-    const resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress, rules: catalogs?.rules || [], enteredAddress: address });
+    if (!resolution) {
+      try {
+        const cellRow = await indexReadByCell(base44, geocode ? { lat: geocode.lat, lng: geocode.lon } : null, geocode ? geohash(geocode.lat, geocode.lon, 7) : "");
+        if (cellRow && cellRow.state === geoState && indexRowFresh(cellRow, { revision: ADDRESS_LOOKUP_REVISION, fingerprint: rulesetFingerprint(catalogs?.rules || []) })) {
+          resolution = { ...cellRow.resolution || {}, status: "location_verified", state: cellRow.state, point: { lat: geocode.lat, lng: geocode.lon }, checked_at: (/* @__PURE__ */ new Date()).toISOString(), index_hit: true, cell_reuse: true };
+          await reporter.emit({ kind: "index_hit", detail: `Jurisdiction reused from a nearby verified pin (${cellRow.jurisdiction_name}, ${cellRow.state}) \u2014 boundary checks skipped.` });
+        }
+      } catch {
+      }
+    }
+    if (!resolution) resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress, rules: catalogs?.rules || [], enteredAddress: address });
+    if (resolution && !resolution.index_hit) {
+      indexWrite(base44, buildIndexEntry({ address, point: geocode ? { lat: geocode.lat, lng: geocode.lon } : resolution?.point, resolution, geocode, revision: ADDRESS_LOOKUP_REVISION, fingerprint: rulesetFingerprint(catalogs?.rules || []), source: "resolver", ttlDays: resolution.status === "invalid_input" ? 90 : 30 }));
+    }
     const hasServiceIssue = Boolean(geocodingService?.issue && resolution.status !== "location_verified");
     if (hasServiceIssue) resolution.reason = geocodingService.message;
     await reporter.emit({ kind: "location_result", detail: resolution.reason }, { stage: "Checking saved jurisdictions", indeterminate: true });
