@@ -2938,13 +2938,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   // thousands of px short on a long pipeline — the scrollbar grows while
   // scrolling, which reads as jitter/lazy-loading.
   const parentRef = useRef(null);
+  // These options MUST be referentially stable: the virtualizer treats
+  // option identity changes as measurement invalidation and notifies a
+  // re-render — inline closures here produced a render-phase loop (#301).
+  const getVirtualItemKey = useCallback(
+    (index) => filteredWorkOrders[index]?.id ?? index,
+    [filteredWorkOrders],
+  );
+  const estimateVirtualItemSize = useCallback(
+    (index) => (filteredWorkOrders[index]?.id === focusedRowId ? 73 : 33),
+    [filteredWorkOrders, focusedRowId],
+  );
   const rowVirtualizer = useVirtualizer({
     count: filteredWorkOrders.length,
     getScrollElement: () => parentRef.current,
     // Key measurements by row id, not position — a re-sort or scope change
     // keeps each row's measured height instead of inheriting its neighbor's.
-    getItemKey: (index) => filteredWorkOrders[index]?.id ?? index,
-    estimateSize: (index) => (filteredWorkOrders[index]?.id === focusedRowId ? 73 : 33),
+    getItemKey: getVirtualItemKey,
+    estimateSize: estimateVirtualItemSize,
     overscan: 8,
   });
   // Focus changes row heights — drop cached measurements so estimates and
