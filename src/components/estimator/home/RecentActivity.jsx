@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { Clock, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
