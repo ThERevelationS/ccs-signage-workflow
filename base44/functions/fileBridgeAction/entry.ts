@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
         okPaths.push(p.path);
       }
       if (!okPaths.length) return { err: 'no paths' };
-      return { args: { paths: okPaths, archive_name: String(b.archive_name || 'package.zip') } };
+      return { args: { root_key: String(b.root_key || ''), paths: okPaths, archive_name: String(b.archive_name || 'package.zip') } };
     },
     queue_index_now: (b) => ({ args: { root_key: String(b.root_key || ''), path_prefix: b.path_prefix ? normPath(b.path_prefix) : '' } }),
     queue_log_tail: (b) => ({ args: { lines: Math.min(Number(b.lines) || 200, 1000) } }),
