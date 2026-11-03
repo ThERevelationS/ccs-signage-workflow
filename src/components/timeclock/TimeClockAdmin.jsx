@@ -2100,7 +2100,7 @@ export default function TimeClockAdmin() {
 
       {(() => {
         const byJob = {};
-        for (const e of entries || []) {
+        for (const e of timeEntries || []) {
           const key = e.work_order_id ? (e.work_order_title || e.client_name || e.work_order_id) : null;
           if (!key) continue;
           byJob[key] = (byJob[key] || 0) + Number(e.total_hours || 0);
