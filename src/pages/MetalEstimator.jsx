@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MetalProject, Settings, Inventory as InventoryEntity } from "@/api/gatedEntities";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,7 +44,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     finishing_rate: 55,
     notes: ""
   });
-  const [globalSettings, setGlobalSettings] = useState({});
+  const [_globalSettings, setGlobalSettings] = useState({});
   const [inventory, setInventory] = useState([]);
   const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
