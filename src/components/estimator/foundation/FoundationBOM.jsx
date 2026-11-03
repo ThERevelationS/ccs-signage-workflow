@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { money } from "./foundationCalc";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
