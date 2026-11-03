@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt } from "@/components/files/fileBridgeClient";
+import AgentFailoverPanel from "@/components/files/AgentFailoverPanel";
 import FileViewerDialog from "@/components/files/FileViewerDialog";
 import InboundAttachDialog from "@/components/files/InboundAttachDialog";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -250,6 +251,9 @@ export default function ServerFiles() {
           (see <code>docs/unraid-filebridge-setup.md</code>) — once it handshakes, shares appear here.
         </div>
       )}
+
+      <AgentFailoverPanel agents={agents} settings={health?.settings}
+        isAdmin={currentUser?.role === "admin"} fbCall={fbCall} onChanged={loadHealth} />
 
       {/* link review queue */}
       {links.length > 0 && (
