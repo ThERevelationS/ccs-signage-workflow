@@ -105,6 +105,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
   handleContextMenu, setSelectedWorkOrder, onCompleteFollowUp, openCorbridgeDialog,
   handleDuplicateClient, deleteWorkOrder, leadSources, users, taskDescriptions, projectTypes,
+  measureElement,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
   const salesOwnerSelect = buildSalesPersonSelectModel(wo.sales_rep, users);
@@ -144,6 +145,11 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   return [
       isFocused && <tr key="focus-gap-top" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>,
       <tr key="row" className={`sales-board-row border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'sales-focus-row' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
+        // data-index + measureElement let the row virtualizer replace its
+        // 33px estimate with the real height — focused rows stay estimated
+        // (their 12px gap bands are siblings, not measurable in-slot).
+        ref={isFocused || !measureElement ? undefined : measureElement}
+        data-index={index}
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
           <button type="button" aria-label={`${isFocused ? 'Unfocus' : 'Focus'} sales row ${index + 1}: ${opportunityDisplayName}`} aria-pressed={isFocused}
