@@ -211,24 +211,28 @@ function LocalityPickerSession({
   useEffect(() => {
     if (!isOpen) return undefined;
     let cancelled = false;
+    let timer = 0;
     setRepositoryLoading(true);
     setRepositoryError("");
 
-    loadAllEntityRows({
+    const attempt = (n) => loadAllEntityRows({
       entity: staffEntities.JurisdictionProfile,
       sort: "name",
       label: "Permitting locality picker repository",
       cacheTtlMs: 60000,
     }).then((rows) => {
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
+      if (!cancelled) setRepositoryLoading(false);
     }).catch((e) => {
       console.error("Could not load saved jurisdictions in locality picker:", e);
-      if (!cancelled) setRepositoryError("Could not load the saved offices list — you can still select a configured office.");
-    }).finally(() => {
-      if (!cancelled) setRepositoryLoading(false);
+      // The shared entity-read budget refills on a rolling window — spaced
+      // retries outlast a busy stretch instead of failing on the first dip.
+      if (!cancelled && n < 3) { timer = setTimeout(() => attempt(n + 1), 7000 * (n + 1)); return; }
+      if (!cancelled) { setRepositoryError("Could not load the saved offices list — you can still select a configured office."); setRepositoryLoading(false); }
     });
+    attempt(0);
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [isOpen, repositoryRetry]);
 
   // Fast path: the full repository catalog pages in slowly under rate limits,
