@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Move, ZoomIn, ZoomOut } from "lucide-react";
 
 const CANVAS_INCHES = 480; // 40 ft of site shown across the canvas
