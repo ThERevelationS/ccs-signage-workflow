@@ -18,11 +18,9 @@ import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { useAuth } from "@/components/auth/EmailGate";
-import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 
-const WorkOrder = base44.entities.WorkOrder;
 
 const stageOrder = ['permitting', 'design', 'production', 'fabrication', 'installation'];
 
