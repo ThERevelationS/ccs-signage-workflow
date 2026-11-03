@@ -6,13 +6,17 @@ import {
   CRM_ACTIVITY_FIELDS,
   CRM_CUSTOMER_FIELDS,
   ESTIMATE_QUEUE_FIELDS,
+  GENERAL_TASK_FIELDS,
+  MY_WORKFLOW_USER_FIELDS,
   QUOTE_DEFAULTS_FIELDS,
   SAVED_VIEW_FIELDS,
   projectCrmActivity,
   projectCrmCustomer,
   projectEstimate,
+  projectGeneralTask,
   projectQuoteDefaults,
   projectSettingRecord,
+  projectWorkflowUser,
   scopeSavedViewsForLens,
   scopeSavedViewsForPage,
   queueFeedCacheKey,
@@ -50,6 +54,21 @@ import {
 //                  subfields — full line blobs never leave the server).
 //     quote_defaults — the {config_name:"default"} QuoteDefaults row.
 //     saved_views — page-axis views when page_key is passed.
+//
+//   feed=my_workflow
+//     items      — GeneralTask rows where completed:false, projected to every
+//                  declared field and sorted by created_date to match the
+//                  gateway read the page ran. The work-order half of the page
+//                  still comes from the shared boardFeed snapshot — folding it
+//                  in would duplicate a whole-table pull for heavy fields the
+//                  queue projections deliberately strip (notes, sip_checklist).
+//     users      — the AuthorizedEmail assignee roster projected to the five
+//                  fields the pickers read (tight allowlist — the entity's
+//                  credential/session fields never leave the backend).
+//     dropdown_conditions — GlobalSettings('dropdownConditions') record.
+//     task_descriptions — GlobalSettings('salesTaskDescriptions') record.
+//     Nothing in this feed is owner-scoped, so its isolate-cache key drops
+//     the owner segment entirely — every staff session shares the entry.
 //
 // Common controls: `since` (updated_date delta cursor, server-side $gte),
 // `limit` (caps items; capped responses keep next_cursor honest), `include`
@@ -124,14 +143,17 @@ const MAX_OWNER = 200;
 // the same bound (loadRows maxRows: 2000), so parity holds.
 const MAX_SAVED_VIEWS = 2000;
 const SETTINGS_KEY_STAGE_MODE = 'productStatusDrivesStage';
+const SETTINGS_KEY_DROPDOWN_CONDITIONS = 'dropdownConditions';
+const SETTINGS_KEY_TASK_DESCRIPTIONS = 'salesTaskDescriptions';
 
-const FEED_NAMES = new Set(['product_queue', 'crm_events', 'estimate_queue']);
+const FEED_NAMES = new Set(['product_queue', 'crm_events', 'estimate_queue', 'my_workflow']);
 // Which extras each feed can compose. `include` narrows this set; when the
 // caller does not pass include, all of the feed's extras are returned.
 const FEED_EXTRAS = {
   product_queue: ['saved_views', 'settings'],
   crm_events: ['customers'],
   estimate_queue: ['quote_defaults', 'saved_views'],
+  my_workflow: ['users', 'dropdown_conditions', 'task_descriptions'],
 };
 
 function bad(message: string) {
@@ -385,7 +407,10 @@ Deno.serve(async (req) => {
       feed,
       lens: queueLens,
       pageKey,
-      owner: sessionEmail,
+      // my_workflow carries no owner-scoped slice — its items and extras are
+      // the same rows for every session, so the key drops the owner segment
+      // and one entry serves a whole-staff mount burst.
+      owner: feed === 'my_workflow' ? '' : sessionEmail,
       include,
       moduleKey,
     }) + `|items:${wantItems ? 1 : 0}`;
@@ -426,11 +451,20 @@ Deno.serve(async (req) => {
       } else if (feed === 'estimate_queue') {
         projection = ESTIMATE_QUEUE_FIELDS;
         projectRow = (row) => projectEstimate(row);
+      } else if (feed === 'my_workflow') {
+        projection = GENERAL_TASK_FIELDS;
+        // The gateway read the page ran was filter({completed:false},
+        // 'created_date') — the server applies the same query so the open-task
+        // set is identical (a since-delta can never observe a task flipping
+        // completed, which is why the client asks for full pulls here).
+        query.completed = false;
+        projectRow = (row) => projectGeneralTask(row);
       }
 
       const entity =
         feed === 'crm_events' ? entities.OpportunityActivity
         : feed === 'estimate_queue' ? entities.AllInOneEstimate
+        : feed === 'my_workflow' ? entities.GeneralTask
         : entities.WorkOrder;
       const scanned = await scanProjectedRows(
         entity, query, projection, projectRow, { limit },
@@ -450,6 +484,14 @@ Deno.serve(async (req) => {
           return u > m ? u : m;
         }, '');
         nextCursor = maxReturned || since || null;
+      }
+      if (feed === 'my_workflow') {
+        // Row-order parity with the gateway read this replaces
+        // (filter({completed:false}, 'created_date')): scan order is
+        // updated_date-ascending for cursor math, so the open-task set is
+        // re-sorted on the immutable created_date before it leaves.
+        pageItems.sort((a: any, b: any) =>
+          String(a?.created_date || '').localeCompare(String(b?.created_date || '')));
       }
       payload.items = pageItems;
       payload.count = pageItems.length;
@@ -506,16 +548,54 @@ Deno.serve(async (req) => {
         payload.quote_defaults = null;
       }
     }
+    if (include.includes('users')) {
+      try {
+        // The page's unfiltered AuthorizedEmail pull — the assignee pickers
+        // need the whole roster, projected down to the five fields they read.
+        const rows = await scanProjectedRows(
+          entities.AuthorizedEmail, {}, MY_WORKFLOW_USER_FIELDS, projectWorkflowUser, { maxRows: MAX_ROWS },
+        );
+        payload.users = rows.items;
+        if (rows.truncated) extrasErrors.users = 'User directory reached the row cap.';
+      } catch (e: any) {
+        extrasErrors.users = e?.message || 'The user directory could not be loaded.';
+        payload.users = null;
+      }
+    }
+    if (include.includes('dropdown_conditions')) {
+      try {
+        const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_DROPDOWN_CONDITIONS });
+        if (!Array.isArray(rows)) throw new Error('Setting lookup did not return a record list.');
+        if (rows.length > 1) throw new Error('Setting has multiple records for its key.');
+        payload.dropdown_conditions = rows[0] ? projectSettingRecord(rows[0]) : null;
+      } catch (e: any) {
+        extrasErrors.dropdown_conditions = e?.message || 'Dropdown conditions could not be loaded.';
+        payload.dropdown_conditions = null;
+      }
+    }
+    if (include.includes('task_descriptions')) {
+      try {
+        const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_TASK_DESCRIPTIONS });
+        if (!Array.isArray(rows)) throw new Error('Setting lookup did not return a record list.');
+        if (rows.length > 1) throw new Error('Setting has multiple records for its key.');
+        payload.task_descriptions = rows[0] ? projectSettingRecord(rows[0]) : null;
+      } catch (e: any) {
+        extrasErrors.task_descriptions = e?.message || 'Task descriptions could not be loaded.';
+        payload.task_descriptions = null;
+      }
+    }
 
     payload.projected_fields = {
       items:
         feed === 'crm_events' ? CRM_ACTIVITY_FIELDS
         : feed === 'estimate_queue' ? ESTIMATE_QUEUE_FIELDS
+        : feed === 'my_workflow' ? GENERAL_TASK_FIELDS
         : QUEUE_WO_FIELDS,
       product: feed === 'product_queue' ? QUEUE_PRODUCT_FIELDS : undefined,
       saved_view: include.includes('saved_views') ? SAVED_VIEW_FIELDS : undefined,
       customer: include.includes('customers') ? CRM_CUSTOMER_FIELDS : undefined,
       quote_defaults: include.includes('quote_defaults') ? QUOTE_DEFAULTS_FIELDS : undefined,
+      user: include.includes('users') ? MY_WORKFLOW_USER_FIELDS : undefined,
     };
     if (Object.keys(extrasErrors).length) payload.extras_errors = extrasErrors;
     if (cacheable) feedCacheSet(cacheKey, payload);
