@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt } from "@/components/files/fileBridgeClient";
+import FileViewerDialog from "@/components/files/FileViewerDialog";
 
 const ICONS = {
   dir: Folder, pdf: FileText, image: FileImage, video: FileVideo, audio: FileAudio,
@@ -32,6 +33,7 @@ export default function ServerFiles() {
   const [searchHits, setSearchHits] = useState(null);
   const [links, setLinks] = useState([]);
   const [uploads, setUploads] = useState([]);
+  const [viewer, setViewer] = useState(null); // {url,name,ext,size,sha256}
   const fileInput = useRef(null);
 
   const loadHealth = useCallback(async () => {
@@ -96,14 +98,14 @@ export default function ServerFiles() {
     try {
       // already-delivered small files keep a permanent URL
       if (row.delivered_url && !(row.delivered_at_ms && row.mtime_ms > row.delivered_at_ms)) {
-        window.open(row.delivered_url, "_blank", "noopener");
+        setViewer({ url: row.delivered_url, name: row.name, ext: row.ext, size: row.size, sha256: row.sha256 });
         return;
       }
       const r = await fbCall("queue_fetch", { root_key: rootKey, path: row.path, sha256: row.sha256, size: row.size });
       const d = r?.data ?? r;
       if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
-      const c = await waitForCommand(d.command_id, { timeoutMs: 300_000, onTick: (t) => setBusy((b) => ({ ...b, [key]: t?.progress ? `fetching ${Math.round(t.progress.pct || 0)}%` : "fetching…" })) });
-      if (c?.result?.file_url) window.open(c.result.file_url, "_blank", "noopener");
+      const c = await waitForCommand(d.command_id, { timeoutMs: 300_000, onTick: (t) => setBusy((b) => ({ ...b, [key]: t?.progress ? `fetching ${Math.round(((t.progress.done || 0) / (t.progress.total || 1)) * 100)}%` : "fetching…" })) });
+      if (c?.result?.file_url) setViewer({ url: c.result.file_url, name: row.name, ext: row.ext, size: row.size, sha256: c.result.sha256 || row.sha256 });
       else setBusy((b) => ({ ...b, [key]: `failed: ${c?.error || c?.status || "unknown"}` }));
     } catch (e) {
       setBusy((b) => ({ ...b, [key]: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 80)}` }));
@@ -317,6 +319,7 @@ export default function ServerFiles() {
       {listSrc && listSrc !== "index" && listSrc !== "empty" && entries.length > 0 && (
         <div className="text-xs text-muted-foreground">Served {listSrc === "agent" || listSrc === "command" ? "live from the server" : `via ${listSrc}`} · {fmtBytes(entries.reduce((s, e) => s + (e.size || 0), 0))} visible</div>
       )}
+      <FileViewerDialog open={!!viewer} file={viewer} onClose={() => setViewer(null)} />
     </div>
   );
 }
