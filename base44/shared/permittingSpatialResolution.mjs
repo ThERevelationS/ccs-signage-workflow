@@ -197,7 +197,10 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
  }
  base.targets=[{...target,geometry:undefined},{name:countyName,state,type:'county',geoid:countyId,county:countyName}].filter((t,i,all)=>all.findIndex(other=>other.geoid===t.geoid)===i);
  // Separate LineStrings preserve multipart and hole outlines without assuming ring orientation.
- base.boundaries=[{type:'Feature',properties:{name:target.name,source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}}];
+ // The containing county's ring rides along as a context feature — targets
+ // already names it, so the map can draw the county line around the pick.
+ base.boundaries=[{type:'Feature',properties:{name:target.name,type:target.type,role:'target',source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}},
+ ...(target.type==='county'||!countyRow?.geometry?.rings?[]:[{type:'Feature',properties:{name:countyName,type:'county',role:'context',source_url:countyRow.source_url},geometry:{type:'MultiLineString',coordinates:countyRow.geometry.rings}}])];
  // A near feature that names the SAME jurisdiction as the resolved target is
  // the boundary drawn twice by two sources — not the edge of another place.
  const featName=f=>String(f.attributes.NAME||f.attributes.municipality||f.attributes.TOWNSHIP||'');
