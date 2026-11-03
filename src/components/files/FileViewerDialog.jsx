@@ -11,7 +11,7 @@ const TEXT_CAP = 512 * 1024; // render ≤512KB inline; larger text files downlo
 // Office/design files fall back to download until the preview pipeline (FB-42)
 // produces pushed previews.
 export default function FileViewerDialog({ open, onClose, file }) {
-  const { url, name, ext, size, sha256 } = file || {};
+  const { url, name, ext, size, sha256, preview_url } = file || {};
   const kind = kindOfExt(ext, false);
   const e = String(ext || "").toLowerCase();
   const [text, setText] = useState(null);
@@ -37,7 +37,10 @@ export default function FileViewerDialog({ open, onClose, file }) {
   const openRaw = () => window.open(url, "_blank", "noopener");
 
   let body;
-  if (kind === "image") {
+  if (preview_url && kind !== "image" && kind !== "video" && kind !== "audio") {
+    // pushed preview (PDF) — renders office/design/other files the browser can't open natively
+    body = <iframe title={`${name} preview`} src={preview_url} className="w-full h-[70vh] rounded border bg-white" />;
+  } else if (kind === "image") {
     body = <img src={url} alt={name} className="max-h-[70vh] w-auto mx-auto object-contain rounded" />;
   } else if (kind === "pdf") {
     body = <iframe title={name} src={url} className="w-full h-[70vh] rounded border bg-white" />;
@@ -52,8 +55,8 @@ export default function FileViewerDialog({ open, onClose, file }) {
         ? <Fallback name={name} reason={`preview unavailable: ${textErr}`} />
         : <div className="p-8 text-sm text-muted-foreground">Loading preview…</div>;
   } else {
-    const why = kind === "design" ? "design files (cdr/ai/psd) get previews when the thumb pipeline lands"
-      : kind === "doc" || kind === "sheet" ? "office docs need the preview pipeline (or download to open natively)"
+    const why = kind === "design" ? "design files (cdr/ai/psd) render inline once the agent pushes a PDF preview — download opens natively meanwhile"
+      : kind === "doc" || kind === "sheet" ? "no pushed PDF preview yet — the agent renders office files during scans; download opens natively"
         : "no inline renderer for this file type";
     body = <Fallback name={name} reason={why} />;
   }
