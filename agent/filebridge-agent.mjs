@@ -21,6 +21,7 @@ import crypto from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
 import zlib from 'node:zlib';
+import { spawn, spawnSync } from 'node:child_process';
 
 const ENV = process.env;
 const APP_URL = (ENV.FB_APP_URL || '').replace(/\/+$/, '');
@@ -147,6 +148,7 @@ try {
   try { db.exec(`ALTER TABLE files ADD COLUMN miss_count INTEGER DEFAULT 0`); } catch { /* present */ }
   try { db.exec(`ALTER TABLE files ADD COLUMN extracted_ms INTEGER DEFAULT 0`); } catch { /* present */ }
   try { db.exec(`ALTER TABLE files ADD COLUMN thumb_pushed_ms INTEGER DEFAULT 0`); } catch { /* present */ }
+  try { db.exec(`ALTER TABLE files ADD COLUMN preview_pushed_ms INTEGER DEFAULT 0`); } catch { /* present */ }
 } catch (e) {
   log('warn', 'sqlite_unavailable', { err: String(e.message || e).slice(0, 120) });
 }
@@ -411,6 +413,57 @@ const extractCandidates = async (root, stats) => {
 const THUMB_EXTS = new Set('jpg jpeg png gif webp svg bmp avif'.split(' '));
 const THUMB_MAX = 2 * 1024 * 1024;
 const THUMB_PER_SCAN = 50;
+
+// ---- PDF previews via LibreOffice (optional) — probes soffice/libreoffice
+// once at startup; absent tool = lane stays dark, no errors (honest degrade).
+// ≤10 conversions/scan — each spawn is seconds of CPU.
+const PREVIEW_EXTS = new Set('doc docx xls xlsx ppt pptx odt ods rtf'.split(' '));
+const PREVIEW_MAX_FILE = 30 * 1024 * 1024;
+const PREVIEW_PER_SCAN = 10;
+let sofficePath = null;
+const probeSoffice = () => {
+  if (sofficePath !== null) return sofficePath;
+  for (const cmd of ['soffice', 'libreoffice']) {
+    try {
+      const r = spawnSync(cmd, ['--version'], { timeout: 8000 });
+      if (r.status === 0 || (r.stdout || '').toString().includes('LibreOffice')) { sofficePath = cmd; break; }
+    } catch { /* not present */ }
+  }
+  if (!sofficePath) sofficePath = ''; // probed-once sentinel
+  return sofficePath;
+};
+const pushPreviews = async (stats) => {
+  if (!stats.previews.length || !probeSoffice()) return;
+  const mark = db ? db.prepare('UPDATE files SET preview_pushed_ms=? WHERE rowid=?') : null;
+  const tmpDir = path.join(STATE_DIR, 'preview-tmp');
+  fs.mkdirSync(tmpDir, { recursive: true });
+  let done = 0;
+  for (const p of stats.previews) {
+    if (done >= PREVIEW_PER_SCAN) break;
+    done += 1;
+    try {
+      const ok = await new Promise((resolve) => {
+        const child = spawn(sofficePath, ['--headless', '--convert-to', 'pdf', '--outdir', tmpDir, p.abs],
+          { stdio: 'ignore' });
+        child.on('error', () => resolve(false));
+        child.on('exit', (c) => resolve(c === 0));
+        setTimeout(() => { try { child.kill('SIGKILL'); } catch {} }, 90_000);
+      });
+      const pdfName = path.join(tmpDir, p.abs.replace(/[/\\]/g, '_').replace(/\.[^.]*$/, '') + '.pdf');
+      // soffice names output after the input basename — find the real one
+      const produced = fs.existsSync(pdfName) ? pdfName
+        : (() => { const want = path.basename(p.abs).replace(/\.[^.]*$/, '') + '.pdf'; const cand = path.join(tmpDir, want); return fs.existsSync(cand) ? cand : null; })();
+      if (!ok || !produced) { mark?.run(-p.mtime_ms || -1, p.rowid); continue; }
+      const bytes = fs.readFileSync(produced);
+      fs.unlinkSync(produced);
+      if (bytes.length > 2 * 1024 * 1024) { mark?.run(-1, p.rowid); continue; } // rendition too large — don't retry until change
+      const r = await post('preview_push', { path_key: p.path_key, bytes_b64: bytes.toString('base64') }).catch(() => null);
+      if (r?.status === 200) { mark?.run(p.mtime_ms, p.rowid); stats.previews_pushed += 1; }
+      else if (r?.status && r.status !== 404 && r.status < 500) { mark?.run(p.mtime_ms, p.rowid); }
+      else { spoolPush('preview_push', { path_key: p.path_key, bytes_b64: bytes.toString('base64') }); mark?.run(p.mtime_ms, p.rowid); }
+    } catch { /* next scan retries */ }
+  }
+};
 const pushThumbs = async (stats) => {
   if (!stats.thumbs.length) return;
   const mark = db ? db.prepare('UPDATE files SET thumb_pushed_ms=? WHERE rowid=?') : null;
@@ -494,6 +547,14 @@ const scanDir = async (root, rel, scanId, stats) => {
           stats.thumbs.push({ rowid: cur.rowid, path_key: row.path_key, abs: path.posix.join(abs, e.name), mtime_ms: Math.floor(st.mtimeMs) });
         }
       }
+      // preview candidates: office ext, ≤30MB, soffice-rendered to PDF —
+      // same mtime-dedupe + primary-only discipline as thumbs.
+      if (PREVIEW_EXTS.has(row.ext) && st.size > 0 && st.size <= PREVIEW_MAX_FILE && state.role === 'primary') {
+        const cur = prev || knownRow(root.root_key, nrel);
+        if (cur && cur.preview_pushed_ms !== Math.floor(st.mtimeMs)) {
+          stats.previews.push({ rowid: cur.rowid, path_key: row.path_key, abs: path.posix.join(abs, e.name), mtime_ms: Math.floor(st.mtimeMs) });
+        }
+      }
     }
     if (stats.batch.length >= SCAN_BATCH) { await flushIndexBatch(stats.batch.splice(0), scanId); }
   }
@@ -506,7 +567,7 @@ const scanDir = async (root, rel, scanId, stats) => {
 };
 
 const scanRoot = async (root, scanId, prefix = '', resumeFrontier = null, persist = null) => {
-  const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, thumbs_pushed: 0, batch: [], recent: [], extract: [], thumbs: [], extractOn: extractionOn(root) };
+  const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, thumbs_pushed: 0, previews_pushed: 0, batch: [], recent: [], extract: [], thumbs: [], previews: [], extractOn: extractionOn(root) };
   const queue = Array.isArray(resumeFrontier) && resumeFrontier.length ? [...resumeFrontier] : [prefix.replace(/\/+$/, '')];
   let guard = 0;
   while (queue.length && guard < 200_000) {
@@ -521,6 +582,7 @@ const scanRoot = async (root, scanId, prefix = '', resumeFrontier = null, persis
   await flushIndexBatch(stats.batch.splice(0), scanId);
   await extractCandidates(root, stats);
   await pushThumbs(stats);
+  await pushPreviews(stats);
   if (stats.recent.length) {
     for (let i = 0; i < stats.recent.length; i += 300) {
       const payload = { items: stats.recent.slice(i, i + 300) };
