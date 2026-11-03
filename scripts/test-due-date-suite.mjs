@@ -398,19 +398,17 @@ const localMid = (y, m, d) => new Date(y, m - 1, d).getTime();
     products: [{ product_due_date: '2026-12-01' }], existing_due_date: '2026-11-15', push_forward_only: true,
   }).pushed, true, 'order pushed when a product lands later');
 
-  // KNOWN DEFECT N-03.1 — reported indexes are FILTERED-list positions, not
-  // input-array positions. computeOrderDueDate filters products to objects
-  // (line ~401) then forEach assigns `index` from the filtered list into
-  // binding_index + product-trace rows; a sparse input shifts the reported
-  // position off the caller's array. binding_product_id stays correct.
+  // N-03.1 CLOSED — reported indexes are the caller's INPUT-array positions.
+  // Both engines iterate the raw products/parts list and skip non-objects,
+  // so sparse input no longer shifts binding_index or trace row indexes.
   const sparse = computeOrderDueDate({ products: [null, 'x', { id: 'p7', product_due_date: '2026-11-10' }] });
   eq(sparse.binding_product_id, 'p7', 'binding id still correct on sparse input');
-  eq(sparse.binding_index, 0, 'KNOWN DEFECT N-03.1: binding_index is the filtered index (0), not the input index (2)');
-  eq(sparse.trace.find((t) => t.kind === 'product' && t.product_id === 'p7').index, 0,
-    'KNOWN DEFECT N-03.1: product-trace index also filtered');
+  eq(sparse.binding_index, 2, 'N-03.1 closed: binding_index is the input index (2), not the filtered index (0)');
+  eq(sparse.trace.find((t) => t.kind === 'product' && t.product_id === 'p7').index, 2,
+    'N-03.1 closed: product-trace index is also the input position');
   const sparseProd = computeProductDueDate({ parts: [null, { id: 'a', product_lead_days: 2 }, { id: 'b', product_lead_days: 5 }], anchor_date: MON });
-  eq(sparseProd.trace.find((t) => t.kind === 'max' && t.field === 'product_due_date').index, 1,
-    'KNOWN DEFECT N-03.1: max-owner index filtered (1), not the input index (2)');
+  eq(sparseProd.trace.find((t) => t.kind === 'max' && t.field === 'product_due_date').index, 2,
+    'N-03.1 closed: max-owner index is the input position (2)');
 }
 
 // ===========================================================================
