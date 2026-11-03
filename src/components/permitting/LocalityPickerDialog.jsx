@@ -117,7 +117,8 @@ function LocalityPickerSession({
   isOpen,
   onClose,
   localities,
-  onApply,  // (localityId, { excludeElectrical }) => void
+  onApply,  // (localityId, { excludeElectrical, locality }) => void
+  onPendingApply, // (localityId, { excludeElectrical, locality }) => void — apply once offices verify
   initialAddress = "",
 }) {
   const { sessionToken,currentUser } = useAuth();
@@ -162,6 +163,15 @@ function LocalityPickerSession({
   const setAddress = (v) => { setAddressRaw(v); setGpsCoords(null); };
   const [suggestions, setSuggestions] = useState([]);
   const suggestionReq = useRef(0);
+  // Styled confirms replace window.confirm/alert — a pending ask renders an
+  // AlertDialog and resolves with the picked action's value ('cancel' on dismiss).
+  const [confirmUi, setConfirmUi] = useState(null);
+  const confirmResolve = useRef(null);
+  const askConfirm = (ui) => {
+    try { if (localStorage.getItem("permitting_skip_confirms") === "1" && ui?.skipValue !== undefined) return Promise.resolve(ui.skipValue); } catch {}
+    return new Promise((resolve) => { confirmResolve.current = resolve; setConfirmUi(ui); });
+  };
+  const answerConfirm = (value) => { setConfirmUi(null); const r = confirmResolve.current; confirmResolve.current = null; r?.(value); };
   useEffect(() => {
     const q = address.trim();
     if (!sessionToken || q.length < 4 || result || searching) { setSuggestions([]); return; }
@@ -392,25 +402,63 @@ function LocalityPickerSession({
   // staff-checked — allow a deliberate "use it anyway" so the job isn't
   // dead-ended. The applied lines keep their needs-check badges downstream.
   const addressNeedsCheck=Boolean(address.trim()&&result?.suggested_locality&&!result.apply_allowed&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id);
-  const handleApply = () => {
+  // Apply needs the full locality row — a stale `localities` prop that lacks it
+  // silently no-ops downstream. Fetch on demand so the apply can't die quietly.
+  const fullLocalityForApply = async () => {
+    if (selectedLocality) return selectedLocality;
+    const rows = await loadAllEntityRows({ entity: staffEntities.PermitLocality, query: { id: selectedLocalityId }, label: 'Locality apply lookup' }).catch(() => null);
+    return rows?.[0] || null;
+  };
+
+  const handleApply = async () => {
     if (!openRef.current || !selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)) return;
     if (addressNeedsCheck) {
       const name = result?.suggested_locality?.name || "this office";
-      if (!confirmOrSkip(`${name}'s offices are not yet verified. Its permit lines will be marked "needs review" until verified. Use it anyway?`)) return;
+      const choice = await askConfirm({
+        title: `Use ${name} before its offices are verified?`,
+        body: "Live office research is running for this jurisdiction. You can let it apply automatically once the offices verify, or use it now — its permit lines will be marked “needs review” until verified.",
+        actions: [
+          { value: 'wait', label: 'Apply when verified', tone: 'outline' },
+          { value: 'now', label: 'Use anyway — needs review', tone: 'primary' },
+        ],
+        skipValue: 'now',
+      });
+      if (choice === 'cancel' || !openRef.current) return;
+      if (choice === 'wait') {
+        const locRow = await fullLocalityForApply();
+        onPendingApply?.(selectedLocalityId, { excludeElectrical, locality: locRow });
+        onClose();
+        return;
+      }
     }
     // Unverified picks get one deliberate pause — address-flow applies are
     // already gated on a verified review; repository picks may not be.
     if (!address.trim() && selectedAuthority.officeCount === 0) {
       const name = selectedLocality?.name || "this office";
-      if (!confirmOrSkip(`${name} is not yet verified — permit offices and contact info may be incomplete. Use it anyway?`)) return;
+      const ok = await askConfirm({
+        title: `${name} is not yet verified`,
+        body: "Permit offices and contact info may be incomplete. Use it anyway?",
+        actions: [{ value: 'yes', label: 'Use anyway', tone: 'primary' }],
+        skipValue: 'yes',
+      });
+      if (ok !== 'yes' || !openRef.current) return;
     }
-    onApply(selectedLocalityId, { excludeElectrical });
+    const locRow = await fullLocalityForApply();
+    onApply(selectedLocalityId, { excludeElectrical, locality: locRow });
     // First-few-applies reassurance — a small visible win while the workflow is
     // still new to the staff member. Stops after the third apply.
     try {
       const count = (parseInt(localStorage.getItem("permitting_apply_count") || "0", 10) || 0) + 1;
       localStorage.setItem("permitting_apply_count", String(count));
-      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Office linked to this job. Next: enter the dates below or contact the office." : "Office linked."), 350);
+      if (count <= 3 && openRef.current) {
+        await askConfirm({
+          title: count === 1 ? "Office linked to this job" : "Office linked",
+          body: count === 1 ? "Next: enter the dates below or contact the office." : "",
+          actions: [{ value: 'ok', label: 'OK', tone: 'primary' }],
+          skipValue: 'ok',
+          hideCancel: true,
+        });
+      }
     } catch {}
     onClose();
   };
@@ -590,9 +638,17 @@ function LocalityPickerSession({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => {
+    <Dialog open={isOpen} onOpenChange={async (o) => {
       if (o) return;
-      if (searching && !confirmOrSkip("A lookup is still running — close anyway? (It continues in the background.)")) return;
+      if (searching) {
+        const ok = await askConfirm({
+          title: "A lookup is still running",
+          body: "Close anyway? It continues in the background.",
+          actions: [{ value: 'yes', label: 'Close', tone: 'primary' }],
+          skipValue: 'yes',
+        });
+        if (ok !== 'yes') return;
+      }
       onClose();
     }}>
       <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
@@ -762,9 +818,17 @@ function LocalityPickerSession({
             variant="outline"
             className="gap-1 min-h-11 w-full sm:w-auto"
             title="Use my current location to find the address (works best on-site)"
-            onClick={() => {
+            onClick={async () => {
               if (!navigator.geolocation) { setError("This device can't share its location — type the address instead."); return; }
-              if (address.trim() && !confirmOrSkip(`Use your GPS location instead of the address you typed (${address.slice(0, 40)})?`)) return;
+              if (address.trim()) {
+                const ok = await askConfirm({
+                  title: "Use your GPS location instead?",
+                  body: `This replaces the address you typed (${address.slice(0, 40)}${address.length > 40 ? '…' : ''}).`,
+                  actions: [{ value: 'yes', label: 'Use my location', tone: 'primary' }],
+                  skipValue: 'yes',
+                });
+                if (ok !== 'yes') return;
+              }
               setError("");
               navigator.geolocation.getCurrentPosition(async (pos) => {
                 try {
@@ -839,7 +903,18 @@ function LocalityPickerSession({
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
-            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office confirmed no electrical permit is required.")) return; setExcludeElectrical(v => { const next = !v; try { localStorage.setItem("permitting_exclude_electrical", next ? "1" : "0"); } catch {} return next; }); }}
+            onClick={async () => {
+              if (!excludeElectrical) {
+                const ok = await askConfirm({
+                  title: "Hide electrical inspectors on this job?",
+                  body: "Only do this if the office confirmed no electrical permit is required.",
+                  actions: [{ value: 'yes', label: 'Hide electrical', tone: 'primary' }],
+                  skipValue: 'yes',
+                });
+                if (ok !== 'yes') return;
+              }
+              setExcludeElectrical(v => { const next = !v; try { localStorage.setItem("permitting_exclude_electrical", next ? "1" : "0"); } catch {} return next; });
+            }}
             className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
@@ -1268,6 +1343,29 @@ function LocalityPickerSession({
                 {creatingDraft ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin motion-reduce:animate-none" /> : null}
                 Make it & use it
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Styled confirm — replaces window.confirm/alert for apply gates,
+            GPS override, electrical toggle and the office-linked notice. */}
+        <AlertDialog open={!!confirmUi} onOpenChange={(open) => { if (!open) answerConfirm('cancel'); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{confirmUi?.title}</AlertDialogTitle>
+              {confirmUi?.body ? <AlertDialogDescription>{confirmUi.body}</AlertDialogDescription> : null}
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              {confirmUi?.hideCancel ? null : <AlertDialogCancel onClick={() => answerConfirm('cancel')}>Cancel</AlertDialogCancel>}
+              {(confirmUi?.actions || []).map((a) => (
+                <AlertDialogAction
+                  key={a.value}
+                  onClick={() => answerConfirm(a.value)}
+                  className={a.tone === 'primary' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-white text-purple-700 border border-purple-300 hover:bg-purple-50'}
+                >
+                  {a.label}
+                </AlertDialogAction>
+              ))}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
