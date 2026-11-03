@@ -1208,6 +1208,14 @@
           }
         }
       }
+    },
+    "pending_permit_locality_id": {
+      "type": "string",
+      "description": "Deferred office apply \u2014 PermitLocality id queued to auto-apply once its sign+zoning offices verify. Marker only; the queue itself lives on the locality's pending_applies."
+    },
+    "pending_permit_locality_name": {
+      "type": "string",
+      "description": "Display name of the locality queued for deferred apply (renders the pending chip in the permitting client group)."
     }
   },
   "required": [
