@@ -51,7 +51,6 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
@@ -92,7 +91,7 @@ export default function WorkOrderCard({
   onRestore,
   onUpdate,
   onDelete,
-  showMoveOptions = true,
+  showMoveOptions: _showMoveOptions = true,
   priorityNumber,
   dragHandleProps = null
 }) {
@@ -102,7 +101,7 @@ export default function WorkOrderCard({
   
   const { isRegistered, promptForEmail, sessionToken, currentUser } = useAuth();
   
-  const requireAuth = (callback) => {
+  const _requireAuth = (callback) => {
     return (e) => {
       if (!isRegistered) {
         e?.preventDefault();
@@ -803,7 +802,7 @@ export default function WorkOrderCard({
     if (onUpdate) onUpdate();
   };
 
-  const handleCompleteClick = async () => {
+  const _handleCompleteClick = async () => {
     // Check if this work order has incomplete riders
     if (!workOrder.is_rider && onComplete) {
       if (riders.length > 0) {
@@ -824,7 +823,7 @@ export default function WorkOrderCard({
   };
 
   // Added delete functionality handlers
-  const handleDeleteClick = async () => {
+  const _handleDeleteClick = async () => {
     // Check if this work order has riders before deleting
     if (!workOrder.is_rider) {
       // Re-fetch the exact relationship in case local rider state is stale.
