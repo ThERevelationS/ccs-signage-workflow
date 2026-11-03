@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { invokePortal } from "@/components/portal/PortalPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { estimateQuoteExpiration, formatQuoteIssueDate, isQuoteExpired, localDateStamp, quoteExpirationDate } from "./quoteLifecycle";
+import { estimateQuoteExpiration, formatQuoteIssueDate, localDateStamp } from "./quoteLifecycle";
 import { activeEstimateAcceptances, cleanQuoteRejectReason, isEstimateAcceptanceSuperseded, listEstimateRevisions } from "./estimateRevisionService";
 import SignaturePad from "./SignaturePad";
 import { loadAllEntityRows } from "./loadAllEntityRows";
