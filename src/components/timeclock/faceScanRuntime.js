@@ -8,7 +8,16 @@ export function loadFaceModelsOnce() {
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-    ]).catch(error => { modelPromise = null; throw error; });
+    ]).then(async () => {
+      // Warm the WebGL pipeline once so the first real scan does not pay the
+      // shader-compile stall (often 1-3s of dead time on the first frame).
+      try {
+        const warm = document.createElement("canvas");
+        warm.width = 64; warm.height = 64;
+        await faceapi.detectSingleFace(warm, new faceapi.TinyFaceDetectorOptions({ inputSize: 64, scoreThreshold: 0.1 }))
+          .withFaceLandmarks().withFaceDescriptor();
+      } catch { /* warmup is best-effort */ }
+    }).catch(error => { modelPromise = null; throw error; });
   }
   return modelPromise;
 }
@@ -48,7 +57,7 @@ export const FACE_QUALITY = { minScore: 0.5, minBoxWidth: 32, minBrightness: 45 
 // Shared scan cadence. The loop self-schedules: the next frame is captured this
 // many ms after the previous detection finishes, so fast devices scan faster
 // and slow devices never pile up overlapping inferences.
-export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 5 };
+export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 6 };
 
 // Liveness probe (#1): a blink (eye-aspect-ratio dip) or natural head movement
 // (nose drift vs face width) must be observed before votes can accumulate.
@@ -151,23 +160,32 @@ export function createMatchVoter({ required = 3, window = 5 } = {}) {
   return vote;
 }
 
-function detectAt(video, inputSize, scoreThreshold) {
-  return faceapi
+// Landmark + descriptor passes are optional: while liveness is still unproved
+// the matcher never runs, so paying for the recognition net on those frames
+// just slows the cadence that liveness sampling depends on.
+function detectAt(video, inputSize, scoreThreshold, withDescriptor = true) {
+  const task = faceapi
     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
-    .withFaceLandmarks().withFaceDescriptor();
+    .withFaceLandmarks();
+  return withDescriptor ? task.withFaceDescriptor() : task;
 }
 
-export function detectDetailedFace(video) {
+// Marginal-face escalations are capped to every 3rd tick - a borderline 320
+// detection otherwise pays the deep 512 pass on every single frame.
+let marginalEscalationTick = 0;
+
+export function detectDetailedFace(video, withDescriptor = true) {
   if (!video || video.readyState < 2 || !video.videoWidth) return Promise.resolve(null);
   // First pass stays cheap at normal distances. The deeper 512 pass runs when
-  // the first pass misses OR finds a marginal face - a low-score or small-box
-  // detection at 320 often resolves into a far stronger detection (and a much
-  // better descriptor) at the higher input size, which is what makes distant
-  // or low-resolution cameras work.
-  return detectAt(video, 320, 0.4).then((first) => {
+  // the first pass misses - and every 3rd tick on a marginal face (a low-score
+  // or small-box detection at 320 often resolves into a far stronger detection
+  // at the higher input size, which is what makes distant or low-resolution
+  // cameras work).
+  return detectAt(video, 320, 0.4, withDescriptor).then((first) => {
     const strong = first && first.detection.score >= 0.6 && first.detection.box.width >= 48;
     if (strong) return first;
-    return detectAt(video, 512, 0.3).then((second) => second || first || null);
+    if (first && (marginalEscalationTick++ % 3) !== 0) return first;
+    return detectAt(video, 512, 0.3, withDescriptor).then((second) => second || first || null);
   });
 }
 
@@ -204,7 +222,9 @@ export function createFaceScanSession({
       schedule();
       return;
     }
-    const detection = await detectDetailedFace(video).catch(() => null);
+    // Descriptor compute is deferred until liveness proves - before that the
+    // matcher never runs, so the recognition net would be pure waste per frame.
+    const detection = await detectDetailedFace(video, livenessState.proved).catch(() => null);
     if (!running || gen !== generation || !isActive()) {
       schedule();
       return;
