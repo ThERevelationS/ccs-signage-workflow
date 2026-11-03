@@ -33,6 +33,19 @@ export async function waitForCommand(command_id, { timeoutMs = 120_000, onTick }
   }
 }
 
+// Restricted-root deliveries: command_status returns {secure_download:true}
+// instead of file_url — fetch bytes through the function proxy into a blob URL.
+export async function secureDownload(command_id) {
+  const r = await fbCall("secure_download", { command_id });
+  const d = r?.data ?? r;
+  if (!d?.ok || !d.bytes_b64) throw new Error(d?.error || "secure_download failed");
+  const bin = atob(d.bytes_b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: d.mime || "application/octet-stream" });
+  return { url: URL.createObjectURL(blob), name: d.name, size: d.size, sha256: d.sha256, blob: true };
+}
+
 export const sha256Hex = async (file) => {
   const buf = await file.arrayBuffer();
   const h = await crypto.subtle.digest("SHA-256", buf);
