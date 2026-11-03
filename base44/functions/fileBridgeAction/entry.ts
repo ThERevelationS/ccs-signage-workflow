@@ -49,7 +49,9 @@ async function enqueue(sr: any, user: any, type: string, args: Record<string, an
   // collapse onto an in-flight identical command
   const dup = await sr.entities.FileBridgeCommand.filter(
     { dedupe_key: dk, status: { $in: ['queued', 'leased', 'running'] } }, '-created_ts', 1,
-  ).catch(() => []);
+  ).catch((e: any) => ({ __err: String(e?.message || e) }));
+  // A failed dedupe read would enqueue duplicates — surface it instead.
+  if ((dup as any)?.__err) return { error: 'temporarily_unavailable_retry', status: 503 };
   if (dup?.[0]) return { ok: true, command_id: dup[0].command_id, deduped: true, served_by: dup[0].served_by };
   const command_id = `cmd_${uuid()}`;
   const row = await sr.entities.FileBridgeCommand.create({
@@ -79,7 +81,9 @@ Deno.serve(async (req) => {
   const action = String(body?.action || '').trim();
   const isAdmin = user.role === 'admin';
 
-  const settingsRow = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+  const settingsRow = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)
+    .catch((e: any) => ({ __err: String(e?.message || e) }));
+  if ((settingsRow as any)?.__err) return Response.json({ error: 'settings_unavailable' }, { status: 503 });
   const settings = normalizeFileBridgeSettings(settingsRow?.[0]?.setting_value);
   if (!settings.enabled && action !== 'admin_settings') {
     return Response.json({ error: 'File Bridge is not enabled yet.' }, { status: 503 });
@@ -122,8 +126,10 @@ Deno.serve(async (req) => {
     if (!rp.ok) return Response.json({ error: rp.error }, { status: 400 });
     const root_key = String(body.root_key || '');
     const rows = await sr.entities.FileIndex.filter(
-      { root_key, parent_path: rp.path, missing: { $ne: true } }, 'is_dir desc,name', 500,
+      { root_key, parent_path: rp.path, missing: { $ne: true } }, 'name', 500,
     ).catch(() => []);
+    // Base44 sort is single-field — dirs-first ordering in memory.
+    (rows || []).sort((a: any, b: any) => (b.is_dir ? 1 : 0) - (a.is_dir ? 1 : 0));
     const stale = (rows || []).some((r: any) => isDeliveryStale(r));
     if ((rows || []).length && !body.refresh) {
       return Response.json({ ok: true, source: 'index', entries: rows, stale_hint: stale });
@@ -213,7 +219,8 @@ Deno.serve(async (req) => {
         for (const p of built.args.paths) {
           const rows = await sr.entities.FileIndex.filter(
             { root_key: built.args.root_key, path: p }, '-updated_date', 1,
-          ).catch(() => []);
+          ).catch((e: any) => ({ __err: String(e?.message || e) }));
+          if ((rows as any)?.__err) return Response.json({ error: 'temporarily_unavailable_retry' }, { status: 503 });
           const row = rows?.[0];
           if (row && !canDelete(row)) {
             await sr.entities.FileBridgeEvent.create({
@@ -227,7 +234,8 @@ Deno.serve(async (req) => {
       if (type === 'move') {
         const rows = await sr.entities.FileIndex.filter(
           { root_key: built.args.root_key, path: built.args.src }, '-updated_date', 1,
-        ).catch(() => []);
+        ).catch((e: any) => ({ __err: String(e?.message || e) }));
+        if ((rows as any)?.__err) return Response.json({ error: 'temporarily_unavailable_retry' }, { status: 503 });
         if (rows?.[0] && !canMove(rows[0])) {
           return Response.json({ error: 'Only bridge-managed files can be moved.' }, { status: 403 });
         }
