@@ -1,4 +1,3 @@
-import React from "react";
 
 // These are the rates the ported SignEstimate Pro math actually reads (Settings keys).
 // They are shop-wide, so they are shown here read-only — edit them in Estimator Settings.
