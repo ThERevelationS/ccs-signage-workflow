@@ -423,7 +423,9 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
               <input type="checkbox" className="h-4 w-4 shrink-0 accent-emerald-600"
                 checked={selected?.has(r.path) || false} onChange={() => onToggle(r)} />
             )}
-            <Icon className={`h-5 w-5 shrink-0 ${r.is_dir ? "text-amber-500" : "text-slate-500"}`} />
+            {r.thumb_url && !r.is_dir
+              ? <img src={r.thumb_url} alt="" className="h-8 w-8 shrink-0 rounded object-cover border" loading="lazy" />
+              : <Icon className={`h-5 w-5 shrink-0 ${r.is_dir ? "text-amber-500" : "text-slate-500"}`} />}
             <button className="font-medium text-sm truncate hover:underline text-left flex-1 min-w-0"
               onClick={() => (r.is_dir ? onNavigate(r.path) : onOpen(r))}>
               {r.name}
