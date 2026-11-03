@@ -432,5 +432,59 @@ Deno.serve(async (req) => {
     return Response.json({ ok: true, demoted: target, primary: null });
   }
 
+  // ---------- save_root / delete_root (admin — FileShareRoot provisioning) ----------
+  // Backend-only RLS means only functions can write roots; the setup wizard
+  // and agent `detect_roots` suggestions land here. Upsert keyed on
+  // (agent_id, root_key). Deleting a root only drops config — never files.
+  if (action === 'save_root') {
+    if (!isAdmin) return Response.json({ error: 'Admin required' }, { status: 403 });
+    const agent_id = String(body.agent_id || settings.primary_agent_id || '');
+    const root_key = String(body.root_key || '').replace(/[^\w-]/g, '_').slice(0, 60);
+    if (!agent_id || !root_key) return Response.json({ error: 'agent_id + root_key required' }, { status: 400 });
+    if (body.rel_root != null) {
+      const rr = safeRelPath(String(body.rel_root));
+      if (!rr.ok) return Response.json({ error: `rel_root: ${rr.error}` }, { status: 400 });
+    }
+    const existing = await sr.entities.FileShareRoot.filter({ agent_id, root_key }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((existing as any)?.__err) return Response.json({ error: 'read_unavailable' }, { status: 503 });
+    const row: any = {
+      agent_id, root_key,
+      display_name: String(body.display_name || root_key),
+      rel_root: String(body.rel_root ?? existing?.[0]?.rel_root ?? ''),
+      unc_path: String(body.unc_path ?? existing?.[0]?.unc_path ?? ''),
+      purpose: ['customer_folders', 'general', 'inbound'].includes(body.purpose) ? body.purpose : (existing?.[0]?.purpose || 'general'),
+      enabled: body.enabled !== undefined ? !!body.enabled : (existing?.[0]?.enabled ?? true),
+      inbound_restricted: body.inbound_restricted !== undefined ? !!body.inbound_restricted : (existing?.[0]?.inbound_restricted ?? false),
+      scan_priority: Number.isFinite(Number(body.scan_priority)) ? Number(body.scan_priority) : (existing?.[0]?.scan_priority ?? 100),
+      extraction_enabled: body.extraction_enabled !== undefined ? !!body.extraction_enabled : (existing?.[0]?.extraction_enabled ?? false),
+    };
+    if (existing?.[0]) {
+      await sr.entities.FileShareRoot.update(existing[0].id, row).catch(() => null);
+    } else {
+      await sr.entities.FileShareRoot.create(row).catch((e: any) => ({ __err: String(e?.message || e) }));
+    }
+    // bump config_version so agents pick it up on next handshake
+    if (settingsRow?.[0]?.id) {
+      const next = normalizeFileBridgeSettings({ ...settings, config_version: (settings.config_version || 0) + 1 });
+      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next }).catch(() => null);
+    }
+    return Response.json({ ok: true, root: row, config_version: (settings.config_version || 0) + 1 });
+  }
+  if (action === 'delete_root') {
+    if (!isAdmin) return Response.json({ error: 'Admin required' }, { status: 403 });
+    const rows = await sr.entities.FileShareRoot.filter(
+      { agent_id: String(body.agent_id || ''), root_key: String(body.root_key || '') }, '-updated_date', 1,
+    ).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable' }, { status: 503 });
+    if (!rows?.[0]) return Response.json({ error: 'root not found' }, { status: 404 });
+    await sr.entities.FileShareRoot.delete(rows[0].id).catch(() => null);
+    if (settingsRow?.[0]?.id) {
+      const next = normalizeFileBridgeSettings({ ...settings, config_version: (settings.config_version || 0) + 1 });
+      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next }).catch(() => null);
+    }
+    return Response.json({ ok: true, deleted: body.root_key });
+  }
+
   return Response.json({ error: `unknown action '${action}'` }, { status: 400 });
 });
