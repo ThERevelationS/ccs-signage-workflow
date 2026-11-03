@@ -279,8 +279,12 @@ Deno.serve(async (req) => {
     // one batched path_key resolution for unknowns
     if (toResolve.length) {
       const keys = toResolve.map((d) => pathKey(d.agent_id, d.root_key, d.path));
-      const found = await sr.entities.FileIndex.filter({ path_key: { $in: keys.slice(0, 200) } }, undefined, 500).catch(() => []);
-      const byKey = new Map((found || []).map((r: any) => [r.path_key, r.id]));
+      // A swallowed read error here would turn known rows into duplicate
+      // path_key creates — surface it, the agent retries the whole batch.
+      const found = await sr.entities.FileIndex.filter({ path_key: { $in: keys.slice(0, 200) } }, undefined, 500)
+        .catch((e: any) => ({ __err: String(e?.message || e) }));
+      if ((found as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+      const byKey = new Map(((found as any[]) || []).map((r: any) => [r.path_key, r.id]));
       const toCreate: any[] = [];
       toResolve.forEach((d, i) => {
         const pk = keys[i];
@@ -289,15 +293,20 @@ Deno.serve(async (req) => {
         else toCreate.push({ ...d, path_key: pk, creation_request_key: pk, origin: 'external', managed_by: 'none' });
       });
       if (toCreate.length) {
-        const created = await sr.entities.FileIndex.bulkCreate(toCreate).catch(() => []);
-        for (const r of created || []) if (r?.path_key) idMap[r.path_key] = r.id;
+        const created = await sr.entities.FileIndex.bulkCreate(toCreate)
+          .catch((e: any) => ({ __err: String(e?.message || e) }));
+        if ((created as any)?.__err) return Response.json({ error: 'write_unavailable', retry: true }, { status: 503 });
+        for (const r of (created as any[]) || []) if (r?.path_key) idMap[r.path_key] = r.id;
       }
     }
+    let updateFailures = 0;
     for (const u of toUpdate) {
-      await sr.entities.FileIndex.update(u.id, u.data).catch(() => null);
+      const r = await sr.entities.FileIndex.update(u.id, u.data).catch(() => null);
+      if (!r) updateFailures += 1;
     }
     return Response.json({
-      ok: true, received: items.length, updated: toUpdate.length,
+      ok: true, received: items.length, updated: toUpdate.length - updateFailures,
+      update_failures: updateFailures || undefined,
       id_map: idMap, suggested_batch_size: items.length >= 500 ? 500 : Math.max(100, items.length * 2),
       elapsed_ms: now() - t0,
     });
@@ -306,7 +315,9 @@ Deno.serve(async (req) => {
   // ---------- thumb_push / preview_push ----------
   if (action === 'thumb_push' || action === 'preview_push') {
     const pk = String(body.path_key || '');
-    const rows = await sr.entities.FileIndex.filter({ path_key: pk }, '-updated_date', 1).catch(() => []);
+    const rows = await sr.entities.FileIndex.filter({ path_key: pk }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
     const row = rows?.[0];
     if (!row) return Response.json({ error: 'no index row' }, { status: 404 });
     const bytes = Uint8Array.from(atob(String(body.bytes_b64 || '')), (c) => c.charCodeAt(0));
@@ -323,7 +334,9 @@ Deno.serve(async (req) => {
   // ---------- deliver_complete (≤48MB single-shot full bytes) ----------
   if (action === 'deliver_complete') {
     const cid = String(body.command_id || '');
-    const rows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1).catch(() => []);
+    const rows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
     const cmd = rows?.[0];
     if (!cmd) return Response.json({ error: 'unknown command' }, { status: 404 });
     const bytes = Uint8Array.from(atob(String(body.bytes_b64 || '')), (c) => c.charCodeAt(0));
