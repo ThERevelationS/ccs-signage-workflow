@@ -102,9 +102,40 @@ function projectRow(row: any, fields: string[] | null, heavy: string[]) {
 // opening at once) collapses to one upstream read set instead of ~7 paged
 // entity reads per tab. Delta pulls and custom projections are never
 // cached; the cached payload keeps its own server_time so the caller
-// delta cursor still covers the gap.
-let feedCache: { key: string; payload: any; expires: number } | null = null;
+// delta cursor still covers the gap. Keyed per (entity|query|sort) — the
+// board polls WorkOrder AND Order, and a single-slot cache thrashed on
+// every alternating pull, collapsing each hit into a cold full-table scan.
+const feedCache = new Map<string, { payload: any; expires: number; at: number }>();
 const FEED_CACHE_TTL_MS = 30_000;
+const FEED_CACHE_MAX_KEYS = 16;
+function feedCacheGet(key: string) {
+  const hit = feedCache.get(key);
+  if (!hit) return null;
+  if (hit.expires <= Date.now()) {
+    feedCache.delete(key);
+    return null;
+  }
+  return hit.payload;
+}
+function feedCacheSet(key: string, payload: any) {
+  if (feedCache.size >= FEED_CACHE_MAX_KEYS) {
+    // Evict expired entries first, then the oldest — a full cache must never
+    // grow unbounded.
+    const now = Date.now();
+    for (const [k, v] of feedCache) {
+      if (v.expires <= now) feedCache.delete(k);
+    }
+  }
+  if (feedCache.size >= FEED_CACHE_MAX_KEYS) {
+    let oldestKey: string | null = null;
+    let oldestAt = Infinity;
+    for (const [k, v] of feedCache) {
+      if (v.at < oldestAt) { oldestAt = v.at; oldestKey = k; }
+    }
+    if (oldestKey !== null) feedCache.delete(oldestKey);
+  }
+  feedCache.set(key, { payload, expires: Date.now() + FEED_CACHE_TTL_MS, at: Date.now() });
+}
 // Set false permanently for the isolate if a projected filter is rejected —
 // one fallback pulls the same page unprojected, and later calls skip the
 // extra argument entirely. Keeps older SDK builds working unchanged.
@@ -147,8 +178,9 @@ Deno.serve(async (req) => {
         : FEED_FIELDS[entityName] || null;
     const cacheable = !since && !fields && !includeHeavy;
     const cacheKey = entityName + "|" + JSON.stringify(query) + "|" + sort;
-    if (cacheable && feedCache && feedCache.key === cacheKey && feedCache.expires > Date.now()) {
-      return Response.json(feedCache.payload);
+    if (cacheable) {
+      const hit = feedCacheGet(cacheKey);
+      if (hit) return Response.json(hit);
     }
 
     const entity = base44.asServiceRole.entities[entityName];
@@ -189,7 +221,7 @@ Deno.serve(async (req) => {
       truncated,
       server_time: new Date().toISOString(),
     };
-    if (cacheable) feedCache = { key: cacheKey, payload, expires: Date.now() + FEED_CACHE_TTL_MS };
+    if (cacheable) feedCacheSet(cacheKey, payload);
     return Response.json(payload);
   } catch (error: any) {
     const status = Number(error?.status || error?.response?.status || 500);
