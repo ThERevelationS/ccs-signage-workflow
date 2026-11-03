@@ -327,6 +327,7 @@ const runScan = async (onlyRootKey = null, prefix = '') => {
     }
     await post('heartbeat', { index_stats: totals, last_scan_at: new Date(scanId).toISOString() }).catch(() => null);
     log('info', 'scan_done', { scan_id: scanId, ...totals });
+    pushInventory(scanId, roots).catch((e) => log('warn', 'inventory_err', { err: String(e.message || e).slice(0, 120) }));
   } finally {
     scanState.running = false;
     metaSet('last_scan_id', scanId); metaSet('last_scan_ms', Date.now());
@@ -334,6 +335,66 @@ const runScan = async (onlyRootKey = null, prefix = '') => {
       const next = [...scanState.requested]; scanState.requested.clear();
       for (const rk of next) runScan(rk).catch(() => null);
     }
+  }
+};
+
+// ---- inventory report (per-ext openability matrix → FileBridgeInventory) ----
+// Local-sqlite derived, so it works even with partial app connectivity (the
+// POST spools). ext→kind drives the viewer/openability roadmap.
+const EXT_KIND = {
+  jpg: 'image', jpeg: 'image', png: 'image', gif: 'image', webp: 'image', svg: 'image', bmp: 'image', tif: 'image', tiff: 'image', heic: 'image',
+  pdf: 'pdf',
+  txt: 'text', md: 'text', log: 'text', csv: 'text', json: 'text', xml: 'text', js: 'text', ts: 'text', jsx: 'text', tsx: 'text', css: 'text', html: 'text',
+  mp4: 'video', mov: 'video', webm: 'video', mkv: 'video', avi: 'video', m4v: 'video',
+  mp3: 'audio', wav: 'audio', ogg: 'audio', m4a: 'audio', flac: 'audio', aac: 'audio',
+  doc: 'office', docx: 'office', xls: 'office', xlsx: 'office', ppt: 'office', pptx: 'office', odt: 'office', ods: 'office', rtf: 'office',
+  zip: 'archive', rar: 'archive', '7z': 'archive', tar: 'archive', gz: 'archive',
+  ttf: 'font', otf: 'font', woff: 'font', woff2: 'font',
+  ai: 'design', psd: 'design', eps: 'design', indd: 'design', cdr: 'design', skp: 'design', dwg: 'design', dxf: 'design', step: 'design', stl: 'design',
+};
+const OPEN_STATE = { image: 'inline', pdf: 'inline', text: 'inline', video: 'inline', audio: 'inline', office: 'download', archive: 'download', font: 'download', design: 'download', other: 'download' };
+const pushInventory = async (scanId, roots) => {
+  if (!db) return;
+  const extRows = db.prepare(
+    `SELECT ext, COUNT(*) c, SUM(size) b FROM files WHERE missing=0 AND is_dir=0 GROUP BY ext ORDER BY c DESC LIMIT 200`,
+  ).all();
+  const ext_map = {};
+  for (const r of extRows) {
+    const e = String(r.ext || '').toLowerCase() || '(none)';
+    const kind = EXT_KIND[e] || 'other';
+    ext_map[e] = { count: r.c, bytes: r.b || 0, kind, open_state: OPEN_STATE[kind] };
+  }
+  const tot = db.prepare(`SELECT COUNT(*) files, COALESCE(SUM(size),0) bytes FROM files WHERE missing=0 AND is_dir=0`).get();
+  const dirs = db.prepare(`SELECT COUNT(*) c FROM files WHERE missing=0 AND is_dir=1`).get()?.c || 0;
+  const top_dirs = db.prepare(
+    `SELECT root_key, name, dir_size_bytes, file_count FROM files WHERE is_dir=1 AND parent_path='' ORDER BY dir_size_bytes DESC LIMIT 50`,
+  ).all().map((r) => ({ root_key: r.root_key, name: r.name, bytes: r.dir_size_bytes || 0, files: r.file_count || 0 }));
+  await post('inventory_report', {
+    run_id: `inv-${AGENT_ID}-${scanId}`, status: 'completed',
+    roots: roots.map((r) => r.root_key),
+    totals: { files: tot?.files || 0, dirs, bytes: tot?.bytes || 0 },
+    ext_map, top_dirs, started_at: new Date(scanId).toISOString(),
+  });
+};
+
+// ---- manifest digest (must match server manifest_sync canonical form) ----
+const manifestDigest = () => {
+  const lines = Object.keys(manifest)
+    .filter((k) => manifest[k]?.origin === 'bridge')
+    .map((k) => {
+      const rest = k.startsWith(`${AGENT_ID}:`) ? k.slice(AGENT_ID.length + 1) : k;
+      const i = rest.indexOf(':');
+      return `${rest.slice(0, i)}|${rest.slice(i + 1)}|bridge|bridge`;
+    }).sort();
+  return { digest: crypto.createHash('sha256').update(lines.join('\n')).digest('hex'), count: lines.length };
+};
+const checkManifestDrift = async () => {
+  const { digest, count } = manifestDigest();
+  const r = await post('manifest_sync', { digest, count }).catch(() => null);
+  if (r?.status === 200 && r.json?.in_sync === false) {
+    log('warn', 'manifest_drift', { server_count: r.json.server_count, local_count: count });
+  } else if (r?.status === 200) {
+    log('info', 'manifest_sync_ok', { count });
   }
 };
 
@@ -943,56 +1004,16 @@ const main = async () => {
       await new Promise((r) => setTimeout(r, backoff));
     }
   }
-  // SSE primary; poll always runs (cheap, drains spool, covers SSE gaps)
-  sseLoop();
-  pollLoop();
-  // periodic re-handshake for config/role changes
-  setInterval(() => handshake().catch(() => null), 120_000);
-  // scheduled re-scan: metadata sweep every 15min (config can retune later)
-  if (state.role !== 'observer') {
-    runScan().catch((e) => log('warn', 'scan_err', { err: String(e.message || e).slice(0, 120) }));
-    setInterval(() => runScan().catch((e) => log('warn', 'scan_err', { err: String(e.message || e).slice(0, 120) })), 15 * 60_000);
-  }
-};
-
-main();
-  if (r.status === 200 && Array.isArray(r.json.commands)) {
-        for (const c of r.json.commands) runCommand(c);
-      }
-      await spoolDrain();
-      if (state.sse_ok !== false) { /* prefer SSE when healthy */ }
-    } catch (e) {
-      log('warn', 'poll_err', { err: String(e.message || e).slice(0, 120) });
-    }
-    await new Promise((r) => setTimeout(r, POLL_MS));
-  }
-};
-
-const main = async () => {
-  log('info', 'agent_start', { agent_id: AGENT_ID, env_role: ROLE_ENV, version: VERSION, roots: ROOTS });
-  // FB_SCAN_ONLY=1: scan local mounts, report, exit — mount verification for
-  // the Unraid walkthrough; spool captures batches since ingest is offline.
-  if (ENV.FB_SCAN_ONLY === '1') {
-    const scanId = Date.now();
-    for (const mount of ROOTS) {
-      const root = { root_key: path.posix.basename(mount), _mount: mount };
-      const s = await scanRoot(root, scanId);
-      log('info', 'scan_only_root', { mount, ...s, batch: undefined, recent: undefined });
-    }
-    const counts = db ? {
-      rows: db.prepare('SELECT COUNT(*) c FROM files').get()?.c,
-      fts_rows: fts ? db.prepare('SELECT COUNT(*) c FROM files_fts').get()?.c : 'n/a',
-      spool: spoolDepth(),
-    } : { db: 'unavailable' };
-    log('info', 'scan_only_done', counts);
-    process.exit(0);
-  }
-  for (let attempt = 0; ; attempt += 1) {
-    try { await handshake(); break; }
-    catch (e) {
-      const backoff = Math.min(60_000, 1000 * 2 ** Math.min(attempt, 6)) * (0.7 + Math.random() * 0.6);
-      log('warn', 'handshake_retry', { err: String(e.message || e).slice(0, 160), backoff_ms: Math.round(backoff) });
-      await new Promise((r) => setTimeout(r, backoff));
+  // optional failover claim: FB_CLAIM_PRIMARY=1 requests promotion when the
+  // current primary is stale; =force overrides a live primary (operator tool).
+  const claim = String(ENV.FB_CLAIM_PRIMARY || '').toLowerCase();
+  if (claim && state.role !== 'primary') {
+    const r = await post('become_primary', { force: claim === 'force' }).catch(() => null);
+    if (r?.status === 200 && r.json?.role === 'primary') {
+      state.role = 'primary';
+      log('warn', 'promoted_primary', { previous: r.json.previous_primary });
+    } else {
+      log('warn', 'claim_primary_refused', { status: r?.status, err: JSON.stringify(r?.json || {}).slice(0, 160) });
     }
   }
   // SSE primary; poll always runs (cheap, drains spool, covers SSE gaps)
@@ -1000,6 +1021,9 @@ const main = async () => {
   pollLoop();
   // periodic re-handshake for config/role changes
   setInterval(() => handshake().catch(() => null), 120_000);
+  // provenance drift check: local manifest vs server upload ledger (hourly)
+  checkManifestDrift().catch(() => null);
+  setInterval(() => checkManifestDrift().catch(() => null), 60 * 60_000);
   // scheduled re-scan: metadata sweep every 15min (config can retune later)
   if (state.role !== 'observer') {
     runScan().catch((e) => log('warn', 'scan_err', { err: String(e.message || e).slice(0, 120) }));
