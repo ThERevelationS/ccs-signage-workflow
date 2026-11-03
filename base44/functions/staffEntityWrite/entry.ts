@@ -18,7 +18,11 @@ const WRITE_OPS: Record<string, Set<string>> = {
   Inventory: new Set(['create', 'updateMany']),
   Customer: new Set(['updateMany']),
   CustomerLocation: new Set(['create', 'updateMany']),
-  GeneralTask: new Set(['create', 'update']),
+  // GeneralTask is backend-only RLS — the CAS helpers (updateGeneralTaskIfUn-
+  // changed/deleteGeneralTaskIfUnchanged) drive updateMany/deleteMany, and the
+  // plain update/delete pair covers the simple paths. Staff-wide: general
+  // office tasks are shared objects, not per-user rows.
+  GeneralTask: new Set(['create', 'update', 'updateMany', 'delete', 'deleteMany']),
   GlobalSettings: new Set(['updateMany']),
   ImportJob: new Set(['create', 'update']),
   JurisdictionProfile: new Set(['create', 'update']),
