@@ -138,9 +138,13 @@ try {
     CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT);`);
   try {
     db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, path, tokenize='unicode61')`);
+    // content FTS is a separate table keyed by files.rowid — name/path hits
+    // and content hits merge in deep_search (match:'name'|'content').
+    db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS content_fts USING fts5(content, tokenize='unicode61')`);
     fts = true;
   } catch { log('warn', 'fts5_unavailable', {}); }
   try { db.exec(`ALTER TABLE files ADD COLUMN miss_count INTEGER DEFAULT 0`); } catch { /* present */ }
+  try { db.exec(`ALTER TABLE files ADD COLUMN extracted_ms INTEGER DEFAULT 0`); } catch { /* present */ }
 } catch (e) {
   log('warn', 'sqlite_unavailable', { err: String(e.message || e).slice(0, 120) });
 }
@@ -172,7 +176,7 @@ const pathKeyLocal = (rootKey, rel) => `${AGENT_ID}:${rootKey}:${rel}`;
 
 const knownRow = (rootKey, rel) => {
   if (!db) return null;
-  try { return db.prepare('SELECT * FROM files WHERE path_key=?').get(pathKeyLocal(rootKey, rel)) || null; } catch { return null; }
+  try { return db.prepare('SELECT rowid,* FROM files WHERE path_key=?').get(pathKeyLocal(rootKey, rel)) || null; } catch { return null; }
 };
 
 // ---- provenance manifest (agent-side delete guard — the fail-safe).
@@ -231,6 +235,50 @@ const flushIndexBatch = async (items, scanId) => {
   spoolPush('index_batch', payload); // durable retry
 };
 
+// ---- content extraction (P5): text-ish files → content_fts, capped per
+// scan so extraction never starves metadata. Re-extracts on mtime change.
+const EXTRACTABLE_EXTS = new Set(
+  'txt md log csv tsv json jsonl xml html htm css js mjs cjs ts tsx jsx ini cfg conf yaml yml env sh bat ps1 sql graphql svg srt vtt'.split(' '),
+);
+const EXTRACT_MAX_FILE = 2 * 1024 * 1024;  // bytes read
+const EXTRACT_MAX_TEXT = 64 * 1024;        // chars kept
+const EXTRACT_PER_SCAN = 500;
+const extractionOn = (root) =>
+  state.content_search !== false &&
+  (root.extraction_enabled === true || (state.extraction_roots || []).includes(root.root_key));
+const looksBinary = (buf) => {
+  const n = Math.min(buf.length, 8192);
+  let bad = 0;
+  for (let i = 0; i < n; i++) {
+    const c = buf[i];
+    if (c === 0 || (c < 9) || (c > 13 && c < 32)) bad += 1;
+  }
+  return bad / Math.max(1, n) > 0.05;
+};
+const extractCandidates = async (root, stats) => {
+  if (!fts || !stats.extract.length) return;
+  let done = 0;
+  const del = db.prepare('DELETE FROM content_fts WHERE rowid=?');
+  const ins = db.prepare('INSERT INTO content_fts(rowid,content) VALUES(?,?)');
+  const mark = db.prepare('UPDATE files SET extracted_ms=? WHERE rowid=?');
+  for (const c of stats.extract) {
+    if (done >= EXTRACT_PER_SCAN) break;
+    done += 1;
+    try {
+      const fh = await fs.promises.open(c.abs, 'r');
+      try {
+        const buf = Buffer.alloc(Math.min(c.size, EXTRACT_MAX_FILE));
+        await fh.read(buf, 0, buf.length, 0);
+        if (looksBinary(buf)) { mark.run(-1, c.rowid); continue; }
+        let text = buf.toString('utf8').replaceAll(String.fromCharCode(0),' ');
+        if (text.length > EXTRACT_MAX_TEXT) text = text.slice(0, EXTRACT_MAX_TEXT);
+        del.run(c.rowid); ins.run(c.rowid, text); mark.run(c.mtime_ms, c.rowid);
+        stats.extracted += 1;
+      } finally { await fh.close(); }
+    } catch { /* unreadable — leave for next scan */ }
+  }
+};
+
 const scanDir = async (root, rel, scanId, stats) => {
   const abs = resolveInRoot(root, rel);
   if (!abs) { stats.skipped += 1; return 0; }
@@ -269,7 +317,17 @@ const scanDir = async (root, rel, scanId, stats) => {
         change_type: prev ? 'modified' : 'created', event_ts: Math.floor(st.mtimeMs),
       });
     }
-    if (isDir) subdirs.push(nrel); else { dirSize += st.size; stats.files += 1; }
+    if (isDir) subdirs.push(nrel); else {
+      dirSize += st.size; stats.files += 1;
+      // extraction candidates: extractable ext, size-capped, and new/changed
+      // since last extraction (extracted_ms !== mtime_ms covers both).
+      if (stats.extractOn && EXTRACTABLE_EXTS.has(row.ext) && st.size > 0 && st.size <= EXTRACT_MAX_FILE) {
+        const cur = prev || knownRow(root.root_key, nrel);
+        if (cur && cur.extracted_ms !== Math.floor(st.mtimeMs)) {
+          stats.extract.push({ rowid: cur.rowid, abs: path.posix.join(abs, e.name), size: st.size, mtime_ms: Math.floor(st.mtimeMs) });
+        }
+      }
+    }
     if (stats.batch.length >= SCAN_BATCH) { await flushIndexBatch(stats.batch.splice(0), scanId); }
   }
   // dir-size rollup + queue children (returned so caller iterates)
@@ -281,7 +339,7 @@ const scanDir = async (root, rel, scanId, stats) => {
 };
 
 const scanRoot = async (root, scanId, prefix = '') => {
-  const stats = { files: 0, skipped: 0, excluded: 0, batch: [], recent: [] };
+  const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, batch: [], recent: [], extract: [], extractOn: extractionOn(root) };
   const queue = [prefix.replace(/\/+$/, '')];
   let guard = 0;
   while (queue.length && guard < 200_000) {
@@ -291,6 +349,7 @@ const scanRoot = async (root, scanId, prefix = '') => {
     for (const s of subs) queue.push(s);
   }
   await flushIndexBatch(stats.batch.splice(0), scanId);
+  await extractCandidates(root, stats);
   if (stats.recent.length) {
     for (let i = 0; i < stats.recent.length; i += 300) {
       const payload = { items: stats.recent.slice(i, i + 300) };
@@ -323,7 +382,7 @@ const runScan = async (onlyRootKey = null, prefix = '') => {
   try {
     for (const root of roots) {
       const s = await scanRoot(root, scanId, prefix);
-      totals.files += s.files; totals.skipped += s.skipped; totals.excluded += s.excluded;
+      totals.files += s.files; totals.skipped += s.skipped; totals.excluded += s.excluded; totals.extracted = (totals.extracted || 0) + s.extracted;
     }
     await post('heartbeat', { index_stats: totals, last_scan_at: new Date(scanId).toISOString() }).catch(() => null);
     log('info', 'scan_done', { scan_id: scanId, ...totals });
@@ -434,6 +493,8 @@ const handshake = async () => {
       return { ...r, _mount };
     });
     state.exclude_patterns = j.config?.exclude_patterns || state.exclude_patterns;
+    state.extraction_roots = j.config?.extraction_roots || state.extraction_roots || [];
+    state.content_search = j.config?.content_search ?? state.content_search;
     fs.writeFileSync(path.join(STATE_DIR, 'config.json'), JSON.stringify(j.config, null, 2));
     log('info', 'config_applied', { version: j.config_version, roots: state.roots.length,
       unmounted: state.roots.filter((r) => !r._mount || !fs.existsSync(r._mount)).map((r) => r.root_key) });
@@ -713,19 +774,37 @@ const executors = {
     const t0 = Date.now(); const cap = Math.min(Number(args.time_cap_ms) || 8000, 20000);
     const want = offset + limit + 1; // +1 row = next-cursor probe
     let rows = [];
+    const seen = new Set();
     try {
-      if (q && fts && !/[*"']/.test(q)) {
-        rows = db.prepare(
-          `SELECT f.root_key,f.path,f.name,f.ext,f.is_dir,f.size,f.mtime_ms FROM files_fts x
+      const matchQ = q && !/[*"']/.test(q)
+        ? q.split(/\s+/).map((t) => `${t.replace(/[^\w.-]/g, '')}*`).filter(Boolean).join(' AND ')
+        : '';
+      if (matchQ && fts) {
+        // name/path lane
+        for (const r of db.prepare(
+          `SELECT f.rowid rid,f.root_key,f.path,f.name,f.ext,f.is_dir,f.size,f.mtime_ms FROM files_fts x
            JOIN files f ON f.rowid=x.rowid WHERE files_fts MATCH ? AND f.missing=0
-           ORDER BY rank LIMIT ?`
-        ).all(q.split(/\s+/).map((t) => `${t.replace(/[^\w.-]/g, '')}*`).filter(Boolean).join(' AND ') || '""', want);
+           ORDER BY rank LIMIT ?`,
+        ).all(matchQ, want)) {
+          if (!seen.has(r.rid)) { seen.add(r.rid); rows.push({ ...r, match: 'name' }); }
+        }
+        // content lane — extracted text with snippet context
+        if (rows.length < want) {
+          for (const r of db.prepare(
+            `SELECT f.rowid rid,f.root_key,f.path,f.name,f.ext,f.is_dir,f.size,f.mtime_ms,
+                    snippet(content_fts,0,'«','»',' … ',14) snip
+             FROM content_fts JOIN files f ON f.rowid=content_fts.rowid
+             WHERE content_fts MATCH ? AND f.missing=0 ORDER BY rank LIMIT ?`,
+          ).all(matchQ, want - rows.length)) {
+            if (!seen.has(r.rid)) { seen.add(r.rid); rows.push({ ...r, match: 'content' }); }
+          }
+        }
       }
       if (!rows.length) {
         const like = `%${q.toLowerCase()}%`;
         rows = db.prepare(
-          `SELECT root_key,path,name,ext,is_dir,size,mtime_ms FROM files
-           WHERE missing=0 AND (lower(name) LIKE ? OR lower(path) LIKE ?) LIMIT ?`
+          `SELECT root_key,path,name,ext,is_dir,size,mtime_ms,'name' match FROM files
+           WHERE missing=0 AND (lower(name) LIKE ? OR lower(path) LIKE ?) LIMIT ?`,
         ).all(like, like, q ? want : 5000);
       }
     } catch (e) { return { ok: false, error: `search failed: ${String(e.message || e).slice(0, 160)}` }; }
@@ -984,7 +1063,7 @@ const main = async () => {
   if (ENV.FB_SCAN_ONLY === '1') {
     const scanId = Date.now();
     for (const mount of ROOTS) {
-      const root = { root_key: path.posix.basename(mount), _mount: mount };
+      const root = { root_key: path.posix.basename(mount), _mount: mount, extraction_enabled: ENV.FB_EXTRACT === '1' };
       const s = await scanRoot(root, scanId);
       log('info', 'scan_only_root', { mount, ...s, batch: undefined, recent: undefined });
     }
