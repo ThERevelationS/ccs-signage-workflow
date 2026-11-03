@@ -307,6 +307,13 @@ const firstFinite = (...vals: unknown[]): number | null => {
 };
 
 // Candidate rule from a part- or machine-shaped override descriptor.
+// Markup field family — the spellings the wire detection layer counts as
+// config (MARKUP_FIELDS in every *PricingWire.ts): markup_pct canonical,
+// markup and markup_percent tolerated spellings. An explicit 0 means
+// sell-at-cost, so absence (null) is the only "not configured" state.
+const markupField = (src: any): number | null =>
+  firstFinite(src?.markup_pct, src?.markup, src?.markup_percent);
+
 // Within a layer: fixed_price > tier_ref > per_unit_breaks > pricing_mode
 // 'market' > markup_pct. Returns null when the descriptor overrides nothing.
 function overrideRule(source: any, tierRules: any[]): any {
@@ -343,7 +350,7 @@ function overrideRule(source: any, tierRules: any[]): any {
       kind: 'breaks',
       unitBreaks: breaks,
       interpolateBreaks: wantsInterpolatedBreaks(source) || undefined,
-      markupPct: firstFinite(source.markup_pct) ?? undefined,
+      markupPct: markupField(source) ?? undefined,
       minimumCharge: firstFinite(source.minimum_charge) ?? undefined,
       formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : undefined,
       ref: source,
@@ -363,10 +370,11 @@ function overrideRule(source: any, tierRules: any[]): any {
     };
   }
 
-  // Any finite markup_pct is an authored override — including 0, which pins
-  // the part at cost (explicit sell-at-cost, F-23 markup-0 signal). An ABSENT
-  // markup_pct still returns null so weaker/default layers price the part.
-  const markup = firstFinite(source.markup_pct);
+  // Any finite markup is an authored override — including 0, which pins
+  // the part at cost (explicit sell-at-cost, F-23 markup-0 signal). All three
+  // wire-detected spellings price identically (markup_pct/markup/markup_percent).
+  // An ABSENT markup still returns null so weaker/default layers price the part.
+  const markup = markupField(source);
   if (markup != null) {
     return {
       kind: 'markup',
@@ -817,13 +825,13 @@ const tierRefModeHit = (src: any, rows: any): any => {
 };
 
 // A finite markup_pct IS a pricing-family signal — including 0 (sell at
-// cost). Same single-field read as overrideRule: `markup`/`markup_percent`
-// spellings are wire-side detection vocabulary; the engine prices markup_pct
-// only. Weakest signal — ranks below explicit tokens, fixed, tier refs, and
+// cost). Same field family as overrideRule: markup_pct/markup/markup_percent
+// — the spellings the wires detect are the spellings the engine prices.
+// Weakest signal — ranks below explicit tokens, fixed, tier refs, and
 // market data, mirroring overrideRule's own precedence.
 const markupSignalHit = (src: any): any => {
   if (!src || typeof src !== 'object') return null;
-  const markup = firstFinite(src.markup_pct);
+  const markup = markupField(src);
   return markup != null
     ? { mode: PRICING_MODES.COST_PLUS, raw: markup, via: 'markup_pct' }
     : null;
