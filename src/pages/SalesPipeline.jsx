@@ -447,13 +447,6 @@ export default function SalesPipeline() {
   const secondaryMetricLabel = ["quote_no_followup", "no_next_action", "near_close", "stale"].includes(attentionFilter)
     ? salesAttentionOption(attentionFilter)?.label : null;
 
-  // TEMP-DIAG: page render counter — distinguishes parent-driven from
-  // child-internal render storms at the #301 crash.
-  if (typeof window !== "undefined") {
-    const d = (window.__pageDiag = window.__pageDiag || { n: 0 });
-    d.n += 1;
-  }
-
   return (
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
