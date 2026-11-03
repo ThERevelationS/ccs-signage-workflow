@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,7 @@ import {
   Plus, 
   Trash2, 
   Calendar as CalendarIcon,
-  CheckCircle2,
-  Circle,
-  AlertTriangle
+  CheckCircle2
 } from "lucide-react";
 
 export default function MilestoneManager({ 
@@ -268,7 +266,7 @@ export default function MilestoneManager({
   );
 }
 
-function MilestoneDialog({ open, onOpenChange, milestone, setMilestone, tasks, onSave }) {
+function MilestoneDialog({ open, onOpenChange: _onOpenChange, milestone, setMilestone, tasks, onSave }) {
   return (
     <Dialog open={open} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-md">
