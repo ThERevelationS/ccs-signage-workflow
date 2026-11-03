@@ -606,13 +606,24 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
     const featName = (f) => String(f.attributes.NAME || f.attributes.municipality || f.attributes.TOWNSHIP || "");
     const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 && stateCities.length === 0 ? [...townships, ...stateTownships] : []].filter((f) => !sameJ(featName(f), target.name));
+    const nearCands = [];
+    const addNear = (f, type) => {
+      const name = featName(f);
+      if (!name || nearCands.some((c) => sameJ(c.name, name))) return;
+      nearCands.push({ name, state, type, geoid: String(f.attributes.GEOID || ""), county: countyName, distance_m: Math.round(f.distance_m || 0), inside: false });
+    };
+    counties.forEach((f) => addNear(f, "county"));
+    places.forEach((f) => addNear(f, "municipality"));
+    statePlaces.forEach((f) => addNear(f, "municipality"));
+    (townships || []).forEach((f) => addNear(f, "township"));
+    (stateTownships || []).forEach((f) => addNear(f, "township"));
     const edge = geocode.approximate_source ? 150 : 25;
     if (!geocode.location_exact && !geocode.approximate_source) {
       const geoClaim = target.type === "municipality" ? geoLocality : target.type === "township" ? geoTwp : target.type === "county" ? geoCounty : "";
       if (target && geoClaim && sameJ(geoClaim, target.name))
         return { ...base, status: "location_verified", reason: "Map position is approximate, but the geocoder independently places this address in " + target.name + " \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "geocoder_jurisdiction" };
-      const ar = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
-      if (ar) return { ...base, status: "location_verified", reason: "Map position is approximate, but a confirmed review rule places this address in " + ar.pick.name + " \u2014 resolving to " + ar.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
+      const ar = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: nearCands, target });
+      if (ar) return { ...base, status: "location_verified", reason: "Map position is approximate, but a confirmed review rule places this address in " + ar.pick.name + " \u2014 resolving to " + ar.pick.name + ". Spot-check the pin on the map.", target: ar.pick, corroborated_by: "resolution_rule" };
       return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
     }
     if (relevant.some((f) => f.distance_m <= edge)) {
@@ -622,8 +633,8 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
         return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the geocoder independently places this address in " + target.name + " \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "geocoder_jurisdiction" };
       if (target && target.type === "municipality" && enteredCity && sameJ(enteredCity, target.name))
         return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but the address's own city matches the " + target.name + " boundary containing it \u2014 resolving to " + target.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "entered_city_name" };
-      const er = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
-      if (er) return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but a confirmed review rule places this address in " + er.pick.name + " \u2014 resolving to " + er.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
+      const er = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: nearCands, target });
+      if (er) return { ...base, status: "location_verified", reason: "The map pin sits close to a boundary, but a confirmed review rule places this address in " + er.pick.name + " \u2014 resolving to " + er.pick.name + ". Spot-check the pin on the map.", target: er.pick, corroborated_by: "resolution_rule" };
       return { ...base, status: "needs_review", target: base.targets[0], reason: "This address is close to a boundary. An administrator must confirm the property before it is used." };
     }
     if (!geocode.location_exact) return { ...base, status: "location_verified", reason: `Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`, target: base.targets[0] };
