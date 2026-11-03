@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt } from "@/components/files/fileBridgeClient";
 import FileViewerDialog from "@/components/files/FileViewerDialog";
+import InboundAttachDialog from "@/components/files/InboundAttachDialog";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const ICONS = {
   dir: Folder, pdf: FileText, image: FileImage, video: FileVideo, audio: FileAudio,
@@ -34,7 +36,13 @@ export default function ServerFiles() {
   const [links, setLinks] = useState([]);
   const [uploads, setUploads] = useState([]);
   const [viewer, setViewer] = useState(null); // {url,name,ext,size,sha256}
+  const [attachRow, setAttachRow] = useState(null);
   const fileInput = useRef(null);
+  const { currentUser } = useAuth();
+
+  const currentRoot = (health?.roots || []).find((r) => r.root_key === rootKey);
+  const isInbound = currentRoot?.purpose === "inbound";
+  const inboundBlocked = isInbound && currentRoot?.inbound_restricted && currentUser?.role !== "admin";
 
   const loadHealth = useCallback(async () => {
     try {
@@ -265,6 +273,16 @@ export default function ServerFiles() {
         </div>
       </div>
 
+      {/* inbound tray banner */}
+      {isInbound && (
+        <div className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${inboundBlocked ? "border-amber-300 bg-amber-50 text-amber-800" : "border-blue-200 bg-blue-50 text-blue-800"}`}>
+          <Link2 className="h-4 w-4 shrink-0" />
+          {inboundBlocked
+            ? "Inbound tray is admin-restricted — you can browse but not attach files."
+            : "Inbound drop zone — use Attach on a file to move it into a customer's linked folder. Files here stay non-deletable."}
+        </div>
+      )}
+
       {/* breadcrumbs */}
       <div className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
         <button className="hover:underline font-medium" onClick={() => setDir("")}>{rootKey || "root"}</button>
@@ -312,6 +330,7 @@ export default function ServerFiles() {
           ) : (
             <EntryTable entries={entries} busy={busy} canDelete={canDelete}
               onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile}
+              onAttach={isInbound && !inboundBlocked ? (r) => setAttachRow(r) : null}
               onNavigate={(p) => setDir(p)} />
           )}
         </div>
@@ -320,11 +339,13 @@ export default function ServerFiles() {
         <div className="text-xs text-muted-foreground">Served {listSrc === "agent" || listSrc === "command" ? "live from the server" : `via ${listSrc}`} · {fmtBytes(entries.reduce((s, e) => s + (e.size || 0), 0))} visible</div>
       )}
       <FileViewerDialog open={!!viewer} file={viewer} onClose={() => setViewer(null)} />
+      <InboundAttachDialog open={!!attachRow} rootKey={rootKey} file={attachRow}
+        onClose={() => setAttachRow(null)} onAttached={() => { setAttachRow(null); loadDir(rootKey, dir, true); }} />
     </div>
   );
 }
 
-function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, canDelete }) {
+function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, canDelete }) {
   return (
     <div className="divide-y">
       {entries.map((r) => {
@@ -350,6 +371,11 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, ca
               {delBusy && <span className="text-red-600">{delBusy}</span>}
             </span>
             <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onAttach && !r.is_dir && !r.missing && (
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" title="Attach to a customer folder" onClick={() => onAttach(r)}>
+                  <Link2 className="h-3.5 w-3.5 mr-1" /> Attach
+                </Button>
+              )}
               {!r.is_dir && !r.missing && (
                 <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Open" onClick={() => onOpen(r)}>
                   <Download className="h-4 w-4" />
