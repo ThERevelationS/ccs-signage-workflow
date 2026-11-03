@@ -379,16 +379,19 @@ const scanDir = async (root, rel, scanId, stats) => {
   return subdirs;
 };
 
-const scanRoot = async (root, scanId, prefix = '') => {
+const scanRoot = async (root, scanId, prefix = '', resumeFrontier = null, persist = null) => {
   const stats = { files: 0, skipped: 0, excluded: 0, extracted: 0, thumbs_pushed: 0, batch: [], recent: [], extract: [], thumbs: [], extractOn: extractionOn(root) };
-  const queue = [prefix.replace(/\/+$/, '')];
+  const queue = Array.isArray(resumeFrontier) && resumeFrontier.length ? [...resumeFrontier] : [prefix.replace(/\/+$/, '')];
   let guard = 0;
   while (queue.length && guard < 200_000) {
     guard += 1;
     const rel = queue.shift();
     const subs = await scanDir(root, rel, scanId, stats);
     for (const s of subs) queue.push(s);
+    // frontier checkpoint — a restart resumes these dirs under the same scanId
+    if (persist && queue.length <= 4000) persist(queue, false);
   }
+  if (persist) persist([], true);
   await flushIndexBatch(stats.batch.splice(0), scanId);
   await extractCandidates(root, stats);
   await pushThumbs(stats);
@@ -401,7 +404,9 @@ const scanRoot = async (root, scanId, prefix = '') => {
   }
   // 2-sweep missing rule: a single missed file might be a locked/transient
   // read — flag missing only after TWO consecutive scans don't see it.
-  if (db) {
+  // Full scans only: a path_prefix partial scan didn't look at the rest of
+  // the root, so it must not advance miss_count outside its scope.
+  if (db && !prefix) {
     try {
       db.prepare(`UPDATE files SET miss_count=miss_count+1 WHERE root_key=? AND last_seen_scan<?`).run(root.root_key, scanId);
       db.prepare(`UPDATE files SET missing=1 WHERE root_key=? AND miss_count>=2 AND missing=0`).run(root.root_key);
@@ -412,20 +417,48 @@ const scanRoot = async (root, scanId, prefix = '') => {
   return stats;
 };
 
+// scan resume checkpoint — the per-root BFS frontier persists in meta after
+// every completed dir. A restart within 30min with the same root set resumes
+// under the SAME scanId (required: the 2-sweep missing rule keys on it).
+const inflightGet = () => { try { return JSON.parse(metaGet('scan_inflight', 'null')) || null; } catch { return null; } };
+const inflightSet = (o) => metaSet('scan_inflight', o ? JSON.stringify(o) : '');
+const RESUME_WINDOW_MS = 30 * 60_000;
+
 const runScan = async (onlyRootKey = null, prefix = '') => {
   if (scanState.running) { for (const rk of [onlyRootKey].filter(Boolean)) scanState.requested.add(rk); return; }
   scanState.running = true;
-  const scanId = Date.now();
+  let scanId = Date.now();
   // scan_priority asc (hot roots first); enabled:false roots are skipped.
   const roots = state.roots
     .filter((r) => (!onlyRootKey || r.root_key === onlyRootKey) && r.enabled !== false)
     .sort((a, b) => (a.scan_priority ?? 100) - (b.scan_priority ?? 100));
-  const totals = { files: 0, skipped: 0, excluded: 0, roots: roots.map((r) => r.root_key) };
+  const rootKeys = roots.map((r) => r.root_key).sort();
+  // resume: same root set + recent inflight checkpoint + full scan (narrow
+  // index_now scans don't touch the checkpoint)
+  let resume = null;
+  const inflight = !prefix ? inflightGet() : null;
+  if (inflight?.scanId && Date.now() - (inflight.ts || 0) < RESUME_WINDOW_MS
+      && JSON.stringify((inflight.roots || []).slice().sort()) === JSON.stringify(rootKeys)) {
+    scanId = inflight.scanId; resume = inflight;
+  } else if (!prefix) {
+    inflightSet({ scanId, ts: Date.now(), roots: rootKeys, frontiers: {} });
+  }
+  if (resume) log('info', 'scan_resume', { scan_id: scanId, frontiers: Object.fromEntries(Object.entries(resume.frontiers || {}).map(([k, v]) => [k, v === 'done' ? 'done' : v.length])) });
+  const totals = { files: 0, skipped: 0, excluded: 0, roots: rootKeys };
   try {
     for (const root of roots) {
-      const s = await scanRoot(root, scanId, prefix);
+      const fr = resume?.frontiers?.[root.root_key];
+      if (fr === 'done') continue;
+      const persist = prefix ? null : (q, done) => {
+        const cur = inflightGet() || { scanId, ts: Date.now(), roots: rootKeys, frontiers: {} };
+        cur.scanId = scanId; cur.ts = Date.now(); cur.roots = rootKeys;
+        cur.frontiers = cur.frontiers || {}; cur.frontiers[root.root_key] = done ? 'done' : q;
+        inflightSet(cur);
+      };
+      const s = await scanRoot(root, scanId, prefix, Array.isArray(fr) ? fr : null, persist);
       totals.files += s.files; totals.skipped += s.skipped; totals.excluded += s.excluded; totals.extracted = (totals.extracted || 0) + s.extracted;
     }
+    if (!prefix) inflightSet(null); // completed — drop the checkpoint
     await post('heartbeat', { index_stats: totals, last_scan_at: new Date(scanId).toISOString() }).catch(() => null);
     log('info', 'scan_done', { scan_id: scanId, ...totals });
     pushInventory(scanId, roots).catch((e) => log('warn', 'inventory_err', { err: String(e.message || e).slice(0, 120) }));
