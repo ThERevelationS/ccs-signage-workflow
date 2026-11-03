@@ -121,7 +121,7 @@ function LocalityPickerSession({
   initialAddress = "",
 }) {
   const { sessionToken,currentUser } = useAuth();
-  const {runAction}=useResearchProgress();
+
   const searchVersion=useRef(0);
   const serviceFails=useRef(0);
   const pendingSearch=useRef(null),pendingDraft=useRef(null);
@@ -289,7 +289,9 @@ function LocalityPickerSession({
     else setError("");
     setResult(null);
     try {
-      const invoke=runAction;
+      // Address lookups go straight to the resolver — they are not scan
+      // actions and must not register rows in Scan activity.
+      const invoke=(name,payload)=>base44.functions.invoke(name,payload);
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
       let data;
       // Patient retry: the app shares one function budget, so 429s come in
