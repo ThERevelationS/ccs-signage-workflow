@@ -547,7 +547,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           return { ...selected, ...remotePatch, id, ...scopedPending };
         });
       });
-    } catch {
+    } catch (error) {
       console.error("Sales Pipeline realtime WorkOrder subscription failed:", error);
     }
 
@@ -579,7 +579,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         label: "Sales Pipeline task assignment rules",
       });
       setTaskAssignmentRules(setting?.setting_value?.rules || []);
-    } catch {}
+    } catch (error) {}
   };
 
   const normalizeTaskDescriptionItems = (items = []) => items.map(item => ({
@@ -645,7 +645,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
       setGlobalSettingsLoaded(true);
       return true;
-    } catch {
+    } catch (error) {
       console.error("Error loading global settings:", error);
       setGlobalSettingsError(error?.message || "Sales Pipeline settings could not be loaded safely.");
       setGlobalSettingsLoaded(true);
@@ -675,7 +675,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (key === 'salesTaskDescriptions') setTaskDescriptions(normalizeTaskDescriptionItems(savedValue.items || []));
         if (key === 'deadlineGradientSettings') setDeadlineGradientSettings(savedValue);
         return saved;
-      } catch {
+      } catch (error) {
         globalSettingsSaveBlockedRef.current[key] = true;
         console.error("Sales Pipeline global setting save blocked:", key, error);
         setGlobalSettingsError(error?.message || "A Sales Pipeline setting changed in another session. Reload latest before saving again.");
@@ -805,7 +805,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       // moved to another workspace must not be declared reviewed here.
       return requiredIds.every((id) => rows.some((row) => row?.id === id))
         ? true : "missing_required";
-    } catch {
+    } catch (error) {
       if (requestId === loadRequestRef.current) {
         console.error("Error loading work orders:", error);
         setLoadError(error?.message || "Sales Pipeline could not be loaded.");
@@ -828,7 +828,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       archiveSkipRef.current += page.length;
       setArchiveHasMore(page.length === ARCHIVE_PAGE_SIZE);
       setWorkOrders((current) => mergeLoadedRows([...current, ...page]));
-    } catch {
+    } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading older Sales Pipeline archive rows:", error);
     } finally {
       if (requestId === loadRequestRef.current) setArchiveLoadingMore(false);
@@ -857,7 +857,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       const result = differenceInDays(to, from);
       return isNaN(result) ? null : result;
-    } catch {
+    } catch (error) {
       return null;
     }
   }, []);
@@ -924,7 +924,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (syncInFlightRef.current) return { ok: false, message: "Sales sync is already running." };
     try {
       await waitForPendingSalesSaves();
-    } catch {
+    } catch (error) {
       return { ok: false, message: error?.message || "Sales changes could not be saved before sync." };
     }
 
@@ -946,7 +946,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       clearSyncedWorkOrderIds(syncTargets);
       releaseLiveEditPins();
       return summary;
-    } catch {
+    } catch (error) {
       return { ok: false, message: error?.message || "Saved in Base44, but Smartsheet sync could not be verified." };
     } finally {
       syncInFlightRef.current = false;
@@ -1288,7 +1288,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         } : selected);
         markWorkOrderNeedsSync(orderId);
         setQuickEditError("");
-      } catch {
+      } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
@@ -1551,7 +1551,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         });
         deletedIds.push(id);
       }
-    } catch {
+    } catch (error) {
       console.error("Sales Pipeline bulk delete stopped:", error);
       const progressNote = deletedIds.length > 0
         ? ` ${deletedIds.length} Work Order${deletedIds.length === 1 ? " was" : "s were"} already moved to Project Trash before the operation stopped.`
@@ -1592,7 +1592,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         label: "Sales Pipeline Work Order delete",
       });
       setWorkOrders((current) => current.filter((workOrder) => workOrder.id !== orderId));
-    } catch {
+    } catch (error) {
       console.error("Sales Pipeline Work Order delete blocked:", error);
       setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
       await loadWorkOrders(false);
@@ -1628,7 +1628,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         updated_date: saved.updated_date,
       });
       setWorkOrders((current) => current.filter((wo) => wo.id !== workOrder.id));
-    } catch {
+    } catch (error) {
       console.error("Could not move Sales Pipeline Work Order safely:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. Reload before moving it into workflow.");
       await loadWorkOrders(false);
@@ -1869,7 +1869,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         corbridge_link: latest.corbridge_link,
       });
       setCorbridgeSaveError("");
-    } catch {
+    } catch (error) {
       console.error("Could not reload latest Corebridge fields:", error);
       setCorbridgeSaveError(error?.message || "The latest Corebridge fields could not be loaded.");
     }
@@ -1899,7 +1899,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
       markWorkOrderNeedsSync(saved.id);
       closeCorbridgeDialog();
-    } catch {
+    } catch (error) {
       console.error("Could not save Corebridge fields:", error);
       setCorbridgeSaveError(error?.message || "These Corebridge fields changed in another session. Reload the latest values before saving.");
     }
@@ -2906,7 +2906,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         setSelectedWorkOrder((selected) => selected?.id === saved.id ? { ...selected, ...saved } : selected);
       }
       return { ok: true };
-    } catch {
+    } catch (error) {
       console.error("Could not remove Sales Pipeline membership safely:", error);
       const message = error?.message || "This opportunity could not be removed from Current Pipeline safely.";
       setQuickEditError(message);
@@ -3039,7 +3039,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (!latest?.id) return;
       setWorkOrders((current) => current.map((row) => row.id === latest.id ? latest : row));
       setSelectedWorkOrder(latest);
-    } catch {
+    } catch (error) {
       console.error("Could not refresh selected Sales Pipeline Work Order:", error);
       await loadWorkOrders(false);
     }
@@ -3088,7 +3088,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             try {
               await transitionWorkOrderFromLoadedSnapshot({ workOrder: wo, newStage, label: "Sales Pipeline details stage transition" });
               await refreshSelectedWorkOrder();
-            } catch {
+            } catch (error) {
               console.error("Error moving Sales Pipeline Work Order:", error);
               alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
               await refreshSelectedWorkOrder();
@@ -3116,7 +3116,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               setWorkOrders((current) => current.filter((row) => row.id !== wo.id));
               setSelectedWorkOrder(null);
               setShowFullWorkOrderDetails(false);
-            } catch {
+            } catch (error) {
               console.error("Error completing Sales Pipeline Work Order:", error);
               alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
               await loadWorkOrders(false);
@@ -3133,7 +3133,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               setWorkOrders((current) => current.filter((row) => row.id !== wo.id));
               setSelectedWorkOrder(null);
               setShowFullWorkOrderDetails(false);
-            } catch {
+            } catch (error) {
               console.error("Sales Pipeline details Work Order delete blocked:", error);
               setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
               await loadWorkOrders(false);
