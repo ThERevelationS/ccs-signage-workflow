@@ -9,9 +9,9 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 
 ## Permitting scan — HARD CONCURRENCY CAP (per Brett 2026-11-02)
 
-**Four agents total, ever: 3 address-lookup workers + 1 office creator** (raised from 1+1 same day after batched telemetry proved the budget holds). The shared entity-read budget (140 req/60s/caller + app-level volume cap) collapses into HTTP 500 `invoke` failures past that — the whole 500-flood class came from overspawned workers.
+**Eleven agents total, ever: 10 address-lookup workers + 1 office creator** (raised 1→3→5→8→10 on 2026-11-02 under Brett's direction — ramping until `invoke` 500s appear, then back to last clean level; the app entity budget — not local CPU — is the ceiling). The shared entity-read budget (140 req/60s/caller + app-level volume cap) collapses into HTTP 500 `invoke` failures past that — the whole 500-flood class came from overspawned workers.
 
-- Validator: `PERMIT_SESSION_TOKEN=$(cat .permit-session-token) node scripts/permitting-address-validation.mjs --file <pool.json> --limit N --workers 3 --json <out>.json --events .live-events.jsonl`. `--workers` is code-clamped ≤3; default is 1.
+- Validator: `PERMIT_SESSION_TOKEN=$(cat .permit-session-token) node scripts/permitting-address-validation.mjs --file <pool.json> --limit N --workers 10 --json <out>.json --events .live-events.jsonl`. `--workers` is code-clamped ≤10; default is 1.
 - Office creator: `node scripts/permitting-bulk-office-drafts.mjs` — exactly ONE instance.
 - Watchdog (`scripts/permitting-error-watchdog.mjs`) is a supervisor, not a worker: it requeues `invoke`/`unresolved`/`office_error` marks and only spawns a 1-worker retry pass when NO validator is alive (empty/unreadable liveness check = assume busy, never spawn). One instance max.
 - Rebuild pools from latest-stage marks before restarting; done stages: `resolved*`, `located_no_locality`, `office_*`, `seed_office_*`, `rule_*`.
@@ -66,3 +66,16 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 - Playwright waterfall: `.audit-work/waterfall.mjs /Page` needs `MSYS_NO_PATHCONV=1` on Git Bash (path args get mangled) and `playwright-core` matching `~/AppData/Local/ms-playwright/chromium-*` version.
 - `sandbox write` has a **per-path circuit breaker**: repeated failed writes to the SAME path trip it — the path then 502s on every attempt while identical content writes instantly to any other path. Bypass: write to `<path>.mpnew` then `sandbox run "mv <path>.mpnew <path>"`. For <5KB payloads, `sandbox run "echo '<base64>' | base64 -d > path"` also works (sandbox run does NOT forward stdin — remote `base64 -d` hangs → 504; content must ride in the command arg, local Windows spawn limit ~8KB).
 - `sandbox read` JSON shape is `{"files":[{"path","content"}]}` — never `j["content"]` at top level (wrote 0-byte files once). Remote content can contain lone surrogates — write with `errors='surrogateescape'`.
+
+## File Bridge platform notes (learned 2026-11-02)
+
+- **Sandbox ≠ production data plane**: `preview-sandbox--<id>.base44.app` functions read/write the SANDBOX entity store; `app.base44.com/api/apps/{id}/entities/*` and `base44 exec` hit PRODUCTION data. A row created via one is invisible to the other. Entity SCHEMAS also needed `POST /api/apps/{id}/entity-schemas {entity_name, entity_schema}` — writing `.jsonc` files does NOT provision them (verified: `FileBridgeHealth` 404 until API-created).
+- **Entity jsonc MUST include top-level `"type":"object"`** or the schema API 400s.
+- **GlobalSettings fields are `setting_key`/`setting_value`** — not key/value. Create is admin-RLS-restricted: neither entity API nor `base44 exec` can create rows; use a service-role function (`fileBridgeIngest bootstrap_settings` pattern).
+- **Secrets**: `POST /api/apps/{id}/secrets {"NAME":"value"}` — write-only, redeploys functions. `FILEBRIDGE_HMAC_KEY` set this way (dev value in `.audit-work/fb-devkey.txt`, local only).
+- **Function invoke URL**: `POST https://<host>/functions/<name>` — preview host `preview-sandbox--<id>.base44.app` (+`?preview_token=`); published host `clay-flow-signage-suite-387da97c.base44.app`.
+- **Large-file push pattern**: `.audit-work/push-file.mjs` — base64 chunk appends to `/tmp` then `base64 -d` (6KB chunks, retry×4, md5 verify). Use EXACT tmp filename in the decode — never glob `/tmp/push-*.b64` (glob-decode once overwrote ingest with spike code; runtime served the corrupt bundle until next rotation).
+- **Function rotation**: sandbox writes redeploy staggered per worker — verify new behavior by a response-shape marker, not retry timing. Workers also cache module-globals independently (60s settings cache caused transient `fileBridge disabled` on some calls right after bootstrap — by design, tolerable).
+- **Measured caps**: function body ~89MB b64-JSON (96MB raw → 413) → 32MB chunks; SSE holds ≥55s with live events; `bulkCreate` exists (array return), `deleteMany` works, serial write ~91ms; `integrations.Core.UploadFile` works but NO storage delete API exists — uploaded bytes are permanent.
+- **429-masking rule**: `.catch(()=>[])` on a settings/command read turns shared-budget 429s into FAKE permanent states (`disabled`, `unknown command`). Read-error paths must return `read_unavailable`/`settings_unavailable` 503 (retry:true) and serve last-good cached settings (≤10min), never normalize-empty-into-disabled.
+- **Actors unusable pre-publish**: external connect → 403 "not been published" even after `actors deploy`; `createClientFromRequest` anonymous client lacks `.actors` entirely. File Bridge uses SSE `command_wait` as the wake channel instead.
