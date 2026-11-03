@@ -28,7 +28,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
 const materials = ["Acrylic", "Wood", "Leather"];
 
-const parseImperialFraction = (fractionString) => {
+const _parseImperialFraction = (fractionString) => {
   if (typeof fractionString !== 'string') return parseFloat(fractionString) || 0;
   let totalValue = 0;
   const wholeAndFraction = fractionString.split('-');
