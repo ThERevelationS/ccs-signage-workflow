@@ -38,7 +38,10 @@ async function verifyAgent(req: Request, rawBody: string, sr: any) {
   const agentId = req.headers.get('x-fb-agent') || '';
   if (!keyId || !ts || !sig) return { ok: false, status: 401, error: 'missing auth headers' };
   if (Math.abs(now() - ts) > FB_REPLAY_WINDOW_MS) return { ok: false, status: 401, error: 'stale timestamp' };
-  const settings = normalizeFileBridgeSettings(await getSettings(sr));
+  const gs = await getSettings(sr);
+  if (gs.error === 'stale_on_error') { /* served last-good — fine */ }
+  else if (gs.error) return { ok: false, status: 503, error: 'settings_unavailable' };
+  const settings = normalizeFileBridgeSettings(gs.v);
   if (keyId !== String(settings.key_id || 'fbk1')) return { ok: false, status: 401, error: 'bad key_id' };
   const cur = Deno.env.get('FILEBRIDGE_HMAC_KEY') || '';
   const prev = Deno.env.get('FILEBRIDGE_HMAC_KEY_PREV') || '';
@@ -51,12 +54,21 @@ async function verifyAgent(req: Request, rawBody: string, sr: any) {
 }
 
 let settingsCache: { v: any; at: number } = { v: null, at: 0 };
-async function getSettings(sr: any) {
-  if (settingsCache.v && now() - settingsCache.at < 60_000) return settingsCache.v;
-  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1).catch(() => []);
+let lastGood: { v: any; at: number } = { v: null, at: 0 };
+// Reads can fail under the shared entity budget — NEVER translate a read
+// failure into 'disabled'. Serve last-good settings for ≤10min on error.
+async function getSettings(sr: any): Promise<{ v: any; error?: string }> {
+  if (settingsCache.v && now() - settingsCache.at < 60_000) return { v: settingsCache.v };
+  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)
+    .catch((e: any) => ({ __err: String(e?.message || e) }));
+  if (rows?.__err) {
+    if (lastGood.v && now() - lastGood.at < 600_000) return { v: lastGood.v, error: 'stale_on_error' };
+    return { v: null, error: rows.__err };
+  }
   const v = rows?.[0]?.setting_value ?? null;
   settingsCache = { v, at: now() };
-  return v;
+  if (v) lastGood = { v, at: now() };
+  return { v };
 }
 
 const ev = (sr: any, e: Record<string, any>) =>
@@ -76,8 +88,8 @@ async function upsertHealth(sr: any, agentId: string, patch: Record<string, any>
 async function pendingCommands(sr: any, agentId: string, limit = 10) {
   const rows = await sr.entities.FileBridgeCommand.filter(
     { agent_id: agentId, status: 'queued' }, 'priority,created_ts', limit,
-  ).catch(() => []);
-  return rows || [];
+  ).catch((e: any) => ({ __err: String(e?.message || e) }));
+  return rows;
 }
 
 Deno.serve(async (req) => {
@@ -160,9 +172,10 @@ Deno.serve(async (req) => {
   if (action === 'command_poll') {
     await upsertHealth(sr, agentId, { state: 'online' });
     const cmds = await pendingCommands(sr, agentId);
+    if ((cmds as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
     // lease them
     const leased: any[] = [];
-    for (const c of cmds) {
+    for (const c of cmds as any[]) {
       const spec = COMMAND_SPECS[c.type];
       const lease_ms = spec?.lease_ms || 60_000;
       const u = await sr.entities.FileBridgeCommand.update(c.id, {
@@ -186,8 +199,9 @@ Deno.serve(async (req) => {
         const t0 = now();
         while (now() - t0 < holdMs) {
           const cmds = await pendingCommands(sr, agentId, 5);
-          if (cmds.length) {
-            for (const c of cmds) {
+          if ((cmds as any)?.__err) { send({ type: 'degraded' }); await new Promise((r) => setTimeout(r, 4000)); continue; }
+          if ((cmds as any[]).length) {
+            for (const c of cmds as any[]) {
               const spec = COMMAND_SPECS[c.type];
               const u = await sr.entities.FileBridgeCommand.update(c.id, {
                 status: 'leased', leased_by: agentId,
@@ -211,7 +225,9 @@ Deno.serve(async (req) => {
   // ---------- command_complete (idempotent) ----------
   if (action === 'command_complete') {
     const cid = String(body.command_id || '');
-    const rows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1).catch(() => []);
+    const rows = await sr.entities.FileBridgeCommand.filter({ command_id: cid }, '-updated_date', 1)
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
     const cmd = rows?.[0];
     if (!cmd) return Response.json({ error: 'unknown command' }, { status: 404 });
     if (isTerminal(cmd.status)) return Response.json({ ok: true, already: true }); // idempotent
