@@ -99,6 +99,8 @@ services:
       FB_ROOTS: /roots/customer_files,/roots/_Inbound
       FB_STATE_DIR: /state
       FB_VERSION: 1.0.0
+      # FB_CLAIM_PRIMARY: "1"  # optional — auto-promote if current primary is stale
+      # FB_EXTRACT: "1"        # optional — force content extraction in FB_SCAN_ONLY
     secrets:
       fb_hmac.key:
         file: /mnt/user/appdata/filebridge/secrets/fb_hmac.key
@@ -158,12 +160,20 @@ docker compose up -d
 In the app, open **Server Files** (hard-drive nav item):
 
 - The health strip should show `tower-primary · online`.
-- Root tabs appear per registered root.
+- **Admins:** expand **Share roots** — the agent's detected shares appear as
+  one-click suggestions. Click a share name, set its purpose
+  (`Customer folders` for the auto-match pipeline, `Inbound drop zone` for
+  the attach tray, `General` otherwise), and save. Root changes reach the
+  agent on its next handshake (≤2 min). Enable **Content extraction** on
+  roots whose text files should be deep-searchable.
+- **Admins:** the **Bridge agents** panel shows both servers' health and
+  the promote/demote controls.
 - First index takes a few minutes per ~50k files — entries fill in
   progressively; the Recent feed shows scan activity.
 - Customer folder suggestions appear in the review queue as matching
   runs (every 5 min): confirm correct ones, reject wrong ones — rejected
   folders never re-suggest.
+- Small images (≤2MB) get row thumbnails automatically as scans run.
 
 ## Step 7 — The backup server (optional but recommended)
 
@@ -176,15 +186,19 @@ a `backup` badge when that's happening.
 
 ### Promotion runbook (primary is dead/gone)
 
-1. App admin: set `fileBridge` GlobalSettings `primary_agent_id =
-   "tower-backup"` (Server Files → Admin, or GlobalSettings row).
-2. `tower-backup` handshakes as **primary** on next cycle (~seconds).
+1. App admin: **Server Files → Bridge agents → Promote to primary** on the
+   backup agent (equivalent to setting `primary_agent_id` in settings).
+   The backup picks up its new role on next handshake (≤2 min).
+2. Alternative: restart the backup agent with `FB_CLAIM_PRIMARY: "1"` —
+   it self-promotes once it sees the current primary is stale.
+   `FB_CLAIM_PRIMARY: "force"` overrides even a live primary (split-brain
+   risk — use only when the old primary is confirmed dead).
 3. Remount its shares `:rw` when you're sure the old primary won't come
    back writing — split-brain protection: the agent refuses mutations
    while `FB_ROLE=backup` regardless.
 4. Old primary returns → it handshakes, sees it's no longer primary,
-   and stays read-only. Demote it in compose (`FB_ROLE: backup`) during
-   your next maintenance.
+   and stays read-only. Demote it in the panel (or compose
+   `FB_ROLE: backup`) during your next maintenance.
 
 ## Operations
 
@@ -195,7 +209,8 @@ a `backup` badge when that's happening.
 | Update agent | replace `agent/filebridge-agent.mjs`, `compose up -d --build` |
 | Rotate key | put new key in app `FILEBRIDGE_HMAC_KEY`, old key moves to `FILEBRIDGE_HMAC_KEY_PREV`, then update agent key files — rotation is seamless while `PREV` is set |
 | Stop serving | `docker stop filebridge-agent` — reads fail over to backup; writes queue for up to TTL |
-| Rebuild provenance | after reinstall: queue `rebuild_manifest` — it re-stamps `manifest.json` from the app's upload ledger |
+| Rebuild provenance | after reinstall: queue `rebuild_manifest` — it re-stamps `manifest.json` from the app's upload ledger. The agent also digest-checks hourly (`manifest_sync`) and logs `manifest_drift` if the ledger and local manifest diverge |
+| Manage roots | Server Files → **Share roots** (admin) — no SSH needed; changes propagate via `config_version` |
 
 ## Troubleshooting
 
@@ -206,6 +221,8 @@ a `backup` badge when that's happening.
 | `root_missing` | mount not attached | fix `volumes:`; the agent never writes outside mounts |
 | Spool growing (`spool/` files) | app unreachable — events queued | self-heals when connectivity returns; spool is priority-tiered + capped |
 | Upload lands as `name (1).ext` | filename collision | by design — bridge never overwrites |
+| Deep search returns name-only hits | extraction off for that root | Share roots → enable **Content extraction** on the root |
+| `manifest_drift` in agent log | local provenance ≠ upload ledger | usually self-corrects after `rebuild_manifest`; if persistent, check for a second agent claiming the same roots |
 
 ## What the agent will NOT do
 
