@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { FOLLOWUP_KIND_META } from "@/components/comms/followupModel";
 
-const clean = (v) => String(v ?? "").trim();
+const _clean = (v) => String(v ?? "").trim();
 export const feedMoney = (n) => `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // Every section key the bell badge counts — kept in one place so the badge,
