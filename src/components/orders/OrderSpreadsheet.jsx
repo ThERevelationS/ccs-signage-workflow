@@ -20,7 +20,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { fetchAllWorkOrders, fetchAllOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
@@ -160,7 +159,7 @@ const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 const ORDER_AUX_RELOAD_MS = 5 * 60 * 1000;
 const ORDER_FOCUS_RELOAD_THROTTLE_MS = 15 * 1000;
 
-const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -173,7 +172,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
-  const [editingCell, setEditingCell] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -195,7 +193,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     handleSort: handleColumnSort, 
     handleCustomSort, 
     clearSort,
-    applySortAndFilter 
   } = useColumnSorting('orderForm', currentUser?.email);
 
   const [customerSearch, setCustomerSearch] = useState("");
@@ -284,7 +281,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [mobileDetailOrderId, setMobileDetailOrderId] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [validationError, setValidationError] = useState(null);
-  const [editingCustomerName, setEditingCustomerName] = useState(null);
+  const [_editingCustomerName, setEditingCustomerName] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
@@ -846,10 +843,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   // Existing internal/manual callers still save Base44 only. The page-level
   // user button calls saveAndSync so explicit Save has deterministic sync semantics.
-  const manualSave = () => {
-    saveAllChanges();
-  };
-
   const addNewRow = async () => {
     // A manual pull owns its ref before React renders the disabled Add button.
     if (!isRegistered || readError || addInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
@@ -1307,15 +1300,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
 
-
-  const getFilteredUsers = (searchTerm) => {
-    if (!searchTerm) return users.slice(0, 10);
-    const lower = searchTerm.toLowerCase();
-    return users.filter(u => 
-      u.full_name?.toLowerCase().includes(lower) ||
-      u.email?.toLowerCase().includes(lower)
-    ).slice(0, 10);
-  };
 
   const getRowColor = (order) => {
     if (effectiveOrderStatus(order) === "received") return "bg-green-100";
