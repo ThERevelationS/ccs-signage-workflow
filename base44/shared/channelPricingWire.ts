@@ -260,7 +260,8 @@ const templateRefValue = (src: any): { ref: unknown; via: string } | null => {
  * line-level scanning and part-descriptor sub-object scanning. Mirrors
  * pricingEngine.overrideRule's own precedence of what counts as a signal:
  * fixed price (positive) > tier ref > break chart > recognized mode/market
- * fields > markup pct (nonzero) > modifiers/minimums. `tier_rules` /
+ * fields > markup pct (any finite — an explicit 0 sells at cost) >
+ * modifiers/minimums. `tier_rules` /
  * `customer_tier` are context signals — a line carrying its own chart IS
  * tier config.
  */
@@ -279,8 +280,10 @@ function descriptorConfigured(src: any): { configured: boolean; via: string[] } 
   if (retail !== null && retail > 0) via.push('market_retail');
   const mode = firstField(src, MODE_FIELDS);
   if (mode !== undefined && ENGINE_MODE_TOKENS.has(normStr(mode))) via.push('pricing_mode');
+  // Any finite markup is authored config — an explicit markup_pct:0 pins the
+  // line at cost (0% markup), not "no config" (F-23 markup-0 signal).
   const markup = firstFinite(src, MARKUP_FIELDS);
-  if (markup !== null && markup !== 0) via.push('markup_pct');
+  if (markup !== null) via.push('markup_pct');
   for (const f of MODIFIER_FIELDS) {
     if (Array.isArray(src[f]) && src[f].length > 0) { via.push('formula_modifiers'); break; }
   }
