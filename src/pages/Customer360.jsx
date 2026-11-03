@@ -10,6 +10,7 @@ import {
   WorkOrder,
 } from "@/api/gatedEntities";
 import KpiStrip from "@/components/customer360/KpiStrip";
+import CustomerFilesPanel from "@/components/files/CustomerFilesPanel";
 import { EmptyState, PageHeader } from "@/components/kit";
 import {
   ActivityTab,
@@ -61,6 +62,7 @@ const TABS = [
   { key: "estimates", label: "Estimates" },
   { key: "jobs", label: "Jobs" },
   { key: "financials", label: "Financials" },
+  { key: "serverfiles", label: "Server Files" },
   { key: "activity", label: "CRM / Activity" },
   { key: "contacts", label: "Contacts & Locations" },
 ];
@@ -434,6 +436,9 @@ export default function Customer360() {
         {tab === "jobs" && <JobsTab data={data || {}} truncatedNotice={truncatedNotice} />}
         {tab === "financials" && (
           <FinancialsTab data={data || {}} backendReady={backendReady} truncatedNotice={truncatedNotice} />
+        )}
+        {tab === "serverfiles" && (
+          <CustomerFilesPanel customerId={customerId} customerName={customerName(c)} />
         )}
         {tab === "activity" && (
           <ActivityTab data={data || {}} backendReady={backendReady} truncatedNotice={truncatedNotice} />
