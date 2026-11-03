@@ -1,1 +1,31 @@
-aW1wb3J0IHsgQnV0dG9uIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2J1dHRvbiI7DQppbXBvcnQgeyBGb2xkZXIsIEV4dGVybmFsTGluayB9IGZyb20gImx1Y2lkZS1yZWFjdCI7DQppbXBvcnQgeyBvcGVuRXh0ZXJuYWxIdHRwVXJsLCBzYWZlRXh0ZXJuYWxIdHRwVXJsIH0gZnJvbSAiQC91dGlscy9zYWZlRXh0ZXJuYWxVcmwiOw0KDQpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBFbWJlZGRlZERyaXZlRmlsZXMoeyBmb2xkZXJVcmwgfSkgew0KICBjb25zdCBzYWZlRm9sZGVyVXJsID0gc2FmZUV4dGVybmFsSHR0cFVybChmb2xkZXJVcmwpOw0KICBpZiAoIWZvbGRlclVybCkgew0KICAgIHJldHVybiAoDQogICAgICA8ZGl2IGNsYXNzTmFtZT0iYm9yZGVyIHJvdW5kZWQtbGcgcC02IHRleHQtY2VudGVyIGJnLWdyYXktNTAvNTAiPg0KICAgICAgICA8Rm9sZGVyIGNsYXNzTmFtZT0idy0xMCBoLTEwIG14LWF1dG8gbWItMiB0ZXh0LWdyYXktMzAwIiAvPg0KICAgICAgICA8cCBjbGFzc05hbWU9InRleHQtc20gdGV4dC1ncmF5LTQwMCI+Tm8gZm9sZGVyIGxpbmtlZDwvcD4NCiAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXhzIHRleHQtZ3JheS00MDAgbXQtMSI+Q2xpY2sgIkxpbmsgRm9sZGVyIiB0byBjb25uZWN0IGEgR29vZ2xlIERyaXZlIGZvbGRlcjwvcD4NCiAgICAgIDwvZGl2Pg0KICAgICk7DQogIH0NCg0KICByZXR1cm4gKA0KICAgIDxkaXYgY2xhc3NOYW1lPSJib3JkZXIgcm91bmRlZC1sZyBwLTYgdGV4dC1jZW50ZXIgYmctZ3JheS01MC81MCI+DQogICAgICA8Rm9sZGVyIGNsYXNzTmFtZT0idy0xMCBoLTEwIG14LWF1dG8gbWItMiB0ZXh0LWJsdWUtNDAwIiAvPg0KICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIHRleHQtZ3JheS02MDAgbWItMyI+R29vZ2xlIERyaXZlIGZvbGRlciBsaW5rZWQ8L3A+DQogICAgICA8QnV0dG9uDQogICAgICAgIG9uQ2xpY2s9eygpID0+IG9wZW5FeHRlcm5hbEh0dHBVcmwoc2FmZUZvbGRlclVybCl9DQogICAgICAgIGRpc2FibGVkPXshc2FmZUZvbGRlclVybH0NCiAgICAgICAgY2xhc3NOYW1lPSJnYXAtMiINCiAgICAgID4NCiAgICAgICAgPEV4dGVybmFsTGluayBjbGFzc05hbWU9InctNCBoLTQiIC8+DQogICAgICAgIE9wZW4gaW4gRHJpdmUNCiAgICAgIDwvQnV0dG9uPg0KICAgIDwvZGl2Pg0KICApOw0KfQ==
+import { Button } from "@/components/ui/button";
+import { Folder, ExternalLink } from "lucide-react";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
+
+export default function EmbeddedDriveFiles({ folderUrl }) {
+  const safeFolderUrl = safeExternalHttpUrl(folderUrl);
+  if (!folderUrl) {
+    return (
+      <div className="border rounded-lg p-6 text-center bg-gray-50/50">
+        <Folder className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+        <p className="text-sm text-gray-400">No folder linked</p>
+        <p className="text-xs text-gray-400 mt-1">Click "Link Folder" to connect a Google Drive folder</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border rounded-lg p-6 text-center bg-gray-50/50">
+      <Folder className="w-10 h-10 mx-auto mb-2 text-blue-400" />
+      <p className="text-sm text-gray-600 mb-3">Google Drive folder linked</p>
+      <Button
+        onClick={() => openExternalHttpUrl(safeFolderUrl)}
+        disabled={!safeFolderUrl}
+        className="gap-2"
+      >
+        <ExternalLink className="w-4 h-4" />
+        Open in Drive
+      </Button>
+    </div>
+  );
+}
