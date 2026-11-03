@@ -364,7 +364,10 @@ function invokeMyWorkflow(payload) {
 // the task pull stays load-bearing and still throws like the old
 // Promise.all did.
 const loadGeneralTasksLegacy = () =>
-  loadAllEntityRows({ entity: base44.entities.GeneralTask, query: { completed: false }, sort: "created_date", label: "My Workflow general tasks" });
+  // GeneralTask is backend-only RLS — the old page's platform-SDK path silently
+  // failed for staff sessions. The staff gateway is allowlisted for it, so the
+  // fallback actually returns rows instead of reproducing that defect.
+  loadAllEntityRows({ entity: staffEntities.GeneralTask, query: { completed: false }, sort: "created_date", label: "My Workflow general tasks" });
 const loadWorkflowUsersLegacy = () =>
   loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "My Workflow authorized users" })
     .catch((err) => { console.error("Error loading authorized users:", err); return EMPTY_ROWS; });
