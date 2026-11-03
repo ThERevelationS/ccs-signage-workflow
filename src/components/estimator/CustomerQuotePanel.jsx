@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
 import { computeEstimateProfitability, DEFAULT_MARGIN_FLOOR_PERCENT } from "./profitability";
-import { estimateQuoteExpiration, formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
+import { estimateQuoteExpiration, formatQuoteIssueDate, localDateStamp, resolveQuoteIssueMetadata } from "./quoteLifecycle";
 import { generateCustomerQuotePdf } from "./quotePdf";
 import { approveEstimateQuote, defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "./quoteDefaults";
