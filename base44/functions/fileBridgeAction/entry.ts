@@ -170,11 +170,11 @@ Deno.serve(async (req) => {
       return { args: { root_key: String(b.root_key || ''), paths: okPaths } };
     },
     queue_restore: (b) => {
-      const p = safeRelPath(String(b.tombstone_path || ''));
-      const d = safeRelPath(String(b.dest_dir || ''));
+      // Agent contract: {root_key, path} — it resolves the tombstone from
+      // its own manifest (trash_path recorded at delete time).
+      const p = safeRelPath(String(b.path || b.tombstone_path || ''));
       if (!p.ok) return { err: p.error };
-      if (!d.ok) return { err: d.error };
-      return { args: { tombstone_path: p.path, dest_dir: d.path } };
+      return { args: { root_key: String(b.root_key || ''), path: p.path } };
     },
     queue_package: (b) => {
       const paths = Array.isArray(b.paths) ? b.paths.slice(0, 100) : [];
@@ -324,6 +324,24 @@ Deno.serve(async (req) => {
       { status: 'suggested' }, '-confidence', 100,
     ).catch(() => []);
     return Response.json({ ok: true, suggestions: rows || [] });
+  }
+
+  // ---------- list_trash (tombstoned rows — the restore surface) ----------
+  // Deleted-via-bridge rows keep missing:true + trash_path; the .ccs_trash
+  // dir itself is scan-excluded so this query is the only staff view into it.
+  if (action === 'list_trash') {
+    const q: any = { missing: true };
+    if (body.root_key) q.root_key = String(body.root_key);
+    const rows = await sr.entities.FileIndex.filter(q, '-mtime_ms', Math.min(Number(body.limit) || 200, 500))
+      .catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable' }, { status: 503 });
+    return Response.json({
+      ok: true,
+      entries: (rows || []).filter((r: any) => r.trash_path).map((r: any) => ({
+        id: r.id, root_key: r.root_key, path: r.path, name: r.name, size: r.size,
+        mtime_ms: r.mtime_ms, trash_path: r.trash_path, ext: r.ext, kind: r.kind,
+      })),
+    });
   }
 
   if (action === 'link_decide') {
