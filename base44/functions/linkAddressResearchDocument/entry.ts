@@ -1,4 +1,5 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
+import {withEntityRateLimitRetry} from '../../shared/entityRateLimitRetry.ts';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {loadAllEntityRows} from '../../shared/pagedEntityRows.ts';
 import {linkAddressDocument} from '../../shared/permittingAddressDocumentLink.mjs';
@@ -6,7 +7,7 @@ import {createScanReporter,silentScanReporter,scanToken} from '../../shared/perm
 Deno.serve(async req=>{
  let reporter=silentScanReporter;
  try{
-  const client=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
+  const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
   if(actor.role!=='admin')return Response.json({error:'Administrator review is required.'},{status:403});
   if(body.dry_run!==true&&!scanToken(body.action_token))return Response.json({error:'A tracked action is required for document linking.'},{status:400});
   if(body.dry_run!==true)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:body.collection_id,kind:'address_document_link',label:'Link reviewed original'});
