@@ -51,7 +51,7 @@ eq(cfgOf({ tier_ref: 'gold' }).configured, true, 'tier_ref');
 eq(cfgOf({ tier_name: 'gold' }).configured, true, 'tier_name');
 eq(cfgOf({ per_unit_breaks: [{ qty: 5, unit_price: 9 }] }).configured, true, 'break chart');
 eq(cfgOf({ markup_pct: 50 }).configured, true, 'markup_pct');
-eq(cfgOf({ markup_pct: 0 }).configured, false, 'markup_pct 0 is not config (engine parity)');
+eq(cfgOf({ markup_pct: 0 }).configured, true, 'markup_pct 0 is explicit sell-at-cost config');
 eq(cfgOf({ pricing_mode: 'market', market_retail: 400 }).configured, true, 'market mode + retail');
 eq(cfgOf({ pricing_mode: 'market_based' }).configured, true, 'recognized mode token');
 eq(cfgOf({ formula_modifiers: [{ type: 'add_pct', value: 5 }] }).configured, true, 'formula modifiers');
@@ -250,9 +250,19 @@ const sell = (o) => W.wireChannelLineSell({ engine: ENGINE, ...o });
   eq(r.tierSource, 'machine_override');
 }
 {
+  // markup_pct:0 is an authored part override — it pins the line at cost,
+  // outranking even the line's own carried customer-tier chart.
   const r = sell({ line: { customer_tier: 'wholesale', markup_pct: 0, tier_rules: [{ customer_tier: 'wholesale', markup_pct: 100 }] }, cost: 200 });
-  eq(r.sellPrice, 400, 'line-carried tier + chart -> x2');
-  eq(r.tierSource, 'customer_tier');
+  eq(r.sellPrice, 200, 'explicit markup_pct 0 pins sell at cost (beats line-carried chart)');
+  eq(r.tierSource, 'part_tier', 'part markup layer wins');
+}
+{
+  // markup_pct:0 alone — sole signal — engages the engine and sells at cost.
+  const r = sell({ line: { markup_pct: 0 }, cost: 200 });
+  eq(r.passthrough, false, 'markup_pct 0 alone no longer passthroughs');
+  eq(r.priced, true, 'engine prices the line');
+  eq(r.sellPrice, 200, 'markup_pct 0 sells at unit cost exactly');
+  eq(r.tierSource, 'part_tier');
 }
 // --- edge cases -------------------------------------------------------------
 {
