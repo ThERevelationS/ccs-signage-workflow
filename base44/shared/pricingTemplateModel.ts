@@ -1331,8 +1331,10 @@ const TEMPLATE_SUPERSEDED_FIELDS = [
  * When the template priced the line, the part's own chart fields are stripped
  * (the template supersedes them — CoreBridge part/template exclusivity) and
  * the resolved value is re-expressed in overrideRule's vocabulary:
- *   markup hit      -> {markup_pct: resolved pct}  (pct===0 pins the unit price
- *                      via a qty-break instead — overrideRule ignores 0 markups)
+ *   markup hit      -> {markup_pct: resolved pct}  (pct===0 still pins the
+ *                      unit price via a qty-break — equivalent to a 0-markup
+ *                      override now that overrideRule honors explicit 0s; the
+ *                      break layer just outranks any stronger fields too)
  *   discount hit    -> {markup_pct: -discount_pct} (cost x (1 - d/100) parity)
  *   market hit      -> {pricing_mode:'market_based', market_retail,
  *                       market_discount_pct}
@@ -1378,7 +1380,7 @@ export function templatePartDescriptor(part: unknown, resolution: TemplatePriceR
       } else if (resolution.markup_pct !== null && resolution.markup_pct !== 0) {
         (p as any).markup_pct = resolution.markup_pct;
       } else {
-        pinUnit(); // markup_pct 0 = "sell at cost" — pin so overrideRule honors it
+        pinUnit(); // markup_pct 0 = "sell at cost" — pin keeps it pinned even at the stronger break layer
       }
       break;
   }
