@@ -1175,6 +1175,7 @@ export default function Permitting() {
                   onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
                   onQueueLocalityApply={queueLocalityApply}
                   onRemoveLocality={removeLocalityFromWorkOrder}
+                  onRefreshLines={() => loadData(false)}
                   onLinkLegacyOffice={linkLegacyPermitLineOffice}
                   onOpenWorkOrder={openWorkOrder}
                   onShowLocalityInfo={setLocalityInfoId}
