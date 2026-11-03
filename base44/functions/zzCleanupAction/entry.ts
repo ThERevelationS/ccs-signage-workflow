@@ -189,6 +189,36 @@ Deno.serve(async (request: Request) => {
       return Response.json({ success: true, cleared, kept, patched: Object.keys(patch).length, row });
     }
 
+    // delete_orphan_by_id — removes ONE row only when provably orphaned:
+    // every populated link field must dangle (target row missing). A row that
+    // still links to any live parent is refused — no blind deletes.
+    if (action === 'delete_orphan_by_id') {
+      const ent = String(body?.entity || '');
+      const id = String(body?.id || '');
+      if (!ent || !id || !CLEANUP_ORDER.includes(ent)) {
+        return Response.json({ success: false, error: 'entity (in cleanup order) and id required' }, { status: 400 });
+      }
+      const rows = await base44.asServiceRole.entities[ent].filter({ id }, null, 1);
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (!row) return Response.json({ success: true, deleted: 0, note: 'already absent' });
+      const live: string[] = [];
+      const dangling: string[] = [];
+      for (const [field, target] of Object.entries(LINK_ENTITY)) {
+        const v = row?.[field];
+        if (typeof v !== 'string' || !v) continue;
+        try {
+          const hit = await base44.asServiceRole.entities[target].filter({ id: v }, null, 1);
+          if (Array.isArray(hit) && hit.length > 0) live.push(`${field}->${target}`); else dangling.push(field);
+        } catch { live.push(`${field} (unverifiable)`); }
+      }
+      if (live.length > 0) {
+        return Response.json({ success: false, error: `Row still links to live parents: ${live.join(', ')}`, live }, { status: 409 });
+      }
+      await base44.asServiceRole.entities[ent].delete(id);
+      await audit('delete_orphan_by_id', `${ent}:${id} dangling=[${dangling.join(',')}]`);
+      return Response.json({ success: true, deleted: 1, dangling });
+    }
+
     return Response.json({ success: false, error: `Unknown action ${action}` }, { status: 400 });
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'cleanup failed' }, { status: e?.status || 500 });
