@@ -809,15 +809,26 @@ const executors = {
     return { ok: true, result: { relinked: rows.length, customer_id: cid } };
   },
 
-  // rebuild_manifest: re-derive the provenance manifest from the index —
-  // bridge-origin rows keep their stamp; used after restore/promotion.
+  // rebuild_manifest: pull the FileBridgeUpload ledger (durable provenance —
+  // survives reinstalls/promotion) and re-stamp manifest.json entries.
   rebuild_manifest: async () => {
     if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
-    if (!db) return { ok: false, error: 'index unavailable' };
-    const rows = db.prepare(`SELECT path_key, root_key, path FROM files WHERE missing=0`).all();
-    let kept = 0;
-    for (const r of rows) if (manifestGet(r.path_key)) kept += 1;
-    return { ok: true, result: { indexed: rows.length, manifest_entries: kept } };
+    const r = await post('manifest_export', {});
+    if (r?.status !== 200) return { ok: false, error: `export failed ${r?.status}`, retry: true };
+    const entries = r.json?.entries || [];
+    let stamped = 0;
+    for (const e of entries) {
+      if (!rootFor(e.root_key)) continue; // only roots this agent actually mounts
+      const pk = pathKeyLocal(e.root_key, e.path);
+      manifestSet(pk, {
+        origin: e.origin || 'bridge', managed_by: e.managed_by || 'bridge',
+        upload_id: e.upload_id, uploaded_by: e.uploaded_by,
+        created_ts: e.created_ts || Date.now(), rebuilt_ts: Date.now(),
+      });
+      stamped += 1;
+    }
+    log('info', 'manifest_rebuilt', { exported: entries.length, stamped });
+    return { ok: true, result: { exported: entries.length, stamped } };
   },
 
   log_tail: async (args) => {
