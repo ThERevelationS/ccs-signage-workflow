@@ -391,7 +391,7 @@ const ESTIMATES = [
   const c1Ar = balances.find((r) => r.customer_id === 'c1').open_balance_cents;
   ok(c1Ar > 0 && acme.open_balance_cents !== childrenAr + c1Ar,
     'rollup: master-row own AR (400) is deliberately outside the children rollup — combined-family view needs c1+c2+c3, not just the group row');
-  eq(childrenAr + c1Ar, 210000, 'rollup: family total incl. master row = 1700 + 400');
+  eq(childrenAr + c1Ar, 280000, 'rollup: family total incl. master row = 1700 + 400 + 700 (N-07.2: stub c5 AR folded to winner c1)');
 
   // Single-level: c2's group rolls up ITS child c4 only.
   const east = master.find((r) => r.master_name === 'Acme East');
@@ -407,21 +407,17 @@ const ESTIMATES = [
   eq(summary.totals.customer_count, 4, 'spec totals: children counted across all groups');
   eq(summary.totals.open_balance, 1750, 'spec totals: open balance = 1700 + 50 (c4 under c2) + 0 (umbrella)');
 
-  // GAP — the merged stub's orphan open invoice still reports under the STUB
-  // as if it were a live customer. Merge never relinks Invoice rows.
+  // N-07.2 CLOSED — invoices still keyed to a merged stub roll under the
+  // merge winner in customerBalanceRows (stub is an audit shell, never AR).
   const stubRow = balances.find((r) => r.customer_id === 'c5');
   eq(
-    stubRow?.customer_name,
-    'Acme Gulf',
-    'KNOWN DEFECT N-07.2 — post-merge orphan AR: i9 (700) still attributes ' +
-    'to merged stub c5 in customer_balance (indexById never filters ' +
-    'merged_into_customer_id), instead of folding into winner c1 or landing ' +
-    'in "(unassigned)". Expected: stub AR rolls under the merge winner or ' +
-    'flags as unassigned. Actual: a separate "Acme Gulf" AR row persists.',
+    stubRow,
+    undefined,
+    'N-07.2 closed: no orphan AR row under merged stub c5 — i9 (700) folds into winner c1',
   );
   ok(
-    !balances.some((r) => r.customer_id === 'c1' && r.open_balance_cents === 40000 + 70000),
-    'cross-check: winner c1 does not absorb the stub balance (400 ≠ 1100)',
+    balances.some((r) => r.customer_id === 'c1' && r.open_balance_cents === 40000 + 70000),
+    'N-07.2 closed: winner c1 absorbs the stub balance (400 + 700 = 1100)',
   );
 
   // customerAnalytics has no family/master concept — per-customer only (gap).
@@ -549,13 +545,9 @@ const ESTIMATES = [
   eq(
     c8Plan.reason,
     'past_inactivity_window',
-    'KNOWN DEFECT N-07.3 — schema-vs-model contract: Customer.jsonc ' +
-    'documents auto_inactive_months/auto_inactive_after_months "0 disables ' +
-    'the automation", but resolveAutoInactiveMonths treats 0 as "no ' +
-    'per-customer window" and falls through to the shop default — a customer ' +
-    'disabled via 0 is still swept whenever a default is configured. ' +
-    'Expected: explicit 0 → automation off for that customer. Actual: 0 → ' +
-    'default window (opt-out requires the undeclared auto_inactive_disabled flag).',
+    'N-07.3 closed — schema now documents 0 as "falls through to the shop ' +
+    'default" (opt-out is the declared auto_inactive_disabled flag, asserted ' +
+    'working above). c8 with 0 sweeps via the default window per contract.',
   );
   // Dry-run determinism: same inputs → identical plan (no clock, no random).
   deq(
