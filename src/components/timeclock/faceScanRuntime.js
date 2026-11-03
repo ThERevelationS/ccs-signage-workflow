@@ -19,15 +19,15 @@ export function createFaceMatcher(users = []) {
     .map(value => new Float32Array(value)) })).filter(item => item.descriptors.length);
   // Per-user adaptive threshold (#3): if a user's enrollment templates cluster
   // tightly (mean intra-distance low), a stricter cutoff applies so look-alikes
-  // can't squeeze in under the blanket floor. Never tightens below the 0.38
-  // ceiling and never loosens below a 0.22 hard floor for safety.
+  // can't squeeze in under the blanket floor. Caps at a 0.45 ceiling and never
+  // loosens below a 0.28 hard floor for safety.
   const userFloors = new Map(templates.map(item => {
     const ds = item.descriptors;
-    if (ds.length < 2) return [item.user, 0.38];
+    if (ds.length < 2) return [item.user, 0.44];
     let sum = 0, n = 0;
     for (let i = 0; i < ds.length; i += 1) for (let j = i + 1; j < ds.length; j += 1) { sum += faceapi.euclideanDistance(ds[i], ds[j]); n += 1; }
     const mean = n ? sum / n : 0;
-    return [item.user, Math.max(0.22, Math.min(0.38, mean + 0.1))];
+    return [item.user, Math.max(0.28, Math.min(0.45, mean + 0.14))];
   }));
   return descriptor => {
     if (!descriptor || descriptor.length !== 128 || !Array.from(descriptor).every(Number.isFinite)) return null;
@@ -38,7 +38,7 @@ export function createFaceMatcher(users = []) {
       if (distance < bestDistance) { secondDistance = bestDistance; bestDistance = distance; best = item.user; }
       else secondDistance = Math.min(secondDistance, distance);
     }
-    const floor = userFloors.get(best) ?? 0.38;
+    const floor = userFloors.get(best) ?? 0.44;
     return bestDistance <= floor && secondDistance > bestDistance && secondDistance >= bestDistance * 1.5 ? best : null;
   };
 }
@@ -79,10 +79,15 @@ function livenessSample(detection, state) {
       if (Math.abs(rel - state.firstNoseRel) > LIVENESS.noseDriftRatio) state.proved = true;
     } else state.firstNoseRel = rel;
   }
+  // Escape hatch: sustained real-face presence for timeoutMs counts as proved
+  // (fronto-parallel still faces that never blink). Time-based, not frame-count
+  // based - a slow inference loop must not stretch 4.5s into a minute. A >2.5s
+  // gap between landmarked frames resets the streak.
+  const nowMs = Date.now();
+  if (!state.streakStartMs || nowMs - (state.lastFrameMs || 0) > 2500) state.streakStartMs = nowMs;
+  state.lastFrameMs = nowMs;
   state.frames += 1;
-  // Escape hatch: sustained real-face presence counts as proved (fronto-parallel
-  // still faces that never blink). Photo held up still fails both channels.
-  if (state.frames >= Math.ceil(LIVENESS.timeoutMs / FACE_SCAN.intervalMs)) state.proved = true;
+  if (nowMs - state.streakStartMs >= LIVENESS.timeoutMs) state.proved = true;
   return state.proved;
 }
 
@@ -186,7 +191,7 @@ export function createFaceScanSession({
   let timer = null;
   let running = false;
   let generation = 0;
-  const livenessState = { frames: 0, misses: 0, lastEar: null, firstNoseRel: null, proved: false };
+  const livenessState = { frames: 0, misses: 0, lastEar: null, firstNoseRel: null, streakStartMs: 0, lastFrameMs: 0, proved: false };
 
   const schedule = () => {
     if (running) timer = setTimeout(tick, intervalMs);
