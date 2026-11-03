@@ -3,7 +3,7 @@ import {
   Folder, File as FileIcon, FileText, FileImage, FileVideo, FileAudio,
   FileSpreadsheet, Palette, Archive, Type, Upload, RefreshCw, Search,
   ChevronRight, HardDrive, Server, Download, Trash2, Undo2, FolderPlus,
-  CheckCircle2, XCircle, Loader2, Link2, AlertTriangle,
+  CheckCircle2, XCircle, Loader2, Link2, AlertTriangle, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,6 +135,30 @@ export default function ServerFiles() {
       } else setBusy((b) => ({ ...b, [key]: `failed: ${d?.error || "enqueue"}` }));
     } catch (e) {
       setBusy((b) => ({ ...b, [key]: `blocked: ${String(e?.response?.data?.error || e.message || e).slice(0, 80)}` }));
+    }
+  };
+
+  const emailFile = async (row) => {
+    const to = window.prompt(`Email "${row.name}" to:`);
+    if (!to?.trim()) return;
+    const key = `mail:${row.path}`;
+    setBusy((b) => ({ ...b, [key]: "sending…" }));
+    const send = () => fbCall("send_file_email", { root_key: rootKey, path: row.path, to: to.trim() }).then((x) => x?.data ?? x);
+    try {
+      let r = await send();
+      if (r?.needs_delivery) {
+        setBusy((b) => ({ ...b, [key]: "fetching for email…" }));
+        const q = await fbCall("queue_fetch", { root_key: rootKey, path: row.path, sha256: row.sha256, size: row.size });
+        const d = q?.data ?? q;
+        if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
+        const c = await waitForCommand(d.command_id, { timeoutMs: 300_000 });
+        if (c?.status !== "completed") throw new Error(`delivery ${c?.status}`);
+        r = await send();
+      }
+      if (r?.ok) setBusy((b) => ({ ...b, [key]: `sent to ${to.trim()}` }));
+      else setBusy((b) => ({ ...b, [key]: `failed: ${r?.error || "unknown"}` }));
+    } catch (e) {
+      setBusy((b) => ({ ...b, [key]: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 60)}` }));
     }
   };
 
@@ -329,7 +353,7 @@ export default function ServerFiles() {
             </div>
           ) : (
             <EntryTable entries={entries} busy={busy} canDelete={canDelete}
-              onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile}
+              onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile} onEmail={emailFile}
               onAttach={isInbound && !inboundBlocked ? (r) => setAttachRow(r) : null}
               onNavigate={(p) => setDir(p)} />
           )}
@@ -345,7 +369,7 @@ export default function ServerFiles() {
   );
 }
 
-function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, canDelete }) {
+function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, onEmail, canDelete }) {
   return (
     <div className="divide-y">
       {entries.map((r) => {
@@ -369,11 +393,17 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
             <span className="w-44 text-xs shrink-0 text-right">
               {openBusy && <span className="text-blue-600">{openBusy}</span>}
               {delBusy && <span className="text-red-600">{delBusy}</span>}
+              {busy[`mail:${r.path}`] && <span className="text-emerald-600">{busy[`mail:${r.path}`]}</span>}
             </span>
             <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
               {onAttach && !r.is_dir && !r.missing && (
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" title="Attach to a customer folder" onClick={() => onAttach(r)}>
                   <Link2 className="h-3.5 w-3.5 mr-1" /> Attach
+                </Button>
+              )}
+              {onEmail && !r.is_dir && !r.missing && (
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Email a link to this file" onClick={() => onEmail(r)}>
+                  <Mail className="h-4 w-4" />
                 </Button>
               )}
               {!r.is_dir && !r.missing && (
