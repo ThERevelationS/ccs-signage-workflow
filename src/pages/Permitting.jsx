@@ -13,6 +13,16 @@ import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
 import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -99,6 +109,15 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
+  // Page-level styled confirm — replaces window.confirm for the send-stamp
+  // prompt. Resolves true/false; honors the same skip flag as the picker.
+  const [confirmAsk, setConfirmAsk] = useState(null);
+  const confirmResolveRef = useRef(null);
+  const askPageConfirm = (ui) => {
+    try { if (localStorage.getItem("permitting_skip_confirms") === "1") return Promise.resolve(true); } catch {}
+    return new Promise((resolve) => { confirmResolveRef.current = resolve; setConfirmAsk(ui); });
+  };
+  const answerPageConfirm = (v) => { const r = confirmResolveRef.current; confirmResolveRef.current = null; setConfirmAsk(null); r?.(v); };
   const [loadError, setLoadError] = useState("");
   const [activeView, setActiveView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -358,10 +377,11 @@ export default function Permitting() {
     // Plain-language confirm before recording a filing — this step fires the
     // permit_submitted automation, so it should never be a silent click.
     if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
-      try {
-        const skip = localStorage.getItem("permitting_skip_confirms") === "1";
-        if (!skip && !window.confirm(`Did you actually send this application to ${item.locality_name || "the office"}?\n\nOK = yes, I sent it. Cancel = not yet.`)) return;
-      } catch {}
+      const ok = await askPageConfirm({
+        title: `Application sent to ${item.locality_name || "the office"}?`,
+        body: "This stamps today as the sent date and starts the follow-up clock. Only confirm if the application actually went out.",
+      });
+      if (!ok) return;
     }
 
     if (updatedStep?.type === 'checkbox' && updates.checked === true) {
@@ -553,6 +573,16 @@ export default function Permitting() {
         return;
       }
 
+      // Lines created before the jurisdiction's sign + zoning offices are
+      // evidence-verified must stay visibly marked — this is the same gate
+      // the picker uses for apply_allowed, so a "use anyway" apply always
+      // carries the review note instead of looking identical to a clean one.
+      const localityVerifiedOffices = (() => {
+        const has = (role) => (Array.isArray(locality.offices) ? locality.offices : [])
+          .some(o => o?.authority_verification_status === 'staff_verified' && (Array.isArray(o?.authority_roles) ? o.authority_roles : []).includes(role));
+        return has('sign_permit') && has('zoning');
+      })();
+
       for (const office of officesToCreate) {
         const newItem = await PermitLineItem.create({
           work_order_id: wo.id,
@@ -568,8 +598,8 @@ export default function Permitting() {
           assigned_to: wo.current_task_assigned_to || wo.assigned_to || "",
           applied_by: currentUser?.full_name || currentUser?.email || "staff",
           applied_date: new Date().toISOString().slice(0, 10),
-          ...(Array.isArray(locality.offices) && locality.offices.length === 0 && !locality.jurisdiction_profile_id ? {
-            notes: `Applied unverified — ${locality.name || "this office"} has no verified offices on file. Applied by ${currentUser?.full_name || currentUser?.email || "staff"} on ${new Date().toISOString().slice(0, 10)}.`,
+          ...(!localityVerifiedOffices ? {
+            notes: `Applied before office verification — ${locality.name || "this office"} does not have verified sign and zoning offices on file yet. Review this line when verification completes. Applied by ${currentUser?.full_name || currentUser?.email || "staff"} on ${new Date().toISOString().slice(0, 10)}.`,
           } : {}),
           steps: office.steps,
           priority: 0
@@ -1542,6 +1572,21 @@ export default function Permitting() {
           onLinesCreated={() => loadData(false)}
         />
       )}
+
+      {/* Page-level styled confirm — the send-stamp prompt resolves through
+          this instead of window.confirm so the UI stays consistent. */}
+      <AlertDialog open={!!confirmAsk} onOpenChange={(o) => { if (!o) answerPageConfirm(false); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAsk?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAsk?.body}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => answerPageConfirm(false)}>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={() => answerPageConfirm(true)}>Yes — I sent it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
