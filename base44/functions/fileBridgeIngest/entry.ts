@@ -513,5 +513,21 @@ Deno.serve(async (req) => {
     return Response.json({ ok: true, received: rows.length });
   }
 
+  // ---------- manifest_export (ledger → agent manifest rebuild source) ----------
+  // The FileBridgeUpload append-only ledger is the durable provenance record —
+  // it survives index reaping and agent reinstalls, so a promoted/reinstalled
+  // agent can rebuild manifest.json (the delete/move security boundary) from it.
+  if (action === 'manifest_export') {
+    const rows = await sr.entities.FileBridgeUpload.filter(
+      { agent_id: agentId }, 'created_date', 2000,
+    ).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const entries = (rows || []).filter((u: any) => u.status !== 'failed').map((u: any) => ({
+      root_key: u.root_key, path: u.path, origin: 'bridge', managed_by: 'bridge',
+      upload_id: u.upload_id, uploaded_by: u.uploaded_by, created_ts: u.created_ts || 0,
+    }));
+    return Response.json({ ok: true, entries });
+  }
+
   return Response.json({ error: `unknown action '${action}'` }, { status: 400 });
 });
