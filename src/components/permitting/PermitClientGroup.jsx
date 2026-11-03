@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ export default function PermitClientGroup({
   onSelectLocalityForWorkOrder,
   onQueueLocalityApply,
   onRemoveLocality,
+  onRefreshLines,
   onLinkLegacyOffice,
   onOpenWorkOrder,
   onShowLocalityInfo,
@@ -80,6 +82,34 @@ export default function PermitClientGroup({
   const lineLocalityIds = [...new Set(group.lines.map(li => String(li.locality_id || '')).filter(Boolean))];
   const appliedLocality = lineLocalityIds.length === 1 ? (localities || []).find(l => l.id === lineLocalityIds[0]) : null;
   const pendingLocalityName = String(wo?.pending_permit_locality_name || '').trim();
+  const pendingLocalityId = String(wo?.pending_permit_locality_id || '').trim();
+  // Live pending-apply status — a static chip says nothing, so poll the
+  // locality: show verification progress, and the moment the worker consumes
+  // this job's pending_applies entry reload the page data so the finished
+  // lines appear without a manual refresh.
+  const [pendStatus, setPendStatus] = useState('');
+  const pendFiredRef = useRef(false);
+  useEffect(() => { pendFiredRef.current = false; }, [pendingLocalityId]);
+  useEffect(() => {
+    if (!pendingLocalityId || !group?.work_order_id || !isRegistered) { setPendStatus(''); return; }
+    let dead = false;
+    const tick = async () => {
+      const loc = await staffEntities.PermitLocality.get(pendingLocalityId).catch(() => null);
+      if (dead || !loc?.id) return;
+      const stillQueued = (Array.isArray(loc.pending_applies) ? loc.pending_applies : [])
+        .some(p => String(p?.work_order_id || '') === String(group.work_order_id));
+      if (!stillQueued) {
+        if (!pendFiredRef.current) { pendFiredRef.current = true; onRefreshLines?.(); }
+        return;
+      }
+      const has = (r) => (loc.offices || []).some(o => o?.authority_verification_status === 'staff_verified' && (o.authority_roles || []).includes(r));
+      const ready = has('sign_permit') && has('zoning');
+      setPendStatus(ready ? 'offices verified — finishing the apply…' : 'researching offices — waiting for sign + zoning verification');
+    };
+    tick();
+    const iv = setInterval(tick, 12000);
+    return () => { dead = true; clearInterval(iv); };
+  }, [pendingLocalityId, group?.work_order_id, isRegistered]);
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
   const progress = getPermitGroupProgress(group, today);
   const authorityCoverage = summarizePermitGroupAuthorityCoverage(group.lines, localities);
@@ -435,8 +465,9 @@ export default function PermitClientGroup({
         <div>
           {pendingLocalityName && (
             <div className="px-4 py-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                <Clock className="w-3 h-3" /> {pendingLocalityName} — applying automatically when its offices verify
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {pendingLocalityName} — applying automatically{pendStatus ? ` · ${pendStatus}` : ' when its offices verify'}
               </span>
             </div>
           )}
