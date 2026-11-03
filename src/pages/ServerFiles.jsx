@@ -40,6 +40,8 @@ export default function ServerFiles() {
   const [viewer, setViewer] = useState(null); // {url,name,ext,size,sha256}
   const [attachRow, setAttachRow] = useState(null);
   const [selected, setSelected] = useState(() => new Set());
+  const [trashView, setTrashView] = useState(false);
+  const [trashRows, setTrashRows] = useState([]);
   const fileInput = useRef(null);
   const { currentUser } = useAuth();
 
@@ -176,6 +178,16 @@ export default function ServerFiles() {
     setSelected((s) => { const n = new Set(s); if (n.has(row.path)) n.delete(row.path); else n.add(row.path); return n; });
   };
 
+  const loadTrash = async () => {
+    setLoading(true);
+    try {
+      const r = await fbCall("list_trash", { root_key: rootKey, limit: 300 });
+      setTrashRows((r?.data ?? r)?.entries || []);
+      setTrashView(true);
+    } catch { setTrashRows([]); setTrashView(true); }
+    setLoading(false);
+  };
+
   const packageSelected = async () => {
     if (!selected.size) return;
     setBusy((b) => ({ ...b, pkg: `zipping ${selected.size} file${selected.size > 1 ? "s" : ""}…` }));
@@ -263,6 +275,9 @@ export default function ServerFiles() {
             </Badge>
           ))}
           {servedByBackup && <Badge variant="secondary">served by backup replica</Badge>}
+          <Button size="sm" variant={trashView ? "default" : "outline"} onClick={() => trashView ? setTrashView(false) : loadTrash()}>
+            <Trash2 className="h-4 w-4 mr-1" /> Trash
+          </Button>
           <Button size="sm" variant="outline" onClick={() => fbCall("queue_index_now", { root_key: rootKey }).then(() => loadDir(rootKey, dir, true))}>
             <RefreshCw className="h-4 w-4 mr-1" /> Re-index
           </Button>
@@ -374,7 +389,23 @@ export default function ServerFiles() {
       )}
 
       {/* listing / search results */}
-      {searchHits !== null ? (
+      {trashView ? (
+        <div className="rounded-lg border">
+          <div className="px-3 py-2 border-b text-sm font-medium flex items-center justify-between">
+            <span>Server trash ({trashRows.length}) — bridge-deleted files only; external files can't be deleted</span>
+            <Button size="sm" variant="ghost" onClick={() => setTrashView(false)}>Back to folder</Button>
+          </div>
+          {trashRows.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">{loading ? "Loading…" : "Trash is empty."}</div>
+          ) : (
+            <EntryTable entries={trashRows.map((r) => ({ ...r, missing: true, is_dir: false }))}
+              busy={busy} canDelete={() => false} onOpen={() => {}} onDelete={() => {}}
+              onRestore={async (r) => {
+                await restoreFile(r); loadTrash();
+              }} />
+          )}
+        </div>
+      ) : searchHits !== null ? (
         <div className="rounded-lg border">
           <div className="px-3 py-2 border-b text-sm font-medium flex items-center justify-between">
             <span>Search results ({searchHits.length})</span>
