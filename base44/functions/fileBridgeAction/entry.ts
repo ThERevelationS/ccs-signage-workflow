@@ -31,6 +31,15 @@ async function rateOk(sr: any, actorKey: string, type: string): Promise<boolean>
   return (rows || []).length < lim.max;
 }
 
+// Restricted roots: per-root flag OR settings lists — their deliveries route
+// through secure_download instead of exposing permanent storage URLs.
+async function isRestrictedRoot(sr: any, settings: any, root_key: string): Promise<boolean> {
+  if (settings.secure_download_roots?.includes(root_key)) return true;
+  if (settings.inbound_restricted_roots?.includes(root_key)) return true;
+  const rows = await sr.entities.FileShareRoot.filter({ root_key }, '-updated_date', 1).catch(() => []);
+  return !!rows?.[0]?.inbound_restricted;
+}
+
 async function loadAgents(sr: any) {
   const rows = await sr.entities.FileBridgeHealth.filter({}, '-updated_date', 10).catch(() => []);
   return (rows || []).map((r: any) => ({
@@ -304,9 +313,50 @@ Deno.serve(async (req) => {
     ).catch(() => []);
     if (!rows?.[0]) return Response.json({ error: 'unknown command' }, { status: 404 });
     const c = rows[0];
+    // restricted roots never expose the storage URL — browser gets the
+    // secure_download proxy marker instead (bytes transit the function)
+    const rk = String((c as any).args?.root_key || '');
+    const restricted = rk && (await isRestrictedRoot(sr, settings, rk));
+    const result = { ...(c.result || {}) };
+    if (restricted && result.file_url) {
+      delete result.file_url;
+      result.secure_download = true;
+    }
     return Response.json({
       ok: true, command_id: c.command_id, type: c.type, status: c.status,
-      result: c.result, error: c.error, progress: c.progress, served_by: c.served_by,
+      result, error: c.error, progress: c.progress, served_by: c.served_by,
+    });
+  }
+
+  // ---------- secure_download — server-side byte proxy for restricted roots ----------
+  // The storage file_url never reaches the browser; bytes transit the function
+  // as base64 (≤24MB → ~32MB payload, inside the observed body cap).
+  if (action === 'secure_download') {
+    const SECURE_CAP = 24 * 1024 * 1024;
+    const rows = await sr.entities.FileBridgeCommand.filter(
+      { command_id: String(body.command_id || '') }, '-updated_date', 1,
+    ).catch(() => []);
+    const c = rows?.[0];
+    if (!c) return Response.json({ error: 'unknown command' }, { status: 404 });
+    if (c.status !== 'completed' || !c.result?.file_url) {
+      return Response.json({ error: 'delivery not ready' }, { status: 409 });
+    }
+    const size = Number(c.result?.bytes || c.result?.size || 0);
+    if (size > SECURE_CAP) {
+      return Response.json({ error: 'exceeds secure_download cap', needs_direct: true }, { status: 413 });
+    }
+    const resp = await fetch(c.result.file_url).catch(() => null);
+    if (!resp?.ok) return Response.json({ error: `upstream fetch ${resp?.status}` }, { status: 502 });
+    const buf = new Uint8Array(await resp.arrayBuffer());
+    if (buf.byteLength > SECURE_CAP) {
+      return Response.json({ error: 'exceeds secure_download cap', needs_direct: true }, { status: 413 });
+    }
+    let bin = '';
+    for (let i = 0; i < buf.byteLength; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
+    return Response.json({
+      ok: true, command_id: c.command_id, bytes_b64: btoa(bin),
+      size: buf.byteLength, name: String(c.result?.name || ''),
+      sha256: c.result?.sha256 || '', mime: resp.headers.get('content-type') || 'application/octet-stream',
     });
   }
 
@@ -384,6 +434,10 @@ Deno.serve(async (req) => {
     const root_key = String(body.root_key || '');
     if (!to || !p.ok || !root_key || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
       return Response.json({ error: 'to, root_key and path are required' }, { status: 400 });
+    }
+    // restricted roots: a permanent emailed link would bypass secure_download
+    if (await isRestrictedRoot(sr, settings, root_key)) {
+      return Response.json({ error: 'restricted root — files cannot be shared by email link' }, { status: 403 });
     }
     const rows = await sr.entities.FileIndex.filter(
       { root_key, path: p.path }, '-updated_date', 1,
