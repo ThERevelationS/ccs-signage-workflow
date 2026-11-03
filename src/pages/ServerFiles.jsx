@@ -3,7 +3,7 @@ import {
   Folder, File as FileIcon, FileText, FileImage, FileVideo, FileAudio,
   FileSpreadsheet, Palette, Archive, Type, Upload, RefreshCw, Search,
   ChevronRight, HardDrive, Server, Download, Trash2, Undo2, FolderPlus,
-  CheckCircle2, XCircle, Loader2, Link2, AlertTriangle, Mail,
+  CheckCircle2, XCircle, Loader2, Link2, AlertTriangle, Mail, Pin, PinOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +127,25 @@ export default function ServerFiles() {
       else setBusy((b) => ({ ...b, [key]: `failed: ${c?.error || c?.status || "unknown"}` }));
     } catch (e) {
       setBusy((b) => ({ ...b, [key]: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 80)}` }));
+    } finally {
+      setBusy((b) => { const n = { ...b }; if (!String(n[key] || "").startsWith("failed")) delete n[key]; return n; });
+    }
+  };
+
+  const pinFile = async (row) => {
+    const key = `pin:${row.path}`;
+    setBusy((b) => ({ ...b, [key]: "pinning…" }));
+    try {
+      const r = await fbCall("queue_pin", { root_key: rootKey, path: row.path, pinned: !row.pinned });
+      const d = r?.data ?? r;
+      if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
+      await waitForCommand(d.command_id, { timeoutMs: 60_000 });
+      // optimistic local state — server row updates on next index_batch
+      const patch = (list) => list.map((x) => x.path === row.path ? { ...x, pinned: !row.pinned } : x);
+      setEntries(patch); setSearchHits((h) => (h ? patch(h) : h));
+    } catch (e) {
+      setBusy((b) => ({ ...b, [key]: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 60)}` }));
+      return;
     } finally {
       setBusy((b) => { const n = { ...b }; if (!String(n[key] || "").startsWith("failed")) delete n[key]; return n; });
     }
@@ -420,7 +439,7 @@ export default function ServerFiles() {
             <Button size="sm" variant="ghost" onClick={() => setSearchHits(null)}>Back to folder</Button>
           </div>
           <EntryTable entries={searchHits} busy={busy} canDelete={canDelete}
-            onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile}
+            onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile} onPin={pinFile}
             onNavigate={(p) => { setSearchHits(null); const parts = p.split("/"); setDir(parts.slice(0, -1).join("/")); }} />
         </div>
       ) : (
@@ -435,7 +454,7 @@ export default function ServerFiles() {
             </div>
           ) : (
             <EntryTable entries={entries} busy={busy} canDelete={canDelete}
-              onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile} onEmail={emailFile}
+              onOpen={openFile} onDelete={deleteFile} onRestore={restoreFile} onEmail={emailFile} onPin={pinFile}
               onAttach={isInbound && !inboundBlocked ? (r) => setAttachRow(r) : null}
               selected={selected} onToggle={toggleSelect}
               onNavigate={(p) => setDir(p)} />
@@ -452,7 +471,7 @@ export default function ServerFiles() {
   );
 }
 
-function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, onEmail, canDelete, selected, onToggle }) {
+function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, onAttach, onEmail, onPin, canDelete, selected, onToggle }) {
   return (
     <div className="divide-y">
       {entries.map((r) => {
@@ -472,6 +491,7 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
               onClick={() => (r.is_dir ? onNavigate(r.path) : onOpen(r))}
               title={r.path}>
               {r.name}
+              {r.pinned && <Pin className="inline h-3 w-3 ml-1 text-amber-500" />}
               {r.match === "content" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">content</Badge>}
               {r.snip && <span className="block text-xs font-normal text-muted-foreground truncate">{r.snip}</span>}
             </button>
@@ -496,6 +516,13 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
               {onEmail && !r.is_dir && !r.missing && (
                 <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Email a link to this file" onClick={() => onEmail(r)}>
                   <Mail className="h-4 w-4" />
+                </Button>
+              )}
+              {onPin && !r.is_dir && !r.missing && (
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
+                  title={r.pinned ? "Unpin — drop from hot index" : "Pin — keep in hot index for fast search"}
+                  onClick={() => onPin(r)}>
+                  {r.pinned ? <PinOff className="h-4 w-4 text-amber-500" /> : <Pin className="h-4 w-4" />}
                 </Button>
               )}
               {!r.is_dir && !r.missing && (
