@@ -176,6 +176,25 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   const tf=[...townships,...stateTownships].find(f=>f.inside&&sameJ(String(f.attributes.NAME||f.attributes.TOWNSHIP||''),twpPick.name)),censT=townships.find(f=>sameJ(String(f.attributes.NAME||''),twpPick.name));
   target={name:twpPick.name,state,type:'township',geoid:String(censT?.attributes.GEOID||twpPick.geoid||''),county:countyName,county_geoid:countyId,geometry:(tf||censT)?.geometry,source_url:(tf||censT)?.source_url,resolved_by:'source_consensus'};}
  else target={name:countyName,state,type:'county',geoid:countyId,county:countyName,county_geoid:countyId,geometry:countyRow.geometry,source_url:countyRow.source_url};
+ // County-authority layer: a county_gis_layer rule registers the county's own
+ // GIS boundary service for a decision level (e.g. civil townships). Counties
+ // draw their own civil boundaries — Census TIGER lines lag annexations, so a
+ // county GIS hit outranks TIGER for that level. preferred_source = ArcGIS
+ // query URL template with {lon}/{lat}; geoid = the name field to read.
+ const gisRule=(rules||[]).find(r=>r&&r.active!==false&&String(r.state||'').toUpperCase()===state&&r.rule_type==='county_gis_layer'&&sameJ(r.county,countyName)&&sameJ(String(r.jurisdiction_type||''),String(target?.type||'')));
+ let gisDecided=false;
+ if(gisRule&&target){
+  try{
+   const url=String(gisRule.preferred_source||'').replace('{lon}',point.lng).replace('{lat}',point.lat);
+   const gj=await fetchJSON(url);
+   const hit=(gj?.features||[]).map(f=>String(f?.attributes?.[gisRule.geoid||'NAME']||'').trim()).find(Boolean)||'';
+   if(hit){
+    gisDecided=true;
+    if(sameJ(hit,target.name)){target={...target,county_gis:hit};}
+    else{const prev=target.name;const gf=[...counties,...places,...statePlaces,...(townships||[]),...(stateTownships||[])].find(f=>sameJ(String(f.attributes.NAME||f.attributes.municipality||f.attributes.TOWNSHIP||''),hit));target={...target,name:hit,county_gis:hit,resolved_by:'county_gis',geometry:gf?.geometry||target.geometry,geoid:gf?String(gf.attributes.GEOID||target.geoid):target.geoid};await onProgress({kind:'boundary',detail:'County GIS places this in '+hit+' — overriding the Census '+prev+' boundary.'});}
+   }
+  }catch{/* county service down — fall through to Census logic */}
+ }
  base.targets=[{...target,geometry:undefined},{name:countyName,state,type:'county',geoid:countyId,county:countyName}].filter((t,i,all)=>all.findIndex(other=>other.geoid===t.geoid)===i);
  // Separate LineStrings preserve multipart and hole outlines without assuming ring orientation.
  base.boundaries=[{type:'Feature',properties:{name:target.name,source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}}];
@@ -211,7 +230,9 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   if(ar)return {...base,status:'location_verified',reason:'Map position is approximate, but a confirmed review rule places this address in '+ar.pick.name+' — resolving to '+ar.pick.name+'. Spot-check the pin on the map.',target:ar.pick,corroborated_by:'resolution_rule'};
   return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
  }
- if(relevant.some(f=>f.distance_m<=edge)){
+ // When the county's own GIS already adjudicated this level, a near Census
+ // feature is TIGER's line disagreeing with the county — not a real edge.
+ if(!gisDecided&&relevant.some(f=>f.distance_m<=edge)){
   // Edge gates before flagging — independent corroboration resolves the pin:
   //  1. The geocoder's own jurisdiction claim for this level agrees with the
   //     geometry (locality for cities, level_3 for townships, level_2 for
