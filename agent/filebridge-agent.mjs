@@ -301,7 +301,13 @@ const scanDir = async (root, rel, scanId, stats) => {
       mtime_ms: Math.floor(st.mtimeMs), dir_size_bytes: null,
       entity_id: prev?.entity_id || null, last_seen_scan: scanId, missing: 0,
     };
-    upsertFile(row);
+    if (changed) {
+      upsertFile(row);
+    } else {
+      // unchanged: touch liveness only — skips the files_fts delete+insert
+      // (the dominant per-file write cost on re-scans).
+      try { db?.prepare('UPDATE files SET last_seen_scan=?,missing=0 WHERE path_key=?').run(scanId, row.path_key); } catch { upsertFile(row); }
+    }
     // inbound roots: everything in the drop zone is bridge-FILED (movable into
     // customer folders) but stays origin:external — never deletable.
     if (root.purpose === 'inbound' && !manifestGet(row.path_key)) {
