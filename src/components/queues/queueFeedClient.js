@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
+import { base44 } from "@/api/base44Client";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { getSessionToken } from "@/components/auth/EmailGate";
@@ -310,4 +311,131 @@ export async function loadFullEstimateRow(row) {
   if (!id) return row;
   const live = await staffEntities.AllInOneEstimate.get(id).catch(() => null);
   return live?.id ? live : row;
+}
+
+// --- My Workflow ---------------------------------------------------------------
+// One call returns the open GeneralTask rows plus the page's mount extras:
+// the AuthorizedEmail assignee roster and the two GlobalSettings records it
+// reads (dropdown conditions, sales task descriptions). The work-order half
+// still comes from the shared board snapshot — folding it in would duplicate
+// boardFeed's whole-table pull for heavy fields the queue projection strips
+// (notes trees, sip_checklist).
+//
+// Items are ALWAYS a full pull and bypass the delta store: the page's set is
+// "open tasks" and a since-delta can never observe a task flipping completed
+// (the query excludes it), so a merged store would hold stale open rows until
+// the resync window. The table is small and the 30s server cache collapses
+// mount bursts, so delta plumbing buys nothing here.
+//
+// A deployed runtime that predates this feed answers 400 ("This feed cannot
+// be read here") — not a 404 — so this feed latches its own down flag rather
+// than tripping queueFeedDown and forcing the other pages' feeds to legacy.
+let myWorkflowFeedDown = false;
+export function myWorkflowFeedIsDown() { return myWorkflowFeedDown; } // test/debug only
+
+const isMissingMyWorkflowFeed = (err) => {
+  if (isQueueFeedUnavailableError(err)) return true;
+  return Number(err?.status ?? err?.response?.status) === 400;
+};
+
+// Identical concurrent calls (StrictMode double-mount, a reload racing the
+// mount call) share one invoke. queueFeed is not governor-deduped, so the
+// latch lives here keyed by the full payload.
+const myWorkflowFlights = new Map();
+function invokeMyWorkflow(payload) {
+  const key = JSON.stringify(payload);
+  const existing = myWorkflowFlights.get(key);
+  if (existing) return existing;
+  const p = invokeQueueFeed(payload).finally(() => {
+    if (myWorkflowFlights.get(key) === p) myWorkflowFlights.delete(key);
+  });
+  myWorkflowFlights.set(key, p);
+  return p;
+}
+
+// The legacy reads reproduce exactly what MyWorkflow mounted before the feed,
+// transports included: tasks + both settings rode the platform SDK
+// (base44.entities) while the roster rode the staffDataRead gateway
+// (staffEntities). That mix matters in the failure path — a feed outage that
+// coexists with a staffDataRead outage still leaves the SDK reads alive, and
+// the fallback pays the same per-caller entity_list pressure the page paid
+// before. Users/settings failures were never fatal on the page (console-only
+// / silent), so those legacy paths resolve to []/null instead of throwing —
+// the task pull stays load-bearing and still throws like the old
+// Promise.all did.
+const loadGeneralTasksLegacy = () =>
+  loadAllEntityRows({ entity: base44.entities.GeneralTask, query: { completed: false }, sort: "created_date", label: "My Workflow general tasks" });
+const loadWorkflowUsersLegacy = () =>
+  loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "My Workflow authorized users" })
+    .catch((err) => { console.error("Error loading authorized users:", err); return EMPTY_ROWS; });
+const loadDropdownConditionsLegacy = () =>
+  loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "dropdownConditions", label: "My Workflow dropdown conditions" })
+    .catch((err) => { console.error("Error loading authorized users:", err); return null; });
+const loadTaskDescriptionsLegacy = () =>
+  loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "salesTaskDescriptions", label: "Sales task descriptions" })
+    .catch(() => null);
+
+// Mount bundle: {generalTasks, users, dropdownConditions, taskDescriptions,
+// tasksError, composed}. Each extra degrades independently — a composed slice
+// that errored server-side pays exactly that slice's legacy read. The task
+// read is the only load-bearing slice; its failure is REPORTED via tasksError
+// rather than thrown, so the roster/settings still land like they did when
+// loadUsers ran independently of the work-order pull.
+export async function fetchMyWorkflowBundle() {
+  const empty = { generalTasks: EMPTY_ROWS, users: EMPTY_ROWS, dropdownConditions: null, taskDescriptions: null, tasksError: null, composed: false };
+  if (!getSessionToken()) return empty;
+  if (!queueFeedDown && !myWorkflowFeedDown) {
+    let data = null;
+    try {
+      data = await invokeMyWorkflow({
+        feed: "my_workflow",
+        include: ["users", "dropdown_conditions", "task_descriptions"],
+      });
+    } catch (err) {
+      if (isMissingMyWorkflowFeed(err)) myWorkflowFeedDown = true;
+      // fall through to the legacy reads
+    }
+    if (data) {
+      const errors = data?.extras_errors || {};
+      let tasksError = null;
+      const [generalTasks, users, dropdownConditions, taskDescriptions] = await Promise.all([
+        (Array.isArray(data.items) ? Promise.resolve(data.items) : loadGeneralTasksLegacy())
+          .catch((err) => { tasksError = err; return EMPTY_ROWS; }),
+        Array.isArray(data.users) ? Promise.resolve(data.users) : loadWorkflowUsersLegacy(),
+        errors.dropdown_conditions || data.dropdown_conditions === undefined
+          ? loadDropdownConditionsLegacy()
+          : Promise.resolve(data.dropdown_conditions ?? null),
+        errors.task_descriptions || data.task_descriptions === undefined
+          ? loadTaskDescriptionsLegacy()
+          : Promise.resolve(data.task_descriptions ?? null),
+      ]);
+      return { generalTasks, users, dropdownConditions, taskDescriptions, tasksError, composed: true };
+    }
+  }
+  const [tasksSettled, users, dropdownConditions, taskDescriptions] = await Promise.all([
+    loadGeneralTasksLegacy().then((rows) => ({ rows, err: null }), (err) => ({ rows: EMPTY_ROWS, err })),
+    loadWorkflowUsersLegacy(),
+    loadDropdownConditionsLegacy(),
+    loadTaskDescriptionsLegacy(),
+  ]);
+  return { ...empty, generalTasks: tasksSettled.rows, users, dropdownConditions, taskDescriptions, tasksError: tasksSettled.err };
+}
+
+// Reload path (mutation conflicts, dialog closes, banner retry): the task set
+// refreshes alone — the page never re-pulled users/settings on reloads.
+export async function fetchMyWorkflowTasks() {
+  if (!getSessionToken()) return { generalTasks: EMPTY_ROWS, composed: false };
+  if (!queueFeedDown && !myWorkflowFeedDown) {
+    try {
+      const data = await invokeMyWorkflow({ feed: "my_workflow", include: [] });
+      return {
+        generalTasks: Array.isArray(data.items) ? data.items : await loadGeneralTasksLegacy(),
+        composed: true,
+      };
+    } catch (err) {
+      if (isMissingMyWorkflowFeed(err)) myWorkflowFeedDown = true;
+      // fall through to the legacy read
+    }
+  }
+  return { generalTasks: await loadGeneralTasksLegacy(), composed: false };
 }
