@@ -223,7 +223,7 @@ function LocalityPickerSession({
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
     }).catch((e) => {
       console.error("Could not load saved jurisdictions in locality picker:", e);
-      if (!cancelled) setRepositoryError("We couldn't load the saved offices list — you can still pick one that's already set up.");
+      if (!cancelled) setRepositoryError("Could not load the saved offices list — you can still select a configured office.");
     }).finally(() => {
       if (!cancelled) setRepositoryLoading(false);
     });
@@ -327,7 +327,7 @@ function LocalityPickerSession({
       if(version!==searchVersion.current||!openRef.current)return;
       if (data?.success === false) {
         setError(/busy|try again/i.test(String(data?.error||""))
-          ? "The checker is working on another lookup right now — wait a few seconds and press Find my office again."
+          ? "A lookup is already running — wait a few seconds and press Find my office again."
           : (data.error || "Search failed"));
       } else {
         setResult(data);
@@ -360,11 +360,11 @@ function LocalityPickerSession({
       }
       const busy429=/status code 429/.test(String(e?.message||""));
       setError(serviceFails.current>=2
-        ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved offices list below."
+        ? "The lookup service is temporarily unavailable — try again in a minute, or select a saved office below."
         : busy429
-          ? "The system is busy right now — wait a few seconds and press Find my office again."
+          ? "The system is busy — wait a few seconds and press Find my office again."
           : /status code 5\d\d/.test(String(e?.message||""))
-            ? "Our lookup service hit a temporary problem — try again, or pick from the saved offices list below."
+            ? "The lookup service encountered an error — try again, or select a saved office below."
             : (e.message || "Search failed"));
     }
     if(pendingSearch.current===version)pendingSearch.current=null;
@@ -393,13 +393,13 @@ function LocalityPickerSession({
     if (!openRef.current || !selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)) return;
     if (addressNeedsCheck) {
       const name = result?.suggested_locality?.name || "this office";
-      if (!confirmOrSkip(`${name}'s offices haven't been checked by our team yet. Its permit lines will be marked "needs a check" until someone verifies them. Use it anyway?`)) return;
+      if (!confirmOrSkip(`${name}'s offices are not yet verified. Its permit lines will be marked "needs review" until verified. Use it anyway?`)) return;
     }
     // Unverified picks get one deliberate pause — address-flow applies are
     // already gated on a verified review; repository picks may not be.
     if (!address.trim() && selectedAuthority.officeCount === 0) {
       const name = selectedLocality?.name || "this office";
-      if (!confirmOrSkip(`${name} hasn't been checked by our team yet — the permit offices and contact info may be incomplete. Use it anyway?`)) return;
+      if (!confirmOrSkip(`${name} is not yet verified — permit offices and contact info may be incomplete. Use it anyway?`)) return;
     }
     onApply(selectedLocalityId, { excludeElectrical });
     // First-few-applies reassurance — a small visible win while the workflow is
@@ -407,7 +407,7 @@ function LocalityPickerSession({
     try {
       const count = (parseInt(localStorage.getItem("permitting_apply_count") || "0", 10) || 0) + 1;
       localStorage.setItem("permitting_apply_count", String(count));
-      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Done — that's right! The office is linked to this job. Next step: scroll down and fill in the dates, or call the office." : "Good — office linked. You've got this."), 350);
+      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Office linked to this job. Next: enter the dates below or contact the office." : "Office linked."), 350);
     } catch {}
     onClose();
   };
@@ -430,6 +430,9 @@ function LocalityPickerSession({
     // Records explicitly marked as superseded duplicates are dead identity —
     // they must not match or count as candidates (same rule the bridge uses).
     if (String(j.duplicate_of || '').trim()) return false;
+    // Tombstoned historical records (paper/remnant jurisdictions kept for
+    // audit) are dead identity too — never a draft candidate.
+    if (String(j.verification_status || '').toLowerCase() === 'historical') return false;
     return (typeMap[detectedTarget.type] || [detectedTarget.type]).includes(String(j.type || '').toLowerCase())
       && normalizePermitJurisdictionName(j.name) === normalizePermitJurisdictionName(detectedTarget.name)
       && normalizeState(j.state) === normalizeState(detectedTarget.state)
@@ -437,7 +440,7 @@ function LocalityPickerSession({
   };
 
   const requestDraftFromRepository = (jurisdiction) => {
-    if(currentUser?.role!=="admin"){setDraftCreateError("Setting up a new office record is an admin job — ask an admin to do this step.");return;}
+    if(currentUser?.role!=="admin"){setDraftCreateError("Creating a new office record requires an administrator.");return;}
     if((address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     setDraftCandidate(jurisdiction);
@@ -483,7 +486,7 @@ function LocalityPickerSession({
     } catch (e) {
       if(!openRef.current||draftVersion!==searchVersion.current)return;
       console.error("Could not create Permit locality draft from repository:", e);
-      setDraftCreateError(e?.message || "Couldn't make the office record — nothing changed on this job.");
+      setDraftCreateError(e?.message || "Could not create the office record — no changes were made.");
     } finally {
       if(openRef.current&&draftVersion===searchVersion.current)setCreatingDraft(false);
     }
@@ -503,8 +506,8 @@ function LocalityPickerSession({
   const applyHint = (() => {
     if (searching) return "";
     if (selectedLocalityId && (addressCanApply || addressNeedsCheck)) return "";
-    if (!address.trim()) return selectedLocalityId ? "Now enter the job address above so we can check this office is right for that spot." : "Type or paste the job address above — then the Use button lights up.";
-    if (!result) return "Press Find my office to check this address.";
+    if (!address.trim()) return selectedLocalityId ? "Enter the job address above to verify this office covers that location." : "Enter the job address above to enable Use this office.";
+    if (!result) return "Press Find my office to verify this address.";
     if (!result.suggested_locality) {
       const named = repositoryMatches.filter(isDetectedCandidate);
       if (named.length) {
@@ -513,11 +516,11 @@ function LocalityPickerSession({
           ? `We found ${nm} — press Create draft & apply next to it above.`
           : `We found ${nm} — an admin needs to press Create draft & apply above.`;
       }
-      return "No office matched that spot yet — check the address, or ask an admin to set the office up.";
+      return "No office matched that location — verify the address, or ask an administrator to create the record.";
     }
-    if (result.location_resolution?.status !== 'location_verified') return "We haven't pinned down the exact spot — the map has to confirm it before an office can be used.";
-    if (selectedLocalityId && selectedLocalityId !== result.suggested_locality.id) return "The office picked doesn't match the searched spot — press Find my office again.";
-    if (!selectedLocalityId) return "This office isn't linked to a record yet — pick a saved office above or ask an admin.";
+    if (result.location_resolution?.status !== 'location_verified') return "The exact location is unconfirmed — the address must verify on the map before an office can be used.";
+    if (selectedLocalityId && selectedLocalityId !== result.suggested_locality.id) return "The selected office does not match the searched location — run Find my office again.";
+    if (!selectedLocalityId) return "No office record is selected — choose a saved office above or contact an administrator.";
     return "";
   })();
 
@@ -535,7 +538,7 @@ function LocalityPickerSession({
   return (
     <Dialog open={isOpen} onOpenChange={(o) => {
       if (o) return;
-      if (searching && !confirmOrSkip("A lookup is still running — close anyway? (It keeps running in the background.)")) return;
+      if (searching && !confirmOrSkip("A lookup is still running — close anyway? (It continues in the background.)")) return;
       onClose();
     }}>
       <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm [&_p]:tracking-wide [&_p]:leading-relaxed [&_button]:tracking-wide":"")}>
@@ -548,7 +551,7 @@ function LocalityPickerSession({
           </DialogTitle>
         </DialogHeader>
 
-        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 mx-4 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this office. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Office" means which town, township, or county office issues your permit — every level is different. "Checked" means our team looked at it. "Needs a look" means nobody confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
+        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 mx-4 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How it works:</strong> enter the job address → we identify the jurisdiction → verify the offices → press Use this office. <span className="cursor-help border-b border-dotted border-violet-400" title='"Office" is the town, township, or county authority that issues your permit — each level differs. "Checked" means the record was verified. "Needs review" means it has not been confirmed.'>terminology</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Dismiss</button></div>}
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap px-4">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
@@ -602,7 +605,7 @@ function LocalityPickerSession({
             </div>
             {suggestions.length > 0 && !result && (
               <ul aria-label="Matching addresses — tap one or press Enter for the first" className="mt-1 divide-y rounded-lg border bg-white shadow-sm">
-                <li className="px-3 py-1.5 text-[11px] font-semibold text-gray-500">Pick your address — or press Enter for the first one:</li>
+                <li className="px-3 py-1.5 text-[11px] font-semibold text-gray-500">Select your address — or press Enter for the first result:</li>
                 {suggestions.map(s => (
                   <li key={s.place_id || s.text}>
                     <button
@@ -669,7 +672,7 @@ function LocalityPickerSession({
                           className="shrink-0 font-semibold text-emerald-700 underline decoration-dotted hover:text-emerald-900"
                           title={r.canApply ? `Use ${r.locality} for this job` : `${r.locality} — found, but offices still need a check`}
                         >
-                          {r.locality}{r.canApply ? " — use it →" : " — needs check"}
+                          {r.locality}{r.canApply ? " — use it →" : " — needs review"}
                         </button>
                       ) : (
                         <span className={`shrink-0 font-semibold ${r.found ? "text-emerald-700" : "text-red-600"}`}>{r.locality || "not found"}</span>
@@ -771,7 +774,7 @@ function LocalityPickerSession({
               try {
                 const text = String(await navigator.clipboard.readText() || "").trim();
                 if (!text) { setError("Nothing on the clipboard — copy an address first."); return; }
-                if (!/\d/.test(text) || !/[a-zA-Z]{3,}/.test(text)) { setError("The clipboard doesn't look like a street address — copy the address first."); return; }
+                if (!/\d/.test(text) || !/[a-zA-Z]{3,}/.test(text)) { setError("Clipboard contents do not look like a street address — copy the address first."); return; }
                 searchVersion.current++; pendingSearch.current = null;
                 setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false);
                 setAutoSearchNonce(Date.now());
@@ -784,7 +787,7 @@ function LocalityPickerSession({
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
-            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => { const next = !v; try { localStorage.setItem("permitting_exclude_electrical", next ? "1" : "0"); } catch {} return next; }); }}
+            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office confirmed no electrical permit is required.")) return; setExcludeElectrical(v => { const next = !v; try { localStorage.setItem("permitting_exclude_electrical", next ? "1" : "0"); } catch {} return next; }); }}
             className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
@@ -830,10 +833,10 @@ function LocalityPickerSession({
             <AddressSearchSummary address={address} searching={searching} result={result} advanced={advanced}/>
             {gpsMismatch && (
               <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
-                Your GPS and the typed address disagree by more than 500 ft — double-check which location is the actual job site before applying.
+                Your GPS and the typed address disagree by more than 500 ft — verify which location is the actual job site before applying.
               </p>
             )}
-            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Found office</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this office.":result.suggested_locality?"We found the town or township — the offices haven't been checked yet, but you can still use it: the permit lines will be marked needs-a-check.":"We found the town or township — it's not set up here yet. An admin can make a record from the saved offices list below."}</p></section>}
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Matched jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Match found — review the office notes below, then press Use this office.":result.suggested_locality?"Jurisdiction identified — the offices are not yet verified; you can still use it and the permit lines will be marked needs review.":"Jurisdiction identified — no office record is configured yet. An administrator can create one from the saved offices list below."}</p></section>}
             {advanced && <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>}
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
@@ -856,34 +859,34 @@ function LocalityPickerSession({
                         </option>
                       ))}
                     </select>
-                    {selectedLocality && <p className="text-xs mt-2">{selectedAuthority.officeCount>0?`${selectedAuthority.officeCount} office(s) reviewed by staff.`:"Office coverage still needs review."}</p>}
-                    <details><summary className="min-h-11 py-2 text-xs cursor-pointer">See office review details</summary>
+                    {selectedLocality && <p className="text-xs mt-2">{selectedAuthority.officeCount>0?`${selectedAuthority.officeCount} office(s) verified.`:"Office coverage is not yet verified."}</p>}
+                    <details><summary className="min-h-11 py-2 text-xs cursor-pointer">Office verification details</summary>
                     {selectedLocality && (
                       selectedAuthority.officeCount > 0 ? (
                         <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
                           <div className="flex items-center gap-1 font-semibold">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            {selectedAuthority.officeCount} office checked by our team{selectedAuthority.officeCount === 1 ? "y" : "ies"}
+                            {selectedAuthority.officeCount} office(s) verified
                           </div>
                           <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
-                          <p className="mt-1 text-emerald-800">These offices are confirmed. Any others listed are still just our notes.</p>
+                          <p className="mt-1 text-emerald-800">These offices are verified. Any others listed remain unconfirmed.</p>
                           {selectedAuthority.coverage_status === "partial" && (
                             <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                              <p className="font-semibold">Still needs checking: {selectedAuthority.other_office_count} more office(s).</p>
-                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                              <p className="font-semibold">Pending verification: {selectedAuthority.other_office_count} office(s).</p>
+                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices pending verification: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                             </div>
                           )}
                           {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
-                            <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
+                            <p className="mt-2 text-gray-700">All known offices are verified — coverage may still be incomplete.</p>
                           )}
                         </div>
                       ) : (
                         <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
                           <div className="flex items-center gap-1 font-semibold">
-                            <AlertTriangle className="h-3.5 w-3.5" /> No offices checked yet
+                            <AlertTriangle className="h-3.5 w-3.5" /> No offices verified yet
                           </div>
-                          <p className="mt-1">You can still use this place, but no one has confirmed which office handles permits there.</p>
-                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                          <p className="mt-1">This jurisdiction can still be used, but no office has been confirmed as the permit authority.</p>
+                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices pending verification: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                         </div>
                       )
                     )}
@@ -892,18 +895,18 @@ function LocalityPickerSession({
                   </div>
                 )}
 
-            {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this office.</p>}
+            {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above to verify its location before using this office.</p>}
             {advanced&&currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
-              <h4 className="font-semibold text-sm">Set up a new office record from the saved list</h4>
-              <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
+              <h4 className="font-semibold text-sm">Create an office record from the repository</h4>
+              <p className="text-xs">This creates a draft — it does not verify the address or confirm the office.</p>
               {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError} <button type="button" className="font-semibold underline" onClick={()=>setRepositoryRetry(n=>n+1)}>Try again</button></p>}
               <label className="block text-xs">Saved office record
                 <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
-                  <option value="">{repositoryLoading?'Loading saved offices…':'Pick a saved office record'}</option>
+                  <option value="">{repositoryLoading?'Loading saved offices…':'Select a saved office record'}</option>
                   {repositoryJurisdictions.map(row=><option key={row.id} value={row.id} disabled={hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)}>{row.name} · {row.state || 'State unknown'} · {row.type || 'Type unknown'}{row.parent_county?.name?' · '+row.parent_county.name+' County':''}{hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)?' · two copies — needs a fix':''}</option>)}
                 </select>
               </label>
-              <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Check the draft before making it</Button>
+              <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Review draft before creating</Button>
             </section>}
             {/* Editing the field clears the result (see onChange), so a result on screen always matches the address shown. */}
             {result && (
@@ -916,7 +919,7 @@ function LocalityPickerSession({
                     ) : (
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                     )}
-                    <h4 className="font-semibold text-sm">{result.suggested_locality ? "Location checked" : "We need to check this address"}</h4>
+                    <h4 className="font-semibold text-sm">{result.suggested_locality ? "Location verified" : "Address verification incomplete"}</h4>
                   </div>
                   {result.suggested_locality ? (
                     <div>
@@ -936,7 +939,7 @@ function LocalityPickerSession({
                         const t = result.location_resolution?.target;
                         if (!t?.name) return null;
                         const chain = [`${String(t.type || 'area').replace(/^\w/, (c) => c.toUpperCase())} of ${t.name}`, t.county ? `${t.county} County` : null, t.state].filter(Boolean);
-                        return <p className="text-[11px] text-green-700 mt-0.5" title="Every level stays separate — the city, the township, and the county are different offices.">{chain.join(' → ')}</p>;
+                        return <p className="text-[11px] text-green-700 mt-0.5" title="Each level is distinct — city, township, and county are separate offices.">{chain.join(' → ')}</p>;
                       })()}
                       {result.location_resolution?.status === 'location_verified' && result.location_resolution?.target?.type && result.location_resolution?.target?.type !== 'township' && (
                         <p className="text-[11px] text-green-700 mt-0.5">Not a township address — it sits inside the {String(result.location_resolution.target.type) === 'county' ? 'county' : `${result.location_resolution.target.type}`}.</p>
@@ -947,42 +950,42 @@ function LocalityPickerSession({
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
-                      <details><summary className="min-h-11 py-2 text-sm cursor-pointer">See office checks</summary>
+                      <details><summary className="min-h-11 py-2 text-sm cursor-pointer">Office verification details</summary>
                       <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         <div className="flex items-center gap-1 font-semibold">
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-                          Permit offices: {addressAuthority?.status === 'staff_verified_roles' ? 'checked by our team' : 'not checked yet'}
+                          Permit offices: {addressAuthority?.status === 'staff_verified_roles' ? 'verified' : 'not yet verified'}
                         </div>
                         {addressAuthority?.status === 'staff_verified_roles' ? (
                           <>
                             <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
-                            <p className="mt-1 text-emerald-800">We confirmed the spot on the map. The offices above were checked separately by our team.</p>
+                            <p className="mt-1 text-emerald-800">Location verified on the map. The offices above were verified separately.</p>
                           </>
                         ) : (
-                          <p className="mt-1">Finding the address does not prove which office handles sign, zoning, building, or electrical permits.</p>
+                          <p className="mt-1">Locating the address does not prove which office handles sign, zoning, building, or electrical permits.</p>
                         )}
                         {addressAuthority?.coverage_status === 'partial' && (
                           <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                            <p className="font-semibold">Still needs checking: {addressAuthority.other_office_count} more office(s).</p>
+                            <p className="font-semibold">Pending verification: {addressAuthority.other_office_count} office(s).</p>
                             {addressRolesNeedingReview.length > 0 && (
-                              <p className="mt-1">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
+                              <p className="mt-1">Offices pending verification: {addressRolesNeedingReview.join(" • ")}</p>
                             )}
                           </div>
                         )}
                         <ElectricalAuthorityCoverage authority={addressAuthority} selectionContext="address" />
                         {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
-                          <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
+                          <p className="mt-2 text-gray-700">All known offices are verified — coverage may still be incomplete.</p>
                         )}
                         {addressAuthority?.coverage_status === 'not_verified' && addressRolesNeedingReview.length > 0 && (
-                          <p className="mt-2 text-amber-900">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
+                          <p className="mt-2 text-amber-900">Offices pending verification: {addressRolesNeedingReview.join(" • ")}</p>
                         )}
                       </div>
                       </details>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'Our main map service was down — a backup found the general area.' : 'Our map tool had a problem.') : result.location_resolution?.status==='location_verified' ? 'Found the spot — the offices still need checking.' : 'We could not pin down the exact spot.'}</strong></p>
-                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'We started looking up info on the town’s website — someone on the team still needs to check it.' : 'Someone on the team can dig deeper using the tools below.'} You do not need to choose a place or guess.</p>
+                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'Primary map service unavailable — a fallback provider found the general area.' : 'Our map tool had a problem.') : result.location_resolution?.status==='location_verified' ? 'Location found — offices are pending verification.' : 'The exact location could not be determined.'}</strong></p>
+                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Automated research has started on the jurisdiction website — results still require verification.' : 'Additional research tools are available below.'} No manual selection is required.</p>
                       {advanced && result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
@@ -992,7 +995,7 @@ function LocalityPickerSession({
 
                 {advanced && <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>}
                 {currentUser?.role==='admin'&&result&&<details className="rounded border bg-gray-50 p-2 text-[10px]"><summary className="cursor-pointer font-semibold text-gray-600">Show technical details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify({geocoding_service:result.geocoding_service,location_resolution:result.location_resolution,authority_review:result.authority_review,match_confidence:result.match_confidence,match_method:result.match_method,apply_allowed:result.apply_allowed},null,2)}</pre></details>}
-                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. The sign and zoning offices haven't been checked yet — you can still press Use it anyway below, and the lines will be marked needs-a-check.</p>}
+                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">Location found. Sign and zoning offices are not yet verified — you can still use it, and the lines will be marked needs review.</p>}
                 {/* Boundary conflict — the official map services disagree. Show every
                     candidate they returned so the user picks; never auto-pick. */}
                 {!result.suggested_locality && Array.isArray(result?.location_resolution?.candidates) && result.location_resolution.candidates.length > 0 && (
@@ -1000,7 +1003,7 @@ function LocalityPickerSession({
                     <div>
                       <h4 className="font-semibold text-sm text-sky-950">Pick the right place</h4>
                       <p className="text-[11px] text-sky-800 mt-0.5">
-                        The map services disagree about this spot — tell us which place is right, then the office list below will match it.
+                        The map services disagree about this location — select the correct place, and the office list below will update to match.
                       </p>
                     </div>
                     {result.location_resolution.candidates.map((c, i) => (
@@ -1081,11 +1084,11 @@ function LocalityPickerSession({
                               size="sm"
                               variant="outline"
                               disabled={creatingDraft || (currentUser?.role === 'admin' && Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
-                              title={currentUser?.role!=="admin"?"Copies a ready-made message you can send to an admin":"Create a draft office record and use it"}
+                              title={currentUser?.role!=="admin"?"Copies a ready-made message for an administrator":"Create a draft office record and use it"}
                               onClick={() => {
                                 if (currentUser?.role !== 'admin') {
                                   navigator.clipboard?.writeText(`Please set up the permitting office for ${jurisdiction.name}${jurisdiction.state ? ', ' + jurisdiction.state : ''}${jurisdiction.parent_county?.name ? ' (' + jurisdiction.parent_county.name + ' County)' : ''} — the address picker found it but only an admin can create the record.`).catch(() => {});
-                                  setDraftCreateError("Copied! Send that note to an admin — it asks them to set this office up.");
+                                  setDraftCreateError("Copied — send that note to an administrator to create this office record.");
                                   return;
                                 }
                                 requestDraftFromRepository(jurisdiction);
@@ -1187,7 +1190,7 @@ function LocalityPickerSession({
               </AlertDialogDescription>
             </AlertDialogHeader>
             {draftCandidate && result?.location_resolution?.status === 'needs_review' && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">The map found the area but not the exact spot — double-check the pin on the map is the right property before filing.</div>
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">The map found the area but not the exact location — verify the map pin is the correct property before filing.</div>
             )}
             {draftCandidate && hasDuplicateRepositoryIdentity(repositoryJurisdictions, draftCandidate) && (
               <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">Heads up: another saved entry has the same name — you're using this exact copy. An admin should still clean up the double later.</div>
@@ -1225,7 +1228,7 @@ function LocalityPickerSession({
               aria-label="Use the picked office" disabled={!selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
-              <Save className="w-4 h-4" /> {addressNeedsCheck ? "Use it anyway — needs a check" : (() => { const n = selectedLocality?.name || result?.suggested_locality?.name || ""; return n ? `Use ${n.length > 22 ? n.slice(0, 22) + "…" : n}` : "Use this office"; })()}
+              <Save className="w-4 h-4" /> {addressNeedsCheck ? "Use anyway — needs review" : (() => { const n = selectedLocality?.name || result?.suggested_locality?.name || ""; return n ? `Use ${n.length > 22 ? n.slice(0, 22) + "…" : n}` : "Use this office"; })()}
             </Button>
           </div>
         </div>
