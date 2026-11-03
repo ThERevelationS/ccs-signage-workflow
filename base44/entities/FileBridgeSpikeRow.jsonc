@@ -12,12 +12,12 @@
   },
   "required": [],
   "rls": {
-    "read": {
+    "create": {
       "user_condition": {
         "role": "__filebridge_spike_backend_only__"
       }
     },
-    "create": {
+    "read": {
       "user_condition": {
         "role": "__filebridge_spike_backend_only__"
       }
