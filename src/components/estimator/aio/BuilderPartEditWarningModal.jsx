@@ -1,4 +1,3 @@
-import React from "react";
 import { AlertTriangle, Pencil, Unlink, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
