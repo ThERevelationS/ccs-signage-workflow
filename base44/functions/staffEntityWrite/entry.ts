@@ -127,7 +127,27 @@ Deno.serve(async (req) => {
     // New jurisdiction records are created only through the admin draft flow —
     // the UI gates this already; the server must fail closed the same way.
     if (entityName === 'PermitLocality' && (op === 'create' || op === 'update') && user.role !== 'admin') {
-      return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
+      // Sole non-admin exception: "Apply when verified" queues a deferred office
+      // apply as pending_applies on the locality — staff may write ONLY that
+      // field, and only as an array of well-formed entries. Everything else
+      // about the jurisdiction record stays admin-locked.
+      const pd = body?.data;
+      const pkeys = pd && typeof pd === 'object' && !Array.isArray(pd) ? Object.keys(pd) : [];
+      const PENDING_APPLY_KEYS = new Set(['work_order_id', 'requested_by', 'requested_at', 'exclude_electrical']);
+      const pendingAppliesOnly = op === 'update'
+        && pkeys.length === 1 && pkeys[0] === 'pending_applies'
+        && Array.isArray((pd as any)?.pending_applies)
+        && (pd as any).pending_applies.length <= 100
+        && (pd as any).pending_applies.every((p: any) =>
+          p && typeof p === 'object' && !Array.isArray(p)
+          && Object.keys(p).every((k: string) => PENDING_APPLY_KEYS.has(k))
+          && typeof p.work_order_id === 'string' && p.work_order_id.trim().length > 0 && p.work_order_id.length <= 64
+          && (p.requested_by === undefined || (typeof p.requested_by === 'string' && p.requested_by.length <= 200))
+          && (p.requested_at === undefined || (typeof p.requested_at === 'string' && p.requested_at.length <= 40))
+          && (p.exclude_electrical === undefined || typeof p.exclude_electrical === 'boolean'));
+      if (!pendingAppliesOnly) {
+        return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
+      }
     }
     // Tax rates feed every quote's tax_percent — admin-gated like jurisdictions.
     if ((entityName === 'TaxGroup' || entityName === 'MarkupTier' || ADMIN_ONLY_WRITE.has(entityName)) && user.role !== 'admin') {
