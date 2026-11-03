@@ -942,7 +942,7 @@ A.deepEqual(RCB.required, ['batch_number', 'closed_at']);
 for (const f of ['expected_total', 'collected_total', 'cash_adjustment', 'variance', 'payment_ids', 'method_totals', 'batch_number', 'closed_at', 'location', 'created_by']) {
   A.ok(f in RCB.properties, `ReconciliationBatch declares ${f}`);
 }
-A.deepEqual(RCB.properties.status.enum, ['open', 'closed']);
+A.deepEqual(RCB.properties.status.enum, ['open', 'closed', 'reopened'], 'reopened = immutable audit-stub status (reopen_batch admin flow)');
 for (const op of ['create', 'read', 'update', 'delete']) {
   A.equal(RCB.rls[op].user_condition.role, '__reconciliationbatch_backend_only__', `rls.${op} backend-only`);
 }
