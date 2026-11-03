@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt } from "@/components/files/fileBridgeClient";
+import { fbCall, waitForCommand, uploadToStaging, fmtBytes, kindOfExt, secureDownload } from "@/components/files/fileBridgeClient";
 import AgentFailoverPanel from "@/components/files/AgentFailoverPanel";
 import RootSetupWizard from "@/components/files/RootSetupWizard";
 import FileViewerDialog from "@/components/files/FileViewerDialog";
@@ -120,6 +120,10 @@ export default function ServerFiles() {
       if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
       const c = await waitForCommand(d.command_id, { timeoutMs: 300_000, onTick: (t) => setBusy((b) => ({ ...b, [key]: t?.progress ? `fetching ${Math.round(((t.progress.done || 0) / (t.progress.total || 1)) * 100)}%` : "fetching…" })) });
       if (c?.result?.file_url) setViewer({ url: c.result.file_url, name: row.name, ext: row.ext, size: row.size, sha256: c.result.sha256 || row.sha256, preview_url: row.preview_state === "ready" ? row.preview_url : "" });
+      else if (c?.result?.secure_download) {
+        const d = await secureDownload(c.command_id);
+        setViewer({ url: d.url, name: row.name, ext: row.ext, size: d.size || row.size, sha256: d.sha256 || row.sha256 });
+      }
       else setBusy((b) => ({ ...b, [key]: `failed: ${c?.error || c?.status || "unknown"}` }));
     } catch (e) {
       setBusy((b) => ({ ...b, [key]: `failed: ${String(e?.response?.data?.error || e.message || e).slice(0, 80)}` }));
@@ -196,8 +200,12 @@ export default function ServerFiles() {
       const d = r?.data ?? r;
       if (!d?.command_id) throw new Error(d?.error || "enqueue failed");
       const c = await waitForCommand(d.command_id, { timeoutMs: 300_000 });
-      if (c?.status !== "completed" || !c?.result?.file_url) throw new Error(c?.error || `packaging ${c?.status}`);
-      window.open(c.result.file_url, "_blank", "noopener");
+      if (c?.status === "completed" && c?.result?.secure_download) {
+        const sd = await secureDownload(c.command_id);
+        const a = document.createElement("a"); a.href = sd.url; a.download = "files.zip"; a.rel = "noopener"; a.click();
+      } else if (c?.status === "completed" && c?.result?.file_url) {
+        window.open(c.result.file_url, "_blank", "noopener");
+      } else throw new Error(c?.error || `packaging ${c?.status}`);
       setSelected(new Set());
       setBusy((b) => { const n = { ...b }; delete n.pkg; return n; });
     } catch (e) {
