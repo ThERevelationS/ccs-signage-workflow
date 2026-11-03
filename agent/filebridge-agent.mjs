@@ -468,7 +468,11 @@ const pushInventory = async (scanId, roots) => {
   const tot = db.prepare(`SELECT COUNT(*) files, COALESCE(SUM(size),0) bytes FROM files WHERE missing=0 AND is_dir=0`).get();
   const dirs = db.prepare(`SELECT COUNT(*) c FROM files WHERE missing=0 AND is_dir=1`).get()?.c || 0;
   const top_dirs = db.prepare(
-    `SELECT root_key, name, dir_size_bytes, file_count FROM files WHERE is_dir=1 AND parent_path='' ORDER BY dir_size_bytes DESC LIMIT 50`,
+    `SELECT d.root_key, d.name, d.dir_size_bytes,
+            (SELECT COUNT(*) FROM files c WHERE c.root_key=d.root_key AND c.is_dir=0 AND c.missing=0
+             AND (c.path=d.name OR c.path LIKE d.name || '/%')) file_count
+     FROM files d WHERE d.is_dir=1 AND d.parent_path='' AND d.missing=0
+     ORDER BY d.dir_size_bytes DESC LIMIT 50`,
   ).all().map((r) => ({ root_key: r.root_key, name: r.name, bytes: r.dir_size_bytes || 0, files: r.file_count || 0 }));
   await post('inventory_report', {
     run_id: `inv-${AGENT_ID}-${scanId}`, status: 'completed',
@@ -528,8 +532,8 @@ const handshake = async () => {
     state.roots = (j.config?.roots || []).map((r) => {
       const candidates = [
         `/roots/${r.root_key}`,
-        ...ROOTS.filter((m) => path.posix.basename(m) === r.root_key),
-        ...ROOTS.filter((m) => r.rel_root && path.posix.basename(m) === path.posix.basename(r.rel_root)),
+        ...ROOTS.filter((m) => path.basename(m) === r.root_key),
+        ...ROOTS.filter((m) => r.rel_root && path.basename(m) === path.basename(r.rel_root)),
       ];
       const _mount = candidates.find((c) => { try { return fs.statSync(c).isDirectory(); } catch { return false; } }) || candidates[0] || '';
       return { ...r, _mount };
@@ -930,9 +934,16 @@ const executors = {
       const alt = dot > 0 ? `${rel.slice(0, dot)} (restored-${n})${rel.slice(dot)}` : `${rel} (restored-${n})`;
       dest = resolveInRoot(root, alt);
     }
+    await fs.promises.rename(src, dest);
+    const realMount = fs.realpathSync(root._mount || '');
+    const restoredRel = dest.slice(realMount.length).replace(/^\//, '');
+    if (restoredRel !== rel) {
+      // collision: record provenance for the suffixed path too
+      manifestSet(pathKeyLocal(root.root_key, restoredRel), { ...rec, origin: 'bridge', managed_by: 'bridge', restored_ts: Date.now(), trash_path: null });
+    }
     manifestSet(pk, { trash_path: null, restored_ts: Date.now() });
     if (db) db.prepare('UPDATE files SET missing=0 WHERE path_key=?').run(pk);
-    return { ok: true, result: { path: rel, restored: true } };
+    return { ok: true, result: { path: restoredRel, restored: true, renamed: restoredRel !== rel } };
   },
 
   move: async (args) => {
@@ -1113,7 +1124,7 @@ const main = async () => {
   if (ENV.FB_SCAN_ONLY === '1') {
     const scanId = Date.now();
     for (const mount of ROOTS) {
-      const root = { root_key: path.posix.basename(mount), _mount: mount, extraction_enabled: ENV.FB_EXTRACT === '1' };
+      const root = { root_key: path.basename(mount), _mount: mount, extraction_enabled: ENV.FB_EXTRACT === '1' };
       const s = await scanRoot(root, scanId);
       log('info', 'scan_only_root', { mount, ...s, batch: undefined, recent: undefined });
     }
