@@ -951,11 +951,19 @@ async function kickOfficeResearch(base44, matched, profiles) {
     const rows = await loadAllEntityRows({ entity: base44.asServiceRole.entities.SourceCollectionQueue, query: { jurisdiction_name: matched.name, state: matched.state }, sort: "created_date", label: "Office research demand check" }).catch(() => null);
     if (rows === null) return { state: "unknown" };
     const already = rows.some((q) => ACTIVE_QUEUE_STATUSES.has(String(q.status || "")) && (!county || !q.parent_county_name || normCountyName(q.parent_county_name) === normCountyName(county)));
-    if (already) return { state: "already_queued" };
-    const typeMap = { city: "city", village: "city", municipality: "city", county: "county", township: "township" };
-    const jurisdictionType = typeMap[String(profile?.type || matched.jurisdiction_type || "city").toLowerCase()] || "city";
-    await base44.asServiceRole.entities.SourceCollectionQueue.create({ jurisdiction_name: matched.name, state: matched.state, jurisdiction_type: jurisdictionType, parent_county_name: county, status: "not_started", dispatch_rank: 0, missing_next: "Office research \u2014 auto-queued by an address lookup that needed verified offices." });
-    return { state: "queued" };
+    if (profile) {
+      try {
+        const kick = base44.functions.invoke("refreshJurisdiction", { jurisdiction_id: profile.id, defer_archive: true, automatic_research: true }).catch(() => null);
+        await Promise.race([kick, new Promise((r) => setTimeout(r, 2e3))]);
+      } catch {
+      }
+    }
+    if (!already) {
+      const typeMap = { city: "city", village: "city", municipality: "city", county: "county", township: "township" };
+      const jurisdictionType = typeMap[String(profile?.type || matched.jurisdiction_type || "city").toLowerCase()] || "city";
+      await base44.asServiceRole.entities.SourceCollectionQueue.create({ jurisdiction_name: matched.name, state: matched.state, jurisdiction_type: jurisdictionType, parent_county_name: county, status: "not_started", dispatch_rank: 0, missing_next: "Office research \u2014 auto-queued by an address lookup that needed verified offices." }).catch(() => null);
+    }
+    return { state: profile ? "research_started" : already ? "already_queued" : "queued" };
   } catch {
     return { state: "unknown" };
   }
@@ -1194,7 +1202,7 @@ Deno.serve(async (req) => {
     const authority = summarizeMatchedLocalityAuthority(matched);
     const applyAllowed = Boolean(matched && authority.verified_roles.includes("sign_permit") && authority.verified_roles.includes("zoning"));
     const officeResearch = matched && !applyAllowed ? await kickOfficeResearch(base44, matched, profiles) : null;
-    if (officeResearch) await reporter.emit({ kind: "catalog_check", detail: { queued: "No verified offices on file \u2014 queued this jurisdiction for priority office research.", already_queued: "Office research is already in progress for this jurisdiction.", backfill_pending: "Office research landed \u2014 the saved-office record is catching up.", verification_pending: "Offices are on file and awaiting verification." }[officeResearch.state] || "Office research status is being checked." });
+    if (officeResearch) await reporter.emit({ kind: "catalog_check", detail: { research_started: "No verified offices on file \u2014 live office research started right now.", queued: "No verified offices on file \u2014 queued this jurisdiction for priority office research.", already_queued: "Office research is already in progress for this jurisdiction.", backfill_pending: "Office research landed \u2014 the saved-office record is catching up.", verification_pending: "Offices are on file and awaiting verification." }[officeResearch.state] || "Office research status is being checked." });
     const automatic = null;
     const addressArchives = null;
     const reason = matched ? resolution.reason : resolution.status === "location_verified" ? `Location is ${resolution.target.name}, but we are not sure which office handles permits there yet. Someone on the team can look it up in the review tools.` : resolution.reason;
