@@ -189,6 +189,17 @@ Deno.serve(async (req) => {
       return Response.json(out);
     }
 
+    if (body.probe === 'gs_dump') {
+      const gs = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 10)
+        .catch((e: any) => ({ err: String(e?.message || e) }));
+      const cmds = await sr.entities.FileBridgeCommand.filter(
+        { agent_id: String(body.agent_id || 'dev-primary') }, '-created_ts', 10,
+      ).catch((e: any) => ({ err: String(e?.message || e) }));
+      out.settings_rows = gs;
+      out.commands = Array.isArray(cmds) ? cmds.map((c) => ({ command_id: c.command_id, type: c.type, status: c.status, leased_by: c.leased_by })) : cmds;
+      return Response.json(out);
+    }
+
     return Response.json({ error: 'unknown probe', known: ['body_size', 'entity_write_speed', 'bulk_api', 'upload', 'sse', 'actor_wake', 'env', 'set_fb_settings', 'mk_cmd', 'list_cmds'] }, { status: 400 });
   } catch (error: any) {
     return Response.json({ error: String(error?.message || error).slice(0, 500) }, { status: 500 });
