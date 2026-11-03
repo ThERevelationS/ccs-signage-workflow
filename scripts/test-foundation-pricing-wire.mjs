@@ -196,7 +196,7 @@ const BASELINE = 5487.5; // 4390 x 1.25
   ok(!descriptorHasPricingContent({ pricing: {} }), 'empty nested block not config');
   ok(!descriptorHasPricingContent({ machine: 'backhoe' }), 'bare machine name not config');
   ok(!descriptorHasPricingContent({ fixed_price: 0 }), 'fixed_price 0 not config');
-  ok(!descriptorHasPricingContent({ markup_pct: 0 }), 'markup_pct 0 not config');
+  ok(descriptorHasPricingContent({ markup_pct: 0 }), 'explicit markup_pct 0 is config (sell at cost)');
   ok(!descriptorHasPricingContent({ total_concrete_cost: 900, concrete_cost_per_cy: 135, pouring_labor_rate: 60, rental_period: 'day' }), 'cost-side fields not config');
   ok(descriptorHasPricingContent({ fixed_price: 200 }), 'fixed_price is config');
   ok(descriptorHasPricingContent({ markup_pct: 60 }), 'markup_pct is config');
@@ -428,6 +428,36 @@ const BASELINE = 5487.5; // 4390 x 1.25
   const rec = { ...plainProject(), labor_markup_pct: 100 };
   const res = wire(rec, { baselineSell: BASELINE, internalCost: COST_TOTAL, markupPercent: 25 });
   eq(res.customer_price, 5967.5, 'labor_markup_pct flat field reprices labor');
+}
+
+{
+  // markup_pct:0 on a component = explicit sell-at-cost — labor drops its 25%
+  // module markup (800 baseline contribution -> 640 engine), other components
+  // keep their baseline share.
+  const rec = { ...plainProject(), labor_pricing: { markup_pct: 0 } };
+  const res = wire(rec, { baselineSell: BASELINE, internalCost: COST_TOTAL, markupPercent: 25 });
+  const labor = res.lines.find((l) => l.key === 'labor');
+  eq(labor.priced, true, 'markup_pct 0 engages the labor line');
+  near(labor.engine.unit_price, 640 / 12, 'labor sells at unit cost exactly', 0.0001);
+  eq(labor.engine.price_source, 'markup');
+  eq(labor.engine.tier_source, 'part_tier', 'part markup-0 layer wins');
+  near(res.customer_price, 5327.5, 'remainder 4687.5 + labor 640', 0.0001);
+}
+
+{
+  // Flat `<component>_markup_pct:0` engages identically to the nested block.
+  const rec = { ...plainProject(), labor_markup_pct: 0 };
+  const res = wire(rec, { baselineSell: BASELINE, internalCost: COST_TOTAL, markupPercent: 25 });
+  near(res.lines.find((l) => l.key === 'labor').engine.unit_price, 640 / 12, 'flat labor_markup_pct 0 sells at cost', 0.0001);
+  near(res.customer_price, 5327.5, 'flat spelling reprices labor at cost', 0.0001);
+}
+
+{
+  // Machine-descriptor markup_pct:0 -> machine layer sells at cost.
+  const rec = { ...plainProject(), equipment_pricing: { machine: { markup_pct: 0 } } };
+  const res = wire(rec, { baselineSell: BASELINE, internalCost: COST_TOTAL, markupPercent: 25 });
+  eq(res.lines.find((l) => l.key === 'equipment').engine.tier_source, 'machine_override', 'machine markup-0 layer wins');
+  near(res.customer_price, 5387.5, 'remainder 4987.5 + equipment 400', 0.0001);
 }
 
 {
