@@ -975,31 +975,28 @@ const ESTIMATES = [
   eq(ambSummary.ambiguous[0].matched_customer_ids.length, 2, 'ambiguous detail carries the hit list');
 
   // --- merge dialog wiring (static) ----------------------------------------
+  // G-14: the dialog delegates to manageCustomerLifecycle + the shared
+  // customerMergeModel — relink coverage + the loser-field fold live there.
   const dlgSrc = readText('src/components/estimator/CustomerMergeDialog.jsx');
-  ok(dlgSrc.includes('merged_into_customer_id'), 'dialog: loser marked merged');
-  ok(dlgSrc.includes('customer_status: "inactive"'), 'dialog: loser also inactivated');
-  ok(/AllInOneEstimate\.updateMany/.test(dlgSrc), 'dialog: estimates relinked by customer_id');
-  ok(/AllInOneEstimate\.updateMany[\s\S]*client_name/.test(dlgSrc), 'dialog: client_name spelling relinked too');
-  ok(/WorkOrder\.updateMany/.test(dlgSrc), 'dialog: work orders relinked');
-  ok(!/Invoice\b/.test(dlgSrc), 'relink list has no Invoice pass');
-  ok(
-    !/(Opportunity|Payment|CustomerContact|CustomerLocation|StoreCreditLedger)\b/.test(dlgSrc),
-    'KNOWN DEFECT N-07.5 — merge sweep re-pointing list: CustomerMergeDialog ' +
-    'relinks ONLY AllInOneEstimate + WorkOrder. Invoices, opportunities, ' +
-    'payments, contacts, locations and credit-ledger rows stay on the ' +
-    'retired stub (see N-07.2 — its open AR still reports under "Acme Gulf"). ' +
-    'Expected: every customer_id-bearing record moves to the winner. Actual: ' +
-    'two entity types only.',
-  );
-  eq(
-    /legacy_client_names/.test(dlgSrc),
-    false,
-    'KNOWN DEFECT N-07.5b — winner-field fold absent: the loser\'s ' +
-    'legacy_client_names (the dedupe vocabulary future matching relies on), ' +
-    'warning_flags, stored credit and contacts are abandoned on the stub ' +
-    'instead of folding into the winner. Expected: winner absorbs union of ' +
-    'identity fields. Actual: winner untouched; stub keeps audit-only copy.',
-  );
+  const mrgSrc = readText('base44/shared/customerMergeModel.ts');
+  ok(/manageCustomerLifecycle|customerMergeModel|invokeFleet/.test(dlgSrc), 'dialog delegates to the server merge path');
+  ok(mrgSrc.includes('merged_into_customer_id'), 'model: loser marked merged');
+  ok(mrgSrc.includes("customer_status: 'inactive'"), 'model: loser also inactivated');
+  for (const ent of ['AllInOneEstimate','WorkOrder','Invoice','Payment','Opportunity','CustomerContact','CustomerLocation','OpportunityActivity','StoreCreditLedger']) {
+    ok(mrgSrc.includes("'" + ent + "'"), 'model relink list covers ' + ent + ' (N-07.5 closed)');
+  }
+  ok(/legacy_client_names/.test(mrgSrc), 'model folds loser names into winner legacy_client_names (N-07.5b partially closed)');
+  ok(mrgSrc.includes('in_store_credit'), 'model merges the loser in-store credit balance into the winner');
+  ok(/warning_flag_details/.test(mrgSrc), 'model unions loser warning_flags + absorbs flag details (N-07.5b closed)');
+  {
+    const wp = (await bundle(repo('base44/shared/customerMergeModel.ts'), 'merge-model')).buildWinnerPatch({
+      keep: { id: 'w', warning_flags: ['credit_hold'], warning_flag_details: { credit_hold: { note: 'kept' } } },
+      lose: { warning_flags: ['credit_hold', 'do_not_mail'], warning_flag_details: { do_not_mail: { note: 'loser note' }, credit_hold: { note: 'dup' } } },
+    });
+    eq((wp.warning_flags || []).join(','), 'credit_hold,do_not_mail', 'winner patch unions warning_flags');
+    eq(wp.warning_flag_details.credit_hold.note, 'kept', 'winner keeps its own flag details');
+    eq(wp.warning_flag_details.do_not_mail.note, 'loser note', 'loser flag details absorbed for new flags');
+  }
 
   // --- merged-stub downstream semantics --------------------------------------
   const dormant = rep.dormantCustomerRows(CUSTOMERS, {
