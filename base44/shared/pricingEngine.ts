@@ -363,8 +363,11 @@ function overrideRule(source: any, tierRules: any[]): any {
     };
   }
 
+  // Any finite markup_pct is an authored override — including 0, which pins
+  // the part at cost (explicit sell-at-cost, F-23 markup-0 signal). An ABSENT
+  // markup_pct still returns null so weaker/default layers price the part.
   const markup = firstFinite(source.markup_pct);
-  if (markup != null && markup !== 0) {
+  if (markup != null) {
     return {
       kind: 'markup',
       markupPct: markup,
@@ -724,7 +727,8 @@ export function matrixRowsToRules(rows: any, opts: any = {}): any[] {
 //
 // Precedence: part > template > globalDefault > 'cost_plus' fallback.
 // Within each layer: explicit mode token > fixed_price > bound tier_ref's
-// chart row > market signals — mirroring overrideRule's own precedence.
+// chart row > market signals > markup_pct (any finite — an explicit 0
+// resolves cost_plus, "sell at cost") — mirroring overrideRule's precedence.
 //   { part, template, globalDefault, tierRules }
 //   part          part-level descriptor. Field-name trap: inventory entities
 //                 use `pricing_mode` for UNIT enums ('per_piece', 'per_roll'…)
@@ -812,8 +816,21 @@ const tierRefModeHit = (src: any, rows: any): any => {
   };
 };
 
+// A finite markup_pct IS a pricing-family signal — including 0 (sell at
+// cost). Same single-field read as overrideRule: `markup`/`markup_percent`
+// spellings are wire-side detection vocabulary; the engine prices markup_pct
+// only. Weakest signal — ranks below explicit tokens, fixed, tier refs, and
+// market data, mirroring overrideRule's own precedence.
+const markupSignalHit = (src: any): any => {
+  if (!src || typeof src !== 'object') return null;
+  const markup = firstFinite(src.markup_pct);
+  return markup != null
+    ? { mode: PRICING_MODES.COST_PLUS, raw: markup, via: 'markup_pct' }
+    : null;
+};
+
 const descriptorModeHit = (src: any, rows: any): any =>
-  explicitModeHit(src) || fixedSignalHit(src) || tierRefModeHit(src, rows) || marketSignalHit(src);
+  explicitModeHit(src) || fixedSignalHit(src) || tierRefModeHit(src, rows) || marketSignalHit(src) || markupSignalHit(src);
 
 export function resolvePricingMode({ part = null, template = null, globalDefault = null, tierRules = null }: any = {}): any {
   const partHit = descriptorModeHit(part, tierRules);
