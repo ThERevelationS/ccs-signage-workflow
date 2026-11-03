@@ -52,10 +52,6 @@ const AUTHORITY_ROLE_LABELS = {
   other: "Other",
 };
 
-// Power-user mode: a localStorage flag that skips the confirm dialogs — for
-// staff who do many applies back-to-back and know what they are doing.
-export const confirmOrSkip = (message) => { try { if (localStorage.getItem("permitting_skip_confirms") === "1") return true; } catch {} return window.confirm(message); };
-
 function verifiedAuthoritySummary(locality) {
   const review = summarizeMatchedLocalityAuthority(locality);
   return {
@@ -805,7 +801,12 @@ function LocalityPickerSession({
               <Search className="w-4 h-4" /> Find my office
             </Button>
             <button type="button" className="min-h-11 self-center rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-50" title="Keyboard shortcuts"
-              onClick={() => window.alert("Shortcuts:\n• Enter — search the typed address\n• Esc — close this dialog\n• Paste a full address — searches automatically")}>?</button>
+              onClick={() => askConfirm({
+                title: "Keyboard shortcuts",
+                body: "Enter — search the typed address. Esc — close this dialog. Paste a full address — searches automatically.",
+                actions: [{ value: 'ok', label: 'Got it', tone: 'primary' }],
+                hideCancel: true,
+              })}>?</button>
             </>
           )}
 
@@ -813,7 +814,7 @@ function LocalityPickerSession({
           <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !advanced; setAdvanced(v); try { localStorage.setItem("permitting_advanced_view", v ? "1" : "0"); } catch {} }}>{advanced ? "Simple view" : "Advanced view"}</button>
 
           {showOptions && <>
-          <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-slate-600 underline self-center" onClick={() => { try { const v = localStorage.getItem("permitting_skip_confirms") !== "1"; localStorage.setItem("permitting_skip_confirms", v ? "1" : "0"); window.alert(v ? "Confirmations are now skipped." : "Confirmations are back on."); } catch {} }}>Skip confirmations</button>
+          <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-slate-600 underline self-center" onClick={() => { try { const v = localStorage.getItem("permitting_skip_confirms") !== "1"; localStorage.setItem("permitting_skip_confirms", v ? "1" : "0"); askConfirm({ title: v ? "Confirmations skipped" : "Confirmations back on", body: v ? "Apply and confirm prompts will resolve automatically from now on." : "Apply and confirm prompts will ask again before acting.", actions: [{ value: 'ok', label: 'OK', tone: 'primary' }], hideCancel: true }); } catch {} }}>Skip confirmations</button>
           <Button
             variant="outline"
             className="gap-1 min-h-11 w-full sm:w-auto"
