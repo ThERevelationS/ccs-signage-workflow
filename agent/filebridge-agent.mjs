@@ -810,6 +810,7 @@ const executors = {
     const filters = args.filters && typeof args.filters === 'object' ? args.filters : {};
     const exts = (filters.ext || []).map((e) => String(e).toLowerCase().replace(/^\./, '')).filter(Boolean);
     const paths = (filters.path || []).map((p) => String(p).replace(/^\/+|\/+$/g, '')).filter(Boolean);
+    const rootScope = filters.root ? String(filters.root) : '';
     const offset = Math.max(0, Number(String(args.cursor || '0').replace(/^o/, '')) || 0);
     if (!q && !exts.length && !paths.length) return { ok: true, result: { hits: [], mode: fts ? 'fts' : 'like' } };
     const limit = Math.min(Number(args.limit) || 200, 1000);
@@ -850,7 +851,8 @@ const executors = {
         ).all(like, like, q ? want : 5000);
       }
     } catch (e) { return { ok: false, error: `search failed: ${String(e.message || e).slice(0, 160)}` }; }
-    // qualifier post-filter (ext set + path prefixes)
+    // qualifier post-filter (ext set + path prefixes + root scope)
+    if (rootScope) rows = rows.filter((r) => r.root_key === rootScope);
     if (exts.length) rows = rows.filter((r) => exts.includes(String(r.ext || '').toLowerCase()));
     if (paths.length) rows = rows.filter((r) => paths.some((p) => r.path === p || String(r.path).startsWith(`${p}/`)));
     const page = rows.slice(offset, offset + limit);
