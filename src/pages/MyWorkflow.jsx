@@ -19,8 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { fetchMyWorkflowBundle, fetchMyWorkflowTasks } from "@/components/queues/queueFeedClient";
 import {
   createWorkOrderArrayItemLocator,
   findWorkOrderArrayItemIndex,
@@ -32,14 +32,9 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
-import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
-import { staffEntities } from "@/components/staff/staffEntities";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 
-const AuthorizedEmail = staffEntities.AuthorizedEmail;
-
-const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
 
 const stageColors = {
@@ -143,12 +138,6 @@ export default function MyWorkflow() {
   const [addTaskForWo, setAddTaskForWo] = useState(null);
   const [assigneeConfirm, setAssigneeConfirm] = useState(null);
   const [taskDescriptions, setTaskDescriptions] = useState([]);
-
-  useEffect(() => {
-    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
-      .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
-      .catch(() => {});
-  }, []);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   // Stage filter persists per-employee via the workspace blob — local seed
@@ -179,53 +168,16 @@ export default function MyWorkflow() {
   }, [visibleRows, workOrders.length]);
 
   useEffect(() => {
-    if (currentUser) {
-      loadMyWorkOrders();
-      loadUsers();
-    }
+    if (currentUser) loadMyWorkflow();
   }, [currentUser]);
 
-  const loadUsers = async () => {
-    try {
-      const [users, dropdownsSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: AuthorizedEmail,
-          sort: null,
-          cacheTtlMs: 30000,
-          label: "My Workflow authorized users",
-        }),
-        loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
-          settingKey: "dropdownConditions",
-          label: "My Workflow dropdown conditions",
-        }),
-      ]);
-      setAllUsers(users);
-      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
-    } catch (error) {
-      // Assignee lists are a convenience for the pickers below; a refused
-      // identity read must not take the page down. A rejected session is
-      // reported through the session layer, which reverifies it and reopens
-      // sign-in when it is truly gone.
-      console.error("Error loading authorized users:", error);
-    }
-  };
-
-  const loadMyWorkOrders = async () => {
-    setIsLoading(true);
-    try {
-      const [allOrders, allGeneralTasks] = await Promise.all([
-        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
-          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
-        ),
-        loadAllEntityRows({
-          entity: GeneralTask,
-          query: { completed: false },
-          sort: "created_date",
-          label: "My Workflow general tasks",
-        })
-      ]);
-
+  // My Workflow's mount data arrives as ONE composed queueFeed invoke
+  // (my_workflow feed): the open GeneralTask rows, the AuthorizedEmail
+  // assignee roster, and the two GlobalSettings records this page reads.
+  // The work-order half stays on the shared board snapshot — its heavy task
+  // trees are exactly what queue projections strip. Every feed slice fails
+  // open to the same gateway reads this page ran before.
+  const applyOrderRows = (allOrders, allGeneralTasks) => {
       const userName = currentUser?.full_name || currentUser?.email;
       // Any spelling of "me": full email, full name, first name, email local part.
       const userKeys = new Set([
@@ -318,6 +270,50 @@ export default function MyWorkflow() {
         }));
 
       setWorkOrders([...myOrders, ...myGeneralTasks]);
+  };
+
+  // Mount path: one composed invoke carries the task rows AND the page's
+  // extras — assignee roster and both settings records land in the same
+  // response. Slice failures degrade inside fetchMyWorkflowBundle instead of
+  // reaching this catch, so a failure here is the task/board read only.
+  const loadMyWorkflow = async () => {
+    setIsLoading(true);
+    try {
+      const [allOrders, bundle] = await Promise.all([
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+        ),
+        fetchMyWorkflowBundle(),
+      ]);
+      // Extras land independently of the task rows — the old loadUsers never
+      // depended on the work-order pull, so a failed task read still leaves
+      // the pickers populated.
+      setAllUsers(bundle.users || []);
+      setDropdownConditions(bundle.dropdownConditions?.setting_value?.items || []);
+      setTaskDescriptions((bundle.taskDescriptions?.setting_value?.items || []).map((i) => i.text || i));
+      if (bundle.tasksError) throw bundle.tasksError;
+      applyOrderRows(allOrders, bundle.generalTasks);
+      setLoadError("");
+    } catch (error) {
+      console.error("Error loading work orders:", error);
+      setLoadError(error?.message || "Your work list could not be loaded.");
+    }
+    setIsLoading(false);
+  };
+
+  // Reload path (mutation conflicts, dialog closes, banner retry): the task
+  // rows and board snapshot refresh; the roster/settings extras mount once
+  // with the bundle and are not re-pulled, same as before.
+  const loadMyWorkOrders = async () => {
+    setIsLoading(true);
+    try {
+      const [allOrders, taskRows] = await Promise.all([
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+        ),
+        fetchMyWorkflowTasks().then((r) => r.generalTasks),
+      ]);
+      applyOrderRows(allOrders, taskRows);
       setLoadError("");
     } catch (error) {
       console.error("Error loading work orders:", error);
