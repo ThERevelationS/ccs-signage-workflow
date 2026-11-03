@@ -135,7 +135,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
-  const getDropdownName = (dropdownId) => {
+  const _getDropdownName = (dropdownId) => {
     if (!dropdownId) return null;
     const dd = dropdownConditions.find(d => d.id === dropdownId);
     return dd?.name || null;
