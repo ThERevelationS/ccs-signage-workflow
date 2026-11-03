@@ -939,6 +939,27 @@ function geocodingRejection(raw) {
   if (/not authorized to use this api|api.*not authorized/.test(message)) return { diagnostic_code: "API_ACCESS_DENIED", message: "Google does not allow this server key to use Geocoding API. An administrator must check the enabled API and key API restrictions." + suffix };
   return { diagnostic_code: "REQUEST_DENIED", message: "Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing." + suffix };
 }
+var ACTIVE_QUEUE_STATUSES = /* @__PURE__ */ new Set(["not_started", "source_discovery", "research_in_flight", "partial_gaps"]);
+var normCountyName = (v) => String(v || "").toLowerCase().replace(/\s*county$/, "").trim();
+async function kickOfficeResearch(base44, matched, profiles) {
+  try {
+    const profile = (profiles || []).find((p) => p.id === matched.jurisdiction_profile_id) || null;
+    const hasRoles = (profile?.office_research?.roles || []).length > 0;
+    if (hasRoles && (matched.offices || []).length > 0) return { state: "verification_pending" };
+    if (hasRoles) return { state: "backfill_pending" };
+    const county = profile?.parent_county?.name || matched.parent_county_name || null;
+    const rows = await loadAllEntityRows({ entity: base44.asServiceRole.entities.SourceCollectionQueue, query: { jurisdiction_name: matched.name, state: matched.state }, sort: "created_date", label: "Office research demand check" }).catch(() => null);
+    if (rows === null) return { state: "unknown" };
+    const already = rows.some((q) => ACTIVE_QUEUE_STATUSES.has(String(q.status || "")) && (!county || !q.parent_county_name || normCountyName(q.parent_county_name) === normCountyName(county)));
+    if (already) return { state: "already_queued" };
+    const typeMap = { city: "city", village: "city", municipality: "city", county: "county", township: "township" };
+    const jurisdictionType = typeMap[String(profile?.type || matched.jurisdiction_type || "city").toLowerCase()] || "city";
+    await base44.asServiceRole.entities.SourceCollectionQueue.create({ jurisdiction_name: matched.name, state: matched.state, jurisdiction_type: jurisdictionType, parent_county_name: county, status: "not_started", dispatch_rank: 0, missing_next: "Office research \u2014 auto-queued by an address lookup that needed verified offices." });
+    return { state: "queued" };
+  } catch {
+    return { state: "unknown" };
+  }
+}
 function addressResponse(data, init = {}) {
   const response = Response.json({ ...data, lookup_revision: ADDRESS_LOOKUP_REVISION }, init);
   response.headers.set("X-CCS-Address-Revision", ADDRESS_LOOKUP_REVISION);
@@ -1172,11 +1193,13 @@ Deno.serve(async (req) => {
     await reporter.emit({ kind: "catalog_check", detail: catalogs ? `Checked ${localities.length} saved jurisdictions. ${matched ? `Unique location match: ${matched.name}. ${matched.offices?.some((office) => office.authority_verification_status === "staff_verified") ? "Checking reviewed office roles." : "Office setup needs review; website research stays in the review tools."}` : "No unique confirmed match. Website research stays available in the review tools."}` : "The saved-office record service was busy \u2014 the office match is deferred to the next lookup, not lost." });
     const authority = summarizeMatchedLocalityAuthority(matched);
     const applyAllowed = Boolean(matched && authority.verified_roles.includes("sign_permit") && authority.verified_roles.includes("zoning"));
+    const officeResearch = matched && !applyAllowed ? await kickOfficeResearch(base44, matched, profiles) : null;
+    if (officeResearch) await reporter.emit({ kind: "catalog_check", detail: { queued: "No verified offices on file \u2014 queued this jurisdiction for priority office research.", already_queued: "Office research is already in progress for this jurisdiction.", backfill_pending: "Office research landed \u2014 the saved-office record is catching up.", verification_pending: "Offices are on file and awaiting verification." }[officeResearch.state] || "Office research status is being checked." });
     const automatic = null;
     const addressArchives = null;
     const reason = matched ? resolution.reason : resolution.status === "location_verified" ? `Location is ${resolution.target.name}, but we are not sure which office handles permits there yet. Someone on the team can look it up in the review tools.` : resolution.reason;
     await reporter.emit({ kind: "address_findings", detail: reason }, { stage: applyAllowed ? "Ready to use" : "Administrator review needed", processed: 1, total: 1, indeterminate: false });
-    return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, office_check_deferred: officeCheckDeferred, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
+    return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, office_research: officeResearch, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, office_check_deferred: officeCheckDeferred, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
   } catch (error) {
     const errorStatus = Number(error?.status || error?.response?.status || 0);
     if (errorStatus === 429 || /rate limit|too many requests|traffic volume/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3, error_detail: String(error?.message || error).slice(0, 300) }, { status: 429, headers: { "Retry-After": "3" } });
