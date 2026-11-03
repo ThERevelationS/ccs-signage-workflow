@@ -91,7 +91,7 @@ function normalizeOrderRequestTypes(values) {
   return normalized;
 }
 
-export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientName }) {
+export default function WorkOrderOrders({ workOrderId, clientName }) {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
@@ -333,15 +333,6 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     } finally {
       deleteInFlightRef.current = false;
     }
-  };
-
-  const getFilteredUsers = (searchTerm) => {
-    if (!searchTerm) return users.slice(0, 10);
-    const lower = searchTerm.toLowerCase();
-    return users.filter(u => 
-      u.full_name?.toLowerCase().includes(lower) ||
-      u.email?.toLowerCase().includes(lower)
-    ).slice(0, 10);
   };
 
   const getRequestorColor = (email) => {
