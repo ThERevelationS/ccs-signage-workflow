@@ -8267,18 +8267,18 @@ Deno.serve(async (req) => {
           { id: fresh.id, updated_date: fresh.updated_date, user_email: target.email, status: 'clocked_out' },
           { $set: writeSet },
         );
-        if (!upd || typeof upd.updated !== 'number') {
+        if (!upd || upd.updated !== 1) {
           return Response.json({ success: false, retry_same_request: true, error: 'The work-day group changed while deciding. Retry this request.' }, { status: 409 });
         }
       }
-      await audit(auditEntity, {
+      await ensureUserActionAudit(auditEntity, {
         action: 'work_day_decision', outcome: decision === 'same_day' ? 'confirmed' : 'declined',
         user_email: target.email, user_name: target.full_name || target.email,
         actor_email: actorEmail, actor_role: actor.role, authentication_method: authenticationMethodFor(actor, target),
         server_timestamp: decidedAt, request_id: requestId,
         reason: decision === 'same_day' ? 'Employee confirmed a multi-segment work day' : 'Employee declined a work-day grouping',
         details: { signature: expectedSignature, group_id: decision === 'same_day' ? groupId : null, anchor_date: promptNow.anchor_date, entry_ids: promptNow.entries.map((row: any) => row.id), span_minutes: promptNow.span_minutes },
-      });
+      }, 'Work-day decision audit');
       return Response.json({ success: true, decision, group_id: decision === 'same_day' ? groupId : null, anchor_date: promptNow.anchor_date, user: publicEmployee(target) });
     }
 
