@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
 
 // Export/import the page's `values` map as JSON. Import keeps only keys that
