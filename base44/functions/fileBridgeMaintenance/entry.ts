@@ -138,6 +138,55 @@ Deno.serve(async (req) => {
   }
   out.sweeps.link_match = linkStats;
 
+  // ---- link reconcile (FB-31) ----
+  // a) broken-link detection: linked folder missing/renamed → status:'broken'
+  //    (folder reappears → restores previous status). Renamed folders surface
+  //    as NEW suggestions via the match sweep above.
+  // b) customer_ids[] re-derivation: rows under a confirmed link's folder get
+  //    customer_id added — powers customer-scoped search_hot + panel scoping.
+  //    Additive only (never strips; wrong-strip is worse than stale-add).
+  //    Capped at 100 updates/run to protect the shared entity budget.
+  const recStats: any = { checked: 0, broken: 0, healed: 0, cid_updates: 0 };
+  const allLinks = await sr.entities.CustomerFolderLink.filter(
+    { status: { $in: ['confirmed', 'suggested', 'broken'] } }, 'folder_path', 500,
+  ).catch(() => []);
+  const escRx = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const l of allLinks || []) {
+    recStats.checked += 1;
+    const dir = await sr.entities.FileIndex.filter(
+      { root_key: l.root_key, path: l.folder_path, is_dir: true }, '-updated_date', 1,
+    ).catch(() => []);
+    const alive = !!dir?.[0] && !dir[0].missing;
+    if (!alive && l.status !== 'broken') {
+      await sr.entities.CustomerFolderLink.update(l.id, {
+        status: 'broken', broken_at: now(), prev_status: l.status,
+      }).catch(() => null);
+      recStats.broken += 1;
+    } else if (alive && l.status === 'broken') {
+      await sr.entities.CustomerFolderLink.update(l.id, {
+        status: l.prev_status || 'suggested', broken_at: 0, prev_status: '',
+      }).catch(() => null);
+      recStats.healed += 1;
+    }
+  }
+  let cidBudget = 100;
+  for (const l of (allLinks || []).filter((x: any) => x.status === 'confirmed')) {
+    if (cidBudget <= 0) break;
+    const rows = await sr.entities.FileIndex.filter(
+      { root_key: l.root_key, path: { $regex: `^${escRx(l.folder_path)}(/|$)` }, missing: { $ne: true } },
+      'path', 500,
+    ).catch(() => []);
+    for (const f of rows || []) {
+      if (cidBudget <= 0) break;
+      const ids = new Set(f.customer_ids || []);
+      if (ids.has(l.customer_id)) continue;
+      ids.add(l.customer_id);
+      const u = await sr.entities.FileIndex.update(f.id, { customer_ids: [...ids] }).catch(() => null);
+      if (u !== null) { recStats.cid_updates += 1; cidBudget -= 1; }
+    }
+  }
+  out.sweeps.link_reconcile = recStats;
+
   await sr.entities.FileBridgeEvent.create({
     event_type: 'maintenance_run', actor: 'system', severity: 'info', ts: now(), details: out.sweeps,
   }).catch(() => null);
