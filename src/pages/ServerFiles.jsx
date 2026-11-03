@@ -492,6 +492,7 @@ function EntryTable({ entries, busy, onOpen, onDelete, onRestore, onNavigate, on
               title={r.path}>
               {r.name}
               {r.pinned && <Pin className="inline h-3 w-3 ml-1 text-amber-500" />}
+              {r.copies > 1 && <Badge variant="outline" className="ml-1.5 text-[10px] px-1 py-0" title="Indexed on primary + backup">{r.copies} copies</Badge>}
               {r.match === "content" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">content</Badge>}
               {r.snip && <span className="block text-xs font-normal text-muted-foreground truncate">{r.snip}</span>}
             </button>
