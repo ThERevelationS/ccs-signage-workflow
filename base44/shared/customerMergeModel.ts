@@ -486,6 +486,30 @@ export function buildWinnerPatch({ keep, lose, masterDecision }: any = {}): Reco
     if (v && v !== clean(keep?.company_name)) legacy.add(v);
   }
   if (legacy.size > before) patch.legacy_client_names = [...legacy].sort();
+
+  // Warning flags (N-07.5b residual): union the loser's badges onto the
+  // winner and absorb its per-flag audit details for flags the winner lacks.
+  const flags = new Set<string>(
+    (Array.isArray(keep?.warning_flags) ? keep.warning_flags : [])
+      .map(clean).filter(Boolean),
+  );
+  const flagsBefore = flags.size;
+  for (const f of Array.isArray(lose?.warning_flags) ? lose.warning_flags : []) {
+    const v = clean(f);
+    if (v) flags.add(v);
+  }
+  if (flags.size > flagsBefore) {
+    patch.warning_flags = [...flags].sort();
+    const details: Record<string, any> = {
+      ...(keep?.warning_flag_details && typeof keep.warning_flag_details === 'object' ? keep.warning_flag_details : {}),
+    };
+    for (const [k, v] of Object.entries(
+      lose?.warning_flag_details && typeof lose.warning_flag_details === 'object' ? lose.warning_flag_details : {},
+    )) {
+      if (!(k in details)) details[k] = v;
+    }
+    patch.warning_flag_details = details;
+  }
   void keepId;
   return patch;
 }
