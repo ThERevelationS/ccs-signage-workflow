@@ -3,7 +3,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {
   COMMAND_SPECS, routeAgent, dedupeKey, safeRelPath, normPath,
   normalizeFileBridgeSettings, canDelete, canMove, isDeliveryStale,
-  parseQualifiers, FB_HEALTHY_AGE_MS, FB_BULK_DELETE_CAP,
+  parseQualifiers, FB_HEALTHY_AGE_MS, FB_BULK_DELETE_CAP, mergeServerCopies,
 } from '../../shared/fileBridgeModel.ts';
 
 // fileBridgeAction — session-authenticated staff API. Every staff-facing read
@@ -33,6 +33,11 @@ async function rateOk(sr: any, actorKey: string, type: string): Promise<boolean>
 
 // Restricted roots: per-root flag OR settings lists — their deliveries route
 // through secure_download instead of exposing permanent storage URLs.
+// mergeServerCopies prefers role==='primary' — FileIndex rows carry agent_id;
+// stamp role from the configured primary before merging.
+const withRole = (rows: any[], primaryAgentId: string) =>
+  (rows || []).map((r: any) => ({ ...r, role: r.agent_id === primaryAgentId ? 'primary' : 'backup' }));
+
 async function isRestrictedRoot(sr: any, settings: any, root_key: string): Promise<boolean> {
   if (settings.secure_download_roots?.includes(root_key)) return true;
   if (settings.inbound_restricted_roots?.includes(root_key)) return true;
@@ -132,8 +137,9 @@ Deno.serve(async (req) => {
     if (body.customer_id) q.customer_ids = { $contains: String(body.customer_id) };
     const rows = await sr.entities.FileIndex.filter(q, '-mtime_ms', limit * 3).catch(() => []);
     const needle = text.toLowerCase();
-    const hits = (rows || [])
-      .filter((r: any) => !needle || String(r.path || '').toLowerCase().includes(needle) || String(r.name || '').toLowerCase().includes(needle))
+    // primary+backup index the same file → collapse to one row w/ copies count
+    const hits = mergeServerCopies(withRole((rows || [])
+      .filter((r: any) => !needle || String(r.path || '').toLowerCase().includes(needle) || String(r.name || '').toLowerCase().includes(needle)), String(settings.primary_agent_id || '')))
       .slice(0, limit);
     return Response.json({ ok: true, hits, hot_scope: true, parsed: { text, filters } });
   }
@@ -146,11 +152,13 @@ Deno.serve(async (req) => {
     const rows = await sr.entities.FileIndex.filter(
       { root_key, parent_path: rp.path, missing: { $ne: true } }, 'name', 500,
     ).catch(() => []);
+    // primary+backup index the same share → collapse dupes w/ copies badge
+    const merged = mergeServerCopies(withRole(rows || [], String(settings.primary_agent_id || '')));
     // Base44 sort is single-field — dirs-first ordering in memory.
-    (rows || []).sort((a: any, b: any) => (b.is_dir ? 1 : 0) - (a.is_dir ? 1 : 0));
-    const stale = (rows || []).some((r: any) => isDeliveryStale(r));
-    if ((rows || []).length && !body.refresh) {
-      return Response.json({ ok: true, source: 'index', entries: rows, stale_hint: stale });
+    merged.sort((a: any, b: any) => (b.is_dir ? 1 : 0) - (a.is_dir ? 1 : 0));
+    const stale = merged.some((r: any) => isDeliveryStale(r));
+    if (merged.length && !body.refresh) {
+      return Response.json({ ok: true, source: 'index', entries: merged, stale_hint: stale });
     }
     const enq = await enqueue(sr, user, 'list_dir', { root_key, path: rp.path, limit: 500 });
     return Response.json({ ok: true, source: 'command', ...enq });
@@ -372,7 +380,7 @@ Deno.serve(async (req) => {
         { root_key: l.root_key, parent_path: l.folder_path, missing: { $ne: true }, is_dir: false },
         '-mtime_ms', Math.min(Number(body.limit) || 50, 200),
       ).catch(() => []);
-      out.push({ link: l, files: rows || [] });
+      out.push({ link: l, files: mergeServerCopies(withRole(rows || [], String(settings.primary_agent_id || ''))) });
     }
     return Response.json({ ok: true, links: out });
   }
@@ -396,10 +404,11 @@ Deno.serve(async (req) => {
     if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable' }, { status: 503 });
     return Response.json({
       ok: true,
-      entries: (rows || []).filter((r: any) => r.trash_path).map((r: any) => ({
-        id: r.id, root_key: r.root_key, path: r.path, name: r.name, size: r.size,
-        mtime_ms: r.mtime_ms, trash_path: r.trash_path, ext: r.ext, kind: r.kind,
-      })),
+      entries: mergeServerCopies(withRole(rows || [], String(settings.primary_agent_id || '')))
+        .filter((r: any) => r.trash_path).map((r: any) => ({
+          id: r.id, root_key: r.root_key, path: r.path, name: r.name, size: r.size,
+          mtime_ms: r.mtime_ms, trash_path: r.trash_path, ext: r.ext, kind: r.kind,
+        })),
     });
   }
 
