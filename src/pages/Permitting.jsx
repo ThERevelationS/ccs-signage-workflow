@@ -753,6 +753,53 @@ export default function Permitting() {
     }
   }, [workOrders, selectedWorkOrder]);
 
+  // "Apply when verified" — the durable request lives on the PermitLocality
+  // (pending_applies[]) where the research/verification workers already write,
+  // so they consume it the moment offices flip apply-ready. The two WorkOrder
+  // fields are just the UI marker the client group renders.
+  const queueLocalityApply = useCallback(async (workOrderId, localityId, opts = {}) => {
+    const locality = opts.locality?.id === localityId ? opts.locality : localities.find(l => l.id === localityId);
+    if (!locality || !isRegistered) return;
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+    const entry = {
+      work_order_id: workOrderId,
+      requested_by: currentUser?.full_name || currentUser?.email || "staff",
+      requested_at: new Date().toISOString(),
+      exclude_electrical: !!opts.excludeElectrical,
+    };
+    try {
+      const live = await PermitLocality.get(localityId).catch(() => null);
+      const pend = (Array.isArray(live?.pending_applies) ? live.pending_applies : [])
+        .filter(p => String(p?.work_order_id || "") !== String(workOrderId));
+      const saved = await PermitLocality.update(localityId, { pending_applies: [...pend, entry] });
+      setLocalities(prev => prev.map(l => l.id === localityId ? { ...l, ...(saved?.id ? saved : { pending_applies: [...pend, entry] }) } : l));
+    } catch (e) {
+      setPermitLineEditError(e?.message || "Could not queue the office apply — nothing was saved.");
+      return;
+    }
+    updateWorkOrderField(workOrderId, "pending_permit_locality_id", localityId);
+    updateWorkOrderField(workOrderId, "pending_permit_locality_name", locality.name || "");
+  }, [localities, workOrders, currentUser, isRegistered, updateWorkOrderField]);
+
+  // Remove a locality's lines from one job — the office record itself is never
+  // touched, so a later address search re-suggests it when it is still correct.
+  const removeLocalityFromWorkOrder = useCallback(async (workOrderId, localityId) => {
+    const doomed = lineItems.filter(li => li.work_order_id === workOrderId && String(li.locality_id || "") === String(localityId));
+    for (const li of doomed) await deletePermitLineItemSafely(li.id);
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (String(wo?.pending_permit_locality_id || "") === String(localityId)) {
+      updateWorkOrderField(workOrderId, "pending_permit_locality_id", "");
+      updateWorkOrderField(workOrderId, "pending_permit_locality_name", "");
+      try {
+        const live = await PermitLocality.get(localityId);
+        if (Array.isArray(live?.pending_applies)) {
+          await PermitLocality.update(localityId, { pending_applies: live.pending_applies.filter(p => String(p?.work_order_id || "") !== String(workOrderId)) });
+        }
+      } catch {}
+    }
+  }, [lineItems, workOrders, deletePermitLineItemSafely, updateWorkOrderField]);
+
   const fixPermittingStage = useCallback(async (workOrderId) => {
     const wo = workOrders.find((row) => row.id === workOrderId);
     if (!wo?._permittingStageFixAvailable || wo.current_stage === "permitting") return false;
@@ -1096,6 +1143,8 @@ export default function Permitting() {
                   onUpdateNotes={updateNotesAndSync}
                   onUpdateLocality={updateLocality}
                   onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
+                  onQueueLocalityApply={queueLocalityApply}
+                  onRemoveLocality={removeLocalityFromWorkOrder}
                   onLinkLegacyOffice={linkLegacyPermitLineOffice}
                   onOpenWorkOrder={openWorkOrder}
                   onShowLocalityInfo={setLocalityInfoId}
