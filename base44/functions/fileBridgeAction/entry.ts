@@ -347,6 +347,38 @@ Deno.serve(async (req) => {
     return Response.json({ ok: true, status: decision });
   }
 
+  // ---------- send_file_email ----------
+  // Sends the delivered file_url as a link (SendEmail has no attachment API).
+  // Requires a fresh delivered_url — caller should queue_fetch first when
+  // needs_delivery comes back.
+  if (action === 'send_file_email') {
+    const to = String(body.to || '').trim();
+    const p = safeRelPath(String(body.path || ''));
+    const root_key = String(body.root_key || '');
+    if (!to || !p.ok || !root_key || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+      return Response.json({ error: 'to, root_key and path are required' }, { status: 400 });
+    }
+    const rows = await sr.entities.FileIndex.filter(
+      { root_key, path: p.path }, '-updated_date', 1,
+    ).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((rows as any)?.__err) return Response.json({ error: 'read_unavailable', retry: true }, { status: 503 });
+    const row = rows?.[0];
+    const fresh = row?.delivered_url && !(row.delivered_at_ms && row.mtime_ms > row.delivered_at_ms);
+    if (!row || !fresh) return Response.json({ needs_delivery: true, ok: false }, { status: 409 });
+    const who = user.full_name || user.email;
+    const subject = String(body.subject || `File from ${who}: ${row.name}`).slice(0, 200);
+    const msg = String(body.message || '').slice(0, 4000);
+    await sr.integrations.Core.SendEmail({
+      to, subject,
+      body: `${msg ? `${msg}\n\n` : ''}${who} shared a file with you from the shop server:\n\n${row.name}\n${row.delivered_url}\n\n(Sent via CCS Signage Workflow)`,
+    });
+    await sr.entities.FileBridgeEvent.create({
+      event_type: 'file_emailed', actor: user.email, root_key, path: p.path,
+      severity: 'info', details: { to }, ts: now(),
+    }).catch(() => null);
+    return Response.json({ ok: true, sent_to: to, file_url: row.delivered_url });
+  }
+
   // ---------- admin_settings ----------
   if (action === 'admin_settings') {
     if (!isAdmin) return Response.json({ error: 'Admin required' }, { status: 403 });
