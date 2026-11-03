@@ -276,6 +276,47 @@ export function projectQuoteDefaults(row) {
 }
 
 // ---------------------------------------------------------------------------
+// My Workflow — feed projection for GeneralTask rows (the page's items set),
+// the AuthorizedEmail assignee roster, and the two GlobalSettings records the
+// page mounts with. Every slice here is GLOBAL — the session gates access but
+// never shapes the payload: the page keeps its own "assigned to me" filtering
+// client-side exactly as before, and the pickers need the whole roster.
+// ---------------------------------------------------------------------------
+
+// Every declared GeneralTask field + system fields. The page keeps the loaded
+// row whole as _generalRecord: updateGeneralTaskIfUnchanged anchors its CAS
+// baseline on updated_date plus the fields it rewrites (text, assigned_to,
+// sub_tasks, completed), so nothing the schema declares may be stripped.
+export const GENERAL_TASK_FIELDS = [
+  'id', 'created_date', 'updated_date',
+  'text', 'stage', 'assigned_to', 'sub_tasks', 'completed',
+  'blocked', 'blocked_reason', 'due_date', 'created_by_name',
+];
+
+export function projectGeneralTask(row) {
+  if (!row || typeof row !== 'object') return row;
+  const out = {};
+  for (const field of GENERAL_TASK_FIELDS) out[field] = row[field];
+  return out;
+}
+
+// AuthorizedEmail rows power the page's three assignee pickers. The allowlist
+// is deliberately tight — the entity carries credential/session fields on
+// staffDataRead's FIELD_DENYLIST — and covers every field the pickers and the
+// roster model touch: full_name/email/id for labels and keys, is_active +
+// sales_roles for eligibleTaskAssignees/canonicalSalesPersonRoster.
+export const MY_WORKFLOW_USER_FIELDS = [
+  'id', 'email', 'full_name', 'sales_roles', 'is_active',
+];
+
+export function projectWorkflowUser(row) {
+  if (!row || typeof row !== 'object') return row;
+  const out = {};
+  for (const field of MY_WORKFLOW_USER_FIELDS) out[field] = row[field];
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Feed cache keys — canonical isolate-cache key so a burst of identical
 // composed pulls collapses to one upstream read set. Isolation rules the
 // tests assert: distinct feeds, lenses, owners and include sets never share
