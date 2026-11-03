@@ -391,5 +391,46 @@ Deno.serve(async (req) => {
     return Response.json({ ok: true, settings: next });
   }
 
+  // ---------- promote_agent / demote_agent (staff-initiated failover) ----------
+  // Operator-side counterpart to the agent's become_primary claim. Admin-only:
+  // flips settings.primary_agent_id + both agents' health roles. The promoted
+  // agent picks up its new role on next handshake/heartbeat (≤120s); the
+  // demoted one refuses mutations the moment it re-handshakes.
+  if (action === 'promote_agent' || action === 'demote_agent') {
+    if (!isAdmin) return Response.json({ error: 'Admin required' }, { status: 403 });
+    const target = String(body.agent_id || '');
+    if (!target) return Response.json({ error: 'agent_id required' }, { status: 400 });
+    const hs = await sr.entities.FileBridgeHealth.filter({ agent_id: target }, '-updated_date', 1).catch(() => []);
+    if (!hs?.[0]) return Response.json({ error: `unknown agent '${target}'` }, { status: 404 });
+    const current = String(settings.primary_agent_id || '');
+    if (action === 'promote_agent') {
+      if (current === target) return Response.json({ ok: true, already: true, primary: target });
+      const next = normalizeFileBridgeSettings({ ...settings, primary_agent_id: target });
+      if (!settingsRow?.[0]?.id) return Response.json({ error: 'settings row missing' }, { status: 503 });
+      await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });
+      await sr.entities.FileBridgeHealth.update(hs[0].id, { role: 'primary' }).catch(() => null);
+      if (current) {
+        const ch = await sr.entities.FileBridgeHealth.filter({ agent_id: current }, '-updated_date', 1).catch(() => []);
+        if (ch?.[0]) await sr.entities.FileBridgeHealth.update(ch[0].id, { role: 'backup' }).catch(() => null);
+      }
+      await sr.entities.FileBridgeEvent.create({
+        event_type: 'staff_promote', agent_id: target, actor: user.email || 'staff',
+        severity: 'warn', details: { previous_primary: current || null },
+      }).catch(() => null);
+      return Response.json({ ok: true, primary: target, previous_primary: current || null });
+    }
+    // demote: only allowed on the configured primary
+    if (current !== target) return Response.json({ error: `'${target}' is not the configured primary` }, { status: 409 });
+    const next = normalizeFileBridgeSettings({ ...settings, primary_agent_id: '' });
+    if (!settingsRow?.[0]?.id) return Response.json({ error: 'settings row missing' }, { status: 503 });
+    await sr.entities.GlobalSettings.update(settingsRow[0].id, { setting_value: next });
+    await sr.entities.FileBridgeHealth.update(hs[0].id, { role: 'backup' }).catch(() => null);
+    await sr.entities.FileBridgeEvent.create({
+      event_type: 'staff_demote', agent_id: target, actor: user.email || 'staff',
+      severity: 'warn', details: {},
+    }).catch(() => null);
+    return Response.json({ ok: true, demoted: target, primary: null });
+  }
+
   return Response.json({ error: `unknown action '${action}'` }, { status: 400 });
 });
