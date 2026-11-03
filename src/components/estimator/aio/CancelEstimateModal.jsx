@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useEscapeKey, useModalDialog } from "@/components/estimator/a11y";
 
@@ -17,7 +17,7 @@ const REASONS = [
   "Custom...",
 ];
 
-export default function CancelEstimateModal({ open, onClose, onConfirm, estimateName }) {
+export default function CancelEstimateModal({ open, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
