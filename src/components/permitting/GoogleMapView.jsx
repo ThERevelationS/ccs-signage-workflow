@@ -17,7 +17,7 @@ export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,mar
  useEffect(()=>setPreview(false),[position?.lat,position?.lng,markerTitle]);
  latest.current={position,markerTitle};
  function locate(){const point=latest.current.position;if(point&&map.current){map.current.panTo(point);map.current.setZoom(17);}}
- function zoomToOutline(){const b=boundaryBounds(boundaries);if(b&&!b.isEmpty()&&map.current)map.current.fitBounds(b,60);}
+ function zoomToOutline(){const t=(boundaries||[]).filter(f=>f?.properties?.role==='target');const b=boundaryBounds(t.length?t:boundaries);if(b&&!b.isEmpty()&&map.current)map.current.fitBounds(b,60);}
  useEffect(()=>{let cancelled=false,failed=false,listener,observer;setError('');setReady(false);setLayerState({});
   // Measurements belong to this map instance; retries and session changes replace it.
   measure.current=false;setMeasuring(false);setDistance('');
@@ -31,9 +31,10 @@ export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,mar
   return()=>{cancelled=true;unsubscribeAuthFailure();observer?.disconnect();listener?.remove();marker.current?.setMap(null);line.current?.setMap(null);Object.values(layers.current).forEach(layer=>layer.setMap(null));if(map.current)window.google?.maps?.event?.clearInstanceListeners(map.current);map.current=null;marker.current=null;};
  },[sessionToken,attempt,defaultCenter]);
  useEffect(()=>{if(!ready||!map.current)return;const maps=window.google.maps;if(position){map.current.panTo(position);map.current.setZoom(17);if(marker.current){marker.current.setMap(map.current);marker.current.setPosition(position);marker.current.setTitle(markerTitle);}else{marker.current=new maps.Marker({position,map:map.current,title:markerTitle,draggable:!!onDragEnd});if(onDragEnd)marker.current.addListener('dragend',(e)=>onDragEnd({lat:e.latLng.lat(),lng:e.latLng.lng()}));}}else{marker.current?.setMap(null);marker.current=null;}},[ready,position?.lat,position?.lng,markerTitle]);
- useEffect(()=>{if(!ready||!map.current)return;const data=map.current.data;data.forEach(feature=>data.remove(feature));for(const feature of boundaries || []){try{data.addGeoJson(feature);}catch(e){console.warn('Could not draw a boundary outline:',e);}}data.setStyle({visible:boundaryVisible,strokeColor:'#7c3aed',strokeWeight:2.5,fillOpacity:0.08,clickable:false});
-  // New boundaries → zoom out to the whole outline once (user can re-zoom).
-  if(boundaries!==boundaryFit.current){boundaryFit.current=boundaries;const b=boundaryBounds(boundaries);if(b&&!b.isEmpty())map.current.fitBounds(b,60);}
+ useEffect(()=>{if(!ready||!map.current)return;const data=map.current.data;data.forEach(feature=>data.remove(feature));for(const feature of boundaries || []){try{data.addGeoJson(feature);}catch(e){console.warn('Could not draw a boundary outline:',e);}}data.setStyle(f=>f.getProperty('role')==='context'?{visible:boundaryVisible,strokeColor:'#94a3b8',strokeWeight:1.75,fillOpacity:0,clickable:false}:{visible:boundaryVisible,strokeColor:'#7c3aed',strokeWeight:2.5,fillOpacity:0.08,clickable:false});
+  // New boundaries → zoom out to the picked outline once (user can re-zoom);
+  // context rings (e.g. the county line) draw without driving the fit.
+  if(boundaries!==boundaryFit.current){boundaryFit.current=boundaries;const t=(boundaries||[]).filter(f=>f?.properties?.role==='target');const b=boundaryBounds(t.length?t:boundaries);if(b&&!b.isEmpty())map.current.fitBounds(b,60);}
  },[ready,boundaries,boundaryVisible]);
  const destination=position?`${position.lat},${position.lng}`:markerTitle,external=destination?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(destination):'https://www.google.com/maps';
  const hasBoundaries=Array.isArray(boundaries)&&boundaries.length>0;
