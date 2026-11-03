@@ -208,6 +208,45 @@ Deno.serve(async (req) => {
     queue_pin: 'pin_file', queue_relink: 'relink_files',
   };
 
+  // ---------- queue_upload: command first (learns routing), then ledger ----------
+  if (action === 'queue_upload') {
+    const dest = safeRelPath(String(body.dest_dir || ''));
+    const name = String(body.name || '').trim();
+    const size = Number(body.size) || 0;
+    const sha256 = String(body.sha256 || '').toLowerCase();
+    const file_url = String(body.file_url || '');
+    const root_key = String(body.root_key || '');
+    if (!dest.ok || !name || !file_url || !root_key || size <= 0 || !/^[0-9a-f]{64}$/.test(sha256)) {
+      return Response.json({ error: 'root_key, dest_dir, name, file_url, size and sha256 are required' }, { status: 400 });
+    }
+    if (!(await rateOk(sr, user.email, 'upload_apply'))) {
+      return Response.json({ error: 'Rate limit — slow down.' }, { status: 429 });
+    }
+    const upload_id = `up_${uuid()}`;
+    const final_path = dest.path ? `${dest.path}/${name}` : name;
+    const enq = await enqueue(sr, user, 'upload_apply', {
+      upload_id, root_key, dest_dir: dest.path, name, sha256, size, file_url,
+      mode: body.mode === 'revision' ? 'revision' : 'new',
+    }, { request_key: body.request_key });
+    if (enq.error) return Response.json({ error: enq.error }, { status: enq.status || 500 });
+    // Permanent append-only provenance — survives FileIndex reaping so a
+    // promoted backup can still prove bridge-origin (delete guard). A failed
+    // ledger write does not block the apply (agent holds args) but is audited.
+    const up = await sr.entities.FileBridgeUpload.create({
+      upload_id, agent_id: enq.queued_for || '', root_key, path: final_path,
+      name, sha256, size, kind: body.mode === 'revision' ? 'revision' : 'upload',
+      uploaded_by: user.email, customer_id: body.customer_id ? String(body.customer_id) : undefined,
+      file_url, status: 'staged', creation_request_key: String(body.request_key || upload_id),
+    }).catch((e: any) => ({ __err: String(e?.message || e) }));
+    if ((up as any)?.__err) {
+      await sr.entities.FileBridgeEvent.create({
+        event_type: 'upload_ledger_write_failed', actor: user.email, root_key, path: final_path,
+        severity: 'error', details: { upload_id, err: (up as any).__err }, ts: now(),
+      }).catch(() => null);
+    }
+    return Response.json({ ok: true, upload_id, path: final_path, ...enq });
+  }
+
   if (queueTypes[action]) {
     const built = queueTypes[action](body);
     if (built.err) return Response.json({ error: built.err }, { status: 400 });
