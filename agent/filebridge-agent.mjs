@@ -402,6 +402,122 @@ const atomicWrite = async (abs, buf) => {
   fs.renameSync(tmp, abs);
 };
 
+// Shared delivery tail: ≤44MB single-shot via deliver_complete, above that
+// 32MB seq chunks via deliver_chunk (seq-deduped → retry-safe; ingest
+// reassembles + completes the command on the last seq). 256MB hard ceiling.
+const deliverFile = async (cmd, abs, { name, size, sha256 }) => {
+  const fname = name || path.posix.basename(abs);
+  if (size <= INLINE_CAP) {
+    const buf = await fs.promises.readFile(abs);
+    const r = await post('deliver_complete', {
+      command_id: cmd.command_id, name: fname,
+      bytes_b64: buf.toString('base64'), sha256, size,
+    }, { timeoutMs: 300_000 });
+    if (r?.status === 200) return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: size, sha256 } };
+    return { ok: false, error: `deliver_failed ${r?.status}`, retry: true };
+  }
+  if (size > 256 * 1024 * 1024) {
+    return { ok: false, error: `file too large for staged delivery (${size})`, needs_proxy: true };
+  }
+  const CHUNK = 32 * 1024 * 1024;
+  const total = Math.ceil(size / CHUNK);
+  for (let seq = 0; seq < total; seq += 1) {
+    const off = seq * CHUNK;
+    const len = Math.min(CHUNK, size - off);
+    const buf = await readFileRange(abs, off, len);
+    const csha = crypto.createHash('sha256').update(buf).digest('hex');
+    const body = {
+      command_id: cmd.command_id, seq, total, bytes_b64: buf.toString('base64'),
+      sha256: csha, file_sha256: sha256, name: fname, size,
+    };
+    let r = await post('deliver_chunk', body, { timeoutMs: 300_000 });
+    if (!r || r.status === 429 || (r.status >= 500 && r.status < 600)) {
+      await new Promise((s) => setTimeout(s, 3000));
+      r = await post('deliver_chunk', body, { timeoutMs: 300_000 });
+    }
+    if (r?.status !== 200) return { ok: false, error: `chunk ${seq} deliver_failed ${r?.status}`, retry: true };
+    if (seq === total - 1) {
+      if (!r.json.file_url) return { ok: false, error: 'assembly did not return file_url', retry: true };
+      return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: size, sha256 } };
+    }
+  }
+  return { ok: false, error: 'chunk loop ended without final response', retry: true };
+};
+
+// ---- minimal zip writer (STORE method — no compression, no deps) ----
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n += 1) {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+const crc32 = (() => {
+  const mk = () => {
+    let crc = 0xffffffff;
+    return {
+      update(buf) { for (let i = 0; i < buf.length; i += 1) crc = CRC_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8); },
+      digest: () => (crc ^ 0xffffffff) >>> 0,
+    };
+  };
+  return mk;
+})();
+const dosDateTime = (d = new Date()) => ({
+  time: ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xffff,
+  date: (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xffff,
+});
+
+// Streams entries into `out` as a valid zip (STORE method, data descriptors
+// so files read once). entries: [{arcname, abs, size}].
+const writeStoreZip = async (out, entries) => {
+  const fd = fs.createWriteStream(out);
+  const write = (buf) => new Promise((res, rej) => { fd.write(buf, (e) => (e ? rej(e) : res())); });
+  const u32 = (n) => { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0, 0); return b; };
+  const u16 = (n) => { const b = Buffer.alloc(2); b.writeUInt16LE(n & 0xffff, 0); return b; };
+  const central = [];
+  let offset = 0;
+  const { time, date } = dosDateTime();
+  for (const e of entries) {
+    const nameBuf = Buffer.from(e.arcname.replace(/\\/g, '/'), 'utf8');
+    const localOff = offset;
+    // local header — crc/sizes zeroed, bit 3 = data descriptor follows data
+    const lh = Buffer.concat([
+      u32(0x04034b50), u16(20), u16(0x0800 | 8), u16(0), u16(time), u16(date),
+      u32(0), u32(0), u32(0), u16(nameBuf.length), u16(0), nameBuf,
+    ]);
+    await write(lh); offset += lh.length;
+    const c = crc32(); let written = 0;
+    await new Promise((res, rej) => {
+      const rs = fs.createReadStream(e.abs);
+      rs.on('data', (chunk) => { c.update(chunk); written += chunk.length; });
+      rs.pipe(fd, { end: false });
+      rs.on('end', res); rs.on('error', rej);
+    });
+    offset += written;
+    const crc = c.digest();
+    const dd = Buffer.concat([u32(0x08074b50), u32(crc), u32(written), u32(written)]);
+    await write(dd); offset += dd.length;
+    central.push({ nameBuf, crc, size: written, localOff, time, date });
+  }
+  const cdStart = offset;
+  for (const e of central) {
+    const cd = Buffer.concat([
+      u32(0x02014b50), u16(20), u16(20), u16(0x0800 | 8), u16(0), u16(e.time), u16(e.date),
+      u32(e.crc), u32(e.size), u32(e.size), u16(e.nameBuf.length), u16(0), u16(0),
+      u16(0), u16(0), u32(0), u32(e.localOff), e.nameBuf,
+    ]);
+    await write(cd); offset += cd.length;
+  }
+  const eocd = Buffer.concat([
+    u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length),
+    u32(offset - cdStart), u32(cdStart), u16(0),
+  ]);
+  await write(eocd);
+  await new Promise((res, rej) => { fd.end((e) => (e ? rej(e) : res())); });
+};
+
 const executors = {
   // served from the local index — O(1), no disk hit, same row shape as scan
   list_dir: async (args) => {
@@ -437,46 +553,42 @@ const executors = {
     if (args.expected_sha256 && args.expected_sha256 !== sha) {
       return { ok: false, error: 'file changed since request (sha256 mismatch)', changed: true };
     }
-    if (st.size <= INLINE_CAP) {
-      const buf = await fs.promises.readFile(abs);
-      const r = await post('deliver_complete', {
-        command_id: cmd.command_id, name: path.posix.basename(abs),
-        bytes_b64: buf.toString('base64'), sha256: sha, size: st.size,
-      }, { timeoutMs: 300_000 });
-      if (r?.status === 200) return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: st.size, sha256: sha } };
-      return { ok: false, error: `deliver_failed ${r?.status}`, retry: true };
+    return deliverFile(cmd, abs, { size: st.size, sha256: sha });
+  },
+
+  // zip a set of files under one root → delivered file_url. STORE method
+  // (no compression) keeps it dependency-free and CPU-cheap; the point is
+  // one-download-many-files, not shrinkage.
+  package_files: async (args, cmd) => {
+    const root = rootFor(args.root_key);
+    if (!root) return { ok: false, error: `unknown root '${args.root_key}'` };
+    const entries = [];
+    for (const p of args.paths || []) {
+      const rel = normRel(p);
+      const abs = rel !== null ? resolveInRoot(root, rel) : null;
+      const st = abs ? await fs.promises.stat(abs).catch(() => null) : null;
+      if (!abs || !st || !st.isFile()) return { ok: false, error: `unreadable: ${p}` };
+      entries.push({ arcname: path.posix.basename(abs), abs, size: st.size });
     }
-    // chunked path — >44MB, hard ceiling 256MB (assembly cap ingest-side)
-    if (st.size > 256 * 1024 * 1024) {
-      return { ok: false, error: `file too large for staged delivery (${st.size})`, needs_proxy: true };
-    }
-    const CHUNK = 32 * 1024 * 1024;
-    const total = Math.ceil(st.size / CHUNK);
-    const name = path.posix.basename(abs);
-    for (let seq = 0; seq < total; seq += 1) {
-      const off = seq * CHUNK;
-      const len = Math.min(CHUNK, st.size - off);
-      const buf = await readFileRange(abs, off, len);
-      const csha = crypto.createHash('sha256').update(buf).digest('hex');
-      let r = await post('deliver_chunk', {
-        command_id: cmd.command_id, seq, total, bytes_b64: buf.toString('base64'),
-        sha256: csha, file_sha256: sha, name, size: st.size,
-      }, { timeoutMs: 300_000 });
-      // one retry per chunk on transport failure — seq dedupe makes it safe
-      if (!r || r.status === 429 || (r.status >= 500 && r.status < 600)) {
-        await new Promise((s) => setTimeout(s, 3000));
-        r = await post('deliver_chunk', {
-          command_id: cmd.command_id, seq, total, bytes_b64: buf.toString('base64'),
-          sha256: csha, file_sha256: sha, name, size: st.size,
-        }, { timeoutMs: 300_000 });
-      }
-      if (r?.status !== 200) return { ok: false, error: `chunk ${seq} deliver_failed ${r?.status}`, retry: true };
-      if (seq === total - 1) {
-        if (!r.json.file_url) return { ok: false, error: 'assembly did not return file_url', retry: true };
-        return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: st.size, sha256: sha } };
+    if (!entries.length) return { ok: false, error: 'no paths' };
+    // disambiguate duplicate basenames inside the archive
+    const seen = new Map();
+    for (const e of entries) {
+      const n = (seen.get(e.arcname) || 0) + 1; seen.set(e.arcname, n);
+      if (n > 1) {
+        const dot = e.arcname.lastIndexOf('.');
+        e.arcname = dot > 0 ? `${e.arcname.slice(0, dot)}-${n}${e.arcname.slice(dot)}` : `${e.arcname}-${n}`;
       }
     }
-    return { ok: false, error: 'chunk loop ended without final response', retry: true };
+    const totalBytes = entries.reduce((n, e) => n + e.size, 0);
+    if (totalBytes > 240 * 1024 * 1024) return { ok: false, error: `package too large (${totalBytes})`, needs_proxy: true };
+    const tmp = path.join(STATE_DIR, `pkg-${cmd.command_id || Date.now()}.zip`);
+    try {
+      await writeStoreZip(tmp, entries);
+      const st = await fs.promises.stat(tmp);
+      const sha = await sha256File(tmp);
+      return await deliverFile(cmd, tmp, { name: args.archive_name || 'package.zip', size: st.size, sha256: sha });
+    } finally { await fs.promises.unlink(tmp).catch(() => null); }
   },
 
   // name/path deep search — FTS5 when available, LIKE fallback. Content
