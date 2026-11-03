@@ -66,6 +66,8 @@ export default function PermitClientGroup({
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
   const [removeOfficeOpen, setRemoveOfficeOpen] = useState(false);
+  // "Mark all submitted" asks with a styled dialog — never window.confirm.
+  const [markSentAsk, setMarkSentAsk] = useState(null);
   const expanded = controlledExpanded ?? internalExpanded;
   const setExpanded = (nextExpanded) => {
     if (onExpandedChange) onExpandedChange(nextExpanded);
@@ -230,12 +232,7 @@ export default function PermitClientGroup({
               type="button"
               className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
               title="Mark every pending line in this job as submitted today"
-              onClick={() => {
-                const pending = group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li));
-                if (!window.confirm(`Mark ${pending.length} application${pending.length === 1 ? "" : "s"} as sent to the office today? Only press OK if you really sent ${pending.length === 1 ? "it" : "them all"}.`)) return;
-                const today = new Date().toISOString().slice(0, 10);
-                for (const li of pending) onUpdateField(li.id, "submitted_date", today);
-              }}
+              onClick={() => setMarkSentAsk(group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}
             >Mark all submitted</button>
           )}
           {queueState.timingLabel && (
@@ -566,6 +563,31 @@ export default function PermitClientGroup({
       {/* Remove this job's applied office — deletes only this job's permit
           lines for that locality; the office record itself is untouched, so
           searching the address again re-suggests the same office. */}
+      {/* Batch "sent today" — a deliberate confirm because this drives the
+          permit_submitted automation for every pending line at once. */}
+      <AlertDialog open={!!markSentAsk} onOpenChange={(o) => { if (!o) setMarkSentAsk(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark {markSentAsk?.length || 0} application{(markSentAsk?.length || 0) === 1 ? '' : 's'} as sent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This stamps today's date on every pending permit line for this job. Only confirm if you really sent {(markSentAsk?.length || 0) === 1 ? 'it' : 'them all'} to the office.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not yet</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                for (const li of markSentAsk || []) onUpdateField(li.id, "submitted_date", today);
+                setMarkSentAsk(null);
+              }}
+            >
+              Yes — I sent them
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={removeOfficeOpen} onOpenChange={setRemoveOfficeOpen}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
