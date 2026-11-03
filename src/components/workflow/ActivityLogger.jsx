@@ -1,1 +1,306 @@
-aW1wb3J0IHsgTm90aWZpY2F0aW9uVHJpZ2dlcnMgfSBmcm9tICIuL05vdGlmaWNhdGlvblNlcnZpY2UiOwppbXBvcnQgeyBjcmVhdGVBY3Rpdml0eUxvZ0Jlc3RFZmZvcnQgfSBmcm9tICIuL2FjdGl2aXR5UGVyc2lzdGVuY2UiOwppbXBvcnQgeyBsb2FkQWxsRW50aXR5Um93cyB9IGZyb20gIkAvY29tcG9uZW50cy9lc3RpbWF0b3IvbG9hZEFsbEVudGl0eVJvd3MiOwppbXBvcnQgeyBzdGFmZkVudGl0aWVzIH0gZnJvbSAiQC9jb21wb25lbnRzL3N0YWZmL3N0YWZmRW50aXRpZXMiOwoKY29uc3QgQWN0aXZpdHlMb2cgPSBzdGFmZkVudGl0aWVzLkFjdGl2aXR5TG9nOwoKZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGdldEN1cnJlbnRVc2VyKCkgewogIC8vIEdldCB1c2VyIGZyb20gbG9jYWxTdG9yYWdlIChzZXQgYnkgRW1haWxHYXRlKQogIGNvbnN0IHN0b3JlZEVtYWlsID0gbG9jYWxTdG9yYWdlLmdldEl0ZW0oInVzZXJFbWFpbCIpOwogIGlmIChzdG9yZWRFbWFpbCkgewogICAgdHJ5IHsKICAgICAgY29uc3QgdXNlcnMgPSBhd2FpdCBsb2FkQWxsRW50aXR5Um93cyh7CiAgICAgICAgZW50aXR5OiBzdGFmZkVudGl0aWVzLkF1dGhvcml6ZWRFbWFpbCwKICAgICAgICBzb3J0OiBudWxsLAogICAgICAgIGxhYmVsOiAiQWN0aXZpdHkgbG9nZ2VyIGF1dGhvcml6ZWQgdXNlcnMiLAogICAgICB9KTsKICAgICAgY29uc3QgdXNlciA9IHVzZXJzLmZpbmQodSA9PiB1LmVtYWlsLnRvTG93ZXJDYXNlKCkgPT09IHN0b3JlZEVtYWlsLnRvTG93ZXJDYXNlKCkpOwogICAgICBpZiAodXNlcikgewogICAgICAgIHJldHVybiB1c2VyOwogICAgICB9CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBjb25zb2xlLmVycm9yKCJFcnJvciBnZXR0aW5nIGN1cnJlbnQgdXNlcjoiLCBlcnJvcik7CiAgICB9CiAgfQogIHJldHVybiB7IGVtYWlsOiAidW5rbm93biIsIGZ1bGxfbmFtZTogIlVua25vd24gVXNlciIgfTsKfQoKZXhwb3J0IGZ1bmN0aW9uIGdldFVzZXJEaXNwbGF5TmFtZSh1c2VyKSB7CiAgaWYgKHVzZXI/LmZ1bGxfbmFtZSkgewogICAgcmV0dXJuIHVzZXIuZnVsbF9uYW1lLnNwbGl0KCIgIilbMF07IC8vIEZpcnN0IG5hbWUgb25seQogIH0KICBpZiAodXNlcj8uZW1haWwpIHsKICAgIHJldHVybiB1c2VyLmVtYWlsLnNwbGl0KCJAIilbMF07CiAgfQogIHJldHVybiAiVW5rbm93biI7Cn0KCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBsb2dBY3Rpdml0eSh7CiAgd29ya09yZGVySWQsCiAgd29ya09yZGVyVGl0bGUsCiAgYWN0aW9uVHlwZSwKICBhY3Rpb25EZXRhaWxzLAogIHByZXZpb3VzVmFsdWUgPSBudWxsLAogIG5ld1ZhbHVlID0gbnVsbAp9KSB7CiAgY29uc3QgdXNlciA9IGF3YWl0IGdldEN1cnJlbnRVc2VyKCk7CiAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgCiAgY29uc3QgcmVzdWx0ID0gYXdhaXQgY3JlYXRlQWN0aXZpdHlMb2dCZXN0RWZmb3J0KHsKICAgIGVudGl0eTogQWN0aXZpdHlMb2csCiAgICBkYXRhOiB7CiAgICAgIHdvcmtfb3JkZXJfaWQ6IHdvcmtPcmRlcklkLAogICAgICB3b3JrX29yZGVyX3RpdGxlOiB3b3JrT3JkZXJUaXRsZSB8fCAiVW5rbm93biIsCiAgICAgIGFjdGlvbl90eXBlOiBhY3Rpb25UeXBlLAogICAgICBhY3Rpb25fZGV0YWlsczogYWN0aW9uRGV0YWlscywKICAgICAgcHJldmlvdXNfdmFsdWU6IHByZXZpb3VzVmFsdWUsCiAgICAgIG5ld192YWx1ZTogbmV3VmFsdWUsCiAgICAgIHBlcmZvcm1lZF9ieV9lbWFpbDogdXNlci5lbWFpbCwKICAgICAgcGVyZm9ybWVkX2J5X25hbWU6IGRpc3BsYXlOYW1lCiAgICB9LAogICAgbGFiZWw6IGBBY3Rpdml0eSBsb2cgZm9yICR7YWN0aW9uVHlwZSB8fCAiV29yayBPcmRlciBhY3Rpb24ifWAsCiAgfSk7CiAgaWYgKCFyZXN1bHQubG9nZ2VkKSB7CiAgICBjb25zb2xlLmVycm9yKHJlc3VsdC53YXJuaW5nIHx8ICJXb3JrIE9yZGVyIGFjdGl2aXR5IGNvdWxkIG5vdCBiZSByZWNvcmRlZC4gVGhlIGJ1c2luZXNzIGFjdGlvbiByZW1haW5zIHNhdmVkLiIpOwogIH0KICByZXR1cm4gcmVzdWx0Owp9CgovLyBIZWxwZXIgZnVuY3Rpb25zIGZvciBjb21tb24gYWN0aW9ucyAtIGxvZ3MgYWN0aXZpdHkgQU5EIHRyaWdnZXJzIGVtYWlsIG5vdGlmaWNhdGlvbnMKZXhwb3J0IGNvbnN0IEFjdGl2aXR5QWN0aW9ucyA9IHsKICB3b3JrT3JkZXJDcmVhdGVkOiBhc3luYyAod28pID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAid29ya19vcmRlcl9jcmVhdGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYENyZWF0ZWQgd29yayBvcmRlciAiJHt3by50aXRsZX0iIGZvciAke3dvLmNsaWVudF9uYW1lfWAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMud29ya09yZGVyQ3JlYXRlZCh3bywgZGlzcGxheU5hbWUpOwogIH0sCgogIHdvcmtPcmRlckNvbXBsZXRlZDogYXN5bmMgKHdvKSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogIndvcmtfb3JkZXJfY29tcGxldGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYE1hcmtlZCAiJHt3by50aXRsZX0iIGFzIGNvbXBsZXRlZGAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMud29ya09yZGVyQ29tcGxldGVkKHdvLCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgd29ya09yZGVyRGVsZXRlZDogYXN5bmMgKHdvKSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogIndvcmtfb3JkZXJfZGVsZXRlZCIsCiAgICAgIGFjdGlvbkRldGFpbHM6IGBEZWxldGVkIHdvcmsgb3JkZXIgIiR7d28udGl0bGV9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMud29ya09yZGVyRGVsZXRlZCh3bywgZGlzcGxheU5hbWUpOwogIH0sCgogIHJpZGVyQ3JlYXRlZDogYXN5bmMgKHdvLCBwYXJlbnRUaXRsZSkgPT4gewogICAgY29uc3QgdXNlciA9IGF3YWl0IGdldEN1cnJlbnRVc2VyKCk7CiAgICBjb25zdCBkaXNwbGF5TmFtZSA9IGdldFVzZXJEaXNwbGF5TmFtZSh1c2VyKTsKICAgIGF3YWl0IGxvZ0FjdGl2aXR5KHsKICAgICAgd29ya09yZGVySWQ6IHdvLmlkLAogICAgICB3b3JrT3JkZXJUaXRsZTogd28udGl0bGUsCiAgICAgIGFjdGlvblR5cGU6ICJyaWRlcl9jcmVhdGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYENyZWF0ZWQgcmlkZXIgIiR7d28udGl0bGV9IiBmb3IgcGFyZW50ICIke3BhcmVudFRpdGxlfSJgCiAgICB9KTsKICAgIGF3YWl0IE5vdGlmaWNhdGlvblRyaWdnZXJzLnJpZGVyQ3JlYXRlZCh3bywgcGFyZW50VGl0bGUsIGRpc3BsYXlOYW1lKTsKICB9LAoKICBzdGFnZUNoYW5nZWQ6IGFzeW5jICh3bywgZnJvbVN0YWdlLCB0b1N0YWdlKSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogInN0YWdlX2NoYW5nZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgTW92ZWQgIiR7d28udGl0bGV9IiBmcm9tICR7ZnJvbVN0YWdlfSB0byAke3RvU3RhZ2V9YCwKICAgICAgcHJldmlvdXNWYWx1ZTogZnJvbVN0YWdlLAogICAgICBuZXdWYWx1ZTogdG9TdGFnZQogICAgfSk7CiAgICBhd2FpdCBOb3RpZmljYXRpb25UcmlnZ2Vycy5zdGFnZUNoYW5nZWQod28sIGZyb21TdGFnZSwgdG9TdGFnZSwgZGlzcGxheU5hbWUpOwogIH0sCgogIG5vdGVBZGRlZDogYXN5bmMgKHdvLCBub3RlVGV4dCwgbm90ZVR5cGUpID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAibm90ZV9hZGRlZCIsCiAgICAgIGFjdGlvbkRldGFpbHM6IGBBZGRlZCAke25vdGVUeXBlfSBub3RlIHRvICIke3dvLnRpdGxlfSI6ICIke25vdGVUZXh0LnN1YnN0cmluZygwLCA1MCl9JHtub3RlVGV4dC5sZW5ndGggPiA1MCA/ICcuLi4nIDogJyd9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMubm90ZUFkZGVkKHdvLCBub3RlVGV4dCwgbm90ZVR5cGUsIGRpc3BsYXlOYW1lKTsKICB9LAoKICBub3RlRGVsZXRlZDogYXN5bmMgKHdvKSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogIm5vdGVfZGVsZXRlZCIsCiAgICAgIGFjdGlvbkRldGFpbHM6IGBEZWxldGVkIGEgbm90ZSBmcm9tICIke3dvLnRpdGxlfSJgCiAgICB9KTsKICAgIGF3YWl0IE5vdGlmaWNhdGlvblRyaWdnZXJzLm5vdGVEZWxldGVkKHdvLCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgc3ViTm90ZUFkZGVkOiBhc3luYyAod28sIHRleHQpID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAic3ViX25vdGVfYWRkZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgQWRkZWQgc3ViLW5vdGUgdG8gIiR7d28udGl0bGV9IjogIiR7dGV4dC5zdWJzdHJpbmcoMCwgNTApfSR7dGV4dC5sZW5ndGggPiA1MCA/ICcuLi4nIDogJyd9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMuc3ViTm90ZUFkZGVkKHdvLCB0ZXh0LCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgc3ViTm90ZURlbGV0ZWQ6IGFzeW5jICh3bykgPT4gewogICAgY29uc3QgdXNlciA9IGF3YWl0IGdldEN1cnJlbnRVc2VyKCk7CiAgICBjb25zdCBkaXNwbGF5TmFtZSA9IGdldFVzZXJEaXNwbGF5TmFtZSh1c2VyKTsKICAgIGF3YWl0IGxvZ0FjdGl2aXR5KHsKICAgICAgd29ya09yZGVySWQ6IHdvLmlkLAogICAgICB3b3JrT3JkZXJUaXRsZTogd28udGl0bGUsCiAgICAgIGFjdGlvblR5cGU6ICJzdWJfbm90ZV9kZWxldGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYERlbGV0ZWQgYSBzdWItbm90ZSBmcm9tICIke3dvLnRpdGxlfSJgCiAgICB9KTsKICAgIGF3YWl0IE5vdGlmaWNhdGlvblRyaWdnZXJzLnN1Yk5vdGVEZWxldGVkKHdvLCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgdGFza0FkZGVkOiBhc3luYyAod28sIHRhc2tUZXh0KSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogInRhc2tfYWRkZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgQWRkZWQgdGFzayB0byAiJHt3by50aXRsZX0iOiAiJHt0YXNrVGV4dC5zdWJzdHJpbmcoMCwgNTApfSR7dGFza1RleHQubGVuZ3RoID4gNTAgPyAnLi4uJyA6ICcnfSJgCiAgICB9KTsKICAgIGF3YWl0IE5vdGlmaWNhdGlvblRyaWdnZXJzLnRhc2tBZGRlZCh3bywgdGFza1RleHQsIGRpc3BsYXlOYW1lKTsKICB9LAoKICB0YXNrQ29tcGxldGVkOiBhc3luYyAod28sIHRhc2tUZXh0KSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogInRhc2tfY29tcGxldGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYENvbXBsZXRlZCB0YXNrIG9uICIke3dvLnRpdGxlfSI6ICIke3Rhc2tUZXh0LnN1YnN0cmluZygwLCA1MCl9JHt0YXNrVGV4dC5sZW5ndGggPiA1MCA/ICcuLi4nIDogJyd9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMudGFza0NvbXBsZXRlZCh3bywgdGFza1RleHQsIGRpc3BsYXlOYW1lKTsKICB9LAoKICB0YXNrVW5jb21wbGV0ZWQ6IGFzeW5jICh3bywgdGFza1RleHQpID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAidGFza191bmNvbXBsZXRlZCIsCiAgICAgIGFjdGlvbkRldGFpbHM6IGBVbmNvbXBsZXRlZCB0YXNrIG9uICIke3dvLnRpdGxlfSI6ICIke3Rhc2tUZXh0LnN1YnN0cmluZygwLCA1MCl9JHt0YXNrVGV4dC5sZW5ndGggPiA1MCA/ICcuLi4nIDogJyd9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMudGFza1VuY29tcGxldGVkKHdvLCB0YXNrVGV4dCwgZGlzcGxheU5hbWUpOwogIH0sCgogIHRhc2tEZWxldGVkOiBhc3luYyAod28pID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAidGFza19kZWxldGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYERlbGV0ZWQgYSB0YXNrIGZyb20gIiR7d28udGl0bGV9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMudGFza0RlbGV0ZWQod28sIGRpc3BsYXlOYW1lKTsKICB9LAoKICB0YXNrRWRpdGVkOiBhc3luYyAod28sIG9sZFRleHQsIG5ld1RleHQpID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAidGFza19lZGl0ZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgRWRpdGVkIHRhc2sgb24gIiR7d28udGl0bGV9ImAsCiAgICAgIHByZXZpb3VzVmFsdWU6IG9sZFRleHQsCiAgICAgIG5ld1ZhbHVlOiBuZXdUZXh0CiAgICB9KTsKICAgIGF3YWl0IE5vdGlmaWNhdGlvblRyaWdnZXJzLnRhc2tFZGl0ZWQod28sIG9sZFRleHQsIG5ld1RleHQsIGRpc3BsYXlOYW1lKTsKICB9LAoKICBpbWFnZVVwbG9hZGVkOiBhc3luYyAod28pID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAiaW1hZ2VfdXBsb2FkZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgVXBsb2FkZWQgaW1hZ2UgdG8gIiR7d28udGl0bGV9ImAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMuaW1hZ2VVcGxvYWRlZCh3bywgZGlzcGxheU5hbWUpOwogIH0sCgogIGFzYXBUb2dnbGVkOiBhc3luYyAod28sIGlzQXNhcCkgPT4gewogICAgY29uc3QgdXNlciA9IGF3YWl0IGdldEN1cnJlbnRVc2VyKCk7CiAgICBjb25zdCBkaXNwbGF5TmFtZSA9IGdldFVzZXJEaXNwbGF5TmFtZSh1c2VyKTsKICAgIGF3YWl0IGxvZ0FjdGl2aXR5KHsKICAgICAgd29ya09yZGVySWQ6IHdvLmlkLAogICAgICB3b3JrT3JkZXJUaXRsZTogd28udGl0bGUsCiAgICAgIGFjdGlvblR5cGU6ICJhc2FwX3RvZ2dsZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgJHtpc0FzYXAgPyAnTWFya2VkJyA6ICdVbm1hcmtlZCd9ICIke3dvLnRpdGxlfSIgYXMgQVNBUGAsCiAgICAgIG5ld1ZhbHVlOiBpc0FzYXAgPyAiQVNBUCIgOiAiTm9ybWFsIgogICAgfSk7CiAgICBhd2FpdCBOb3RpZmljYXRpb25UcmlnZ2Vycy5hc2FwVG9nZ2xlZCh3bywgaXNBc2FwLCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgcHJpb3JpdHlDaGFuZ2VkOiBhc3luYyAod28sIG5ld1ByaW9yaXR5KSA9PiB7CiAgICBjb25zdCB1c2VyID0gYXdhaXQgZ2V0Q3VycmVudFVzZXIoKTsKICAgIGNvbnN0IGRpc3BsYXlOYW1lID0gZ2V0VXNlckRpc3BsYXlOYW1lKHVzZXIpOwogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogInByaW9yaXR5X2NoYW5nZWQiLAogICAgICBhY3Rpb25EZXRhaWxzOiBgQ2hhbmdlZCBwcmlvcml0eSBvZiAiJHt3by50aXRsZX0iIHRvICMke25ld1ByaW9yaXR5fWAKICAgIH0pOwogICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMucHJpb3JpdHlDaGFuZ2VkKHdvLCBkaXNwbGF5TmFtZSk7CiAgfSwKCiAgcmVzdG9yZWQ6IGFzeW5jICh3bywgdG9TdGFnZSkgPT4gewogICAgYXdhaXQgbG9nQWN0aXZpdHkoewogICAgICB3b3JrT3JkZXJJZDogd28uaWQsCiAgICAgIHdvcmtPcmRlclRpdGxlOiB3by50aXRsZSwKICAgICAgYWN0aW9uVHlwZTogInJlc3RvcmVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYFJlc3RvcmVkICIke3dvLnRpdGxlfSIgdG8gJHt0b1N0YWdlfSBzdGFnZWAsCiAgICAgIG5ld1ZhbHVlOiB0b1N0YWdlCiAgICB9KTsKICB9LAoKICBmaWVsZFVwZGF0ZWQ6IGFzeW5jICh3bywgZmllbGROYW1lLCBvbGRWYWx1ZSwgbmV3VmFsdWUpID0+IHsKICAgIGNvbnN0IHVzZXIgPSBhd2FpdCBnZXRDdXJyZW50VXNlcigpOwogICAgY29uc3QgZGlzcGxheU5hbWUgPSBnZXRVc2VyRGlzcGxheU5hbWUodXNlcik7CiAgICBhd2FpdCBsb2dBY3Rpdml0eSh7CiAgICAgIHdvcmtPcmRlcklkOiB3by5pZCwKICAgICAgd29ya09yZGVyVGl0bGU6IHdvLnRpdGxlLAogICAgICBhY3Rpb25UeXBlOiAid29ya19vcmRlcl91cGRhdGVkIiwKICAgICAgYWN0aW9uRGV0YWlsczogYFVwZGF0ZWQgJHtmaWVsZE5hbWV9IG9uICIke3dvLnRpdGxlfSJgLAogICAgICBwcmV2aW91c1ZhbHVlOiBvbGRWYWx1ZSwKICAgICAgbmV3VmFsdWU6IG5ld1ZhbHVlCiAgICB9KTsKICAgIGlmIChmaWVsZE5hbWUgPT09ICJhc3NpZ25lZF90byIpIHsKICAgICAgYXdhaXQgTm90aWZpY2F0aW9uVHJpZ2dlcnMuYXNzaWduZWRUb0NoYW5nZWQod28sIG9sZFZhbHVlLCBuZXdWYWx1ZSwgZGlzcGxheU5hbWUpOwogICAgfQogIH0KfTs=
+import { NotificationTriggers } from "./NotificationService";
+import { createActivityLogBestEffort } from "./activityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
+
+const ActivityLog = staffEntities.ActivityLog;
+
+export async function getCurrentUser() {
+  // Get user from localStorage (set by EmailGate)
+  const storedEmail = localStorage.getItem("userEmail");
+  if (storedEmail) {
+    try {
+      const users = await loadAllEntityRows({
+        entity: staffEntities.AuthorizedEmail,
+        sort: null,
+        label: "Activity logger authorized users",
+      });
+      const user = users.find(u => u.email.toLowerCase() === storedEmail.toLowerCase());
+      if (user) {
+        return user;
+      }
+    } catch (error) {
+      console.error("Error getting current user:", error);
+    }
+  }
+  return { email: "unknown", full_name: "Unknown User" };
+}
+
+export function getUserDisplayName(user) {
+  if (user?.full_name) {
+    return user.full_name.split(" ")[0]; // First name only
+  }
+  if (user?.email) {
+    return user.email.split("@")[0];
+  }
+  return "Unknown";
+}
+
+export async function logActivity({
+  workOrderId,
+  workOrderTitle,
+  actionType,
+  actionDetails,
+  previousValue = null,
+  newValue = null
+}) {
+  const user = await getCurrentUser();
+  const displayName = getUserDisplayName(user);
+  
+  const result = await createActivityLogBestEffort({
+    entity: ActivityLog,
+    data: {
+      work_order_id: workOrderId,
+      work_order_title: workOrderTitle || "Unknown",
+      action_type: actionType,
+      action_details: actionDetails,
+      previous_value: previousValue,
+      new_value: newValue,
+      performed_by_email: user.email,
+      performed_by_name: displayName
+    },
+    label: `Activity log for ${actionType || "Work Order action"}`,
+  });
+  if (!result.logged) {
+    console.error(result.warning || "Work Order activity could not be recorded. The business action remains saved.");
+  }
+  return result;
+}
+
+// Helper functions for common actions - logs activity AND triggers email notifications
+export const ActivityActions = {
+  workOrderCreated: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_created",
+      actionDetails: `Created work order "${wo.title}" for ${wo.client_name}`
+    });
+    await NotificationTriggers.workOrderCreated(wo, displayName);
+  },
+
+  workOrderCompleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_completed",
+      actionDetails: `Marked "${wo.title}" as completed`
+    });
+    await NotificationTriggers.workOrderCompleted(wo, displayName);
+  },
+
+  workOrderDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_deleted",
+      actionDetails: `Deleted work order "${wo.title}"`
+    });
+    await NotificationTriggers.workOrderDeleted(wo, displayName);
+  },
+
+  riderCreated: async (wo, parentTitle) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "rider_created",
+      actionDetails: `Created rider "${wo.title}" for parent "${parentTitle}"`
+    });
+    await NotificationTriggers.riderCreated(wo, parentTitle, displayName);
+  },
+
+  stageChanged: async (wo, fromStage, toStage) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "stage_changed",
+      actionDetails: `Moved "${wo.title}" from ${fromStage} to ${toStage}`,
+      previousValue: fromStage,
+      newValue: toStage
+    });
+    await NotificationTriggers.stageChanged(wo, fromStage, toStage, displayName);
+  },
+
+  noteAdded: async (wo, noteText, noteType) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "note_added",
+      actionDetails: `Added ${noteType} note to "${wo.title}": "${noteText.substring(0, 50)}${noteText.length > 50 ? '...' : ''}"`
+    });
+    await NotificationTriggers.noteAdded(wo, noteText, noteType, displayName);
+  },
+
+  noteDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "note_deleted",
+      actionDetails: `Deleted a note from "${wo.title}"`
+    });
+    await NotificationTriggers.noteDeleted(wo, displayName);
+  },
+
+  subNoteAdded: async (wo, text) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "sub_note_added",
+      actionDetails: `Added sub-note to "${wo.title}": "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`
+    });
+    await NotificationTriggers.subNoteAdded(wo, text, displayName);
+  },
+
+  subNoteDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "sub_note_deleted",
+      actionDetails: `Deleted a sub-note from "${wo.title}"`
+    });
+    await NotificationTriggers.subNoteDeleted(wo, displayName);
+  },
+
+  taskAdded: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_added",
+      actionDetails: `Added task to "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+    await NotificationTriggers.taskAdded(wo, taskText, displayName);
+  },
+
+  taskCompleted: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_completed",
+      actionDetails: `Completed task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+    await NotificationTriggers.taskCompleted(wo, taskText, displayName);
+  },
+
+  taskUncompleted: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_uncompleted",
+      actionDetails: `Uncompleted task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+    await NotificationTriggers.taskUncompleted(wo, taskText, displayName);
+  },
+
+  taskDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_deleted",
+      actionDetails: `Deleted a task from "${wo.title}"`
+    });
+    await NotificationTriggers.taskDeleted(wo, displayName);
+  },
+
+  taskEdited: async (wo, oldText, newText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_edited",
+      actionDetails: `Edited task on "${wo.title}"`,
+      previousValue: oldText,
+      newValue: newText
+    });
+    await NotificationTriggers.taskEdited(wo, oldText, newText, displayName);
+  },
+
+  imageUploaded: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "image_uploaded",
+      actionDetails: `Uploaded image to "${wo.title}"`
+    });
+    await NotificationTriggers.imageUploaded(wo, displayName);
+  },
+
+  asapToggled: async (wo, isAsap) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "asap_toggled",
+      actionDetails: `${isAsap ? 'Marked' : 'Unmarked'} "${wo.title}" as ASAP`,
+      newValue: isAsap ? "ASAP" : "Normal"
+    });
+    await NotificationTriggers.asapToggled(wo, isAsap, displayName);
+  },
+
+  priorityChanged: async (wo, newPriority) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "priority_changed",
+      actionDetails: `Changed priority of "${wo.title}" to #${newPriority}`
+    });
+    await NotificationTriggers.priorityChanged(wo, displayName);
+  },
+
+  restored: async (wo, toStage) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "restored",
+      actionDetails: `Restored "${wo.title}" to ${toStage} stage`,
+      newValue: toStage
+    });
+  },
+
+  fieldUpdated: async (wo, fieldName, oldValue, newValue) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_updated",
+      actionDetails: `Updated ${fieldName} on "${wo.title}"`,
+      previousValue: oldValue,
+      newValue: newValue
+    });
+    if (fieldName === "assigned_to") {
+      await NotificationTriggers.assignedToChanged(wo, oldValue, newValue, displayName);
+    }
+  }
+};
