@@ -954,7 +954,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false, followUpGuards = null) => {
-    const currentWo = workOrders.find(wo => wo.id === orderId);
+    const currentWo = workOrdersRef.current.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
     if (reloadingSalesQuickEditsRef.current) {
       setQuickEditError("Reload latest is in progress. Review the refreshed WorkOrder before editing again.");
@@ -1312,7 +1312,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const reconcileExistingSalesTaskStatus = (workOrder) => {
     if (!isRegistered || !workOrder?.id) return;
-    const current = workOrders.find(row => row.id === workOrder.id);
+    const current = workOrdersRef.current.find(row => row.id === workOrder.id);
     const plan = planExistingSalesTaskStatusReconciliation(current);
     if (!plan || String(workOrder.current_task_description || '').trim() !== plan.task ||
         workOrder.sales_status !== current.sales_status ||
@@ -2767,6 +2767,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   useEffect(() => {
     filteredWorkOrdersRef.current = filteredWorkOrders;
   }, [filteredWorkOrders]);
+
+  // Rows are memoized on `wo` identity, so callbacks they hold can go stale
+  // for minutes between polls. Read workOrders through a ref in any code path
+  // reachable from a row callback or a stale baseline poisons the save guards.
+  const workOrdersRef = useRef(workOrders);
+
+  useEffect(() => {
+    workOrdersRef.current = workOrders;
+  }, [workOrders]);
 
   useEffect(() => {
     if (!selectedWorkOrder?.id) {
