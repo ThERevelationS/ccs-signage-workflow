@@ -139,7 +139,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
     if (snapshotDiffRevision?.estimate_snapshot_before && estimate) {
       snapshotDiffLines = summarizeEstimateChanges(snapshotDiffRevision.estimate_snapshot_before, estimate) || [];
     }
-  } catch (diffError) {
+  } catch {
     snapshotDiffLines = [];
   }
 
