@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
