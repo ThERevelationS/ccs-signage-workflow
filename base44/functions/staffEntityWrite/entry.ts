@@ -12,6 +12,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   BuilderPart: new Set(['create', 'updateMany']),
   BuilderPartGroup: new Set(['updateMany']),
   BuilderProduct: new Set(['create', 'updateMany']),
+  BrickStoneProject: new Set(['create']),
   ChannelLetterInstallEquipment: new Set(['updateMany', 'deleteMany']),
   ChecklistSubItem: new Set(['create', 'updateMany', 'deleteMany']),
   CustomItemsProject: new Set(['create', 'update', 'updateMany', 'delete']),
