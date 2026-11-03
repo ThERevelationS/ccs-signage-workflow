@@ -579,6 +579,24 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       };
       townships.filter((f) => /\btownship$/i.test(f.attributes.NAME)).forEach((f) => addTwp(f, f.attributes.NAME, "Census township boundary"));
       stateTownships.forEach((f) => addTwp(f, f.attributes.TOWNSHIP, "Ohio state township boundary"));
+      {
+        const censusInside = twpCands.filter((c) => c.inside && c.inside_sources.includes("Census township boundary"));
+        if (censusInside.length === 1) {
+          const t = censusInside[0];
+          for (const o of twpCands) {
+            if (o === t || o.merged_into) continue;
+            if (o.inside && o.inside_sources.includes("Ohio state township boundary")) {
+              (t.aliases = t.aliases || []).push(o.name);
+              for (const s of o.supported_by) if (!t.supported_by.includes(s)) t.supported_by.push(s);
+              for (const s of o.inside_sources) if (!t.inside_sources.includes(s)) t.inside_sources.push(s);
+              o.merged_into = t.name;
+              o.inside = false;
+              o.supported_by = [];
+            }
+          }
+        }
+      }
+      ;
       const insideTwp = twpCands.filter((c) => c.inside && c.inside_sources.length);
       let twpPick = null;
       if (twpCands.length === 1 && insideTwp.length) twpPick = twpCands[0];
@@ -591,16 +609,17 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
           if (hit) twpPick = hit;
         }
       }
+      const liveTwpCands = twpCands.filter((c) => !c.merged_into);
       if (!twpPick) {
-        const tr = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: twpCands });
+        const tr = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, candidates: liveTwpCands });
         if (tr) twpPick = tr.pick;
       }
       if (!twpPick) {
-        if (twpCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.", candidates: twpCands, target: null };
+        if (liveTwpCands.length) return { ...base, status: "needs_review", reason: "Official boundary sources disagree about the township here. Pick the correct jurisdiction below.", candidates: liveTwpCands, target: null };
         throw Error("Township location is missing or conflicting.");
       }
       const tf = [...townships, ...stateTownships].find((f) => f.inside && sameJ(String(f.attributes.NAME || f.attributes.TOWNSHIP || ""), twpPick.name)), censT = townships.find((f) => sameJ(String(f.attributes.NAME || ""), twpPick.name));
-      target = { name: twpPick.name, state, type: "township", geoid: String(censT?.attributes.GEOID || twpPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: (tf || censT)?.geometry, source_url: (tf || censT)?.source_url, resolved_by: "source_consensus" };
+      target = { name: twpPick.name, state, type: "township", geoid: String(censT?.attributes.GEOID || twpPick.geoid || ""), county: countyName, county_geoid: countyId, geometry: (tf || censT)?.geometry, source_url: (tf || censT)?.source_url, resolved_by: "source_consensus", ...twpPick.aliases?.length ? { aliases: twpPick.aliases } : {} };
     } else target = { name: countyName, state, type: "county", geoid: countyId, county: countyName, county_geoid: countyId, geometry: countyRow.geometry, source_url: countyRow.source_url };
     const gisRule = (rules || []).find((r) => r && r.active !== false && String(r.state || "").toUpperCase() === state && r.rule_type === "county_gis_layer" && sameJ(r.county, countyName) && sameJ(String(r.jurisdiction_type || ""), String(target?.type || "")));
     let gisDecided = false;
@@ -672,7 +691,8 @@ function exactConfiguredLocality(localities, resolution, profiles = []) {
   if (resolution?.status !== "location_verified" || !resolution.target) return null;
   const target = resolution.target;
   const matches = localities.filter((row) => {
-    if (normalizeAddressState(row.state).toUpperCase() !== target.state || !sameJ(row.name, target.name)) return false;
+    if (normalizeAddressState(row.state).toUpperCase() !== target.state) return false;
+    if (!sameJ(row.name, target.name) && !(target.aliases || []).some((a) => sameJ(row.name, a))) return false;
     const township = /township/i.test(row.name), county = /county$/i.test(String(row.name).trim());
     if (target.type === "county" && !county || target.type !== "county" && county) return false;
     if (target.type === "township" && !township || target.type !== "township" && township) return false;
