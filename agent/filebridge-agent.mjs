@@ -532,6 +532,45 @@ const executors = {
     return { ok: true, result: { src: srcRel, dst: dstRel } };
   },
 
+  // upload_apply: pull the staged file_url (outbound HTTPS), verify sha256,
+  // collision-safe atomic write, stamp bridge provenance, index the file.
+  upload_apply: async (args) => {
+    if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
+    const root = rootFor(args.root_key);
+    const destDir = root ? normRel(args.dest_dir || '') : null;
+    const dirAbs = destDir !== null ? resolveInRoot(root, destDir) : null;
+    if (!root || !dirAbs) return { ok: false, error: 'bad root/dest_dir' };
+    const name = String(args.name || '').replace(/[/\\]/g, '').normalize('NFC');
+    if (!name || name.startsWith('.')) return { ok: false, error: 'bad name' };
+    const resp = await fetch(String(args.file_url || ''), { signal: AbortSignal.timeout(120_000) }).catch(() => null);
+    if (!resp?.ok) return { ok: false, error: `staging fetch failed ${resp?.status}`, retry: true };
+    const buf = Buffer.from(await resp.arrayBuffer());
+    const sha = crypto.createHash('sha256').update(buf).digest('hex');
+    if (args.sha256 && args.sha256 !== sha) return { ok: false, error: 'sha256 mismatch on staging pull' };
+    // never overwrite: revision → name.rev-N.ext; new → name (n).ext
+    const ext = path.posix.extname(name); const stem = name.slice(0, name.length - ext.length);
+    let finalName = name; let n = 1;
+    while (fs.existsSync(path.posix.join(dirAbs, finalName))) {
+      finalName = args.mode === 'revision' ? `${stem}.rev-${n}${ext}` : `${stem} (${n})${ext}`;
+      n += 1; if (n > 99) return { ok: false, error: 'no free filename' };
+    }
+    await fs.promises.mkdir(dirAbs, { recursive: true });
+    const abs = path.posix.join(dirAbs, finalName);
+    await atomicWrite(abs, buf);
+    const finalRel = destDir ? `${destDir}/${finalName}` : finalName;
+    const pk = pathKeyLocal(root.root_key, finalRel);
+    manifestSet(pk, { origin: 'bridge', managed_by: 'bridge', created_ts: Date.now(), upload_id: args.upload_id });
+    const st = await fs.promises.stat(abs);
+    upsertFile({
+      path_key: pk, root_key: root.root_key, path: finalRel, name: finalName,
+      parent_path: destDir || '', ext: ext.slice(1).toLowerCase(), kind: 'file', is_dir: 0,
+      size: st.size, mtime_ms: Math.floor(st.mtimeMs), dir_size_bytes: null,
+      entity_id: null, last_seen_scan: Number(metaGet('last_scan_id', 0)) || 0, missing: 0,
+    });
+    log('info', 'upload_applied', { path: finalRel, bytes: st.size, upload_id: args.upload_id });
+    return { ok: true, result: { path: finalRel, bytes: st.size, sha256: sha, renamed: finalName !== name ? finalName : undefined } };
+  },
+
   log_tail: async (args) => {
     const lines = fs.existsSync(LOG_FILE) ? fs.readFileSync(LOG_FILE, 'utf8').split('\n').slice(-(args.lines || 200)) : [];
     return { ok: true, result: { lines } };
