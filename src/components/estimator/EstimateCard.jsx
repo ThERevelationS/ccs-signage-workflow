@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { estimateQuoteExpiration, localDateStamp, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
+import { estimateQuoteExpiration, localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const CUSTOMER_NOTE_CACHE_MS = 30_000;
