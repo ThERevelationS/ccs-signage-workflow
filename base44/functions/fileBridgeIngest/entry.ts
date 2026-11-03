@@ -294,15 +294,24 @@ Deno.serve(async (req) => {
     for (const it of items) {
       const rp = safeRelPath(String(it.path || ''));
       if (!rp.ok) continue;
-      const data = {
+      const data: any = {
         agent_id: agentId, root_key: String(it.root_key || ''),
         path: rp.path, name: baseName(rp.path), parent_path: parentPath(rp.path),
-        ext: extOf(rp.path), kind: kindOf(rp.path), is_dir: !!it.is_dir,
-        size: it.size || 0, mtime_ms: it.mtime_ms || 0, dir_size_bytes: it.dir_size_bytes,
-        customer_ids: it.customer_ids || [], hot: !!it.hot, hot_score: it.hot_score || 0,
-        missing: !!it.missing, served_by: body.served_by || undefined,
+        ext: extOf(rp.path), kind: kindOf(rp.path),
+        served_by: body.served_by || undefined,
         last_seen_scan: body.scan_id || undefined,
       };
+      // State fields apply ONLY when present — scan items carry them, but
+      // sparse patches (pin/relink) must not wipe existing values.
+      if (it.is_dir !== undefined) data.is_dir = !!it.is_dir;
+      if (it.size !== undefined) data.size = it.size || 0;
+      if (it.mtime_ms !== undefined) data.mtime_ms = it.mtime_ms || 0;
+      if (it.dir_size_bytes !== undefined) data.dir_size_bytes = it.dir_size_bytes;
+      if (it.missing !== undefined) data.missing = !!it.missing;
+      if (it.customer_ids !== undefined) data.customer_ids = it.customer_ids;
+      if (it.hot !== undefined) data.hot = !!it.hot;
+      if (it.hot_score !== undefined) data.hot_score = it.hot_score;
+      if (it.pinned !== undefined) data.pinned = !!it.pinned;
       if (it.entity_id) toUpdate.push({ id: String(it.entity_id), data });
       else toResolve.push(data);
     }
@@ -320,7 +329,12 @@ Deno.serve(async (req) => {
         const pk = keys[i];
         const existing = byKey.get(pk);
         if (existing) { toUpdate.push({ id: existing, data: d }); idMap[pk] = existing; }
-        else toCreate.push({ ...d, path_key: pk, creation_request_key: pk, origin: 'external', managed_by: 'none' });
+        else toCreate.push({
+          ...d, path_key: pk, creation_request_key: pk,
+          origin: 'external', managed_by: 'none',
+          customer_ids: d.customer_ids || [], pinned: !!d.pinned,
+          hot: !!d.hot, hot_score: d.hot_score || 0,
+        });
       });
       if (toCreate.length) {
         const created = await sr.entities.FileIndex.bulkCreate(toCreate)
