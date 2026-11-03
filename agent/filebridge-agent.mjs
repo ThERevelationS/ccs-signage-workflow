@@ -86,23 +86,36 @@ const post = (action, payload, { stream = false, timeoutMs = 90_000 } = {}) =>
     req.end();
   });
 
-// ---- durable spool ----
+// ---- durable spool: priority-tiered (results > deltas > events) + cap ----
+const SPOOL_PRIORITY = { command_complete: 0, deliver_complete: 0, index_batch: 1, recent_batch: 2, event: 3 };
+const SPOOL_MAX = 5000;
 const spoolPush = (kind, payload) => {
   const name = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${kind}.json`;
-  fs.writeFileSync(path.join(SPOOL_DIR, name), JSON.stringify(payload));
+  try { fs.writeFileSync(path.join(SPOOL_DIR, name), JSON.stringify(payload)); } catch { return; }
+  // cap: beyond SPOOL_MAX, drop the oldest lowest-priority files
+  const files = spoolList();
+  if (files.length > SPOOL_MAX) {
+    const pri = (f) => SPOOL_PRIORITY[f.split('.').slice(-2, -1)[0]] ?? 2;
+    const doomed = files.filter((f) => pri(f) >= 2).slice(0, files.length - SPOOL_MAX);
+    for (const f of doomed) { try { fs.unlinkSync(path.join(SPOOL_DIR, f)); } catch {} }
+    if (doomed.length) log('warn', 'spool_cap_evict', { evicted: doomed.length });
+  }
 };
 const spoolList = () =>
   fs.readdirSync(SPOOL_DIR).filter((f) => f.endsWith('.json')).sort();
 const spoolDepth = () => spoolList().length;
 const spoolDrain = async () => {
-  for (const f of spoolList()) {
+  const pri = (f) => SPOOL_PRIORITY[f.split('.').slice(-2, -1)[0]] ?? 2;
+  const files = spoolList().sort((a, b) => pri(a) - pri(b) || a.localeCompare(b));
+  for (const f of files) {
     try {
       const payload = JSON.parse(fs.readFileSync(path.join(SPOOL_DIR, f), 'utf8'));
       const kind = f.split('.').slice(-2, -1)[0];
       const r = await post(kind, payload);
       if (r.status >= 200 && r.status < 300) fs.unlinkSync(path.join(SPOOL_DIR, f));
       else if (r.status === 401 || r.status === 403) { fs.unlinkSync(path.join(SPOOL_DIR, f)); log('warn', 'spool_drop_auth', { f }); }
-      else break; // keep order, retry next cycle
+      else if (r.status === 503 && r.json?.retry) break; // budget/degraded — retry next cycle
+      else break;
     } catch { break; }
   }
 };
@@ -118,7 +131,8 @@ try {
       path_key TEXT PRIMARY KEY, root_key TEXT, path TEXT, name TEXT,
       parent_path TEXT, ext TEXT, kind TEXT, is_dir INTEGER,
       size INTEGER, mtime_ms INTEGER, dir_size_bytes INTEGER,
-      entity_id TEXT, last_seen_scan INTEGER, missing INTEGER DEFAULT 0);
+      entity_id TEXT, last_seen_scan INTEGER, missing INTEGER DEFAULT 0,
+      miss_count INTEGER DEFAULT 0);
     CREATE INDEX IF NOT EXISTS files_parent ON files(root_key, parent_path);
     CREATE INDEX IF NOT EXISTS files_name ON files(name);
     CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT);`);
@@ -126,6 +140,7 @@ try {
     db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, path, tokenize='unicode61')`);
     fts = true;
   } catch { log('warn', 'fts5_unavailable', {}); }
+  try { db.exec(`ALTER TABLE files ADD COLUMN miss_count INTEGER DEFAULT 0`); } catch { /* present */ }
 } catch (e) {
   log('warn', 'sqlite_unavailable', { err: String(e.message || e).slice(0, 120) });
 }
@@ -189,7 +204,7 @@ const resolveInRoot = (root, rel) => {
   if (abs !== realMount && !abs.startsWith(realMount + '/')) return null; // escape guard
   return abs;
 };
-const rootFor = (rootKey) => state.roots.find((r) => r.root_key === rootKey);
+const rootFor = (rootKey) => state.roots.find((r) => r.root_key === rootKey && r.enabled !== false);
 const EXCLUDE = [/^\./, /~\$/, /^~/, /\.tmp$/i, /\.part$/i, /Thumbs\.db$/i, /desktop\.ini$/i, /\.ccs_trash$/, /\.ccs_/];
 const excluded = (name) => EXCLUDE.some((re) => re.test(name));
 
@@ -278,10 +293,14 @@ const scanRoot = async (root, scanId, prefix = '') => {
       if (r?.status !== 200) spoolPush('recent_batch', payload);
     }
   }
-  // mark stale rows missing
+  // 2-sweep missing rule: a single missed file might be a locked/transient
+  // read — flag missing only after TWO consecutive scans don't see it.
   if (db) {
     try {
-      db.prepare(`UPDATE files SET missing=1 WHERE root_key=? AND last_seen_scan<?`).run(root.root_key, scanId);
+      db.prepare(`UPDATE files SET miss_count=miss_count+1 WHERE root_key=? AND last_seen_scan<?`).run(root.root_key, scanId);
+      db.prepare(`UPDATE files SET missing=1 WHERE root_key=? AND miss_count>=2 AND missing=0`).run(root.root_key);
+      // rows seen this scan keep missing=0 (upsert already resets) — reset counter
+      db.prepare(`UPDATE files SET miss_count=0 WHERE root_key=? AND last_seen_scan=?`).run(root.root_key, scanId);
     } catch {}
   }
   return stats;
@@ -291,7 +310,10 @@ const runScan = async (onlyRootKey = null, prefix = '') => {
   if (scanState.running) { for (const rk of [onlyRootKey].filter(Boolean)) scanState.requested.add(rk); return; }
   scanState.running = true;
   const scanId = Date.now();
-  const roots = state.roots.filter((r) => !onlyRootKey || r.root_key === onlyRootKey);
+  // scan_priority asc (hot roots first); enabled:false roots are skipped.
+  const roots = state.roots
+    .filter((r) => (!onlyRootKey || r.root_key === onlyRootKey) && r.enabled !== false)
+    .sort((a, b) => (a.scan_priority ?? 100) - (b.scan_priority ?? 100));
   const totals = { files: 0, skipped: 0, excluded: 0, roots: roots.map((r) => r.root_key) };
   try {
     for (const root of roots) {
