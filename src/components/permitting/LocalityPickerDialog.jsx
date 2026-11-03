@@ -535,9 +535,48 @@ function LocalityPickerSession({
     if (s === 'queued') return `Researching ${nm}'s permit offices now — verification usually finishes within a few minutes.`;
     if (s === 'already_queued') return `${nm}'s offices are already being researched — verification usually finishes within a few minutes.`;
     if (s === 'backfill_pending') return `${nm}'s office research landed — updating its saved record now.`;
+    if (s === 'research_started') return `Researching ${nm}'s permit offices right now — this usually takes a couple of minutes.`;
     if (s === 'verification_pending') return `${nm}'s offices are on file — verification is finishing up.`;
+    if (s === 'verified') return `${nm}'s offices verified — ready to use.`;
     return "";
   })();
+
+  // Live office resolution — while the picked locality's offices are being
+  // researched/verified, watch the records so roles landing updates this
+  // screen in place: no re-search, no manual refresh.
+  const [officeWatch, setOfficeWatch] = useState({ roles: 0, offices: 0 });
+  useEffect(() => {
+    const locId = result?.suggested_locality?.id;
+    const profId = result?.suggested_locality?.jurisdiction_profile_id;
+    if (!isOpen || !addressNeedsCheck || !locId) return;
+    let dead = false;
+    const poll = async () => {
+      try {
+        const [locs, profs] = await Promise.all([
+          loadAllEntityRows({ entity: staffEntities.PermitLocality, query: { id: locId }, label: 'Live office watch' }),
+          profId ? loadAllEntityRows({ entity: staffEntities.JurisdictionProfile, query: { id: profId }, label: 'Live office watch' }) : Promise.resolve([]),
+        ]);
+        const loc = locs?.[0], prof = profs?.[0];
+        if (dead || !loc) return;
+        const auth = summarizeMatchedLocalityAuthority(loc);
+        const allowed = auth.verified_roles.includes('sign_permit') && auth.verified_roles.includes('zoning');
+        const roles = (prof?.office_research?.roles || []).length;
+        setOfficeWatch({ roles, offices: (loc.offices || []).length });
+        setResult(prev => prev ? {
+          ...prev,
+          authority_review: auth,
+          apply_allowed: allowed,
+          office_research: allowed ? { state: 'verified' }
+            : roles && !(loc.offices || []).length ? { state: 'backfill_pending' }
+            : roles ? { state: 'verification_pending' }
+            : prev.office_research,
+        } : prev);
+      } catch {}
+    };
+    poll();
+    const iv = setInterval(poll, 15000);
+    return () => { dead = true; clearInterval(iv); };
+  }, [isOpen, addressNeedsCheck, result?.suggested_locality?.id, result?.suggested_locality?.jurisdiction_profile_id]);
 
   // Picking a suggestion fills the field and searches immediately — same path
   // as a paste or a QR scan, so the user never presses Find after tapping.
@@ -969,6 +1008,12 @@ function LocalityPickerSession({
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
                           Permit offices: {addressAuthority?.status === 'staff_verified_roles' ? 'verified' : 'not yet verified'}
                         </div>
+                        {addressNeedsCheck && (
+                          <p className="mt-1 flex items-center gap-1 text-amber-800">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Live — watching for updates{officeWatch.roles ? `, ${officeWatch.roles} office role${officeWatch.roles === 1 ? '' : 's'} found` : ''}{officeWatch.offices ? `, ${officeWatch.offices} office${officeWatch.offices === 1 ? '' : 's'} saved` : ''}. This updates automatically.
+                          </p>
+                        )}
                         {addressAuthority?.status === 'staff_verified_roles' ? (
                           <>
                             <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
@@ -1230,7 +1275,15 @@ function LocalityPickerSession({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t px-4 pb-3 pt-3">
           <div className="text-[11px] text-gray-500">
             {applyHint && <span className="block text-xs font-medium text-slate-600 mb-0.5">{applyHint}</span>}
-            {addressNeedsCheck && officeResearchMsg && <span className="block text-xs font-medium text-amber-700 mb-0.5">{officeResearchMsg}</span>}
+            {addressNeedsCheck && officeResearchMsg && (
+              <span className="block text-xs font-medium text-amber-700 mb-0.5">
+                <Loader2 className="inline h-3 w-3 animate-spin mr-1 -mt-0.5" />
+                {officeResearchMsg}
+                {(officeWatch.roles > 0 || officeWatch.offices > 0) && (
+                  <span className="text-amber-800"> {officeWatch.roles > 0 && `${officeWatch.roles} office role${officeWatch.roles === 1 ? '' : 's'} found`}{officeWatch.roles > 0 && officeWatch.offices > 0 ? ' — ' : ''}{officeWatch.offices > 0 && `${officeWatch.offices} saved`}.</span>
+                )}
+              </span>
+            )}
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
