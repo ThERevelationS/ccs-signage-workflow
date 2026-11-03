@@ -87,9 +87,12 @@ async function upsertHealth(sr: any, agentId: string, patch: Record<string, any>
 
 async function pendingCommands(sr: any, agentId: string, limit = 10) {
   const rows = await sr.entities.FileBridgeCommand.filter(
-    { agent_id: agentId, status: 'queued' }, 'priority,created_ts', limit,
+    { agent_id: agentId, status: 'queued' }, 'created_ts', limit * 3,
   ).catch((e: any) => ({ __err: String(e?.message || e) }));
-  return rows;
+  if (rows?.__err || !Array.isArray(rows)) return rows;
+  // Base44 sort is single-field only — order by priority in memory.
+  rows.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0) || a.created_ts - b.created_ts);
+  return rows.slice(0, limit);
 }
 
 Deno.serve(async (req) => {
