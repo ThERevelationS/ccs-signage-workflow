@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { CNCProject, Settings } from "@/api/gatedEntities";
-import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +73,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     createAttemptRef.current = { signature: "", key: "" };
     copyAttemptRef.current = { signature: "", key: "" };
     loadPrerequisites();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [editId, estimateId]);
 
   const loadPrerequisites = async () => {
