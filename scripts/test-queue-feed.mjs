@@ -456,4 +456,219 @@ assert.deepEqual(projectSettingRecord({ id: 's1', setting_key: 'k', setting_valu
 rmSync(outViews);
 rmSync(outCrm);
 rmSync(outLinks);
+
+// ===========================================================================
+// M-03-followup — my_workflow feed: GeneralTask items + AuthorizedEmail
+// roster + the two GlobalSettings records, composed for MyWorkflow.jsx.
+// ===========================================================================
+
+// --- entry.ts wiring ----------------------------------------------------------
+
+for (const needle of [
+  "'my_workflow'",
+  'entities.GeneralTask',
+  'entities.AuthorizedEmail',
+  'GENERAL_TASK_FIELDS',
+  'MY_WORKFLOW_USER_FIELDS',
+  'projectGeneralTask',
+  'projectWorkflowUser',
+  'SETTINGS_KEY_DROPDOWN_CONDITIONS',
+  'SETTINGS_KEY_TASK_DESCRIPTIONS',
+]) {
+  assert.ok(src.includes(needle), `entry.ts wires my_workflow: ${needle}`);
+}
+// The open-task query and the created_date ordering parity are in code.
+assert.ok(/query\.completed\s*=\s*false/.test(src), 'my_workflow items query is {completed:false}');
+assert.ok(/created_date.*localeCompare|localeCompare.*created_date/s.test(src), 'my_workflow items sort by created_date');
+// Nothing in this feed is owner-scoped — the cache key drops the owner so one
+// entry serves the whole staff burst instead of one entry per session.
+assert.ok(/feed === 'my_workflow' \? '' : sessionEmail/.test(src), 'my_workflow cache key drops the owner segment');
+// Extras declared for the feed.
+{
+  const m = src.match(/my_workflow:\s*\[([^\]]*)\]/);
+  assert.ok(m, 'FEED_EXTRAS declares the my_workflow set');
+  for (const extra of ['users', 'dropdown_conditions', 'task_descriptions']) {
+    assert.ok(m[1].includes(`'${extra}'`), `my_workflow extras include ${extra}`);
+  }
+}
+
+// --- shared model additions ---------------------------------------------------
+
+const {
+  GENERAL_TASK_FIELDS,
+  MY_WORKFLOW_USER_FIELDS,
+  projectGeneralTask,
+  projectWorkflowUser,
+} = FM;
+assert.ok(Array.isArray(GENERAL_TASK_FIELDS) && GENERAL_TASK_FIELDS.length >= 10, 'GT projection is non-trivial');
+assert.ok(Array.isArray(MY_WORKFLOW_USER_FIELDS), 'user projection exists');
+
+// Every field the page reads off a GeneralTask row must be projected: the
+// pseudo-row map plus the CAS baseline updateGeneralTaskIfUnchanged anchors
+// (updated_date + the fields it rewrites + the text guard).
+for (const field of [
+  'id', 'created_date', 'updated_date',
+  'text', 'stage', 'assigned_to', 'sub_tasks', 'completed', 'due_date',
+  'blocked', 'blocked_reason', 'created_by_name',
+]) {
+  assert.ok(GENERAL_TASK_FIELDS.includes(field), `GT projection covers ${field}`);
+}
+// The projection carries every declared schema property — GeneralTask.jsonc.
+{
+  const gtSchema = JSON.parse(readFileSync(resolve(here, '../base44/entities/GeneralTask.jsonc'), 'utf8')
+    .replace(/\/\/[^\n]*/g, ''));
+  for (const prop of Object.keys(gtSchema.properties || {})) {
+    assert.ok(GENERAL_TASK_FIELDS.includes(prop), `GT projection covers declared schema field ${prop}`);
+  }
+}
+
+// The page's own gt.* reads (from MyWorkflow.jsx source) are all projected.
+{
+  const pageSrc = readFileSync(resolve(here, '../src/pages/MyWorkflow.jsx'), 'utf8');
+  const gtReads = [...new Set([...pageSrc.matchAll(/\bgt\.([A-Za-z_]\w*)/g)].map((m) => m[1]))];
+  for (const field of gtReads) {
+    assert.ok(GENERAL_TASK_FIELDS.includes(field), `GT projection covers page read gt.${field}`);
+  }
+  // The page no longer reads entities directly — the composed feed carries them.
+  assert.ok(!/loadAllEntityRows|loadSingleGlobalSetting|staffEntities/.test(pageSrc), 'page dropped the gateway reads');
+  for (const needle of ['fetchMyWorkflowBundle', 'fetchMyWorkflowTasks', 'applyOrderRows', 'loadMyWorkflow']) {
+    assert.ok(pageSrc.includes(needle), `page wires ${needle}`);
+  }
+}
+
+// The user projection covers what the pickers/roster model read AND can never
+// carry a credential field — cross-checked against staffDataRead's denylist.
+{
+  const sdr = readFileSync(resolve(here, '../base44/functions/staffDataRead/entry.ts'), 'utf8');
+  const dm = sdr.match(/AuthorizedEmail:\s*\[([\s\S]*?)\]/);
+  assert.ok(dm, 'staffDataRead FIELD_DENYLIST for AuthorizedEmail located');
+  const denied = [...dm[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  for (const field of denied) {
+    assert.ok(!MY_WORKFLOW_USER_FIELDS.includes(field), `user projection never carries denylisted ${field}`);
+  }
+  for (const field of ['id', 'email', 'full_name', 'sales_roles', 'is_active']) {
+    assert.ok(MY_WORKFLOW_USER_FIELDS.includes(field), `user projection covers picker field ${field}`);
+  }
+}
+
+// --- projection behavior ------------------------------------------------------
+
+const rawTask = {
+  id: 'gt1', created_date: '2026-10-01T00:00:00Z', updated_date: '2026-11-02T00:00:00Z',
+  text: 'Call permit office', stage: 'permitting', completed: false,
+  assigned_to: ['Sam Person'], due_date: '2026-11-05',
+  sub_tasks: [{ text: 'sub', completed: false, assigned_to: ['Sam Person'], details: [{ text: 'd', completed: false, assigned_to: ['Sam Person'] }] }],
+  blocked: false, blocked_reason: '', created_by_name: 'Dee Boss',
+  internal_note: 'x'.repeat(3000), junk_blob: 'z'.repeat(3000),
+};
+const projectedTask = projectGeneralTask(rawTask);
+for (const field of GENERAL_TASK_FIELDS) assert.ok(field in projectedTask, `projected task carries ${field}`);
+assert.ok(!('internal_note' in projectedTask) && !('junk_blob' in projectedTask), 'GT projection strips undeclared fields');
+assert.equal(projectedTask.sub_tasks[0].details[0].text, 'd', 'task trees ride whole like the gateway read');
+
+const rawUser = {
+  id: 'u1', email: 'sam@x.test', full_name: 'Sam Person', sales_roles: ['Task Assigned'], is_active: true,
+  password_hash: 'secret', face_descriptors: [0.1], session_not_before: 't', phone: '555', role: 'admin',
+};
+const projectedUser = projectWorkflowUser(rawUser);
+assert.deepEqual(projectedUser, { id: 'u1', email: 'sam@x.test', full_name: 'Sam Person', sales_roles: ['Task Assigned'], is_active: true },
+  'user projection is the tight allowlist only');
+
+// --- parity: composed rows === gateway rows after the page's own filter ------
+// The page keeps _generalRecord whole and filters by "assigned to me". The
+// projection must preserve the filter verdict AND the CAS fields.
+function legacyGtPredicate(gt, userName) {
+  const isAssignedTo = (assignedTo) => {
+    const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
+    return arr.includes(userName);
+  };
+  if (isAssignedTo(gt.assigned_to) && !gt.completed) return true;
+  if ((gt.sub_tasks || []).some((st) => isAssignedTo(st.assigned_to) && !st.completed)) return true;
+  return (gt.sub_tasks || []).some((st) => (st.details || []).some((d) => isAssignedTo(d.assigned_to) && !d.completed));
+}
+const gtRows = [
+  rawTask,
+  { id: 'gt2', text: 'not mine', created_date: '2026-10-02', updated_date: 'u2', completed: false, assigned_to: ['Other'] },
+  { id: 'gt3', text: 'mine via detail', created_date: '2026-10-03', updated_date: 'u3', completed: false,
+    sub_tasks: [{ text: 's', completed: false, assigned_to: [], details: [{ text: 'dd', completed: false, assigned_to: ['Sam Person'] }] }] },
+];
+assert.deepEqual(
+  gtRows.map(projectGeneralTask).filter((gt) => legacyGtPredicate(gt, 'Sam Person')).map((gt) => gt.id),
+  gtRows.filter((gt) => legacyGtPredicate(gt, 'Sam Person')).map((gt) => gt.id),
+  'projected GT rows filter identically to raw rows'
+);
+// CAS baseline parity — everything updateGeneralTaskIfUnchanged reads off the
+// loaded record survives projection.
+for (const field of ['id', 'updated_date', 'text', 'assigned_to', 'sub_tasks', 'completed']) {
+  assert.ok(field in projectedTask, `projected task preserves CAS field ${field}`);
+}
+
+// Roster parity vs the real model: eligibleTaskAssignees on projected users
+// must return the identical set as on raw rows.
+const outIdent = resolve(here, '.tmp-qfeed-ident.mjs');
+buildSync({
+  entryPoints: [resolve(here, '../src/components/admin/smartsheetTaskAssigneeModel.js')],
+  bundle: true, format: 'esm', outfile: outIdent, logLevel: 'silent',
+  alias: { '@': resolve(here, '../src') },
+});
+const IDENT = await import(pathToFileURL(outIdent).href);
+const userRows = [
+  rawUser,
+  { id: 'u2', email: 'dee@x.test', full_name: 'Dee Boss', sales_roles: ['PM', 'Task Assigned'], is_active: true, password_hash: 's' },
+  { id: 'u3', email: 'old@x.test', full_name: 'Old Timer', sales_roles: ['Task Assigned'], is_active: false },
+  { id: 'u4', email: 'noname@x.test', full_name: '', sales_roles: ['Task Assigned'], is_active: true },
+];
+assert.deepEqual(
+  IDENT.eligibleTaskAssignees(userRows.map(projectWorkflowUser)).map((u) => u.full_name),
+  IDENT.eligibleTaskAssignees(userRows).map((u) => u.full_name),
+  'eligibleTaskAssignees identical on projected vs raw users'
+);
+rmSync(outIdent);
+
+// --- cache-key isolation incl. the new feed ------------------------------------
+
+const wfKey = (over = {}) =>
+  queueFeedCacheKey({ feed: 'my_workflow', owner: '', include: ['users', 'dropdown_conditions', 'task_descriptions'], ...over });
+assert.equal(wfKey(), wfKey(), 'my_workflow key is deterministic');
+for (const feed of ['product_queue', 'crm_events', 'estimate_queue']) {
+  assert.notEqual(wfKey(), queueFeedCacheKey({ feed, owner: '', include: ['users', 'dropdown_conditions', 'task_descriptions'] }),
+    `my_workflow key isolated from ${feed}`);
+}
+assert.notEqual(
+  wfKey({ include: ['users', 'dropdown_conditions', 'task_descriptions'] }),
+  wfKey({ include: [] }),
+  'items-only my_workflow calls isolate from composed ones'
+);
+assert.notEqual(wfKey({ owner: 'sam@x.test' }), wfKey({ owner: '' }), 'owner segment still isolates when present');
+
+// --- client wrapper wiring ------------------------------------------------------
+
+const clientSrc = readFileSync(resolve(here, '../src/components/queues/queueFeedClient.js'), 'utf8');
+for (const needle of [
+  'fetchMyWorkflowBundle', 'fetchMyWorkflowTasks', 'invokeMyWorkflow',
+  '"my_workflow"', '"users"', '"dropdown_conditions"', '"task_descriptions"',
+  'loadGeneralTasksLegacy', 'loadWorkflowUsersLegacy',
+  'loadDropdownConditionsLegacy', 'loadTaskDescriptionsLegacy',
+  'myWorkflowFeedDown', 'myWorkflowFlights',
+]) {
+  assert.ok(clientSrc.includes(needle), `queueFeedClient wires ${needle}`);
+}
+// The legacy fallback reproduces today's reads exactly: {completed:false}
+// created_date task pull, unfiltered roster pull with the 30s TTL, the two
+// setting records.
+for (const needle of [
+  'query: { completed: false }',
+  'sort: "created_date"',
+  '"My Workflow general tasks"',
+  'cacheTtlMs: 30000',
+  '"My Workflow authorized users"',
+  '"dropdownConditions"',
+  '"salesTaskDescriptions"',
+]) {
+  assert.ok(clientSrc.includes(needle), `legacy fallback reproduces ${needle}`);
+}
+// A deployed runtime that predates the feed answers 400 — the per-feed latch
+// exists so my_workflow degrades alone instead of tripping queueFeedDown.
+assert.ok(/status\s*\)\s*===\s*400/.test(clientSrc) || /=== 400/.test(clientSrc), '400 feed-absent latch present');
+
 console.log('PASS queue-feed');
