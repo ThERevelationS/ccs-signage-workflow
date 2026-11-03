@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
       index_stats: body.index_stats || undefined, last_scan_at: body.last_scan_at || undefined,
       error: body.error || '',
     });
-    return Response.json({ ok: true, config_version: settings.config_version, server_time_ms: now() });
+    return Response.json({ ok: true, config_version: settings.config_version, server_time_ms: now(), rev: BUNDLE_REV });
   }
 
   // ---------- command_poll (short-poll fallback) ----------
@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       }).catch(() => null);
       if (u) leased.push({ command_id: c.command_id, id: c.id, type: c.type, args: c.args });
     }
-    return Response.json({ ok: true, commands: leased, server_time_ms: now() });
+    return Response.json({ ok: true, commands: leased, server_time_ms: now(), rev: BUNDLE_REV });
   }
 
   // ---------- command_wait (SSE long-poll = primary wake channel) ----------
