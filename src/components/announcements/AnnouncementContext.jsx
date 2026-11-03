@@ -3,6 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchActiveAnnouncementFeed, acknowledgeAnnouncement } from "./announcementPersistence";
+import { isPlatformRateLimit } from "@/api/requestGovernor.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { usePolling } from "@/lib/usePolling";
 
 const AnnouncementContext = createContext(null);
@@ -109,7 +111,11 @@ export function AnnouncementProvider({ children, currentPageName }) {
       let rows;
       try {
         rows = await fetchActiveAnnouncementFeed();
-      } catch {
+      } catch (feedError) {
+        // A rate-limited feed must not fall back to a paged entity read —
+        // the fallback doubles spend inside the same storm it is meant to
+        // survive. Keep the last fetched rows; the next tick retries.
+        if (isPlatformRateLimit(feedError) || isFleetCoolingDown()) return;
         rows = await loadAllEntityRows({
           entity: base44.entities.Announcement,
           query: { is_active: true },
