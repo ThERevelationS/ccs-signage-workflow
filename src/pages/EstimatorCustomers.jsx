@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, Link2, Copy, Send, MessageSquare, Printer } from "lucide-react";
+import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, MessageSquare, Printer } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
