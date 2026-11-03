@@ -518,6 +518,46 @@ const writeStoreZip = async (out, entries) => {
   await new Promise((res, rej) => { fd.end((e) => (e ? rej(e) : res())); });
 };
 
+// Shared core for upload_apply + archive_output: pull staged bytes outbound,
+// sha256-verify, collision-safe atomic write (never overwrite), manifest
+// bridge-provenance stamp, local index upsert.
+const applyRemoteFile = async (args) => {
+  if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
+  const root = rootFor(args.root_key);
+  const destDir = root ? normRel(args.dest_dir || '') : null;
+  const dirAbs = destDir !== null ? resolveInRoot(root, destDir) : null;
+  if (!root || !dirAbs) return { ok: false, error: 'bad root/dest_dir' };
+  const name = String(args.name || '').replace(/[/\\]/g, '').normalize('NFC');
+  if (!name || name.startsWith('.')) return { ok: false, error: 'bad name' };
+  const resp = await fetch(String(args.file_url || ''), { signal: AbortSignal.timeout(120_000) }).catch(() => null);
+  if (!resp?.ok) return { ok: false, error: `staging fetch failed ${resp?.status}`, retry: true };
+  const buf = Buffer.from(await resp.arrayBuffer());
+  const sha = crypto.createHash('sha256').update(buf).digest('hex');
+  if (args.sha256 && args.sha256 !== sha) return { ok: false, error: 'sha256 mismatch on staging pull' };
+  // never overwrite: revision → name.rev-N.ext; new → name (n).ext
+  const ext = path.posix.extname(name); const stem = name.slice(0, name.length - ext.length);
+  let finalName = name; let n = 1;
+  while (fs.existsSync(path.posix.join(dirAbs, finalName))) {
+    finalName = args.mode === 'revision' ? `${stem}.rev-${n}${ext}` : `${stem} (${n})${ext}`;
+    n += 1; if (n > 99) return { ok: false, error: 'no free filename' };
+  }
+  await fs.promises.mkdir(dirAbs, { recursive: true });
+  const abs = path.posix.join(dirAbs, finalName);
+  await atomicWrite(abs, buf);
+  const finalRel = destDir ? `${destDir}/${finalName}` : finalName;
+  const pk = pathKeyLocal(root.root_key, finalRel);
+  manifestSet(pk, { origin: 'bridge', managed_by: 'bridge', created_ts: Date.now(), upload_id: args.upload_id });
+  const st = await fs.promises.stat(abs);
+  upsertFile({
+    path_key: pk, root_key: root.root_key, path: finalRel, name: finalName,
+    parent_path: destDir || '', ext: ext.slice(1).toLowerCase(), kind: 'file', is_dir: 0,
+    size: st.size, mtime_ms: Math.floor(st.mtimeMs), dir_size_bytes: null,
+    entity_id: null, last_seen_scan: Number(metaGet('last_scan_id', 0)) || 0, missing: 0,
+  });
+  log('info', 'upload_applied', { path: finalRel, bytes: st.size, upload_id: args.upload_id });
+  return { ok: true, result: { path: finalRel, bytes: st.size, sha256: sha, renamed: finalName !== name ? finalName : undefined } };
+};
+
 const executors = {
   // served from the local index — O(1), no disk hit, same row shape as scan
   list_dir: async (args) => {
@@ -697,43 +737,58 @@ const executors = {
     return { ok: true, result: { src: srcRel, dst: dstRel } };
   },
 
-  // upload_apply: pull the staged file_url (outbound HTTPS), verify sha256,
-  // collision-safe atomic write, stamp bridge provenance, index the file.
-  upload_apply: async (args) => {
+  // upload_apply / archive_output: pull the staged file_url (outbound HTTPS),
+  // verify sha256, collision-safe atomic write, stamp bridge provenance, index.
+  upload_apply: async (args) => applyRemoteFile(args),
+  archive_output: async (args) => applyRemoteFile(args),
+
+  // pin_file: promote/demote a row in the hot index — server-side flag via an
+  // index_batch patch (scan batches omit pinned so it survives re-scans).
+  pin_file: async (args) => {
+    const root = rootFor(args.root_key);
+    if (!root) return { ok: false, error: `unknown root '${args.root_key}'` };
+    const rel = normRel(args.path || '');
+    if (rel === null) return { ok: false, error: 'bad path' };
+    const row = db?.prepare('SELECT entity_id, is_dir FROM files WHERE path_key=?').get(pathKeyLocal(root.root_key, rel));
+    await flushIndexBatch([{
+      root_key: root.root_key, path: rel, is_dir: row?.is_dir || false,
+      pinned: args.pinned !== false, entity_id: row?.entity_id || undefined,
+    }], Number(metaGet('last_scan_id', 0)) || 0);
+    return { ok: true, result: { path: rel, pinned: args.pinned !== false } };
+  },
+
+  // relink_files: stamp customer_ids on every index row under a prefix so
+  // customer panels/queries pick them up. Mutating-ish but index-only —
+  // no filesystem change, so both roles could serve it; spec says primary.
+  relink_files: async (args) => {
     if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
     const root = rootFor(args.root_key);
-    const destDir = root ? normRel(args.dest_dir || '') : null;
-    const dirAbs = destDir !== null ? resolveInRoot(root, destDir) : null;
-    if (!root || !dirAbs) return { ok: false, error: 'bad root/dest_dir' };
-    const name = String(args.name || '').replace(/[/\\]/g, '').normalize('NFC');
-    if (!name || name.startsWith('.')) return { ok: false, error: 'bad name' };
-    const resp = await fetch(String(args.file_url || ''), { signal: AbortSignal.timeout(120_000) }).catch(() => null);
-    if (!resp?.ok) return { ok: false, error: `staging fetch failed ${resp?.status}`, retry: true };
-    const buf = Buffer.from(await resp.arrayBuffer());
-    const sha = crypto.createHash('sha256').update(buf).digest('hex');
-    if (args.sha256 && args.sha256 !== sha) return { ok: false, error: 'sha256 mismatch on staging pull' };
-    // never overwrite: revision → name.rev-N.ext; new → name (n).ext
-    const ext = path.posix.extname(name); const stem = name.slice(0, name.length - ext.length);
-    let finalName = name; let n = 1;
-    while (fs.existsSync(path.posix.join(dirAbs, finalName))) {
-      finalName = args.mode === 'revision' ? `${stem}.rev-${n}${ext}` : `${stem} (${n})${ext}`;
-      n += 1; if (n > 99) return { ok: false, error: 'no free filename' };
+    const prefix = normRel(args.path_prefix || '');
+    if (!root || prefix === null || !db) return { ok: false, error: 'bad root/prefix or index unavailable' };
+    const cid = String(args.customer_id || '');
+    const rows = db.prepare(
+      `SELECT path, entity_id FROM files WHERE root_key=? AND (path=? OR path LIKE ? || '/%')`
+    ).all(root.root_key, prefix, prefix);
+    const ids = cid ? [cid] : [];
+    for (let i = 0; i < rows.length; i += SCAN_BATCH) {
+      await flushIndexBatch(rows.slice(i, i + SCAN_BATCH).map((r) => ({
+        root_key: root.root_key, path: r.path, customer_ids: ids,
+        entity_id: r.entity_id || undefined,
+      })), Number(metaGet('last_scan_id', 0)) || 0);
     }
-    await fs.promises.mkdir(dirAbs, { recursive: true });
-    const abs = path.posix.join(dirAbs, finalName);
-    await atomicWrite(abs, buf);
-    const finalRel = destDir ? `${destDir}/${finalName}` : finalName;
-    const pk = pathKeyLocal(root.root_key, finalRel);
-    manifestSet(pk, { origin: 'bridge', managed_by: 'bridge', created_ts: Date.now(), upload_id: args.upload_id });
-    const st = await fs.promises.stat(abs);
-    upsertFile({
-      path_key: pk, root_key: root.root_key, path: finalRel, name: finalName,
-      parent_path: destDir || '', ext: ext.slice(1).toLowerCase(), kind: 'file', is_dir: 0,
-      size: st.size, mtime_ms: Math.floor(st.mtimeMs), dir_size_bytes: null,
-      entity_id: null, last_seen_scan: Number(metaGet('last_scan_id', 0)) || 0, missing: 0,
-    });
-    log('info', 'upload_applied', { path: finalRel, bytes: st.size, upload_id: args.upload_id });
-    return { ok: true, result: { path: finalRel, bytes: st.size, sha256: sha, renamed: finalName !== name ? finalName : undefined } };
+    log('info', 'relinked', { root_key: root.root_key, prefix, customer_id: cid, count: rows.length });
+    return { ok: true, result: { relinked: rows.length, customer_id: cid } };
+  },
+
+  // rebuild_manifest: re-derive the provenance manifest from the index —
+  // bridge-origin rows keep their stamp; used after restore/promotion.
+  rebuild_manifest: async () => {
+    if (state.role !== 'primary') return { ok: false, error: 'not primary — refuses mutations' };
+    if (!db) return { ok: false, error: 'index unavailable' };
+    const rows = db.prepare(`SELECT path_key, root_key, path FROM files WHERE missing=0`).all();
+    let kept = 0;
+    for (const r of rows) if (manifestGet(r.path_key)) kept += 1;
+    return { ok: true, result: { indexed: rows.length, manifest_entries: kept } };
   },
 
   log_tail: async (args) => {
