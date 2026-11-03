@@ -423,7 +423,8 @@ const executors = {
   },
 
   // full-bytes delivery: single-shot ≤44MB via deliver_complete; larger files
-  // would chunk (P3) — report cleanly rather than truncate.
+  // stage 32MB chunks via deliver_chunk (seq-deduped → retry-safe) and ingest
+  // reassembles on the last one.
   fetch_bytes: async (args, cmd) => {
     const root = rootFor(args.root_key);
     if (!root) return { ok: false, error: `unknown root '${args.root_key}'` };
@@ -432,20 +433,50 @@ const executors = {
     if (!abs) return { ok: false, error: 'path outside root' };
     const st = await fs.promises.stat(abs).catch(() => null);
     if (!st || !st.isFile()) return { ok: false, error: 'not a file' };
-    if (st.size > INLINE_CAP) {
-      return { ok: false, error: `over inline cap (${st.size} > ${INLINE_CAP})`, needs_chunks: true };
-    }
     const sha = await sha256File(abs);
     if (args.expected_sha256 && args.expected_sha256 !== sha) {
       return { ok: false, error: 'file changed since request (sha256 mismatch)', changed: true };
     }
-    const buf = await fs.promises.readFile(abs);
-    const r = await post('deliver_complete', {
-      command_id: cmd.command_id, name: path.posix.basename(abs),
-      bytes_b64: buf.toString('base64'), sha256: sha, size: st.size,
-    }, { timeoutMs: 300_000 });
-    if (r?.status === 200) return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: st.size, sha256: sha } };
-    return { ok: false, error: `deliver_failed ${r?.status}`, retry: true };
+    if (st.size <= INLINE_CAP) {
+      const buf = await fs.promises.readFile(abs);
+      const r = await post('deliver_complete', {
+        command_id: cmd.command_id, name: path.posix.basename(abs),
+        bytes_b64: buf.toString('base64'), sha256: sha, size: st.size,
+      }, { timeoutMs: 300_000 });
+      if (r?.status === 200) return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: st.size, sha256: sha } };
+      return { ok: false, error: `deliver_failed ${r?.status}`, retry: true };
+    }
+    // chunked path — >44MB, hard ceiling 256MB (assembly cap ingest-side)
+    if (st.size > 256 * 1024 * 1024) {
+      return { ok: false, error: `file too large for staged delivery (${st.size})`, needs_proxy: true };
+    }
+    const CHUNK = 32 * 1024 * 1024;
+    const total = Math.ceil(st.size / CHUNK);
+    const name = path.posix.basename(abs);
+    for (let seq = 0; seq < total; seq += 1) {
+      const off = seq * CHUNK;
+      const len = Math.min(CHUNK, st.size - off);
+      const buf = await readFileRange(abs, off, len);
+      const csha = crypto.createHash('sha256').update(buf).digest('hex');
+      let r = await post('deliver_chunk', {
+        command_id: cmd.command_id, seq, total, bytes_b64: buf.toString('base64'),
+        sha256: csha, file_sha256: sha, name, size: st.size,
+      }, { timeoutMs: 300_000 });
+      // one retry per chunk on transport failure — seq dedupe makes it safe
+      if (!r || r.status === 429 || (r.status >= 500 && r.status < 600)) {
+        await new Promise((s) => setTimeout(s, 3000));
+        r = await post('deliver_chunk', {
+          command_id: cmd.command_id, seq, total, bytes_b64: buf.toString('base64'),
+          sha256: csha, file_sha256: sha, name, size: st.size,
+        }, { timeoutMs: 300_000 });
+      }
+      if (r?.status !== 200) return { ok: false, error: `chunk ${seq} deliver_failed ${r?.status}`, retry: true };
+      if (seq === total - 1) {
+        if (!r.json.file_url) return { ok: false, error: 'assembly did not return file_url', retry: true };
+        return { ok: true, done_by_ingest: true, result: { file_url: r.json.file_url, bytes: st.size, sha256: sha } };
+      }
+    }
+    return { ok: false, error: 'chunk loop ended without final response', retry: true };
   },
 
   // name/path deep search — FTS5 when available, LIKE fallback. Content
