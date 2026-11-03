@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { History, Loader2, Star } from "lucide-react";
+import { History, Star } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
