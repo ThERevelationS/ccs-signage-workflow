@@ -527,6 +527,18 @@ function LocalityPickerSession({
     return "";
   })();
 
+  // What the search kicked off for unverified offices — surfaced so "needs
+  // review" isn't a dead end with nothing to look at.
+  const officeResearchMsg = (() => {
+    const s = result?.office_research?.state;
+    const nm = result?.suggested_locality?.name || "this jurisdiction";
+    if (s === 'queued') return `Researching ${nm}'s permit offices now — verification usually finishes within a few minutes.`;
+    if (s === 'already_queued') return `${nm}'s offices are already being researched — verification usually finishes within a few minutes.`;
+    if (s === 'backfill_pending') return `${nm}'s office research landed — updating its saved record now.`;
+    if (s === 'verification_pending') return `${nm}'s offices are on file — verification is finishing up.`;
+    return "";
+  })();
+
   // Picking a suggestion fills the field and searches immediately — same path
   // as a paste or a QR scan, so the user never presses Find after tapping.
   const pickSuggestion = (s) => {
@@ -951,7 +963,7 @@ function LocalityPickerSession({
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
-                      <details><summary className="min-h-11 py-2 text-sm cursor-pointer">Office verification details</summary>
+                      <details open={addressNeedsCheck || undefined}><summary className="min-h-11 py-2 text-sm cursor-pointer">Office verification details</summary>
                       <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         <div className="flex items-center gap-1 font-semibold">
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
@@ -1218,6 +1230,7 @@ function LocalityPickerSession({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t px-4 pb-3 pt-3">
           <div className="text-[11px] text-gray-500">
             {applyHint && <span className="block text-xs font-medium text-slate-600 mb-0.5">{applyHint}</span>}
+            {addressNeedsCheck && officeResearchMsg && <span className="block text-xs font-medium text-amber-700 mb-0.5">{officeResearchMsg}</span>}
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
