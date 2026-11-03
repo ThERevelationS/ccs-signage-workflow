@@ -26,7 +26,7 @@ export function normalizeSchedule(schedule) {
   const rows = Array.isArray(schedule) ? schedule : [];
   const out = [];
   let cumulative = 0;
-  rows.forEach((row, i) => {
+  rows.forEach((row) => {
     if (cumulative >= 100 - EPS) return;
     let pct = num(row?.pct, NaN);
     if (!Number.isFinite(pct) || pct <= 0) return;
