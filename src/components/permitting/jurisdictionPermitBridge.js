@@ -175,10 +175,14 @@ export function jurisdictionToPermitLocality(jurisdiction) {
 
   // One office record per distinct researched office; roles an office covers
   // merge onto that office (sign permit + zoning often share one counter).
+  // Only potentially-applicable roles are claimed — research returns all
+  // seven roles including 'unknown'/'not_applicable_candidate' entries, and
+  // claiming those puts unprovable (or contradicted) roles on the office.
   const byOffice = new Map();
   for (const r of roles) {
     const officeName = cleanText(r?.office_name) || cleanText(r?.label);
     if (!officeName) continue;
+    if (r?.applicability && !/potentially_applicable|applicable|confirmed/i.test(String(r.applicability))) continue;
     const key = officeName.toLowerCase();
     const entry = byOffice.get(key) || { name: officeName, roles: [], source: "", quotes: [], notes: [], contact: {} };
     if (r?.role && !entry.roles.includes(r.role)) entry.roles.push(r.role);
