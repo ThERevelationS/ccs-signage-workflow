@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FileCheck2, ExternalLink, History, Loader2, Upload } from "lucide-react";
 import { UploadFile } from "@/integrations/Core";
 import { transitionProductAndBuilderStatus } from "@/components/estimator/workOrderConversion";
