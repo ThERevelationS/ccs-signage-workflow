@@ -410,19 +410,23 @@ function LocalityPickerSession({
     if (!openRef.current || !selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)) return;
     if (addressNeedsCheck) {
       const name = result?.suggested_locality?.name || "this office";
+      const held = result?.office_research?.state === 'research_held';
       const choice = await askConfirm({
-        title: `Use ${name} before its offices are verified?`,
-        body: "Live office research is running for this jurisdiction. You can let it apply automatically once the offices verify, or use it now — its permit lines will be marked “needs review” until verified.",
+        title: `Add ${name} before its offices are verified?`,
+        body: held
+          ? `${name} is flagged for a quick human review before automatic office research can run — it's on the review list now. The permit lines are still added immediately, marked needs-review.`
+          : "The permit lines are added now either way, marked needs-review. With auto-verify they update themselves the moment the offices are verified — office research is already running for this jurisdiction.",
         actions: [
-          { value: 'wait', label: 'Apply when verified', tone: 'outline' },
+          { value: 'wait', label: 'Add now + auto-verify', tone: 'outline' },
           { value: 'now', label: 'Use anyway — needs review', tone: 'primary' },
         ],
         skipValue: 'now',
       });
       if (choice === 'cancel' || !openRef.current) return;
+      const locRowEarly = await fullLocalityForApply();
       if (choice === 'wait') {
-        const locRow = await fullLocalityForApply();
-        onPendingApply?.(selectedLocalityId, { excludeElectrical, locality: locRow });
+        onPendingApply?.(selectedLocalityId, { excludeElectrical, locality: locRowEarly });
+        onApply(selectedLocalityId, { excludeElectrical, locality: locRowEarly });
         onClose();
         return;
       }
@@ -582,6 +586,7 @@ function LocalityPickerSession({
     if (s === 'research_started') return `Researching ${nm}'s permit offices right now — this usually takes a couple of minutes.`;
     if (s === 'verification_pending') return `${nm}'s offices are on file — verification is finishing up.`;
     if (s === 'verified') return `${nm}'s offices verified — ready to use.`;
+    if (s === 'research_held') return `${nm} is flagged for a quick human review before automatic office research can run — it's on the review list now.`;
     return "";
   })();
 
