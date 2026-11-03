@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import {
-  FB_HEALTHY_AGE_MS, FB_RECENT_RING_CAP, normalizeFileBridgeSettings,
+  FB_HEALTHY_AGE_MS, FB_RECENT_RING_CAP, MATCH_AUTO, matchCustomerFolders,
+  normalizeFileBridgeSettings,
 } from '../../shared/fileBridgeModel.ts';
 
 // fileBridgeMaintenance — scheduled hands-off sweeps (workflow: every 5 min).
@@ -91,6 +92,51 @@ Deno.serve(async (req) => {
     events_deleted: oldEvents?.length || 0, recent_deleted: recentDeleted,
     chunks_deleted: oldChunks?.length || 0, commands_deleted: oldCmds?.length || 0,
   };
+
+  // ---- customer folder link matching ----
+  // Top-level dirs on purpose:'customer_folders' roots vs Customer.company_name.
+  // >=MATCH_AUTO unambiguous -> confirmed+auto; otherwise suggested for human review.
+  // Existing link on a folder (any status, incl rejected_sticky) -> never re-suggest.
+  const linkStats: any = { candidates: 0, created: 0, auto_confirmed: 0, skipped_existing: 0, errors: 0 };
+  const custRoots = await sr.entities.FileShareRoot.filter(
+    { purpose: 'customer_folders', enabled: true }, 'root_key', 20,
+  ).catch(() => []);
+  const customers = await sr.entities.Customer.filter({}, 'company_name', 2000)
+    .catch((e: any) => ({ __err: String(e?.message || e) }));
+  const cList = Array.isArray(customers)
+    ? customers.map((c: any) => ({ id: c.id, name: c.company_name || c.name || '' })).filter((c: any) => c.name)
+    : null;
+  if (custRoots?.length && cList?.length) {
+    for (const root of custRoots) {
+      const dirs = await sr.entities.FileIndex.filter(
+        { root_key: root.root_key, is_dir: true, parent_path: '', missing: { $ne: true } },
+        'name', 500,
+      ).catch(() => []);
+      if (!dirs?.length) continue;
+      const existing = await sr.entities.CustomerFolderLink.filter(
+        { root_key: root.root_key }, 'folder_path', 1000,
+      ).catch(() => []);
+      const taken = new Set((existing || []).map((l: any) => l.folder_path));
+      const byPath = new Map(dirs.map((d: any) => [d.path, d]));
+      const matches = matchCustomerFolders(dirs.map((d: any) => d.path), cList);
+      linkStats.candidates += matches.length;
+      for (const m of matches) {
+        const dir = byPath.get(m.folder);
+        if (!dir || taken.has(m.folder)) { linkStats.skipped_existing += 1; continue; }
+        const auto = m.confidence >= MATCH_AUTO;
+        const c = await sr.entities.CustomerFolderLink.create({
+          creation_request_key: `link|${dir.agent_id || root.agent_id || ''}|${root.root_key}|${m.folder}|${m.customer_id}`,
+          customer_id: m.customer_id, customer_name: m.customer_name,
+          agent_id: dir.agent_id || root.agent_id || '', root_key: root.root_key,
+          folder_path: m.folder, confidence: m.confidence, signals: m.signals,
+          status: auto ? 'confirmed' : 'suggested', auto,
+        }).catch((e: any) => ({ __err: String(e?.message || e) }));
+        if (c?.__err) linkStats.errors += 1;
+        else { linkStats.created += 1; if (auto) linkStats.auto_confirmed += 1; taken.add(m.folder); }
+      }
+    }
+  }
+  out.sweeps.link_match = linkStats;
 
   await sr.entities.FileBridgeEvent.create({
     event_type: 'maintenance_run', actor: 'system', severity: 'info', ts: now(), details: out.sweeps,
