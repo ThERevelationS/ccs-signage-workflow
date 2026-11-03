@@ -2961,6 +2961,26 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     updateWorkOrder(woId, fieldName, "");
   };
 
+  // TEMP-DIAG: render identity tracker — records which state/prop changes each render.
+  if (typeof window !== "undefined") {
+    const __s = (window.__spDiag = window.__spDiag || { n: 0, last: {}, changes: [] });
+    const snap = {
+      isLoading, loadError, workOrders, filteredWorkOrders, pipelineSummary,
+      sortConfig, liveEditPinVersion, users, selectedRows, focusedRowId,
+      openDatePopover, sessionToken, currentUser, searchTerm, filterStatus,
+      recordScope, attentionFilter, customFilters, activeColumnPreset,
+      onSummaryChange, onColumnHeaderFilterChange, sortedWorkOrders,
+      scopedWorkOrders, taskDescriptions, leadSources, projectTypes,
+    };
+    const changed = Object.keys(snap).filter((k) => snap[k] !== __s.last[k]);
+    if (changed.length || __s.n < 3) {
+      __s.changes.push(`${__s.n}:${changed.join(",")}`);
+      if (__s.changes.length > 600) __s.changes.shift();
+    }
+    Object.assign(__s.last, snap);
+    __s.n += 1;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
