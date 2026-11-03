@@ -97,7 +97,7 @@ export default function AddPermitLineDialog({ isOpen, onClose, onSave, workOrder
               <Label className="text-sm">Locality</Label>
               <Select value={localityId} onValueChange={setLocalityId}>
                 <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Pick the town or township..." />
+                  <SelectValue placeholder="Select the jurisdiction..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
