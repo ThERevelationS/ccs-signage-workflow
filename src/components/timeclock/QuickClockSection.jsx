@@ -1077,6 +1077,16 @@ export default function QuickClockSection({
     }
   };
 
+  // The face roster loads async and can arrive after the camera is already
+  // open in QR-only mode (e.g. a transient entity-budget 429 delayed it). When
+  // it lands mid-session, start the face pass without making the user re-tap.
+  useEffect(() => {
+    if (canUseFace && isRecognizing && recognitionMethod === "camera" && !faceScanSessionRef.current?.isRunning?.()) {
+      void startCameraMode();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUseFace, isRecognizing, recognitionMethod]);
+
   const handleQrDecoded = async (decodedText) => {
     if (recognitionLockedRef.current) return;
     identifyFlowSeqRef.current += 1;
