@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -309,7 +309,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
         .slice(0, OPEN_PO_DETAIL_CAP);
       const out = [];
       for (let i = 0; i < open.length; i += 5) {
-        // eslint-disable-next-line no-await-in-loop -- intentional small batches
+         
         const chunk = await Promise.all(open.slice(i, i + 5).map((po) =>
           base44.functions.invoke("purchaseOrderAction", {
             session_token: sessionToken,
@@ -466,7 +466,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
       dateBasis: filters.dateBasis,
       now: new Date(),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are the stable query data refs
+     
   }, [
     def, workOrders, filters, needSet,
     estimatesQuery.data, invoicesQuery.data, paymentsQuery.data,
