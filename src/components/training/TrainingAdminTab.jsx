@@ -16,6 +16,7 @@ import {
   trainingBootstrap, trainingAssign, trainingCancel, trainingReopen,
   trainingItemCreate, trainingItemUpdate, trainingItemDelete,
 } from "./trainingService";
+import { newRequestKey } from "@/components/sop/sopModel";
 
 // Editor/admin body for the training tracker, rendered as a tab inside the SOP
 // admin drawer. Manages the reusable TrainingItem catalog (create/edit/active
@@ -42,6 +43,7 @@ const TYPE_LABELS = {
 const emptyForm = {
   title: "", type: "custom", description: "", sop_id: "",
   url: "", file_url: "", duration_minutes: "", valid_months: "", active: true,
+  sort_order: 0,
 };
 
 const fmtDate = (value) => {
@@ -60,6 +62,8 @@ function itemToForm(item) {
     duration_minutes: item.duration_minutes ? String(item.duration_minutes) : "",
     valid_months: item.valid_months ? String(item.valid_months) : "",
     active: item.active !== false,
+    // Not editable in the form — carried through so an update doesn't reset it.
+    sort_order: Number(item.sort_order) || 0,
   };
 }
 
@@ -74,6 +78,7 @@ function formToItem(form) {
     duration_minutes: Number(form.duration_minutes) || 0,
     valid_months: form.type === "certification" ? (Number(form.valid_months) || 0) : 0,
     active: form.active !== false,
+    sort_order: Number(form.sort_order) || 0,
   };
 }
 
@@ -208,6 +213,10 @@ export default function TrainingAdminTab({ sops = [], me = null }) {
         emails: assignEmails,
         dueDate: assignDue || "",
         notes: assignNotes,
+        // Fresh nonce per submission: retries of THIS call dedupe, but a later
+        // deliberate re-assign keys differently so it isn't swallowed by the
+        // previous row's dedupe record.
+        assignKey: newRequestKey(),
       });
       setAssignResult({ created: (res?.created || []).length, skipped: res?.skipped || [] });
       await load();
