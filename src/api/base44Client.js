@@ -78,12 +78,20 @@ const cloneValue = (value) => {
 const copyResponse = (res) => (res && typeof res === 'object' && 'data' in res ? { ...res, data: cloneValue(res.data) } : cloneValue(res));
 
 // Sign-in can fail before any credential is checked — a transient server-side
-// failure (5xx) or a request that never got a response. Only those are retried:
-// a 400/401/403/409/429 response means the request was processed and must be
-// reported to the user as-is. The server never counts a failed login it did not
-// evaluate, so these retries cannot lock an account out.
+// failure (5xx), a request that never got a response, or a shared-budget 429.
+// verifyLogin returns its own 429 for the credential lockout too; that is a
+// real decision the user must see, so it is excluded by its message. Any
+// other 429 (platform invoke cap or the function's shared-budget pass-through)
+// is transient congestion worth a bounded retry. The server never counts a
+// failed login it did not evaluate, so these retries cannot lock an account
+// out — and a retried lockout response still surfaces after the attempts run
+// out, just a few seconds later.
 function isUnprocessedSignInFailure(err) {
   const status = err?.response?.status ?? err?.status;
+  if (status === 429) {
+    const msg = String(err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? '');
+    return !/too many failed|login_locked|try again in \d+ minutes/i.test(msg);
+  }
   return typeof status === 'number' ? status >= 500 : true;
 }
 
@@ -218,10 +226,10 @@ const functionsProxy = new Proxy(rawClient.functions, {
           respectCooldown: read,
           retryOnRateLimit: isRetryableFunction(fnName, payload),
           shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
-          // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-          // Other invokes use the governor default — read-pool calls and
-          // request-id-gated writes are both safe to retry on a 429.
-          maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
+          // Keep the sign-in spinner bounded: a handful of backed-off retries,
+          // ~10s worst case. Other invokes use the governor default — read-pool
+          // calls and request-id-gated writes are both safe to retry on a 429.
+          maxAttempts: fnName === 'verifyLogin' ? 4 : undefined,
         });
         // One rate-limit note per invocation: dedupe followers share exec, so
         // they must not each note the same 429.
