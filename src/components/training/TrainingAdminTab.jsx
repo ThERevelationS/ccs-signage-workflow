@@ -17,6 +17,8 @@ import {
   trainingItemCreate, trainingItemUpdate, trainingItemDelete,
 } from "./trainingService";
 import { newRequestKey } from "@/components/sop/sopModel";
+import { recordNotification } from "@/components/workflow/notificationClient";
+import { getSessionToken } from "@/components/auth/EmailGate";
 
 // Editor/admin body for the training tracker, rendered as a tab inside the SOP
 // admin drawer. Manages the reusable TrainingItem catalog (create/edit/active
@@ -219,6 +221,25 @@ export default function TrainingAdminTab({ sops = [], me = null }) {
         assignKey: newRequestKey(),
       });
       setAssignResult({ created: (res?.created || []).length, skipped: res?.skipped || [] });
+      // Tell each assignee via the persisted notification center — same
+      // record() path other modules use. dedupe_key makes a retried assign
+      // notify at most once per assignment row; the call is fail-soft so a
+      // notification outage never blocks the assign itself. Pre-acked rows
+      // land already-completed, so they get no "go do this" ping.
+      const sessionToken = getSessionToken();
+      for (const rec of res?.created || []) {
+        if (rec?.status !== "pending" || !rec?.assignee_email) continue;
+        recordNotification(sessionToken, {
+          recipient_email: rec.assignee_email,
+          category: "system",
+          title: `New training assigned: ${rec.training_title || assignFor.title}`,
+          body: `${assignDue ? `Due ${assignDue} — ` : ""}Open My Workflow or the SOPs page to complete it.`,
+          deep_link: rec.training_type === "sop" && rec.sop_id ? `/sop?sop=${encodeURIComponent(rec.sop_id)}` : "/sop",
+          source_event: "training_assigned",
+          source_id: rec.id,
+          dedupe_key: `training_assigned:${rec.id}`,
+        });
+      }
       await load();
     } catch (e) {
       setError(e?.message || "Could not assign this training.");
