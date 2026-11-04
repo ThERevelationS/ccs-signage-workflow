@@ -155,7 +155,7 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
             <div className="space-y-2">
               {form.categories.map((cat, i) => (
                 <CategoryRow
-                  key={cat.key || i}
+                  key={i}
                   cat={cat}
                   inUse={inUseByCategory[cat.key] || 0}
                   onChange={(next) => patchCategory(i, next)}
