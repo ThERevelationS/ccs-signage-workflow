@@ -170,6 +170,12 @@ function visibleTo(row: any, canEdit: boolean) {
   return canEdit || row?.status === 'published';
 }
 
+// Suggestions carry staff names/emails meant for editor review — strip them
+// from rows served to regular staff (their own submissions still work).
+function forViewer(row: any, canEdit: boolean) {
+  return canEdit ? row : { ...row, suggestions: [] };
+}
+
 async function loadSettings(GlobalSettings: any) {
   const rows = await GlobalSettings.filter({ setting_key: SETTINGS_KEY });
   const row = Array.isArray(rows) && rows[0]?.setting_value ? rows[0] : null;
@@ -273,7 +279,7 @@ Deno.serve(async (req) => {
 
     if (action === 'bootstrap') {
       const rows = await listAll(Sop);
-      const sops = rows.filter((row: any) => visibleTo(row, canEdit));
+      const sops = rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit));
       return Response.json({
         settings,
         settings_updated_date: settingsRecord?.updated_date || '',
@@ -289,7 +295,7 @@ Deno.serve(async (req) => {
 
     if (action === 'list') {
       const rows = await listAll(Sop);
-      return Response.json({ sops: rows.filter((row: any) => visibleTo(row, canEdit)) });
+      return Response.json({ sops: rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit)) });
     }
 
     if (action === 'get') {
@@ -298,7 +304,7 @@ Deno.serve(async (req) => {
       if (!row?.id || !visibleTo(row, canEdit)) {
         return Response.json({ error: 'SOP not found.' }, { status: 404 });
       }
-      return Response.json({ sop: row });
+      return Response.json({ sop: forViewer(row, canEdit) });
     }
 
     if (action === 'acknowledge') {
@@ -314,7 +320,7 @@ Deno.serve(async (req) => {
         const version = Number(row.version) || 1;
         const seen = Array.isArray(row.acknowledged_viewers) ? row.acknowledged_viewers : [];
         const already = seen.some((v: any) => String(v?.email || '').toLowerCase() === viewer && Number(v?.version) === version);
-        if (already) return Response.json({ acknowledged: true, already_acknowledged: true, sop: row });
+        if (already) return Response.json({ acknowledged: true, already_acknowledged: true, sop: forViewer(row, canEdit) });
         const next = [...seen, { email: viewer, name: viewerName, version, acknowledged_at: new Date().toISOString() }].slice(-500);
         const result = await Sop.updateMany(
           { id: row.id, updated_date: row.updated_date },
@@ -346,7 +352,7 @@ Deno.serve(async (req) => {
               ).catch(() => {});
             }
           }
-          return Response.json({ acknowledged: true, sop: saved || row });
+          return Response.json({ acknowledged: true, sop: forViewer(saved || row, canEdit) });
         }
       }
       // All CAS attempts lost — do NOT claim success: the receipt never landed,
@@ -446,6 +452,11 @@ Deno.serve(async (req) => {
       if (!STATUSES.has(status)) return Response.json({ error: 'Unknown SOP status.' }, { status: 400 });
       const current = await Sop.get(id).catch(() => null);
       if (!current?.id) return Response.json({ error: 'SOP no longer exists.' }, { status: 404 });
+      // The UI blocks publishing an empty SOP — enforce it here too so a
+      // zero-step procedure can never go live via a crafted invoke.
+      if (status === 'published' && (!Array.isArray(current.steps) || current.steps.length === 0)) {
+        return Response.json({ error: 'Add at least one step before publishing.' }, { status: 400 });
+      }
       const saved = await updateExact(Sop, body, {
         status,
         updated_by_email: String(user.email).toLowerCase(),
@@ -482,6 +493,9 @@ Deno.serve(async (req) => {
       const rows = (await listAll(Sop)).filter((row: any) => row.status === 'published' && row.requires_ack === true);
       const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({}, 'full_name', 1000).catch(() => []);
       const roster = (Array.isArray(users) ? users : [])
+        // Deactivated staff can never sign in to acknowledge — counting them
+        // as pending would corrupt the compliance numbers forever.
+        .filter((u: any) => u?.is_deactivated !== true)
         .map((u: any) => ({ email: String(u?.email || '').toLowerCase(), name: String(u?.full_name || u?.email || '').trim() }))
         .filter((u: any) => u.email);
       const report = rows.map((row: any) => {
@@ -498,7 +512,17 @@ Deno.serve(async (req) => {
 
     if (action === 'delete') {
       if (!isAdmin) return Response.json({ error: 'Only administrators can delete SOPs.' }, { status: 403 });
-      return Response.json(await deleteExact(Sop, body));
+      const result = await deleteExact(Sop, body);
+      // Sop-type training items pointing at the removed SOP can never be
+      // assigned again — deactivate them so they stop offering a dead link.
+      const TrainingItem = (base44.asServiceRole.entities as any).TrainingItem;
+      if (result?.deleted && TrainingItem) {
+        await TrainingItem.updateMany(
+          { sop_id: String(body?.id || '').trim(), active: true },
+          { $set: { active: false } },
+        ).catch(() => {});
+      }
+      return Response.json(result);
     }
 
     return Response.json({ error: 'Unknown SOP action.' }, { status: 400 });
