@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Clock3, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -11,22 +12,11 @@ import {
 import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
   TIME_CLOCK_COMPANY_TIME_ZONE,
+  companyDateTimeInputFromIso,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
 
 const MAX_MINUTES_AGO = 12 * 60;
-const STEP_MINUTES = 5;
-const QUICK_CHOICES = [
-  { label: "Just now", minutes: 0 },
-  { label: "15 min", minutes: 15 },
-  { label: "30 min", minutes: 30 },
-  { label: "45 min", minutes: 45 },
-  { label: "1 hr", minutes: 60 },
-  { label: "2 hr", minutes: 120 },
-  { label: "4 hr", minutes: 240 },
-  { label: "6 hr", minutes: 360 },
-];
 
 const companyClockTime = (date) =>
   new Intl.DateTimeFormat("en-US", {
@@ -45,10 +35,11 @@ const companyDayKey = (date) =>
   }).format(date);
 
 const agoLabel = (minutes) => {
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
+  const m = Math.floor(minutes);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const hours = Math.floor(m / 60);
+  const rest = m % 60;
   return rest === 0 ? `${hours} hr ago` : `${hours} hr ${rest} min ago`;
 };
 
@@ -60,68 +51,64 @@ export default function MissedClockInDialog({
   onReport,
   onCancel,
 }) {
-  const [minutesAgo, setMinutesAgo] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0);
+  const [timeText, setTimeText] = useState("");
   const [localError, setLocalError] = useState("");
-  const [customMode, setCustomMode] = useState(false);
-  const [customValue, setCustomValue] = useState("");
-  const [customError, setCustomError] = useState("");
 
   useEffect(() => {
     if (open) {
-      setMinutesAgo(0);
+      const nowInput = companyDateTimeInputFromIso(new Date().toISOString()) || "";
+      setDayOffset(0);
+      setTimeText(nowInput.slice(11));
       setLocalError("");
-      setCustomMode(false);
-      setCustomValue("");
-      setCustomError("");
     }
   }, [open]);
 
-  const arrival = useMemo(
-    () => new Date(Date.now() - minutesAgo * 60 * 1000),
-    [minutesAgo],
-  );
-  const arrivalIso = arrival.toISOString();
-  const arrivalLabel = companyClockTime(arrival);
-  const isToday = companyDayKey(arrival) === companyDayKey(new Date());
-  const sliderFill = `${(minutesAgo / MAX_MINUTES_AGO) * 100}%`;
+  const todayYmd = (companyDateTimeInputFromIso(new Date().toISOString()) || "").slice(0, 10);
+  const yesterdayYmd = (companyDateTimeInputFromIso(new Date(Date.now() - 86400000).toISOString()) || "").slice(0, 10);
+  const ymd = dayOffset === 0 ? todayYmd : yesterdayYmd;
 
-  const chooseMinutes = (minutes) => {
-    setMinutesAgo(minutes);
-    setLocalError("");
-    setCustomMode(false);
-    setCustomError("");
-  };
-
-  const applyCustomTime = (value) => {
-    setCustomValue(value);
-    setLocalError("");
-    if (!value) { setCustomError(""); return; }
-    const parsed = parseCompanyDateTimeInput(value);
-    if (!parsed.ok) {
-      setCustomError(parsed.error || `Enter a valid time in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`);
-      return;
-    }
-    const deltaMinutes = (Date.now() - Date.parse(parsed.iso)) / 60000;
-    if (deltaMinutes < 0) {
-      setCustomError("That arrival time is in the future.");
-      return;
-    }
-    if (deltaMinutes > MAX_MINUTES_AGO) {
-      setCustomError(`That is more than 12 hours ago in ${TIME_CLOCK_COMPANY_TIME_LABEL}. Ask a manager to correct the shift instead.`);
-      return;
-    }
-    setCustomError("");
-    setMinutesAgo(Math.floor(deltaMinutes));
-  };
+  const parsed = timeText ? parseCompanyDateTimeInput(`${ymd}T${timeText}`) : null;
+  const arrival = parsed?.ok ? new Date(parsed.iso) : null;
+  const deltaMinutes = arrival ? (Date.now() - arrival.getTime()) / 60000 : null;
+  const timeError = !parsed
+    ? ""
+    : !parsed.ok
+      ? (parsed.error || `Enter a valid time in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`)
+      : deltaMinutes < 0
+        ? "That arrival time is in the future."
+        : deltaMinutes > MAX_MINUTES_AGO
+          ? `That is more than 12 hours ago in ${TIME_CLOCK_COMPANY_TIME_LABEL}. Ask a manager to correct the shift instead.`
+          : "";
+  const arrivalIso = parsed?.ok && !timeError ? parsed.iso : null;
+  const arrivalLabel = arrivalIso ? companyClockTime(arrival) : "--:--";
+  const isToday = arrivalIso ? companyDayKey(arrival) === companyDayKey(new Date()) : true;
 
   const submit = async () => {
     setLocalError("");
+    if (!arrivalIso) return;
     try {
       await onReport(arrivalIso);
     } catch (err) {
       setLocalError(err?.message || "The missed Clock In was not confirmed.");
     }
   };
+
+  const dayButton = (offset, label) => (
+    <button
+      type="button"
+      key={offset}
+      disabled={busy}
+      onClick={() => { setDayOffset(offset); setLocalError(""); }}
+      className={`rounded-full px-2 py-2 text-sm font-semibold transition-[transform,background-color,color,box-shadow] duration-150 motion-safe:active:scale-95 disabled:opacity-50 ${
+        dayOffset === offset
+          ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
+          : "bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-amber-950 dark:hover:text-amber-200"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next && !busy) onCancel?.(); }}>
@@ -138,7 +125,7 @@ export default function MissedClockInDialog({
                   Forgot to Clock In{userName ? `, ${userName}` : ""}?
                 </DialogTitle>
                 <DialogDescription className="mt-0.5">
-                  Tell us when you actually arrived and we will start your shift from then.
+                  Type the actual time you arrived and we will start your shift from then.
                 </DialogDescription>
               </div>
             </div>
@@ -149,88 +136,40 @@ export default function MissedClockInDialog({
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                 You arrived {isToday ? "today" : "yesterday"} at
               </p>
-              <p key={arrivalIso} className="mci-time-pop mt-1 text-4xl font-black tabular-nums tracking-tight text-slate-900 dark:text-slate-50">
+              <p key={arrivalIso || "empty"} className="mci-time-pop mt-1 text-4xl font-black tabular-nums tracking-tight text-slate-900 dark:text-slate-50">
                 {arrivalLabel}
               </p>
               <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {agoLabel(minutesAgo)} · {TIME_CLOCK_COMPANY_TIME_LABEL}
+                {arrivalIso ? `${agoLabel(deltaMinutes)} · ${TIME_CLOCK_COMPANY_TIME_LABEL}` : `type the actual arrival time · ${TIME_CLOCK_COMPANY_TIME_LABEL}`}
               </p>
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
-              {QUICK_CHOICES.map((choice) => {
-                const selected = minutesAgo === choice.minutes;
-                return (
-                  <button type="button"
-                    key={choice.minutes}
-                    disabled={busy}
-                    onClick={() => chooseMinutes(choice.minutes)}
-                    className={`rounded-full px-2 py-1.5 text-xs font-semibold transition-[transform,background-color,color,box-shadow] duration-150 motion-safe:active:scale-95 disabled:opacity-50 ${
-                      selected
-                        ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
-                        : "bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-amber-950 dark:hover:text-amber-200"
-                    }`}
-                  >
-                    {choice.label}
-                  </button>
-                );
-              })}
-            </div>
-
             <div>
-              <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-                <span>Just now</span>
-                <span>12 hr ago</span>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                What time did you actually arrive? ({TIME_CLOCK_COMPANY_TIME_LABEL})
+              </p>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                {dayButton(0, "Today")}
+                {dayButton(1, "Yesterday")}
               </div>
-              <input
-                type="range"
-                min={0}
-                max={MAX_MINUTES_AGO}
-                step={STEP_MINUTES}
-                value={minutesAgo}
+              <Input
+                id="mci-arrival-time"
+                type="time"
+                value={timeText}
+                onChange={(event) => { setTimeText(event.target.value); setLocalError(""); }}
                 disabled={busy}
-                onChange={(event) => chooseMinutes(Number(event.target.value))}
-                className="mci-slider mt-2 w-full disabled:opacity-50"
-                style={{ "--mci-fill": sliderFill }}
-                aria-label="How many minutes ago you arrived"
+                aria-label={`Exact arrival time in ${TIME_CLOCK_COMPANY_TIME_LABEL}`}
+                className="mt-2 h-14 bg-white text-center text-3xl font-black tracking-widest dark:bg-slate-900"
               />
+              {timeError && (
+                <p className="mt-2 text-xs font-medium text-red-700 dark:text-red-300">{timeError}</p>
+              )}
             </div>
-
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setCustomMode((v) => !v);
-                setCustomError("");
-                setLocalError("");
-              }}
-              className="w-full rounded-xl border border-dashed border-amber-300 py-2 text-xs font-semibold text-amber-700 transition-colors hover:border-amber-500 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/40"
-            >
-              {customMode ? "Back to quick options" : "Pick an exact time…"}
-            </button>
-
-            {customMode && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-800 dark:bg-amber-950/20">
-                <TimeQuickPick
-                  value={customValue}
-                  onChange={applyCustomTime}
-                  disabled={busy}
-                  mode="datetime"
-                  times={SHIFT_START_TIMES}
-                  dayOffsets={[0, 1]}
-                  confirmLabel="Arrived"
-                  inputId="mci-custom-arrival"
-                />
-                {customError && (
-                  <p className="mt-2 text-xs font-medium text-red-700 dark:text-red-300">{customError}</p>
-                )}
-              </div>
-            )}
 
             <Button
               type="button"
               onClick={submit}
-              disabled={busy || (customMode && (!customValue || !!customError))}
+              disabled={busy || !arrivalIso}
               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-5 text-base font-bold text-white shadow-lg shadow-amber-500/30 transition-[box-shadow,transform] duration-200 hover:from-amber-600 hover:to-orange-600 hover:shadow-xl motion-safe:active:scale-[0.98]"
             >
               {busy ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
