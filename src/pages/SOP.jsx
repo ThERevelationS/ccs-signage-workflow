@@ -15,6 +15,7 @@ import {
   sopBootstrap, sopCreate, sopUpdate, sopSetStatus, sopDelete, sopAcknowledge, sopSuggestEdit, sopResolveSuggestion,
 } from "@/components/sop/sopService";
 import { newSopDraft } from "@/components/sop/sopModel";
+import TrainingSection from "@/components/training/TrainingSection";
 
 // The SOP module front page: browse procedures by department, read them with
 // photos/video, and — for admins and named editors — build new ones with AI
@@ -296,6 +297,10 @@ export default function SOP() {
       )}
 
       {view === "browse" && (
+        <div className="mb-4 empty:hidden"><TrainingSection compact /></div>
+      )}
+
+      {view === "browse" && (
         <SopBrowser
           sops={sops}
           settings={settings}
@@ -358,6 +363,7 @@ export default function SOP() {
         settings={settings}
         settingsUpdatedDate={settingsDate}
         sops={sops}
+        me={me}
         onSaved={(next, nextDate) => { setSettings(next); setSettingsDate(nextDate); }}
         onResolveSuggestion={resolveSuggestion}
       />
