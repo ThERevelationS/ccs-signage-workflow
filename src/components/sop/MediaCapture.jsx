@@ -19,7 +19,7 @@ function pickVideoMime() {
   return candidates.find((t) => MediaRecorder.isTypeSupported(t)) || "";
 }
 
-export default function MediaCapture({ open, onClose, onAttach, allowRecording = true, maxImageMb = 15, maxVideoMb = 100 }) {
+export default function MediaCapture({ open, onClose, onAttach, allowRecording = true, maxImageMb = 15, maxVideoMb = 100, imageOnly = false }) {
   const [tab, setTab] = useState("photo");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -30,12 +30,17 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const discardRef = useRef(false);
 
   const stopCamera = useCallback(() => {
+    // Every exit through here (cancel, close, tab switch, unmount) drops the
+    // clip — only an explicit "Stop & use" may turn a recording into a file.
+    discardRef.current = true;
     try { recorderRef.current?.state === "recording" && recorderRef.current.stop(); } catch {}
     streamRef.current?.getTracks?.().forEach((t) => t.stop());
     streamRef.current = null;
     recorderRef.current = null;
+    chunksRef.current = [];
     setCameraState("off");
     setRecording(false);
   }, []);
@@ -70,6 +75,7 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
   const handleImageFiles = (files) => {
     const file = files?.[0];
     if (!file) return;
+    if (!String(file.type || "").startsWith("image/")) { setError("That file is not an image — pick a photo or use the video tab."); return; }
     if (!checkSize(file, maxImageMb)) return;
     finishUpload(file, "image");
   };
@@ -77,6 +83,7 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
   const handleVideoFiles = (files) => {
     const file = files?.[0];
     if (!file) return;
+    if (!String(file.type || "").startsWith("video/")) { setError("That file is not a video — pick a video file or paste a link."); return; }
     if (!checkSize(file, maxVideoMb)) return;
     finishUpload(file, "video");
   };
@@ -125,12 +132,15 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
     const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
     recorderRef.current = recorder;
     chunksRef.current = [];
+    discardRef.current = false;
     recorder.ondataavailable = (e) => { if (e.data?.size) chunksRef.current.push(e.data); };
     recorder.onstop = () => {
+      if (discardRef.current) return;
       const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "video/webm" });
       if (!checkSize(blob, maxVideoMb)) { stopCamera(); return; }
       stopCamera();
-      finishUpload(new File([blob], `sop-video-${Date.now()}.webm`, { type: blob.type }), "video");
+      const ext = (blob.type || "").includes("mp4") ? "mp4" : "webm";
+      finishUpload(new File([blob], `sop-video-${Date.now()}.${ext}`, { type: blob.type }), "video");
     };
     recorder.start(500);
     setRecording(true);
@@ -138,6 +148,7 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
   };
 
   const stopVideoRecording = () => {
+    discardRef.current = false;
     try { recorderRef.current?.stop(); } catch { stopCamera(); }
   };
 
@@ -157,24 +168,24 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
         <DialogHeader>
           <DialogTitle>Add photo or video</DialogTitle>
         </DialogHeader>
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={imageOnly ? "photo" : tab} onValueChange={(v) => { setTab(v); stopCamera(); }}>
+          <TabsList className={`grid w-full ${imageOnly ? "grid-cols-1" : "grid-cols-3"}`}>
             <TabsTrigger value="photo" className="gap-1"><ImageIcon className="h-4 w-4" /> Photo</TabsTrigger>
-            <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" /> Video</TabsTrigger>
-            <TabsTrigger value="link" className="gap-1"><Link2 className="h-4 w-4" /> Link</TabsTrigger>
+            {!imageOnly && <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" /> Video</TabsTrigger>}
+            {!imageOnly && <TabsTrigger value="link" className="gap-1"><Link2 className="h-4 w-4" /> Link</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="photo" className="space-y-3 pt-3">
             {cameraState === "off" ? (
               <div className="flex flex-wrap gap-2">
                 <label className="inline-flex">
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageFiles(e.target.files)} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }} />
                   <Button type="button" variant="outline" asChild disabled={busy} className="gap-1.5">
                     <span><Upload className="h-4 w-4" /> Upload photo</span>
                   </Button>
                 </label>
                 <label className="inline-flex">
-                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleImageFiles(e.target.files)} />
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }} />
                   <Button type="button" variant="outline" asChild disabled={busy} className="gap-1.5">
                     <span><Camera className="h-4 w-4" /> Camera app</span>
                   </Button>
@@ -202,7 +213,7 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
             {cameraState === "off" ? (
               <div className="flex flex-wrap gap-2">
                 <label className="inline-flex">
-                  <input type="file" accept="video/*" className="hidden" onChange={(e) => handleVideoFiles(e.target.files)} />
+                  <input type="file" accept="video/*" className="hidden" onChange={(e) => { handleVideoFiles(e.target.files); e.target.value = ""; }} />
                   <Button type="button" variant="outline" asChild disabled={busy} className="gap-1.5">
                     <span><Upload className="h-4 w-4" /> Upload video</span>
                   </Button>
