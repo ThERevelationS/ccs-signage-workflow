@@ -83,11 +83,21 @@ export default function TrainingSection({ compact = false }) {
   };
 
   // Render nothing until we know there is something to show — the section is
-  // invisible for staff with no assignments rather than an empty card.
+  // invisible for staff with no assignments rather than an empty card. A
+  // failed load must NOT be silent: show a slim error strip with a retry or a
+  // transient outage quietly hides assigned training.
   if (!rows) return null;
   const pending = rows.filter((r) => r.status === "pending");
   const completed = rows.filter((r) => r.status === "completed").slice(0, 3);
-  if (!pending.length && !completed.length) return null;
+  if (!pending.length && !completed.length) {
+    if (!error) return null;
+    return (
+      <div className={`rounded-lg border border-red-200 bg-red-50 flex items-center gap-2 text-xs text-red-700 ${compact ? "p-2" : "p-3"}`}>
+        <span className="flex-1 truncate">{error}</span>
+        <button type="button" onClick={load} className="font-medium underline shrink-0">Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-lg border border-slate-200 bg-white ${compact ? "p-3" : "p-4"}`}>
