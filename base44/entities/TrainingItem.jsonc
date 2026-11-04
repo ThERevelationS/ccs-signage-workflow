@@ -1,0 +1,87 @@
+{
+  "name": "TrainingItem",
+  "type": "object",
+  "description": "Reusable training material an admin can assign to employees: an SOP in this app, an external video/document link, an uploaded file, a certification, or a custom/in-person item.",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Training name shown on My Workflow and the SOP page."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "sop",
+        "video",
+        "document",
+        "certification",
+        "custom"
+      ],
+      "default": "custom",
+      "description": "sop = links into the /sop module; certification carries an expiry/renewal window."
+    },
+    "description": {
+      "type": "string",
+      "description": "What the assignee should do/learn."
+    },
+    "sop_id": {
+      "type": "string",
+      "description": "Sop record id when type=sop \u2014 the My Workflow row deep-links to it."
+    },
+    "url": {
+      "type": "string",
+      "description": "External link (video, document, course page)."
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Uploaded file attachment (doc/video/pdf)."
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated time to complete."
+    },
+    "valid_months": {
+      "type": "number",
+      "default": 0,
+      "description": "For certifications: months the completion stays valid before renewal is due. 0 = no expiry."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Inactive items can't be newly assigned but keep history."
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Deterministic create key for retry/lost-response dedupe."
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    }
+  }
+}
