@@ -322,6 +322,24 @@ Deno.serve(async (req) => {
         );
         if (result && result.updated === 1) {
           const saved = await Sop.get(id).catch(() => null);
+          // A pending training assignment for this SOP completes the moment the
+          // assignee acknowledges it — one read, one tap, both records close.
+          const TrainingAssignment = (base44.asServiceRole.entities as any).TrainingAssignment;
+          if (TrainingAssignment) {
+            const assigned = await TrainingAssignment.filter({ sop_id: id, assignee_email: viewer, status: 'pending' }, null, 20).catch(() => []);
+            for (const a of Array.isArray(assigned) ? assigned : []) {
+              const expiresAt = (() => {
+                const months = Number(a?.valid_months) || 0;
+                if (!months) return null;
+                const d = new Date(); if (Number.isNaN(d.getTime())) return null;
+                d.setMonth(d.getMonth() + months); return d.toISOString();
+              })();
+              await TrainingAssignment.update(a.id, {
+                status: 'completed', completed_at: new Date().toISOString(),
+                completed_method: 'sop_ack', expires_at: expiresAt,
+              }).catch(() => {});
+            }
+          }
           return Response.json({ acknowledged: true, sop: saved || row });
         }
       }
