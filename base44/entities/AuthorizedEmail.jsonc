@@ -205,6 +205,11 @@
       "default": false,
       "description": "Admin-assigned permission to pause counted work time without clocking out"
     },
+    "can_self_approve_shifts": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin-only grant to approve the user's own Time Clock shifts. OFF by default - without it, another administrator must approve."
+    },
     "face_descriptors": {
       "type": "array",
       "description": "Stored face recognition descriptors for this user",
