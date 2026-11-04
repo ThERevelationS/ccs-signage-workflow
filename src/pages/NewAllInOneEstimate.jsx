@@ -223,6 +223,7 @@ export default function NewAllInOneEstimate() {
             customerId: customer.id,
             siteAddress: form.site_address,
             estimateId: estimate.id,
+            sessionToken,
           });
         } catch (locationError) {
           window.alert(`Estimate was created, but its Customer location could not be saved: ${locationError?.message || "unknown error"}`);
