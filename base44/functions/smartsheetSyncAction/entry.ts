@@ -2693,6 +2693,11 @@ async function pushDataset(
             return result.body;
           },
           makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
+          isMarkerRowAbsent: async (markerRowId: any) => {
+            const res = await smartsheetGet(`/sheets/${sheetId}?` + new URLSearchParams({
+              rowIds: String(markerRowId), exclude: 'nonexistentCells' }), token);
+            return String(res.body?.id ?? '') === sheetId && normalizeSheetRows(res.body).length === 0;
+          },
           verifyCreatedRow: async ({ rowId, expectedSnapshot, record: verifyRecord, recovered }: any) => {
             await reportOrderProgress({
               phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length,
@@ -4562,6 +4567,11 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           return result.body;
         },
         makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
+        isMarkerRowAbsent: async (markerRowId: any) => {
+          const res = await smartsheetGet(`/sheets/${sheetId}?` + new URLSearchParams({
+            rowIds: String(markerRowId), exclude: 'nonexistentCells' }), token);
+          return String(res.body?.id ?? '') === sheetId && normalizeSheetRows(res.body).length === 0;
+        },
         verifyCreatedRow: async ({ rowId, expectedSnapshot }: any) => {
           const columnIds = [...new Set(Object.values(bindings)
             .map((value: any) => cleanText(value, 40)).filter((value: string) => /^\d+$/.test(value)))];
