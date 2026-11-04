@@ -173,7 +173,7 @@ const FIELD_DENYLIST: Record<string, string[]> = {
   ],
 };
 
-const MAX_LIMIT = 500;
+const MAX_LIMIT = 5000;
 const MAX_SKIP = 100000;
 const MAX_QUERY_BYTES = 4000;
 
