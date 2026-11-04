@@ -146,7 +146,8 @@ export default function UserManagement() {
     can_order_export: false,
     can_view_resources: false,
     employment_type: "hourly",
-    can_work_pause: false
+    can_work_pause: false,
+    can_self_approve_shifts: false
   });
   const activeAccountDraft = useRef(formData);
   activeAccountDraft.current = formData;
@@ -299,6 +300,7 @@ export default function UserManagement() {
       sales_roles: ["Task Assigned"], can_import_export: false,
       can_order_export: false, can_view_resources: false,
       employment_type: "hourly", can_work_pause: false,
+      can_self_approve_shifts: false,
     });
     // A prior session may still have an invitation in flight. Release only its
     // UI ownership; never let it resume onboarding or Smartsheet actions.
@@ -1488,6 +1490,7 @@ export default function UserManagement() {
           sales_roles: ["Task Assigned"],
           employment_type: "hourly",
           can_work_pause: false,
+          can_self_approve_shifts: false,
           onboarding_complete: false
         },
         sessionToken,
@@ -1655,6 +1658,7 @@ export default function UserManagement() {
         role: verifiedUser.role || "user",
         sales_roles: Array.isArray(verifiedUser.sales_roles) ? verifiedUser.sales_roles : [],
         is_full_admin: verifiedUser.is_full_admin === true,
+        can_self_approve_shifts: verifiedUser.can_self_approve_shifts === true,
         admin_permissions: verifiedUser.admin_permissions && typeof verifiedUser.admin_permissions === "object" ? verifiedUser.admin_permissions : {},
       });
       await loadUsers();
@@ -2610,6 +2614,20 @@ export default function UserManagement() {
                           </div>
                         </div>
                       </div>
+                      {formData.role === "admin" && (
+                        <div className="rounded-lg border border-purple-200 bg-white p-3">
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              checked={formData.can_self_approve_shifts === true}
+                              onCheckedChange={(checked) => changeAccountDraft({ can_self_approve_shifts: checked === true })}
+                            />
+                            <div>
+                              <label className="text-sm font-medium">Approve own shifts</label>
+                              <p className="text-xs text-gray-500 mt-1">Admin only. Lets this administrator approve their own Time Clock shifts without a second admin. OFF by default.</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
