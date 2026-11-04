@@ -51,13 +51,18 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
   const [reportBusy, setReportBusy] = useState(false);
   const [expandedReport, setExpandedReport] = useState("");
 
+  const settingsArrived = settings !== null;
   useEffect(() => {
     if (open) {
       setForm(settings ? JSON.parse(JSON.stringify(settings)) : null);
       setError("");
       setReport(null);
     }
-  }, [open, settings]);
+    // Re-seed on a REAL settings change (first arrival or an updated_date
+    // bump). A routine bootstrap replaces the settings object identity every
+    // time — depending on it would wipe in-progress edits whenever an
+    // unrelated action (e.g. resolving a suggestion) refreshes the page data.
+  }, [open, settingsArrived, settingsUpdatedDate]);
 
   const inUseByCategory = useMemo(() => {
     const map = {};
