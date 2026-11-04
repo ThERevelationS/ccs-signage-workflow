@@ -37,6 +37,11 @@ const STEP_FROM_PHOTO_SCHEMA = {
   required: ["body"],
 };
 
+// Step bodies are stored as HTML and rendered with dangerouslySetInnerHTML —
+// LLM text must be escaped before paragraph-wrapping or a stray "<" can
+// inject markup into every viewer's page.
+const escapeHtml = (s) => String(s).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 export async function uploadFile(file) {
   const res = await base44.integrations.Core.UploadFile({ file });
   const url = res?.file_url || res?.url || "";
@@ -86,7 +91,7 @@ ${notes}`,
       .map((s) => ({
         id: newStepId(),
         title: String(s.title || "").trim(),
-        body: String(s.body || "").trim() ? `<p>${String(s.body).trim().replace(/\n+/g, "</p><p>")}</p>` : "",
+        body: String(s.body || "").trim() ? `<p>${escapeHtml(String(s.body).trim()).replace(/\n+/g, "</p><p>")}</p>` : "",
         images: [],
         video_url: "",
         external_video_url: "",
