@@ -22,7 +22,7 @@ export default function SopRunMode({ sop, settings, onClose }) {
         <button type="button" onClick={onClose} className="p-2 -ml-2 text-white/70 hover:text-white" aria-label="Exit run mode"><X className="h-6 w-6" /></button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{sop.title}</p>
-          <p className="text-xs text-white/50">{cat.label} · Step {idx + 1} of {steps.length}</p>
+          <p className="text-xs text-white/50">{cat.label}{steps.length ? ` · Step ${idx + 1} of ${steps.length}` : " · No steps"}</p>
         </div>
         <div className="h-1.5 w-24 rounded-full bg-white/15 overflow-hidden">
           <div className="h-full bg-emerald-400 transition-all" style={{ width: `${steps.length ? (done.size / steps.length) * 100 : 0}%` }} />
@@ -70,9 +70,14 @@ export default function SopRunMode({ sop, settings, onClose }) {
             )}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+          <p className="text-white/60 text-sm">This SOP has no steps yet.</p>
+          <Button type="button" variant="outline" onClick={onClose} className="bg-transparent text-white border-white/25">Back</Button>
+        </div>
+      )}
 
-      {!finished && (
+      {!finished && steps.length > 0 && (
         <div className="flex items-center gap-2 border-t border-white/10 p-3">
           <Button type="button" variant="outline" size="lg" disabled={idx === 0} onClick={() => setIdx((i) => i - 1)} className="gap-1 bg-transparent text-white border-white/25">
             <ChevronLeft className="h-5 w-5" /> Back
