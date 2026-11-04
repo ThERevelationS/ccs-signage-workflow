@@ -48,13 +48,17 @@ function cleanItemForm(value: any) {
   const title = cleanText(data.title, 200);
   if (!title) throw bad('Training needs a title.');
   const type = TYPES.has(String(data.type)) ? String(data.type) : 'custom';
+  const sopId = type === 'sop' ? cleanText(data.sop_id, 60) : '';
+  // A sop-type item with no linked SOP can only be "marked done" blind —
+  // there is nothing for the assignee to read.
+  if (type === 'sop' && !sopId) throw bad('Pick the SOP this training links to.');
   const dur = Number(data.duration_minutes);
   const valid = Number(data.valid_months);
   return {
     title,
     type,
     description: cleanText(data.description, 4000),
-    sop_id: type === 'sop' ? cleanText(data.sop_id, 60) : '',
+    sop_id: sopId,
     url: cleanUrl(data.url),
     file_url: cleanUrl(data.file_url),
     duration_minutes: Number.isFinite(dur) ? Math.max(0, Math.min(40000, Math.round(dur))) : 0,
@@ -166,6 +170,8 @@ Deno.serve(async (req) => {
         payload.items = items || [];
         payload.assignments = decorate(assignments || []);
         payload.staff = (Array.isArray(staffRows) ? staffRows : [])
+          // Deactivated accounts can't sign in — assigning to them is dead work.
+          .filter((s: any) => s?.is_deactivated !== true)
           .map((s: any) => ({ email: String(s?.email || '').toLowerCase(), name: String(s?.name || s?.full_name || s?.email || '') }))
           .filter((s: any) => s.email);
       }
@@ -252,9 +258,9 @@ Deno.serve(async (req) => {
       // already acknowledged the current version close out immediately —
       // the acknowledge op early-returns on re-ack, so the hook never fires.
       let sopRow: any = null;
-      if (String(item.type) === 'sop' && item.sop_id) {
+      if (String(item.type) === 'sop') {
         const Sop = (base44.asServiceRole.entities as any).Sop;
-        sopRow = Sop ? await Sop.get(String(item.sop_id)).catch(() => null) : null;
+        sopRow = Sop && item.sop_id ? await Sop.get(String(item.sop_id)).catch(() => null) : null;
         if (!sopRow?.id || sopRow.status !== 'published') {
           return Response.json({ error: 'The linked SOP is missing or not published.' }, { status: 400 });
         }
@@ -275,12 +281,20 @@ Deno.serve(async (req) => {
         const row = (Array.isArray(staff) ? staff : []).find((s: any) => String(s?.email || '').toLowerCase() === em);
         return String(row?.name || row?.full_name || em);
       };
+      const deactivated = new Set((Array.isArray(staff) ? staff : [])
+        .filter((s: any) => s?.is_deactivated === true)
+        .map((s: any) => String(s?.email || '').toLowerCase()));
       const created: any[] = [];
       const skipped: string[] = [];
       for (const em of emails) {
+        if (deactivated.has(em)) { skipped.push(em); continue; }
         const pending = await TrainingAssignment.filter({ training_id: item.id, assignee_email: em, status: 'pending' }, null, 1).catch(() => []);
         if (Array.isArray(pending) && pending.length > 0) { skipped.push(em); continue; }
         const preAcked = sopRow ? alreadyAcked(em) : false;
+        // Recovery matches on the request key, not {status:'pending'}: a
+        // pre-acked row is created 'completed', so the old matcher could never
+        // find it after a lost response — the retry then wrote a duplicate.
+        const requestKey = `${item.id}:${em}${assignKey ? `:${assignKey}` : ''}`;
         const { record } = await createWithRecovery(TrainingAssignment, {
           training_id: item.id,
           training_title: String(item.title || ''),
@@ -299,8 +313,8 @@ Deno.serve(async (req) => {
           completed_at: preAcked ? nowIso : null,
           completed_method: preAcked ? 'sop_ack' : null,
           notes,
-          creation_request_key: `${item.id}:${em}${assignKey ? `:${assignKey}` : ''}`,
-        }, { training_id: item.id, assignee_email: em, status: 'pending' });
+          creation_request_key: requestKey,
+        }, { creation_request_key: requestKey });
         if (record?.id) created.push(record);
       }
       return Response.json({ created, skipped });
