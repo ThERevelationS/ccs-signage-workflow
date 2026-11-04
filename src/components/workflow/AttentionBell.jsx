@@ -156,7 +156,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
       >
         <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         {count > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-red-600 px-1 text-[9px] font-bold leading-4 text-white">
+          <span className={`pointer-events-none absolute -right-1 -top-1 inline-flex items-center justify-center rounded-full bg-red-600 font-bold leading-none text-white ring-2 ring-white dark:ring-slate-900 ${compact ? "h-3.5 min-w-3.5 px-0.5 text-[8px]" : "h-4 min-w-4 px-1 text-[9px]"}`}>
             {count > 99 ? "99+" : count}
           </span>
         )}
