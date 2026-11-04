@@ -226,9 +226,11 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
               <Button type="button" variant="ghost" size="sm" onClick={() => setSuggestStep(null)}>Cancel</Button>
               <Button type="button" size="sm" disabled={suggestBusy || !suggestText.trim()} onClick={async () => {
                 setSuggestBusy(true);
-                await onSuggest?.({ sopId: sop.id, stepId: suggestStep, text: suggestText });
+                // onSuggest returns false on failure — keep the dialog (and
+                // the typed text) open so it isn't lost to a transient error.
+                const ok = await onSuggest?.({ sopId: sop.id, stepId: suggestStep, text: suggestText });
                 setSuggestBusy(false);
-                setSuggestStep(null);
+                if (ok !== false) setSuggestStep(null);
               }}>{suggestBusy ? "Sending…" : "Send suggestion"}</Button>
             </div>
           </div>
