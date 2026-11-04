@@ -29,6 +29,7 @@ import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchConten
 import { buildJurisdictionQuestionContext } from "./jurisdictionQuestionContext";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
 import { downloadPermitPack } from "./permitPack";
+import OfficeChangeLog from "./OfficeChangeLog";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -928,6 +929,8 @@ Answer only from the provided excerpts and cite the document title and official 
 
       {activeTab === "overview" && <><JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
+
+        <OfficeChangeLog jurisdiction={jurisdiction} />
 
         <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
           <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} canEdit={currentUser?.role === "admin"} actor={currentUser?.full_name || currentUser?.email || "CCS Staff"} onSave={updated => onSaveOfficeResearch?.(jurisdiction, updated)} onNavigate={navigateWorkspace} onPreviewWorkflow={() => { setElectricalPlanningHandoff(createElectricalPlanningHandoff(jurisdiction.office_research, jurisdiction)); setShowWorkflowDesigner(true); }}/>
