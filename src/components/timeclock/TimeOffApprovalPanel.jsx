@@ -29,7 +29,7 @@ const STATUS_BADGE = {
   cancelled: "bg-gray-200 text-gray-600",
 };
 
-export default function TimeOffApprovalPanel({ sessionToken }) {
+export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, onReviewRequestOpened, onRequestsLoaded }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,6 +65,17 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
   }, [sessionToken]);
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  useEffect(() => {
+    if (typeof onRequestsLoaded === "function") onRequestsLoaded(requests);
+  }, [requests, onRequestsLoaded]);
+
+  useEffect(() => {
+    if (!reviewRequestId || loading) return;
+    const request = requests.find((r) => r.id === reviewRequestId);
+    if (request) openReview(request);
+    if (typeof onReviewRequestOpened === "function") onReviewRequestOpened();
+  }, [reviewRequestId, requests, loading]);
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
