@@ -9865,6 +9865,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (action === 'admin_get_entry') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to load time entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      if (!entryId) return Response.json({ success: false, error: 'entry_id is required.' }, { status: 400 });
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      if (asEmail(entry.user_email) !== target.email) {
+        return Response.json({ success: false, error: 'TimeEntry does not belong to the requested employee.' }, { status: 404 });
+      }
+      return Response.json({ success: true, entry });
+    }
+
     if (action === 'admin_set_entry_approval') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to approve time entries.' }, { status: 403 });
       const entryId = String(body?.entry_id || '').trim();
