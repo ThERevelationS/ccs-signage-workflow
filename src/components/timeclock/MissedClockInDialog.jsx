@@ -11,7 +11,9 @@ import {
 import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
   TIME_CLOCK_COMPANY_TIME_ZONE,
+  parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
+import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
 
 const MAX_MINUTES_AGO = 12 * 60;
 const STEP_MINUTES = 5;
@@ -60,11 +62,17 @@ export default function MissedClockInDialog({
 }) {
   const [minutesAgo, setMinutesAgo] = useState(0);
   const [localError, setLocalError] = useState("");
+  const [customMode, setCustomMode] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+  const [customError, setCustomError] = useState("");
 
   useEffect(() => {
     if (open) {
       setMinutesAgo(0);
       setLocalError("");
+      setCustomMode(false);
+      setCustomValue("");
+      setCustomError("");
     }
   }, [open]);
 
@@ -80,6 +88,30 @@ export default function MissedClockInDialog({
   const chooseMinutes = (minutes) => {
     setMinutesAgo(minutes);
     setLocalError("");
+    setCustomMode(false);
+    setCustomError("");
+  };
+
+  const applyCustomTime = (value) => {
+    setCustomValue(value);
+    setLocalError("");
+    if (!value) { setCustomError(""); return; }
+    const parsed = parseCompanyDateTimeInput(value);
+    if (!parsed.ok) {
+      setCustomError(parsed.error || `Enter a valid time in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`);
+      return;
+    }
+    const deltaMinutes = (Date.now() - Date.parse(parsed.iso)) / 60000;
+    if (deltaMinutes < 0) {
+      setCustomError("That arrival time is in the future.");
+      return;
+    }
+    if (deltaMinutes > MAX_MINUTES_AGO) {
+      setCustomError(`That is more than 12 hours ago in ${TIME_CLOCK_COMPANY_TIME_LABEL}. Ask a manager to correct the shift instead.`);
+      return;
+    }
+    setCustomError("");
+    setMinutesAgo(Math.floor(deltaMinutes));
   };
 
   const submit = async () => {
@@ -131,7 +163,6 @@ export default function MissedClockInDialog({
                 return (
                   <button type="button"
                     key={choice.minutes}
-                    type="button"
                     disabled={busy}
                     onClick={() => chooseMinutes(choice.minutes)}
                     className={`rounded-full px-2 py-1.5 text-xs font-semibold transition-[transform,background-color,color,box-shadow] duration-150 motion-safe:active:scale-95 disabled:opacity-50 ${
@@ -165,10 +196,41 @@ export default function MissedClockInDialog({
               />
             </div>
 
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setCustomMode((v) => !v);
+                setCustomError("");
+                setLocalError("");
+              }}
+              className="w-full rounded-xl border border-dashed border-amber-300 py-2 text-xs font-semibold text-amber-700 transition-colors hover:border-amber-500 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/40"
+            >
+              {customMode ? "Back to quick options" : "Pick an exact time…"}
+            </button>
+
+            {customMode && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-800 dark:bg-amber-950/20">
+                <TimeQuickPick
+                  value={customValue}
+                  onChange={applyCustomTime}
+                  disabled={busy}
+                  mode="datetime"
+                  times={SHIFT_START_TIMES}
+                  dayOffsets={[0, 1]}
+                  confirmLabel="Arrived"
+                  inputId="mci-custom-arrival"
+                />
+                {customError && (
+                  <p className="mt-2 text-xs font-medium text-red-700 dark:text-red-300">{customError}</p>
+                )}
+              </div>
+            )}
+
             <Button
               type="button"
               onClick={submit}
-              disabled={busy}
+              disabled={busy || (customMode && (!customValue || !!customError))}
               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-5 text-base font-bold text-white shadow-lg shadow-amber-500/30 transition-[box-shadow,transform] duration-200 hover:from-amber-600 hover:to-orange-600 hover:shadow-xl motion-safe:active:scale-[0.98]"
             >
               {busy ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
