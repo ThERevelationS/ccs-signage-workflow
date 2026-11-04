@@ -1,5 +1,6 @@
 // Records an estimate's site address as a reusable CustomerLocation for the
 // estimate's customer, so permitting/install flows can link to it by location_id.
+import { base44 } from "@/api/base44Client";
 // The caller passes the staff-gated CustomerLocation entity (create + updateMany
 // are the only operations that gateway allows), so this never touches RLS
 // directly. Re-using the same site address never creates a duplicate location.
@@ -55,6 +56,7 @@ export async function ensureEstimateCustomerLocation({
   customerId,
   siteAddress,
   estimateId,
+  sessionToken,
 } = {}) {
   const id = clean(customerId);
   const address = clean(siteAddress);
@@ -70,10 +72,10 @@ export async function ensureEstimateCustomerLocation({
     (location) => normalizeAddress(location?.label) === wanted || locationAddress(location) === wanted
       || (normalizeAddress(location?.address_line_1) === normalizeAddress(address))
   );
-  if (match) return match;
+  const location = match || null;
 
   const parsed = parseAddress(address);
-  return entity.create({
+  const created = location || await entity.create({
     customer_id: id,
     label: address,
     address_line_1: parsed.street,
@@ -91,4 +93,37 @@ export async function ensureEstimateCustomerLocation({
       captured_at: new Date().toISOString(),
     },
   });
+
+  // MP-8.2 — auto-attach resolved permitting jurisdiction + offices to the
+  // location. Advisory: a lookup miss never blocks the estimate save, and an
+  // already-linked location is left untouched.
+  const target = created;
+  if (target?.id && !clean(target.jurisdiction_profile_id) && sessionToken) {
+    try {
+      const r = await base44.functions.invoke("findLocalityByAddress", { address, session_token: sessionToken });
+      const data = r?.data || r;
+      const loc = data?.suggested_locality;
+      if (data?.apply_allowed === true && clean(loc?.jurisdiction_profile_id)) {
+        const offices = (loc?.offices || []).map((o) => ({
+          id: clean(o?.id), name: clean(o?.name), roles: Array.isArray(o?.authority_roles) ? o.authority_roles : [],
+          verified: o?.authority_verification_status === "staff_verified",
+          phone: clean(o?.contact_phone), email: clean(o?.contact_email),
+        })).filter((o) => o.name);
+        await entity.updateMany({ id: target.id, updated_date: target.updated_date }, {
+          $set: {
+            jurisdiction_profile_id: clean(loc.jurisdiction_profile_id),
+            jurisdiction_name: clean(loc?.name),
+            source_summary: {
+              ...(target.source_summary || {}),
+              resolved_via: "findLocalityByAddress",
+              resolved_at: new Date().toISOString(),
+              match_confidence: clean(data?.match_confidence),
+              permit_offices: offices,
+            },
+          },
+        });
+      }
+    } catch { /* advisory — lookup outage never blocks a save */ }
+  }
+  return created;
 }
