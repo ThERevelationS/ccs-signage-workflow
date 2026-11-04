@@ -203,7 +203,9 @@ function detectConflict(
       if (actual !== expected) return true;
       continue;
     }
-    const current = cell.display_value != null ? String(cell.display_value) : (cell.displayValue != null ? String(cell.displayValue) : (cell.value == null ? '' : String(cell.value)));
+    const current = cell.display_value != null && String(cell.display_value) !== '' ? String(cell.display_value)
+      : (cell.displayValue != null && String(cell.displayValue) !== '' ? String(cell.displayValue)
+      : (cell.value == null ? '' : String(cell.value)));
     const last = snapshot[colId];
     const lastStr = last == null ? '' : String(last);
     if (current.trim() !== lastStr.trim()) return true;
