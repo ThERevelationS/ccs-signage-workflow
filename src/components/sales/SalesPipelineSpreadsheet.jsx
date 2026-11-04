@@ -40,7 +40,7 @@ import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitio
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import { readBackUncertainSalesFollowUpSave } from "@/components/sales/salesFollowUpSaveRecovery.mjs";
 import { recoverRequiredSalesArchiveRows } from "@/components/sales/salesArchiveRecovery.mjs";
-import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
+import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning, classifySalesQuickEditSaveError, analyzeSalesQuickEditDrift } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
 import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
@@ -1186,20 +1186,111 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           out[changedField] = baselineSource[changedField];
           return out;
         }, {});
+        const conflictedFields = [];
+        const appliedFields = new Set();
+        let latestFenceRecord = null;
         let saved;
         let recoveredFollowUpSave = false;
         try {
-          saved = await replaceWorkOrderFieldsIfUnchanged({
-            workOrderId: orderId,
-            expectedFields,
-            nextFields: changes,
-            guardFields: {
+          for (let pass = 0; ; pass += 1) {
+            const guardFields = {
               ...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
               ...(pendingFollowUpGuardsRef.current[orderId] || {}),
-            },
-            label: "Sales Pipeline quick edit",
-          });
+            };
+            // Freshness fence: baselines come from a feed snapshot that can be
+            // minutes old while syncs and other sessions keep writing. One
+            // point read before the write converts post-write 409s into a
+            // determinate pre-write check — drift means nothing is sent.
+            let fenceRecord = null;
+            try {
+              fenceRecord = await WorkOrder.get(orderId);
+            } catch {
+              fenceRecord = null;
+            }
+            if (fenceRecord?.id && fenceRecord.deleted !== true) {
+              latestFenceRecord = fenceRecord;
+              const drift = analyzeSalesQuickEditDrift(fenceRecord, { expectedFields, guardFields, changes });
+              drift.applied.forEach((field) => appliedFields.add(field));
+              if (drift.conflicted.length) {
+                // A field this edit targets was changed by another writer, so
+                // that field's save is rejected before it can overwrite. Drop
+                // the conflicted fields and give the still-valid remainder
+                // one continuation pass instead of failing the whole batch.
+                conflictedFields.push(...drift.conflicted);
+                drift.conflicted.forEach((field) => {
+                  delete changes[field];
+                  delete expectedFields[field];
+                  historyFieldsAtSave.delete(field);
+                  if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][field];
+                  if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][field];
+                  pendingHistoryFieldsRef.current[orderId]?.delete?.(field);
+                });
+                setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, ...fenceRecord } : row));
+                setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...fenceRecord } : selected);
+                if (pass === 0 && Object.keys(changes).length) continue;
+                throw Object.assign(
+                  new Error("This field changed in another session: " + conflictedFields.join(", ") + ". Reload before saving."),
+                  { status: 409 },
+                );
+              }
+              if (drift.guardDrift.length) {
+                // The record moved only on fields this edit does not touch.
+                // Rebase the guards to the fresh values; the server's own
+                // validators still decide whether the patch may apply.
+                drift.guardDrift.forEach((field) => { guardFields[field] = fenceRecord[field] ?? null; });
+              }
+              if (Object.keys(changes).length && Object.keys(changes).every((field) => appliedFields.has(field))) {
+                // Identical values already reached the record — adopt it
+                // without writing or claiming the earlier write as ours.
+                saved = fenceRecord;
+                break;
+              }
+            }
+            saved = await replaceWorkOrderFieldsIfUnchanged({
+              workOrderId: orderId,
+              expectedFields,
+              nextFields: changes,
+              guardFields,
+              label: "Sales Pipeline quick edit",
+            });
+            break;
+          }
         } catch (saveError) {
+          if (classifySalesQuickEditSaveError(saveError) !== 'uncertain') {
+            // Determinate failure — nothing was written. Refresh this row from
+            // the authoritative record and prune only the fields that truly
+            // conflicted or already landed; still-valid edits stay queued.
+            const latest = await WorkOrder.get(orderId).catch(() => latestFenceRecord);
+            if (latest?.id && latest.deleted !== true) {
+              const queuedNow = { ...(pendingChangesRef.current[orderId] || {}) };
+              const queuedDrift = analyzeSalesQuickEditDrift(latest, {
+                expectedFields: Object.fromEntries(Object.keys(queuedNow).map((f) => [f, (pendingBaselinesRef.current[orderId] || {})[f]])),
+                guardFields: {},
+                changes: queuedNow,
+              });
+              [...queuedDrift.applied, ...queuedDrift.conflicted].forEach((f) => {
+                if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
+                if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
+                pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
+                if (!conflictedFields.includes(f)) conflictedFields.push(f);
+              });
+              if (pendingChangesRef.current[orderId] && !Object.keys(pendingChangesRef.current[orderId]).length) {
+                delete pendingChangesRef.current[orderId];
+                delete pendingBaselinesRef.current[orderId];
+                delete pendingSalesGuardsRef.current[orderId];
+                delete pendingHistoryFieldsRef.current[orderId];
+                delete pendingRecordScopesRef.current[orderId];
+              }
+              setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, ...latest } : row));
+              setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...latest } : selected);
+            }
+            const named = conflictedFields.map((f) => f.replace(/_/g, " ")).join(", ");
+            throw new Error(named
+              ? `${named} changed in another session — the latest values are shown; that edit was not saved. Re-apply it against the current record.`
+              : classifySalesQuickEditSaveError(saveError) === 'busy'
+                ? "The app is busy right now — that edit was not saved and is still queued. Try again in a few seconds."
+                : (saveError?.message || "This record changed in another session. The latest values are shown; re-apply the edit."));
+          }
           if (!pendingFollowUpGuardsRef.current[orderId]) {
             // Non-completion Sales edits must not silently reuse a queued patch
             // after a lost response. Observe current values once, without
@@ -1225,7 +1316,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
         // History is written only after the conflict-safe business save succeeds.
         await Promise.all(Object.keys(changes)
-          .filter((changedField) => historyFieldsAtSave.has(changedField))
+          .filter((changedField) => historyFieldsAtSave.has(changedField) && !appliedFields.has(changedField))
           .map((changedField) => trackChange(orderId, changedField, baselineSource[changedField], saved[changedField])));
 
         const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
@@ -1287,7 +1378,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : selected);
         markWorkOrderNeedsSync(orderId);
-        setQuickEditError("");
+        setQuickEditError(conflictedFields.length
+          ? `${conflictedFields.map((f) => f.replace(/_/g, " ")).join(", ")} changed in another session — the latest values are shown; that edit was not saved. Re-apply it against the current record.`
+          : "");
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
