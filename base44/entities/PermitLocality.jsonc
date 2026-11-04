@@ -18,6 +18,27 @@
       "type": "string",
       "description": "Optional canonical JurisdictionProfile ID this tracker locality was explicitly created from. Existing legacy localities may remain unlinked until staff verifies the relationship."
     },
+    "office_change_log": {
+      "type": "array",
+      "description": "Append-only (cap 20) log of detected changes to this locality's offices[] \u2014 entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the offices-updated alerts.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "office_count": {
+            "type": "number"
+          },
+          "verified_count": {
+            "type": "number"
+          }
+        }
+      }
+    },
     "governing_body": {
       "type": "string",
       "description": "LEGACY \u2014 Governing body name"
