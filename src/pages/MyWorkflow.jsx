@@ -34,6 +34,7 @@ import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskP
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
+import TrainingSection from "@/components/training/TrainingSection";
 
 const GeneralTask = staffEntities.GeneralTask;
 
@@ -752,6 +753,9 @@ export default function MyWorkflow() {
             </div>
           </div>
         </div>
+
+        {/* Assigned training — self-fetching section, hidden when empty */}
+        <div className="mb-4 empty:hidden"><TrainingSection /></div>
 
         {/* Spreadsheet Table */}
         <div className="clay-card p-2 w-full overflow-x-auto">
