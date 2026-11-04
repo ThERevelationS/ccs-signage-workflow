@@ -169,7 +169,6 @@ export default function SopBrowser({ sops, settings, me, activeCategory, onCateg
         {categories.map((cat) => (
           <button type="button"
             key={cat.key}
-            type="button"
             onClick={() => onCategoryChange(cat.key)}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
               activeCategory === cat.key ? "text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
