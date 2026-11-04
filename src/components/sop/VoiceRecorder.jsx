@@ -26,6 +26,7 @@ export default function VoiceRecorder({ onTranscript, onAudioSaved, onCancel }) 
   const chunksRef = useRef([]);
   const blobRef = useRef(null);
   const timerRef = useRef(null);
+  const cancelledRef = useRef(false);
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks?.().forEach((t) => t.stop());
@@ -48,6 +49,10 @@ export default function VoiceRecorder({ onTranscript, onAudioSaved, onCancel }) 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [stopStream, previewUrl]);
 
+  // Mount-only teardown flag: a recorder stop event arriving after unmount
+  // must not mint object URLs or set state on a dead component.
+  useEffect(() => () => { cancelledRef.current = true; }, []);
+
   const start = async () => {
     setError("");
     if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) {
@@ -63,6 +68,7 @@ export default function VoiceRecorder({ onTranscript, onAudioSaved, onCancel }) 
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data?.size) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
+        if (cancelledRef.current) return;
         stopStream();
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
         blobRef.current = blob;
