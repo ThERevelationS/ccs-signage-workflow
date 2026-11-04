@@ -1,0 +1,123 @@
+{
+  "name": "TrainingAssignment",
+  "type": "object",
+  "description": "One employee's assignment of one TrainingItem \u2014 surfaces as a specialized row on My Workflow and in the assigned section on /sop. Training fields are snapshotted so reports stay readable if the item changes.",
+  "properties": {
+    "training_id": {
+      "type": "string",
+      "description": "TrainingItem record id."
+    },
+    "training_title": {
+      "type": "string"
+    },
+    "training_type": {
+      "type": "string",
+      "enum": [
+        "sop",
+        "video",
+        "document",
+        "certification",
+        "custom"
+      ],
+      "default": "custom"
+    },
+    "sop_id": {
+      "type": "string",
+      "description": "Snapshot for direct /sop?sop=<id> linking."
+    },
+    "url": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "valid_months": {
+      "type": "number",
+      "default": 0
+    },
+    "assignee_email": {
+      "type": "string"
+    },
+    "assignee_name": {
+      "type": "string"
+    },
+    "assigned_by": {
+      "type": "string",
+      "description": "Email of the admin/editor who assigned it."
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "description": "Optional ISO date the assignment is due."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_method": {
+      "type": "string",
+      "enum": [
+        "self",
+        "manager",
+        "sop_ack",
+        "expired_renewal"
+      ],
+      "description": "How it was completed \u2014 sop_ack means the SOP's own acknowledge button closed it."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "For certifications: completed_at + valid_months \u2014 when renewal is due."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Assigner notes shown to the employee."
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "training_id:email key \u2014 prevents duplicate pending assignments."
+    }
+  },
+  "required": [
+    "training_id",
+    "assignee_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__training_backend_only__"
+      }
+    }
+  }
+}
