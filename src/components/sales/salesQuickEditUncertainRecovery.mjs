@@ -29,3 +29,41 @@ export function uncertainSalesQuickEditWarning(state) {
   return 'Sales save outcome is uncertain. '+observation+
     ' Do not repeat this save. Use Reload latest to inspect the authoritative record before editing it again.';
 }
+
+// Server-side equivalent() mirror (base44/shared/fieldAudit.ts): the CAS
+// compare is strict stringification with a null/'' equivalence only — no
+// trim or numeric coercion. Mirroring it here keeps pre-write drift checks
+// identical to what fieldHistoryAction will compute.
+export const salesEquivalent=(a,b)=>JSON.stringify(a ?? null)===JSON.stringify(b ?? null) ||
+  ((a==null||a==='')&&(b==null||b===''));
+
+// Failures that prove nothing was written vs failures where the write may
+// have committed with a lost response. Gateway 429 = request rejected before
+// the function ran; the pre-write 409 messages below are thrown before any
+// update executes. Only truly uncertain failures should block follow-up saves.
+const PRE_WRITE_409=/changed in another session|no longer matches its loaded state|record changed\. Reload|is in Trash/i;
+export function classifySalesQuickEditSaveError(error) {
+  const status=Number(error?.status ?? error?.response?.status ?? 0);
+  const message=String(error?.message || error?.response?.data?.error || '');
+  if(status===429)return 'busy';
+  if(status===409)return PRE_WRITE_409.test(message)?'conflict':'uncertain';
+  return 'uncertain';
+}
+
+// Compare a freshly-read record against the baselines a save was about to
+// CAS on. Buckets fields so the caller can keep still-valid pending edits,
+// drop genuinely conflicted ones, and detect "someone already saved the
+// same values" (applied — nothing to redo, nothing to report as lost).
+export function analyzeSalesQuickEditDrift(record,{expectedFields={},guardFields={},changes={}}={}) {
+  const applied=[],conflicted=[],guardDrift=[];
+  if(!record||typeof record!=='object')return {applied,conflicted,guardDrift,unavailable:true};
+  for(const field of Object.keys(expectedFields)) {
+    if(salesEquivalent(record[field],changes[field]))applied.push(field);
+    else if(!salesEquivalent(record[field],expectedFields[field]))conflicted.push(field);
+  }
+  for(const field of Object.keys(guardFields)) {
+    if(Object.prototype.hasOwnProperty.call(expectedFields,field))continue;
+    if(!salesEquivalent(record[field],guardFields[field]))guardDrift.push(field);
+  }
+  return {applied,conflicted,guardDrift,unavailable:false};
+}
