@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,14 @@ export function sopDeepLink(sop) {
 }
 
 export default function SopQrDialog({ sop, settings, open, onClose }) {
+  // While the sticker dialog is up, scope print output to just the sticker —
+  // otherwise window.print() would dump the whole app behind the dialog.
+  useEffect(() => {
+    if (!open) return undefined;
+    document.body.classList.add("sop-qr-printing");
+    return () => document.body.classList.remove("sop-qr-printing");
+  }, [open]);
+
   if (!sop) return null;
   const cat = categoryByKey(settings, sop.category);
   const url = sopDeepLink(sop);
