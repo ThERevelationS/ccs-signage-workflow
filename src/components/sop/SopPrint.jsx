@@ -15,10 +15,23 @@ export default function SopPrint({ sop, settings, onClose }) {
   const cat = categoryByKey(settings, sop.category);
   const version = Number(sop.version) || 1;
 
+  // Step photos may still be in flight when the button is hit — wait for them
+  // or the printed page comes out with blank image boxes.
+  const printPage = async () => {
+    const imgs = Array.from(document.querySelectorAll(".sop-print-root img"));
+    await Promise.all(imgs.map((img) => (img.complete
+      ? Promise.resolve()
+      : new Promise((resolve) => {
+          img.addEventListener("load", resolve, { once: true });
+          img.addEventListener("error", resolve, { once: true });
+        }))));
+    window.print();
+  };
+
   return (
     <div className="sop-print-root fixed inset-0 z-[80] bg-white overflow-y-auto">
       <div className="sop-print-toolbar sticky top-0 flex items-center gap-2 border-b bg-white p-3">
-        <Button type="button" size="sm" onClick={() => window.print()} className="gap-1.5">
+        <Button type="button" size="sm" onClick={printPage} className="gap-1.5">
           <Printer className="h-4 w-4" /> Print
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={onClose} className="gap-1.5">
@@ -105,6 +118,9 @@ export const SOP_PRINT_CSS = `
   .sop-print-root { position: static !important; overflow: visible !important; }
   .sop-print-toolbar { display: none !important; }
   nav, .top-nav, .side-nav, [data-shell-navigation-handle] { display: none !important; }
+  body.sop-qr-printing * { visibility: hidden !important; }
+  body.sop-qr-printing .sop-qr-card,
+  body.sop-qr-printing .sop-qr-card * { visibility: visible !important; }
 }
 .sop-print-root .sop-quill .ql-toolbar { display: none; }
 `;
