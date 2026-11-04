@@ -10380,8 +10380,15 @@ Deno.serve(async (req) => {
 
       const companyDate = dateKeyInCompanyTime(serverNow.toISOString());
       const claimedCompanyDate = dateKeyInCompanyTime(claimedClockIn.toISOString());
-      if (!companyDate || !claimedCompanyDate || claimedCompanyDate !== companyDate) {
-        return Response.json({ success: false, error: 'Late-day self-service recovery can only reconstruct a missing Clock In from today. Older missing punches require manager review.' }, { status: 400 });
+      // The explicit self-report window is the 12 hours the dialog advertises -
+      // same-day would wrongly reject a night-shift 11:45 PM arrival claimed
+      // after midnight. The prompted recovery path keeps its same-day bound.
+      const minutesSinceClaim = (serverNow.getTime() - claimedClockIn.getTime()) / 60000;
+      const outsideWindow = action === 'report_missed_clock_in'
+        ? minutesSinceClaim > 12 * 60
+        : claimedCompanyDate !== companyDate;
+      if (!companyDate || !claimedCompanyDate || outsideWindow) {
+        return Response.json({ success: false, error: 'Self-service missed Clock In can only reconstruct an arrival from the last 12 hours. Older missing punches require manager review.' }, { status: 400 });
       }
 
       const claimedClockInIso = claimedClockIn.toISOString();
