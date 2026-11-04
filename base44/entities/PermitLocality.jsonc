@@ -39,6 +39,36 @@
         }
       }
     },
+    "observed_outcomes": {
+      "type": "object",
+      "description": "Observed-vs-claimed aggregation from real filed permits: permits_observed, avg_decision_days, fee_min/max/avg, denial_count. Stamped by the office-diff worker from the PermitLineItem mirror.",
+      "properties": {
+        "permits_observed": {
+          "type": "number"
+        },
+        "avg_decision_days": {
+          "type": "number"
+        },
+        "fee_min": {
+          "type": "number"
+        },
+        "fee_max": {
+          "type": "number"
+        },
+        "fee_avg": {
+          "type": "number"
+        },
+        "denial_count": {
+          "type": "number"
+        },
+        "computed_at": {
+          "type": "string"
+        },
+        "sample_window": {
+          "type": "string"
+        }
+      }
+    },
     "governing_body": {
       "type": "string",
       "description": "LEGACY \u2014 Governing body name"
