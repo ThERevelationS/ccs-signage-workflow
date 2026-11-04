@@ -44,7 +44,10 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
     } catch (err) {
       if (!openRef.current || attempt !== attemptSeqRef.current) return;
       const apiError = err?.response?.data?.error;
-      setError(apiError || err?.message || "Login failed");
+      const status = Number(err?.response?.status ?? err?.status);
+      setError(apiError || (status === 429
+        ? "The time clock is busy right now — wait a few seconds and try again."
+        : err?.message || "Login failed"));
     }
     if (attempt === attemptSeqRef.current) setSubmitting(false);
   };
