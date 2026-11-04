@@ -14,7 +14,7 @@ import SopQrDialog from "@/components/sop/SopQr";
 import {
   sopBootstrap, sopCreate, sopUpdate, sopSetStatus, sopDelete, sopAcknowledge, sopSuggestEdit, sopResolveSuggestion,
 } from "@/components/sop/sopService";
-import { newSopDraft } from "@/components/sop/sopModel";
+import { newSopDraft, newRequestKey } from "@/components/sop/sopModel";
 import TrainingSection from "@/components/training/TrainingSection";
 
 // The SOP module front page: browse procedures by department, read them with
@@ -68,7 +68,9 @@ export default function SOP() {
     const editId = searchParams.get("edit");
     if (editId) {
       const found = sops.find((s) => s.id === editId);
-      if (found) { setActiveSop(found); setIsNewDraft(false); setView("edit"); }
+      // Non-editors can guess ?edit=<id> — don't drop them into a dead-end
+      // editor they can't save from; the backend would reject writes anyway.
+      if (found && me?.canEdit) { setActiveSop(found); setIsNewDraft(false); setView("edit"); }
     } else if (sopId) {
       const found = sops.find((s) => s.id === sopId);
       if (found) { setActiveSop(found); setView("detail"); }
@@ -140,7 +142,10 @@ export default function SOP() {
     setBusy(true);
     try {
       if (isNewDraft) {
-        const created = await sopCreate(payload);
+        // The draft carries a stable request_key (minted at newSopDraft/clone
+        // time) so a retried save after a lost response dedupes server-side
+        // instead of creating a second SOP.
+        const created = await sopCreate(payload, activeSop?.request_key);
         let record = created?.record;
         if (publish && record?.id) {
           const res = await sopSetStatus({ id: record.id, expectedUpdatedDate: record.updated_date, status: "published" });
@@ -158,7 +163,7 @@ export default function SOP() {
       } else {
         const res = await sopUpdate({ id: activeSop.id, expectedUpdatedDate: activeSop.updated_date, nextFields: payload });
         let record = res?.record;
-        if (publish && record?.status !== "published") {
+        if (publish && record?.id && record.status !== "published") {
           const st = await sopSetStatus({ id: record.id, expectedUpdatedDate: record.updated_date, status: "published" });
           record = st?.record || record;
         }
@@ -208,7 +213,9 @@ export default function SOP() {
 
   const cloneSop = (sop) => {
     const { id, updated_date, created_date, acknowledged_viewers, suggestions, status, ...rest } = sop;
-    setActiveSop({ ...rest, title: `Copy of ${sop.title}`, status: "draft", version: 1 });
+    // Fresh request_key — reusing the source's key would dedupe the clone
+    // back to the original record instead of creating a new SOP.
+    setActiveSop({ ...rest, title: `Copy of ${sop.title}`, status: "draft", version: 1, request_key: newRequestKey() });
     setIsNewDraft(true);
     setDraftEpoch((n) => n + 1);
     setView("edit");
@@ -218,8 +225,10 @@ export default function SOP() {
     try {
       await sopSuggestEdit({ id: sopId, stepId, text });
       setError("");
+      return true;
     } catch (e) {
       setError(e?.message || "Could not send your suggestion.");
+      return false;
     }
   };
 
