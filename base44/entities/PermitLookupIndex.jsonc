@@ -1,0 +1,170 @@
+{
+  "name": "PermitLookupIndex",
+  "type": "object",
+  "description": "Precomputed address-resolution index. One row per normalized address holds the resolver's jurisdiction pick, geohash cells for near-address reuse, and (later) the materialized office stack. Reads turn a lookup into one indexed entity fetch instead of a geocode chain plus 4-6 boundary queries. Rows are written by the resolver itself after a verified resolution, and by the validation/sweep workers as they process addresses.",
+  "properties": {
+    "address_key": {
+      "type": "string",
+      "description": "Normalized full lookup key: lowercase, punctuation collapsed, unit designators stripped. Primary fast-path key \u2014 exact repeats of the same address in any casing hit this."
+    },
+    "street_key": {
+      "type": "string",
+      "description": "Normalized street part only (same normalization the rules use for address_key). Diagnostics and manual joins."
+    },
+    "geohash5": {
+      "type": "string",
+      "description": "5-char geohash of the resolved pin (~5km cell) \u2014 county-level reuse."
+    },
+    "geohash6": {
+      "type": "string",
+      "description": "6-char geohash (~1.2km cell)."
+    },
+    "geohash7": {
+      "type": "string",
+      "description": "7-char geohash (~150m cell) \u2014 same-block jurisdiction reuse."
+    },
+    "state": {
+      "type": "string",
+      "description": "OH or KY."
+    },
+    "county": {
+      "type": "string",
+      "description": "Parent county name."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Resolved jurisdiction (the pick)."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "description": "county | township | municipality | city | village."
+    },
+    "geoid": {
+      "type": "string",
+      "description": "Census/state GEOID of the pick when known."
+    },
+    "pick_status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "rejected"
+      ],
+      "description": "verified = location_verified resolution. rejected = invalid_input (deterministic not-an-address; cached to skip geocoding junk input). needs_review/unresolved are NEVER cached \u2014 they are not answers."
+    },
+    "edge": {
+      "type": "boolean",
+      "description": "Pin sat near a boundary when resolved. Edge rows are still served by exact address_key, but are never used for geohash-cell reuse for other addresses."
+    },
+    "boundary_distance_m": {
+      "type": "number",
+      "description": "Distance from the stored pin to the nearest relevant boundary at resolve time. Cell-reuse guarantee: a new pin may reuse this row only when its distance to the stored pin is strictly less than this value."
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Resolved pin {lat,lng} for map display and cell-reuse distance checks."
+    },
+    "geocode_snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Minimal geocoder result needed to reconstruct the response (provider, formatted address, location_exact)."
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Resolver answer snapshot (status, target, targets, sources meta, reason). Boundary ring geometry is deliberately NOT stored \u2014 it is too large for an entity field."
+    },
+    "office_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "Materialized applicable-office stack (sign issuer, electrical issuer, inspection provider, zoning, overlays) \u2014 populated by the office-research pipeline once research completes."
+    },
+    "lookup_revision": {
+      "type": "string",
+      "description": "ADDRESS_LOOKUP_REVISION at write time \u2014 code changes invalidate rows."
+    },
+    "ruleset_fingerprint": {
+      "type": "string",
+      "description": "Fingerprint of the active PermitResolutionRule catalog at write time \u2014 a minted/changed rule invalidates rows."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "resolver",
+        "validator",
+        "sweep",
+        "rule"
+      ],
+      "default": "resolver",
+      "description": "Which path wrote the row."
+    },
+    "resolved_at": {
+      "type": "string",
+      "description": "ISO timestamp of the original resolution."
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "Rows past this are treated as misses (30d verified, 90d rejected)."
+    },
+    "last_verified_at": {
+      "type": "string",
+      "description": "Last time the pick was re-confirmed by a full resolution."
+    },
+    "hit_count": {
+      "type": "number",
+      "description": "Times this row served a lookup \u2014 feeds the index-utility dashboard metric."
+    },
+    "office_refs_version": {
+      "type": "string",
+      "description": "Hash of the office set materialized into office_refs \u2014 cheap staleness check when offices change."
+    },
+    "parked_reason": {
+      "type": "string",
+      "description": "Why the entry is parked instead of fully answered (e.g. 'needs_office_check' \u2014 jurisdiction resolved, offices still verifying)."
+    },
+    "zoning_district": {
+      "type": "string",
+      "description": "Zoning district designation at this address when a municipal zoning GIS layer resolved it (e.g. 'C-2 General Commercial')."
+    },
+    "permit_required_hint": {
+      "type": "string",
+      "description": "Quick permit-required signal scoped to this address (e.g. 'sign permit required \u2014 C-2' or 'exempt: temporary <32sqft'), when the jurisdiction's ordinance data supports it."
+    },
+    "zoning_context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Full zoning-layer attributes at this address \u2014 district code, use category, height district, source service. Written by the local resolver when a verified municipal zoning layer (Columbus, Cleveland, \u2026) answers the point query."
+    }
+  },
+  "required": [
+    "address_key",
+    "state",
+    "jurisdiction_name",
+    "pick_status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__permitlookupindex_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__permitlookupindex_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__permitlookupindex_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__permitlookupindex_backend_only__"
+      }
+    }
+  }
+}
