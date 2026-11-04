@@ -9,6 +9,7 @@ import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAu
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
 import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
+import PermittingRulesList from "@/components/admin/PermittingRulesList";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -406,6 +407,8 @@ export default function AdminPermittingSettings() {
                 </CardContent>
               </Card>
             </div>
+
+            <PermittingRulesList />
 
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
