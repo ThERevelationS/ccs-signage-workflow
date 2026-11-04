@@ -224,7 +224,7 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
         <div className="rounded-xl border border-purple-200 bg-purple-50/50 p-4 space-y-2">
           <div className="flex items-center justify-between">
             <Label className="flex items-center gap-1.5 text-purple-900"><ClipboardCheck className="h-4 w-4" /> AI review — completeness check</Label>
-            <Button type="button" variant="ghost" size="icon" onClick={() => setReview(null)} className="h-7 w-7"><X className="h-4 w-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setReview(null)} className="h-7 w-7" aria-label="Dismiss AI review"><X className="h-4 w-4" /></Button>
           </div>
           {review.length === 0 ? (
             <p className="text-sm text-emerald-700">No issues found — looks solid.</p>
