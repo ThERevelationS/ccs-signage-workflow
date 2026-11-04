@@ -7,23 +7,27 @@ import { History, RefreshCw } from "lucide-react";
 // offices, and when". Self-fetches the PermitLocality for the open profile.
 export default function OfficeChangeLog({ jurisdiction }) {
   const [log, setLog] = useState(null);
+  const [observed, setObserved] = useState(null);
 
   useEffect(() => {
     let dead = false;
     (async () => {
-      if (!jurisdiction?.id) { setLog([]); return; }
+      if (!jurisdiction?.id) { setLog([]); setObserved(null); return; }
       const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);
       const loc = (Array.isArray(locs) ? locs : [])[0];
-      if (!dead) setLog(Array.isArray(loc?.office_change_log) ? loc.office_change_log : []);
+      if (dead) return;
+      setLog(Array.isArray(loc?.office_change_log) ? loc.office_change_log : []);
+      setObserved(loc?.observed_outcomes && loc.observed_outcomes.permits_observed ? loc.observed_outcomes : null);
     })();
     return () => { dead = true; };
   }, [jurisdiction?.id]);
 
-  if (!log || log.length === 0) return null;
+  const hasLog = log && log.length > 0;
+  if (!hasLog && !observed) return null;
 
-  const entries = [...log].reverse().slice(0, 8);
+  const entries = hasLog ? [...log].reverse().slice(0, 8) : [];
   const newest = new Date(entries[0]?.at || 0).getTime();
-  const fresh = Date.now() - newest < 7 * 24 * 3600 * 1000;
+  const fresh = newest && Date.now() - newest < 7 * 24 * 3600 * 1000;
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -36,6 +40,15 @@ export default function OfficeChangeLog({ jurisdiction }) {
           </span>
         )}
       </p>
+      {observed && (
+        <p className="mb-2 rounded border border-emerald-100 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-800">
+          Observed from {observed.permits_observed} filed permit{observed.permits_observed === 1 ? "" : "s"}:{" "}
+          {observed.avg_decision_days != null && <>{observed.avg_decision_days}d avg decision · </>}
+          {observed.fee_avg != null && <>avg fee ${observed.fee_avg}</>}
+          {observed.fee_min != null && observed.fee_max != null && observed.fee_min !== observed.fee_max && <> (${observed.fee_min}–${observed.fee_max})</>}
+          {observed.denial_count > 0 && <> · {observed.denial_count} denial{observed.denial_count === 1 ? "" : "s"}</>}
+        </p>
+      )}
       <ul className="space-y-1">
         {entries.map((e, i) => (
           <li key={i} className="flex items-baseline gap-2 text-[11px] leading-snug">
