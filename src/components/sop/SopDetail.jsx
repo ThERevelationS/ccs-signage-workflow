@@ -20,7 +20,6 @@ function StepMedia({ step, onImageClick }) {
           {step.images.map((url, i) => (
             <button type="button"
               key={`${url}-${i}`}
-              type="button"
               onClick={() => onImageClick?.(step.images, i)}
               className="rounded-lg overflow-hidden border border-slate-200 hover:border-slate-400 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             >
