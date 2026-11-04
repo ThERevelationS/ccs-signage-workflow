@@ -1268,7 +1268,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 guardFields: {},
                 changes: queuedNow,
               });
-              [...queuedDrift.applied, ...queuedDrift.conflicted].forEach((f) => {
+              queuedDrift.applied.forEach((f) => {
+                // Already holding the target value — drop the queued edit
+                // silently; the desired state is on the record.
+                if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
+                if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
+                pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
+              });
+              queuedDrift.conflicted.forEach((f) => {
                 if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
                 if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
                 pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
