@@ -16,15 +16,16 @@ export default function SopPrint({ sop, settings, onClose }) {
   const version = Number(sop.version) || 1;
 
   // Step photos may still be in flight when the button is hit — wait for them
-  // or the printed page comes out with blank image boxes.
+  // (bounded, so a stuck request can't hang the button) or the printed page
+  // comes out with blank image boxes.
   const printPage = async () => {
     const imgs = Array.from(document.querySelectorAll(".sop-print-root img"));
-    await Promise.all(imgs.map((img) => (img.complete
-      ? Promise.resolve()
-      : new Promise((resolve) => {
-          img.addEventListener("load", resolve, { once: true });
-          img.addEventListener("error", resolve, { once: true });
-        }))));
+    const pending = imgs.filter((img) => !img.complete).map((img) =>
+      new Promise((resolve) => {
+        img.addEventListener("load", resolve, { once: true });
+        img.addEventListener("error", resolve, { once: true });
+      }));
+    await Promise.race([Promise.all(pending), new Promise((r) => setTimeout(r, 8000))]);
     window.print();
   };
 
