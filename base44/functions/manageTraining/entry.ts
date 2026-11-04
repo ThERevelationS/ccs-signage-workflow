@@ -159,7 +159,9 @@ Deno.serve(async (req) => {
       const mine = await TrainingAssignment.filter({ assignee_email: email }, '-updated_date', 200);
       const payload: any = {
         me: { email, name: String(user.full_name || ''), role: user.role, canEdit },
-        my_assignments: decorate(mine || []),
+        // Cancelled rows are invisible to the assignee in every client —
+        // keep them off the wire instead of shipping them forever.
+        my_assignments: decorate((mine || []).filter((r: any) => r?.status !== 'cancelled')),
       };
       if (canEdit) {
         const [items, assignments, staffRows] = await Promise.all([
