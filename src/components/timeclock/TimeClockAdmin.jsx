@@ -602,7 +602,7 @@ export default function TimeClockAdmin() {
     }
   };
 
-  const openApprovalDialog = (entry, decision) => {
+  const openApprovalDialog = async (entry, decision) => {
     if (pendingApprovalRecovery &&
         (pendingApprovalRecovery.entry_id !== entry?.id || pendingApprovalRecovery.decision !== decision)) {
       setTimeEntryError("An interrupted manager shift review is still pending in this session. Resume that exact review before starting another approval or reopen action.");
@@ -624,12 +624,32 @@ export default function TimeClockAdmin() {
       clearAdminRequestId(requestAction, entry?.id, recoveredRequestId);
       clearApprovalRetry(decision, entry?.id);
     }
+    let latest = entry;
+    let loadNotice = "";
+    if (entry?.id && sessionToken) {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", {
+          action: "admin_get_entry", session_token: sessionToken,
+          target_email: entry.user_email, entry_id: entry.id, request_id: newRequestId(),
+        });
+        const d = functionData(res);
+        if (d?.success && d.entry?.id) latest = d.entry;
+      } catch { /* keep the already-loaded row */ }
+    }
+    if (latest !== entry) {
+      setTimeEntries((cur) => cur.map((e) => (e.id === latest.id ? { ...e, ...latest } : e)));
+      const changed = latest.status !== entry.status ||
+        (latest.approval_status || "unreviewed") !== (entry.approval_status || "unreviewed") ||
+        latest.clock_in !== entry.clock_in || latest.clock_out !== entry.clock_out ||
+        (latest.pay_period_id || null) !== (entry.pay_period_id || null);
+      if (changed) loadNotice = "This shift changed since it was loaded — the latest version is shown.";
+    }
     const requestId = newRequestId();
-    if (entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
-    setApprovalEntry(entry);
+    if (latest?.id) persistAdminRequestId(requestAction, latest.id, requestId);
+    setApprovalEntry(latest);
     setApprovalDecision(decision);
     setApprovalNote("");
-    setApprovalError("");
+    setApprovalError(loadNotice);
     setApprovalRequestId(requestId);
     setApprovalRetryPayload(null);
   };
