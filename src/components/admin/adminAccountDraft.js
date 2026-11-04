@@ -3,7 +3,8 @@
 const ACCOUNT_FIELDS = [
   "full_name", "username", "role", "sales_roles",
   "can_import_export", "can_order_export", "can_view_resources",
-  "employment_type", "can_work_pause", "force_password_reset", "is_deactivated",
+  "employment_type", "can_work_pause", "can_self_approve_shifts",
+  "force_password_reset", "is_deactivated",
   "notification_prefs"
 ];
 const own = (value, field) => Object.prototype.hasOwnProperty.call(value, field);
@@ -23,6 +24,7 @@ export function createAdminAccountDraft(record) {
     can_view_resources: record.role === "admin" || record.can_view_resources || false,
     employment_type: record.employment_type || "hourly",
     can_work_pause: record.can_work_pause === true,
+    can_self_approve_shifts: record.role === "admin" && record.can_self_approve_shifts === true,
     force_password_reset: record.force_password_reset === true,
     is_deactivated: record.is_deactivated === true,
     notification_prefs: record.notification_prefs && typeof record.notification_prefs === "object"
