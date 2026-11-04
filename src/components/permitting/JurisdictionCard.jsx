@@ -79,6 +79,23 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
                 Permit page
               </a>
             )}
+            {jurisdiction.ordinance_url && (
+              <a
+                href={jurisdiction.ordinance_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-purple-600 hover:underline flex items-center gap-1 mt-1"
+                onClick={e => e.stopPropagation()}
+              >
+                <FileText className="w-3 h-3" />
+                Sign code
+              </a>
+            )}
+            {jurisdiction.office_research?.ordinance?.sign_permit_required_hint && (
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-800" title="Sign code text says a permit is required">
+                sign permit required
+              </span>
+            )}
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0 sm:gap-1">
             <Button
