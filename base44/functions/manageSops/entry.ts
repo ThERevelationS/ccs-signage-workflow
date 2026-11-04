@@ -334,16 +334,24 @@ Deno.serve(async (req) => {
                 const d = new Date(); if (Number.isNaN(d.getTime())) return null;
                 d.setMonth(d.getMonth() + months); return d.toISOString();
               })();
-              await TrainingAssignment.update(a.id, {
-                status: 'completed', completed_at: new Date().toISOString(),
-                completed_method: 'sop_ack', expires_at: expiresAt,
-              }).catch(() => {});
+              // Predicate on still-pending so a concurrent cancel/reopen
+              // between the filter and this write isn't overwritten back to
+              // completed.
+              await TrainingAssignment.updateMany(
+                { id: a.id, status: 'pending' },
+                { $set: {
+                  status: 'completed', completed_at: new Date().toISOString(),
+                  completed_method: 'sop_ack', expires_at: expiresAt,
+                } },
+              ).catch(() => {});
             }
           }
           return Response.json({ acknowledged: true, sop: saved || row });
         }
       }
-      return Response.json({ acknowledged: true, deferred: true });
+      // All CAS attempts lost — do NOT claim success: the receipt never landed,
+      // so tell the client to retry instead of silently dropping it.
+      return Response.json({ error: 'This SOP is being updated right now — try acknowledging again in a moment.' }, { status: 409 });
     }
 
     if (action === 'suggest_edit') {
@@ -375,7 +383,7 @@ Deno.serve(async (req) => {
           return Response.json({ suggested: true, suggestion });
         }
       }
-      return Response.json({ suggested: true, deferred: true });
+      return Response.json({ error: 'This SOP is being updated right now — send the suggestion again in a moment.' }, { status: 409 });
     }
 
     // Everything below mutates records — requires admin or named-editor rights.
@@ -401,7 +409,12 @@ Deno.serve(async (req) => {
       const current = await Sop.get(id).catch(() => null);
       if (!current?.id) return Response.json({ error: 'SOP no longer exists.' }, { status: 404 });
       const form = cleanForm({ ...current, ...(body?.next_fields || {}) });
-      const contentChanged = !fieldsMatch(current, form);
+      // Only reader-visible content forces a re-read: pinning, reordering,
+      // recategorizing, or retagging must NOT invalidate everyone's read
+      // receipts by bumping the version.
+      const CONTENT_KEYS = ['title', 'summary', 'steps', 'safety_notes', 'attachments', 'cover_image_url', 'estimated_minutes'];
+      const contentChanged = CONTENT_KEYS.some((key) =>
+        JSON.stringify(normalize(current?.[key])) !== JSON.stringify(normalize(form?.[key])));
       // Publishing fresh content while already published moves the version so
       // staff who acknowledged the old text are asked to re-read it.
       const versionBump = current.status === 'published' && contentChanged ? 1 : 0;
