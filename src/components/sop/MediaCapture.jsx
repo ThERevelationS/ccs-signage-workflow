@@ -142,9 +142,12 @@ export default function MediaCapture({ open, onClose, onAttach, allowRecording =
   };
 
   const attachLink = () => {
-    const { embed, link } = externalVideoEmbedUrl(linkValue);
+    const { link } = externalVideoEmbedUrl(linkValue);
     if (!link) { setError("Paste a valid https:// video link (YouTube, Vimeo, or direct)."); return; }
-    onAttach?.({ type: "external_video", url: embed || link, name: linkValue.trim() });
+    // Store the canonical link — viewers run externalVideoEmbedUrl at render
+    // time, so storing the converted embed URL would downgrade YouTube/Vimeo
+    // iframes to plain links.
+    onAttach?.({ type: "external_video", url: link, name: linkValue.trim() });
     onClose?.();
   };
 
