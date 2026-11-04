@@ -14,8 +14,8 @@ export const trainingReport = () => invoke("report");
 export const trainingComplete = ({ id, expectedUpdatedDate }) =>
   invoke("complete", { id, expected_updated_date: expectedUpdatedDate });
 
-export const trainingAssign = ({ trainingId, emails, dueDate, notes }) =>
-  invoke("assign", { training_id: trainingId, emails, due_date: dueDate, notes });
+export const trainingAssign = ({ trainingId, emails, dueDate, notes, assignKey }) =>
+  invoke("assign", { training_id: trainingId, emails, due_date: dueDate, notes, assign_key: assignKey });
 
 export const trainingCancel = ({ id, expectedUpdatedDate }) =>
   invoke("cancel", { id, expected_updated_date: expectedUpdatedDate });
