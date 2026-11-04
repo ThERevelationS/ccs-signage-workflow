@@ -28,9 +28,10 @@ Deno.serve(async (req) => {
     } catch (authError) {
       const status = Number(authError?.status || 500);
       if (status === 503) console.error('verifySession session authentication service is unavailable');
-      const safeStatus = [401, 409, 429].includes(status) ? status : 500;
+      const safeStatus = [401, 409, 429, 503].includes(status) ? status : 500;
       return Response.json({
         valid: false,
+        ...([429, 503].includes(safeStatus) ? { retry_later: true } : {}),
         error: safeStatus === 409 ? 'User identity could not be verified uniquely' :
           safeStatus === 401 ? 'Session is invalid, expired, or revoked' :
           'Session verification service is unavailable',
@@ -73,8 +74,8 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number(error?.status || error?.response?.status || 500);
-    if (status === 429) {
-      return Response.json({ valid: false, retry_later: true, error: 'Session verification is busy. Try again in a moment.' }, { status: 429 });
+    if (status === 429 || status === 503) {
+      return Response.json({ valid: false, retry_later: true, error: 'Session verification is busy. Try again in a moment.' }, { status });
     }
     console.error('verifySession error:', error);
     return Response.json({ valid: false, error: 'Session verification could not be completed safely' }, { status: 500 });
