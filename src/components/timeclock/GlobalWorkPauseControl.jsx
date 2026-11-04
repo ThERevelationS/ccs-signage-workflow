@@ -123,12 +123,14 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   }, [email, sessionToken, scopeInstanceKey, refreshTimeClockStatus]);
 
   useEffect(() => {
-    void loadStatus();
+    // Provider's delayed poll lands outside the mount burst; its 5s dedupe
+    // cache makes this follow-up free instead of a second status_lite racing it.
+    if (timeClockStatus.version > 0) void loadStatus();
   }, [timeClockStatus.version, loadStatus]);
 
   useEffect(() => {
     mountedRef.current = true;
-    loadStatus();
+    if (timeClockStatus.version > 0) loadStatus();
     // Change events can originate from another employee session or arrive late.
     // Treat them only as invalidation signals; signed-session status is authoritative.
     const onPauseChanged = () => {
