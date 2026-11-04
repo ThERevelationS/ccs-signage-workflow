@@ -58,6 +58,7 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
   const [mediaOpen, setMediaOpen] = useState(null); // 'cover' | 'attachment'
   const [tagInput, setTagInput] = useState("");
   const [attachBusy, setAttachBusy] = useState(false);
+  const [attachError, setAttachError] = useState("");
   const isAdmin = me?.role === "admin";
   const categories = settings?.categories || [];
 
@@ -136,7 +137,8 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
 
   const handleMediaAttach = async ({ type, url, name }) => {
     if (mediaOpen === "cover") {
-      patch({ cover_image_url: url });
+      // Covers render in <img> tags — only images may land here.
+      if (type === "image") patch({ cover_image_url: url });
     } else {
       const kind = type === "image" ? "image" : type === "video" || type === "external_video" ? "video" : "other";
       patch({ attachments: [...(form.attachments || []), { name: name || "Attachment", url, kind }] });
@@ -147,16 +149,30 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
   const attachFile = async (files) => {
     const file = files?.[0];
     if (!file) return;
+    // The dialog path enforces settings caps; this bare-file path must too.
+    const imgCap = Number(settings?.max_image_upload_mb) || 15;
+    const vidCap = Number(settings?.max_video_upload_mb) || 100;
+    const cap = file.type?.startsWith("image/") ? imgCap : file.type?.startsWith("video/") ? vidCap : Math.max(imgCap, vidCap);
+    if (file.size > cap * 1024 * 1024) {
+      setAttachError(`File is ${(file.size / 1048576).toFixed(1)} MB — the limit is ${cap} MB.`);
+      return;
+    }
     setAttachBusy(true);
+    setAttachError("");
     try {
       const url = await uploadFile(file);
       patch({ attachments: [...(form.attachments || []), { name: file.name, url, kind: attachmentKindFromFile(file) }] });
-    } catch { /* surfaced via upload error paths elsewhere */ }
+    } catch (e) {
+      setAttachError(e?.message || "Upload failed — try again.");
+    }
     setAttachBusy(false);
   };
 
   const valid = form.title.trim().length > 0;
   const filledSteps = form.steps.filter((s) => s.title || stripHtml(s.body) || s.images?.length || s.video_url || s.external_video_url);
+  // A published SOP can never be saved down to zero steps — that would leave
+  // an empty procedure live for staff.
+  const publishedEmpty = !isNew && sop.status === "published" && filledSteps.length === 0;
 
   const buildPayload = () => ({
     title: form.title,
@@ -349,7 +365,7 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
           <Label>Attachments</Label>
           <div className="flex gap-1.5">
             <label className="inline-flex">
-              <input type="file" className="hidden" onChange={(e) => attachFile(e.target.files)} />
+              <input type="file" className="hidden" onChange={(e) => { attachFile(e.target.files); e.target.value = ""; }} />
               <Button type="button" variant="outline" size="sm" asChild disabled={attachBusy} className="gap-1.5 h-8 text-xs">
                 <span><Paperclip className="h-3.5 w-3.5" /> {attachBusy ? "Uploading…" : "Upload file"}</span>
               </Button>
@@ -371,10 +387,11 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
         ) : (
           <p className="text-xs text-slate-400">No attachments yet — PDFs, spec sheets, or reference files.</p>
         )}
+        {attachError && <p className="mt-2 text-xs text-red-600">{attachError}</p>}
       </div>
 
       <div className="sticky bottom-0 -mx-2 border-t bg-white/95 backdrop-blur p-3 flex flex-wrap items-center gap-2">
-        <Button type="button" onClick={handleSave} disabled={!valid || saving} className="gap-1.5" variant="outline">
+        <Button type="button" onClick={handleSave} disabled={!valid || saving || publishedEmpty} className="gap-1.5" variant="outline">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isNew ? "Save draft" : "Save changes"}
         </Button>
@@ -392,7 +409,11 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
           </Button>
         )}
         {!valid && <span className="text-xs text-slate-400">A title is required.</span>}
-        {valid && !filledSteps.length && <span className="text-xs text-slate-400">Add at least one step to publish.</span>}
+        {valid && !filledSteps.length && (
+          <span className="text-xs text-slate-400">
+            {publishedEmpty ? "A published SOP needs at least one step." : "Add at least one step to publish."}
+          </span>
+        )}
       </div>
 
       <MediaCapture
@@ -402,6 +423,7 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
         allowRecording={settings?.allow_in_app_recording !== false}
         maxImageMb={settings?.max_image_upload_mb || 15}
         maxVideoMb={settings?.max_video_upload_mb || 100}
+        imageOnly={mediaOpen === "cover"}
       />
     </div>
   );
