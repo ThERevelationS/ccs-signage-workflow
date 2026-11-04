@@ -42,6 +42,9 @@ export const newSopDraft = (settings, user) => ({
   pinned: false,
   sort_order: 0,
   created_by_email: user?.email || "",
+  // Idempotency key for the create call — stable across retries of this draft
+  // so a lost response can't create a duplicate record. Not persisted.
+  request_key: newRequestKey(),
 });
 
 export const newRequestKey = () =>
@@ -62,6 +65,14 @@ export function externalVideoEmbedUrl(value) {
   try {
     const u = new URL(url);
     const host = u.hostname.replace(/^www\./, "");
+    // Already-converted embed URLs (saved by older clients) pass through as
+    // embeds so they still render as iframes.
+    if (host === "youtube-nocookie.com" && u.pathname.startsWith("/embed/")) {
+      return { embed: url, link: url };
+    }
+    if (host === "player.vimeo.com" && u.pathname.startsWith("/video/")) {
+      return { embed: url, link: url };
+    }
     if (host === "youtu.be") {
       const id = u.pathname.split("/").filter(Boolean)[0];
       if (id) return { embed: `https://www.youtube-nocookie.com/embed/${id}`, link: url };
