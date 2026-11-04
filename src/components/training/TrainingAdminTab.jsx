@@ -393,12 +393,12 @@ export default function TrainingAdminTab({ sops = [], me = null }) {
                 <Select value={form.sop_id} onValueChange={(v) => setForm((f) => ({ ...f, sop_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Pick the SOP" /></SelectTrigger>
                   <SelectContent>
-                    {(sops || []).map((s) => (
+                    {(sops || []).filter((s) => s.status === "published" || s.id === form.sop_id).map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="mt-1 text-[11px] text-slate-400">Completes automatically when the assignee acknowledges this SOP.</p>
+                <p className="mt-1 text-[11px] text-slate-400">Only published SOPs can be assigned. Completes automatically when the assignee acknowledges this SOP.</p>
               </div>
             )}
             {form.type === "certification" && (
