@@ -1,4 +1,4 @@
-import { AlertTriangle, Briefcase, Clock3, Coffee, FileWarning, Pause, RefreshCw, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Briefcase, CalendarOff, CheckCircle2, Clock3, Coffee, FileWarning, MessageSquare, Pause, RefreshCw, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
@@ -49,6 +49,17 @@ export default function TimeClockExceptionCenter({
   activeLaborSegments = [],
   correctionRequests = [],
   punchExceptions = [],
+  missingBreakEntries = [],
+  unreviewedEntries = [],
+  needsReviewEntries = [],
+  otWatch = [],
+  otProjected = [],
+  swapRequests = [],
+  adminNotes = [],
+  timeOffRequests = [],
+  onDecideSwap,
+  onAcknowledgeNote,
+  onReviewTimeOff,
   onReviewEntry,
   onReviewCorrection,
   onApproveEntry,
@@ -672,6 +683,95 @@ export default function TimeClockExceptionCenter({
     });
   }
 
+  const correctedEntryIds = new Set(correctedNeedsReviewEntries.map(entry => entry.id));
+  for (const entry of needsReviewEntries) {
+    if (correctedEntryIds.has(entry.id)) continue;
+    exceptions.push({
+      key: `needs-review:${entry.id}`,
+      severity: "warning",
+      icon: FileWarning,
+      title: "Shift needs a manager review decision",
+      employee: entry.user_name || entry.user_email,
+      detail: "This completed shift is flagged Needs Review and must be approved by a manager before the pay period can be finalized.",
+      approvalEntry: entry,
+    });
+  }
+
+  for (const entry of unreviewedEntries) {
+    exceptions.push({
+      key: `unreviewed:${entry.id}`,
+      severity: "info",
+      icon: CheckCircle2,
+      title: "Completed shift has not been reviewed",
+      employee: entry.user_name || entry.user_email,
+      detail: "This shift is complete but has never been reviewed by a manager. Approve it here or open the shift to inspect it first.",
+      approvalEntry: entry,
+    });
+  }
+
+  for (const entry of missingBreakEntries) {
+    exceptions.push({
+      key: `missing-lunch:${entry.id}`,
+      severity: "warning",
+      icon: Coffee,
+      title: "Shift over five hours with no lunch recorded",
+      employee: entry.user_name || entry.user_email,
+      detail: `A completed shift ran ${Number(entry.total_hours || 0).toFixed(1)}h with no recorded lunch break. Review whether a break was actually taken.`,
+      entry,
+    });
+  }
+
+  for (const request of swapRequests) {
+    exceptions.push({
+      key: `swap:${request.id}`,
+      severity: "info",
+      icon: ArrowLeftRight,
+      title: "Schedule swap request awaiting a decision",
+      employee: `${request.requester_email} ↔ ${request.partner_email}`,
+      detail: request.reason ? `"${request.reason}"` : "A schedule swap between these employees needs a manager decision.",
+      swapRequest: request,
+    });
+  }
+
+  for (const note of adminNotes) {
+    exceptions.push({
+      key: `note:${note.id}`,
+      severity: "info",
+      icon: MessageSquare,
+      title: "Employee note awaiting acknowledgement",
+      employee: note.user_name || note.user_email,
+      detail: note.note || "An employee note needs a manager acknowledgement.",
+      adminNote: note,
+    });
+  }
+
+  for (const request of timeOffRequests) {
+    exceptions.push({
+      key: `timeoff:${request.id}`,
+      severity: "warning",
+      icon: CalendarOff,
+      title: "Time-off request awaiting review",
+      employee: request.user_name || request.user_email,
+      detail: `${request.start_date || "?"} → ${request.end_date || "?"} · ${request.hours_requested ?? "?"}h requested${request.reason ? ` — "${request.reason}"` : ""}`,
+      timeOffRequest: request,
+    });
+  }
+
+  if (otWatch.length > 0) {
+    const otDetail = otWatch.slice(0, 8).map(r => {
+      const p = otProjected.find(x => x.name === r.name);
+      return `${r.name} ${r.hours.toFixed(1)}h${p ? ` (projected ${p.projected.toFixed(1)}h)` : ""}`;
+    }).join("; ");
+    exceptions.push({
+      key: "ot-watch",
+      severity: "info",
+      icon: Clock3,
+      title: `${otWatch.length} employee${otWatch.length === 1 ? "" : "s"} near or over 40h this week`,
+      employee: "Overtime watch",
+      detail: otDetail,
+    });
+  }
+
   exceptions.sort((a, b) => {
     const rank = { critical: 0, warning: 1, info: 2 };
     return rank[a.severity] - rank[b.severity] || a.title.localeCompare(b.title);
@@ -717,7 +817,7 @@ export default function TimeClockExceptionCenter({
                         <p className="font-semibold text-sm">{item.title}</p>
                         <Badge variant="outline" className={severityBadge(item.severity)}>{item.severity}</Badge>
                         {(() => {
-                          const ageTs = Date.parse(item.correctionRequest?.created_date || item.punchCase?.submitted_at || item.punchCase?.created_date || item.entry?.clock_in || item.approvalEntry?.clock_in || "");
+                          const ageTs = Date.parse(item.correctionRequest?.created_date || item.punchCase?.submitted_at || item.punchCase?.created_date || item.entry?.clock_in || item.approvalEntry?.clock_in || item.timeOffRequest?.created_date || item.swapRequest?.created_date || item.adminNote?.requested_at || "");
                           if (!Number.isFinite(ageTs) || (nowMs - ageTs) <= 48 * 3600e3) return null;
                           const days = Math.floor((nowMs - ageTs) / 86400e3);
                           return <Badge variant="outline" className="border-amber-400 bg-amber-100 text-amber-900">{days >= 1 ? `${days}d` : "48h+"} unreviewed</Badge>;
@@ -738,6 +838,19 @@ export default function TimeClockExceptionCenter({
                   ) : item.entry && typeof onReviewEntry === "function" ? (
                     <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.entry)} className="shrink-0 bg-white/80">
                       Review Shift
+                    </Button>
+                  ) : item.swapRequest && typeof onDecideSwap === "function" ? (
+                    <div className="flex shrink-0 gap-1.5">
+                      <Button type="button" size="sm" variant="outline" onClick={() => onDecideSwap(item.swapRequest.id, "approve")} className="bg-white/80 text-green-700">Approve swap</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => onDecideSwap(item.swapRequest.id, "reject")} className="bg-white/80 text-red-600">Reject</Button>
+                    </div>
+                  ) : item.adminNote && typeof onAcknowledgeNote === "function" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onAcknowledgeNote(item.adminNote)} className="shrink-0 bg-white/80 text-green-700">
+                      Acknowledge
+                    </Button>
+                  ) : item.timeOffRequest && typeof onReviewTimeOff === "function" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onReviewTimeOff(item.timeOffRequest)} className="shrink-0 bg-white/80">
+                      Review Request
                     </Button>
                   ) : null}
                 </div>
