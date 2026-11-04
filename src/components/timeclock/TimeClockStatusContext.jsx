@@ -110,10 +110,9 @@ export function TimeClockStatusProvider({ children }) {
 
   usePolling(() => refresh({ force: true }), 180000, {
     enabled: Boolean(email && token),
-    // Fire after the mount burst (feeds/prefs/roster all land in the first
-    // seconds); at 1.5s this call reliably lost the shared read budget and
-    // surfaced a 429 on every page load.
-    initialDelayMs: 20000,
+    // Fire after the mount burst's 60s rolling budget window rolls off;
+    // anything earlier reliably 429s while feeds/prefs/roster spend the pool.
+    initialDelayMs: 65000,
   });
 
   useEffect(() => {
