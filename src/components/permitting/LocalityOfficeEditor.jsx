@@ -1,4 +1,5 @@
 import OfficeRescanButton from "./OfficeRescanButton";
+import OpenNowBadge from "./OpenNowBadge";
 import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -123,6 +124,13 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
             <div>
               <Label className="text-[10px] text-gray-500">Address</Label>
               <Input value={office.contact_address || ""} onChange={e => update({ contact_address: e.target.value })} className="h-7 text-xs" />
+            </div>
+            <div className="col-span-2 flex items-center gap-2">
+              <div className="flex-1">
+                <Label className="text-[10px] text-gray-500">Hours</Label>
+                <Input value={office.hours || ""} onChange={e => update({ hours: e.target.value })} className="h-7 text-xs" placeholder="M-F 8:00 AM - 4:30 PM" />
+              </div>
+              <OpenNowBadge hours={office.hours} />
             </div>
             <div className="col-span-2">
               <Label className="text-[10px] text-gray-500">Notes</Label>
