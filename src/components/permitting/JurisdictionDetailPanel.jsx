@@ -28,6 +28,7 @@ import CAGISSearchBar from "./CAGISSearchBar";
 import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, documentSearchContentSource, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
 import { buildJurisdictionQuestionContext } from "./jurisdictionQuestionContext";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
+import { downloadPermitPack } from "./permitPack";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -666,6 +667,22 @@ Answer only from the provided excerpts and cite the document title and official 
             >
               <Download className="w-4 h-4" />
               Report
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);
+                  const locality = (Array.isArray(locs) ? locs : [])[0] || null;
+                  downloadPermitPack({ jurisdiction, locality });
+                } catch { downloadPermitPack({ jurisdiction, locality: null }); }
+              }}
+              title="Download the filing bundle — contacts, forms, fees, documents, sign code"
+              className="min-h-11 flex-1 gap-1.5 text-xs sm:flex-none"
+            >
+              <Download className="w-4 h-4" />
+              Permit pack
             </Button>
             <Button
               size="sm"
