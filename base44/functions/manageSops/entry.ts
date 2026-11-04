@@ -171,9 +171,15 @@ function visibleTo(row: any, canEdit: boolean) {
 }
 
 // Suggestions carry staff names/emails meant for editor review — strip them
-// from rows served to regular staff (their own submissions still work).
-function forViewer(row: any, canEdit: boolean) {
-  return canEdit ? row : { ...row, suggestions: [] };
+// from rows served to regular staff (their own submissions still work). The
+// read-receipt list gets the same treatment: viewers only ever read their own
+// entry, so shipping up to 500 coworkers' names/emails on every SOP row is
+// pure leak and payload weight.
+function forViewer(row: any, canEdit: boolean, viewerEmail = '') {
+  if (canEdit) return row;
+  const mine = (Array.isArray(row?.acknowledged_viewers) ? row.acknowledged_viewers : [])
+    .filter((v: any) => String(v?.email || '').toLowerCase() === viewerEmail);
+  return { ...row, suggestions: [], acknowledged_viewers: mine };
 }
 
 async function loadSettings(GlobalSettings: any) {
@@ -278,8 +284,9 @@ Deno.serve(async (req) => {
     const isAdmin = user.role === 'admin';
 
     if (action === 'bootstrap') {
+      const viewerEmail = String(user.email || '').toLowerCase();
       const rows = await listAll(Sop);
-      const sops = rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit));
+      const sops = rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit, viewerEmail));
       return Response.json({
         settings,
         settings_updated_date: settingsRecord?.updated_date || '',
@@ -294,8 +301,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'list') {
+      const viewerEmail = String(user.email || '').toLowerCase();
       const rows = await listAll(Sop);
-      return Response.json({ sops: rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit)) });
+      return Response.json({ sops: rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit, viewerEmail)) });
     }
 
     if (action === 'get') {
@@ -304,7 +312,7 @@ Deno.serve(async (req) => {
       if (!row?.id || !visibleTo(row, canEdit)) {
         return Response.json({ error: 'SOP not found.' }, { status: 404 });
       }
-      return Response.json({ sop: forViewer(row, canEdit) });
+      return Response.json({ sop: forViewer(row, canEdit, String(user.email || '').toLowerCase()) });
     }
 
     if (action === 'acknowledge') {
@@ -320,7 +328,7 @@ Deno.serve(async (req) => {
         const version = Number(row.version) || 1;
         const seen = Array.isArray(row.acknowledged_viewers) ? row.acknowledged_viewers : [];
         const already = seen.some((v: any) => String(v?.email || '').toLowerCase() === viewer && Number(v?.version) === version);
-        if (already) return Response.json({ acknowledged: true, already_acknowledged: true, sop: forViewer(row, canEdit) });
+        if (already) return Response.json({ acknowledged: true, already_acknowledged: true, sop: forViewer(row, canEdit, viewer) });
         const next = [...seen, { email: viewer, name: viewerName, version, acknowledged_at: new Date().toISOString() }].slice(-500);
         const result = await Sop.updateMany(
           { id: row.id, updated_date: row.updated_date },
@@ -352,7 +360,7 @@ Deno.serve(async (req) => {
               ).catch(() => {});
             }
           }
-          return Response.json({ acknowledged: true, sop: forViewer(saved || row, canEdit) });
+          return Response.json({ acknowledged: true, sop: forViewer(saved || row, canEdit, viewer) });
         }
       }
       // All CAS attempts lost — do NOT claim success: the receipt never landed,
@@ -415,6 +423,12 @@ Deno.serve(async (req) => {
       const current = await Sop.get(id).catch(() => null);
       if (!current?.id) return Response.json({ error: 'SOP no longer exists.' }, { status: 404 });
       const form = cleanForm({ ...current, ...(body?.next_fields || {}) });
+      // Same rule as publish: a live SOP can never end up with zero steps —
+      // the UI guards it, but the save path must too or a crafted/stale
+      // invoke leaves an empty procedure readable by staff.
+      if (current.status === 'published' && form.steps.length === 0) {
+        return Response.json({ error: 'A published SOP needs at least one step.' }, { status: 400 });
+      }
       // Only reader-visible content forces a re-read: pinning, reordering,
       // recategorizing, or retagging must NOT invalidate everyone's read
       // receipts by bumping the version.
