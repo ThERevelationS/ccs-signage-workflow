@@ -68,6 +68,7 @@ function adminUserView(row: any) {
     can_approve_quotes: row?.can_approve_quotes === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
+    can_self_approve_shifts: row?.role === 'admin' && row?.can_self_approve_shifts === true,
     is_full_admin: row?.is_full_admin === true,
     admin_permissions: row?.admin_permissions && typeof row.admin_permissions === 'object' && !Array.isArray(row.admin_permissions) ? row.admin_permissions : {},
     hr_data: row?.hr_data && typeof row.hr_data === 'object' && !Array.isArray(row.hr_data) ? row.hr_data : {},
@@ -122,6 +123,7 @@ function cleanManagedFields(value: any) {
     out.employment_type = employmentType;
   }
   if (Object.prototype.hasOwnProperty.call(input, 'can_work_pause')) out.can_work_pause = input.can_work_pause === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'can_self_approve_shifts')) out.can_self_approve_shifts = input.can_self_approve_shifts === true;
   if (Object.prototype.hasOwnProperty.call(input, 'force_password_reset')) out.force_password_reset = input.force_password_reset === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_deactivated')) out.is_deactivated = input.is_deactivated === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
@@ -136,6 +138,7 @@ function cleanManagedFields(value: any) {
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
   if (out.role === 'user') out.can_order_export = false;
+  if (out.role === 'user') out.can_self_approve_shifts = false;
   return out;
 }
 
@@ -483,6 +486,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
     can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,
     employment_type: EMPLOYMENT_TYPES.has(String(input?.employment_type || 'hourly')) ? String(input.employment_type || 'hourly') : 'hourly',
     can_work_pause: input?.can_work_pause === true,
+    can_self_approve_shifts: role === 'admin' && input?.can_self_approve_shifts === true,
     can_approve_quotes: input?.can_approve_quotes === true,
     onboarding_complete: false,
   };
@@ -603,7 +607,8 @@ Deno.serve(async (req) => {
         }
       }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
-        Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
+        Object.prototype.hasOwnProperty.call(desired, 'can_view_resources') ||
+        Object.prototype.hasOwnProperty.call(desired, 'can_self_approve_shifts');
       // Existing clients may not supply expected_role. They still receive a
       // conditional role guard from the loaded record at persistence time.
       const expectedRole = String(body?.expected_role || '').trim();
@@ -619,7 +624,13 @@ Deno.serve(async (req) => {
       if (desired.can_order_export === true && (desired.role || current.role) !== 'admin') {
         return Response.json({ error: 'Order Form export requires an admin account.' }, { status: 403 });
       }
+      // Self shift approval is an admin-only grant like Order Form export:
+      // role demotion revokes it and no non-admin may retain it.
+      if (desired.can_self_approve_shifts === true && (desired.role || current.role) !== 'admin') {
+        return Response.json({ error: 'Self shift approval requires an admin account.' }, { status: 403 });
+      }
       if (desired.role === 'user') desired.can_order_export = false;
+      if (desired.role === 'user') desired.can_self_approve_shifts = false;
       const expectedInput = body?.expected_fields && typeof body.expected_fields === 'object' && !Array.isArray(body.expected_fields)
         ? body.expected_fields
         : {};
@@ -628,7 +639,7 @@ Deno.serve(async (req) => {
         // Existing users predate the Order Export field. Its absent stored
         // value means false, but the conditional write must retain the actual
         // absent baseline rather than falsely treating it as a conflict.
-        const legacyUnsetOrderExport = field === 'can_order_export' && current?.[field] == null;
+        const legacyUnsetOrderExport = (field === 'can_order_export' || field === 'can_self_approve_shifts') && current?.[field] == null;
         const currentValue = legacyUnsetOrderExport ? false : current?.[field];
         if (!sameValue(currentValue, expectedInput[field]) && !sameValue(currentValue, desired[field])) {
           return Response.json({ error: `Authorized user changed in another session (${field}). Reload before saving.` }, { status: 409 });
