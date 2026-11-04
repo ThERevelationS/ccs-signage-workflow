@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -60,6 +60,16 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
   const [suggestStep, setSuggestStep] = useState(null); // step id or "" for general
   const [suggestText, setSuggestText] = useState("");
   const [suggestBusy, setSuggestBusy] = useState(false);
+
+  // The suggest-edit overlay isn't a Radix dialog — give it the same Esc-to-
+  // close behavior staff get everywhere else.
+  useEffect(() => {
+    if (suggestStep === null) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setSuggestStep(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [suggestStep]);
+
   if (!sop) return null;
   const cat = categoryByKey(settings, sop.category);
   const version = Number(sop.version) || 1;
@@ -212,9 +222,16 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
 
       {suggestStep !== null && (
         <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/50 p-4" onClick={() => setSuggestStep(null)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Suggest an improvement"
+          >
             <p className="font-semibold text-slate-900">Suggest an improvement{suggestStep ? " for this step" : ""}</p>
             <textarea
+              autoFocus
               value={suggestText}
               onChange={(e) => setSuggestText(e.target.value)}
               rows={3}
