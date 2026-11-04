@@ -49,6 +49,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, p
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
+import TimeClockCalendar from "@/components/timeclock/TimeClockCalendar";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
 import TimeClockPunchExceptionReport from "@/components/timeclock/TimeClockPunchExceptionReport";
@@ -234,6 +235,8 @@ export default function TimeClockAdmin() {
   };
   const [punchExceptions, setPunchExceptions] = useState([]);
   const [adminNotes, setAdminNotes] = useState([]);
+  const [timeOffRequests, setTimeOffRequests] = useState([]);
+  const [timeOffReviewRequestId, setTimeOffReviewRequestId] = useState("");
   const [devices, setDevices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState("");
@@ -1257,6 +1260,160 @@ export default function TimeClockAdmin() {
         </Button>
       </div>
 
+      <TimeClockCalendar
+        timeEntries={timeEntries}
+        punchExceptions={punchExceptions}
+        correctionRequests={correctionRequests}
+        currentDate={currentDate}
+        onSelectDate={(day) => { setCurrentDate(day); setDateRange("today"); }}
+      />
+
+      <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
+        subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
+        count={staleActiveEntries.length + duplicateActiveEmails.length + missingBreakEntries.length + needsReviewEntries.length + unreviewedEntries.length + swapRequests.length + adminNotes.length + timeOffRequests.filter((r) => r.status === "pending").length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
+        <div className="clay-card p-3 sm:p-4 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <p className="text-xs text-gray-600">Unreviewed</p>
+              <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
+            </div>
+            <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+              <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
+              <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {cleanReviewEntries.length > 0 && (
+                  <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
+                    onClick={approveAllClean} className="min-h-10 text-xs bg-white/80">
+                    {bulkApproveBusy ? "Approving…" : `Approve ${cleanReviewEntries.length} clean`}
+                  </Button>
+                )}
+                {staleActiveEntries.length > 0 && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setBulkCloseOpen(true)} className="min-h-10 text-xs bg-white/80 text-amber-700">
+                    Close {staleActiveEntries.length} stale
+                  </Button>
+                )}
+              </div>
+              {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
+              {retentionMsg && <p className="text-[11px] text-gray-600 mt-1">{retentionMsg}</p>}
+            </div>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+              <p className="text-xs text-green-700">Approved</p>
+              <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
+            </div>
+          </div>
+        </div>
+        <TimeClockExceptionCenter
+          timeEntries={timeEntries}
+          employeeStates={employeeStates}
+          activeBreaks={activeBreaks}
+          activeWorkPauses={activeWorkPauses}
+          activeLaborSegments={activeLaborSegments}
+          correctionRequests={correctionRequests}
+          punchExceptions={punchExceptions}
+          missingBreakEntries={missingBreakEntries}
+          unreviewedEntries={unreviewedEntries}
+          needsReviewEntries={needsReviewEntries}
+          otWatch={otWatch}
+          otProjected={otProjected}
+          swapRequests={swapRequests}
+          adminNotes={adminNotes}
+          timeOffRequests={timeOffRequests.filter((r) => r.status === "pending")}
+          onDecideSwap={decideSwap}
+          onAcknowledgeNote={ackAdminNote}
+          onReviewTimeOff={(request) => setTimeOffReviewRequestId(request?.id || "")}
+          onReviewEntry={handleEditEntry}
+          onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+          onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
+          onRefresh={() => loadData({ silent: true })}
+        />
+        <div className="hidden">
+      <CorrectionCoordinatorDiagnostics
+        sessionToken={sessionToken}
+        availableEntryIds={timeEntries.map((entry) => entry.id)}
+        onViewShift={(entryId) => {
+          const entry = timeEntries.find((item) => item.id === entryId);
+          if (entry) setDetailEntry(entry);
+        }}
+        onInspectAudits={(entryId) => {
+          if (!String(entryId || "").trim()) return;
+          setAuditInvestigation({
+            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
+          });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
+            behavior: "smooth", block: "start",
+          }), 0);
+        }}
+      />
+      <CorrectionRequestAdminPanel
+        sessionToken={sessionToken}
+        entries={timeEntries}
+        onEntriesChanged={() => loadData({ silent: true })}
+        reviewRequestId={correctionReviewRequestId}
+        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
+      />
+          <TimeOffApprovalPanel sessionToken={sessionToken} reviewRequestId={timeOffReviewRequestId} onReviewRequestOpened={() => setTimeOffReviewRequestId("")} onRequestsLoaded={setTimeOffRequests} />
+        </div>
+      <Dialog open={bulkCloseOpen} onOpenChange={setBulkCloseOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Close {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Close at</Label>
+              <TimeQuickPick mode="time" value={bulkCloseTime} onChange={setBulkCloseTime} inputId="bulk-close-time" />
+            </div>
+            <div>
+              <Label className="text-xs">Reason (required)</Label>
+              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out ??? closed by admin" className="mt-1" />
+            </div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
+              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} ??? in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
+            </ul>
+            {bulkCloseResults && (
+              <p className={`text-xs ${bulkCloseResults.failed.length ? "text-amber-700" : "text-emerald-700"}`}>
+                Closed {bulkCloseResults.closed}, skipped {bulkCloseResults.skipped}
+                {bulkCloseResults.failed.length ? `, failed ${bulkCloseResults.failed.length}: ${bulkCloseResults.failed.join("; ")}` : ""}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setBulkCloseOpen(false)}>Cancel</Button>
+              <Button type="button" size="sm" disabled={bulkCloseBusy || !bulkCloseReason.trim() || !sessionToken || !staleActiveEntries.length}
+                onClick={async () => {
+                  setBulkCloseBusy(true);
+                  const failed = []; let closed = 0, skipped = 0;
+                  for (const entry of staleActiveEntries) {
+                    const dayInput = `${companyDateTimeInputFromIso(entry.clock_in).slice(0, 10)}T${bulkCloseTime}`;
+                    const parsed = parseCompanyDateTimeInput(dayInput, entry.clock_in);
+                    if (!parsed?.ok || new Date(parsed.iso).getTime() <= new Date(entry.clock_in).getTime()) { skipped++; continue; }
+                    try {
+                      const rid = newRequestId();
+                      const res = await base44.functions.invoke("timeClockAction", {
+                        action: "admin_correct_entry", session_token: sessionToken,
+                        target_email: entry.user_email, request_id: rid, entry_id: entry.id,
+                        expected_updated_date: entry.updated_date, reason: bulkCloseReason.trim(),
+                        correction: {
+                          clock_in: entry.clock_in, clock_out: parsed.iso,
+                          lunch_minutes: entry.lunch_minutes ?? 0, notes: entry.notes || "",
+                          job_allocations: entry.job_allocations || [],
+                        },
+                      });
+                      const data = functionData(res);
+                      if (!data?.success) throw adminActionError(data, "not confirmed");
+                      closed++;
+                    } catch (err) { failed.push(`${entry.user_name || entry.user_email}: ${err?.message || err}`); }
+                  }
+                  setBulkCloseResults({ closed, skipped, failed });
+                  setBulkCloseBusy(false);
+                  await loadData({ silent: true });
+                }}>
+                {bulkCloseBusy ? "Closing???" : "Close entries"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </AdminSection>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="clay-card p-4">
@@ -1661,296 +1818,7 @@ export default function TimeClockAdmin() {
         );
       })()}
 
-      <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
-        subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
-        count={staleActiveEntries.length + duplicateActiveEmails.length + missingBreakEntries.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
-      {missingBreakEntries.length > 0 && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-amber-900">
-                {missingBreakEntries.length} shift{missingBreakEntries.length === 1 ? "" : "s"} over 5 hours with no lunch recorded
-              </div>
-              <div className="mt-3 space-y-2">
-                {missingBreakEntries.slice(0, 10).map(entry => (
-                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
-                    <div className="text-sm">
-                      <span className="font-medium text-gray-900">{entry.user_name || entry.user_email}</span>
-                      <span className="text-xs text-gray-600 ml-2">{safeFormat(entry.clock_in, "MMM d")} ?? {Number(entry.total_hours).toFixed(1)}h</span>
-                    </div>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setDetailEntry(entry)} className="bg-white/80">Review</Button>
-                  </div>
-                ))}
-                {missingBreakEntries.length > 10 && <p className="text-xs text-amber-700">???and {missingBreakEntries.length - 10} more</p>}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <Dialog open={bulkCloseOpen} onOpenChange={setBulkCloseOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Close {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"}</DialogTitle></DialogHeader>
-          <div className="space-y-3 pt-1">
-            <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs whitespace-nowrap">Close at</Label>
-              <TimeQuickPick mode="time" value={bulkCloseTime} onChange={setBulkCloseTime} inputId="bulk-close-time" />
-            </div>
-            <div>
-              <Label className="text-xs">Reason (required)</Label>
-              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out ??? closed by admin" className="mt-1" />
-            </div>
-            <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
-              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} ??? in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
-            </ul>
-            {bulkCloseResults && (
-              <p className={`text-xs ${bulkCloseResults.failed.length ? "text-amber-700" : "text-emerald-700"}`}>
-                Closed {bulkCloseResults.closed}, skipped {bulkCloseResults.skipped}
-                {bulkCloseResults.failed.length ? `, failed ${bulkCloseResults.failed.length}: ${bulkCloseResults.failed.join("; ")}` : ""}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setBulkCloseOpen(false)}>Cancel</Button>
-              <Button type="button" size="sm" disabled={bulkCloseBusy || !bulkCloseReason.trim() || !sessionToken || !staleActiveEntries.length}
-                onClick={async () => {
-                  setBulkCloseBusy(true);
-                  const failed = []; let closed = 0, skipped = 0;
-                  for (const entry of staleActiveEntries) {
-                    const dayInput = `${companyDateTimeInputFromIso(entry.clock_in).slice(0, 10)}T${bulkCloseTime}`;
-                    const parsed = parseCompanyDateTimeInput(dayInput, entry.clock_in);
-                    if (!parsed?.ok || new Date(parsed.iso).getTime() <= new Date(entry.clock_in).getTime()) { skipped++; continue; }
-                    try {
-                      const rid = newRequestId();
-                      const res = await base44.functions.invoke("timeClockAction", {
-                        action: "admin_correct_entry", session_token: sessionToken,
-                        target_email: entry.user_email, request_id: rid, entry_id: entry.id,
-                        expected_updated_date: entry.updated_date, reason: bulkCloseReason.trim(),
-                        correction: {
-                          clock_in: entry.clock_in, clock_out: parsed.iso,
-                          lunch_minutes: entry.lunch_minutes ?? 0, notes: entry.notes || "",
-                          job_allocations: entry.job_allocations || [],
-                        },
-                      });
-                      const data = functionData(res);
-                      if (!data?.success) throw adminActionError(data, "not confirmed");
-                      closed++;
-                    } catch (err) { failed.push(`${entry.user_name || entry.user_email}: ${err?.message || err}`); }
-                  }
-                  setBulkCloseResults({ closed, skipped, failed });
-                  setBulkCloseBusy(false);
-                  await loadData({ silent: true });
-                }}>
-                {bulkCloseBusy ? "Closing???" : "Close entries"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      {otWatch.length > 0 && (
-        <div className="rounded-xl border border-orange-300 bg-orange-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-orange-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-orange-900">Overtime watch ??? {otWatch.length} employee{otWatch.length === 1 ? "" : "s"} near or over 40h this week</div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {otWatch.map(r => (
-                  <span key={r.name} className={`rounded-full border px-2 py-1 text-xs font-medium ${r.hours >= 40 ? "border-red-400 bg-red-100 text-red-800" : "border-orange-300 bg-white text-orange-800"}`}>
-                    {(() => {
-                      const p = otProjected.find(x => x.name === r.name);
-                      return `${r.name} ?? ${r.hours.toFixed(1)}h${p ? ` ??? ~${p.projected.toFixed(0)}h` : ""}`;
-                    })()}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {duplicateActiveEmails.length > 0 && (
-        <div className="rounded-xl border border-red-300 bg-red-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-red-900">
-                {duplicateActiveEmails.length} employee{duplicateActiveEmails.length === 1 ? "" : "s"} have overlapping open shifts
-              </div>
-              <p className="text-sm text-red-800 mt-1">
-                Each employee should only ever have one active clock-in. Review and resolve the extra open entr{duplicateActiveEmails.length === 1 ? "y" : "ies"} below.
-              </p>
-              <div className="mt-3 space-y-2">
-                {duplicateActiveEntries.map(entry => (
-                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-red-200 px-3 py-2">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
-                      <div className="text-xs text-gray-600">
-                        Clocked in {safeFormat(entry.clock_in, "MMM d, yyyy 'at' h:mm a")}
-                      </div>
-                    </div>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setDetailEntry(entry)} className="bg-white/80">
-                      Review Shift
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {staleActiveEntries.length > 0 && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-amber-900">
-                {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"} need review
-              </div>
-              <p className="text-sm text-amber-800 mt-1">
-                These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
-              </p>
-              <div className="mt-2">
-                <Button size="sm" variant="outline" className="border-amber-400 text-amber-900"
-                  onClick={() => { setBulkCloseResults(null); setBulkCloseOpen(true); }}>
-                  Close all at a set time
-                </Button>
-              </div>
-              <div className="mt-3 space-y-2">
-                {staleActiveEntries.map(entry => (
-                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
-                      <div className="text-xs text-gray-600">
-                        Clocked in {safeFormat(entry.clock_in, "MMM d, yyyy 'at' h:mm a")}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
-                      Review Entry
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <CorrectionCoordinatorDiagnostics
-        sessionToken={sessionToken}
-        availableEntryIds={timeEntries.map((entry) => entry.id)}
-        onViewShift={(entryId) => {
-          const entry = timeEntries.find((item) => item.id === entryId);
-          if (entry) setDetailEntry(entry);
-        }}
-        onInspectAudits={(entryId) => {
-          if (!String(entryId || "").trim()) return;
-          setAuditInvestigation({
-            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
-          });
-          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
-            behavior: "smooth", block: "start",
-          }), 0);
-        }}
-      />
-      <TimeClockExceptionCenter
-        timeEntries={timeEntries}
-        employeeStates={employeeStates}
-        activeBreaks={activeBreaks}
-        activeWorkPauses={activeWorkPauses}
-        activeLaborSegments={activeLaborSegments}
-        correctionRequests={correctionRequests}
-        punchExceptions={punchExceptions}
-        onReviewEntry={handleEditEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-        onRefresh={() => loadData({ silent: true })}
-      />
-      <div className="clay-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Shift Review
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">Manager review status for completed shifts in the selected period. Approval does not finalize payroll.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="text-xs text-gray-600">Unreviewed</p>
-            <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
-          </div>
-          <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
-            <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
-            <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
-            {cleanReviewEntries.length > 0 && (
-              <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
-                onClick={approveAllClean} className="mt-2 min-h-10 w-full text-xs bg-white/80">
-                {bulkApproveBusy ? "Approving???" : `Approve ${cleanReviewEntries.length} clean`}
-              </Button>
-            )}
-            {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
-            {retentionMsg && <p className="text-[11px] text-gray-600 mt-1">{retentionMsg}</p>}
-          </div>
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-            <p className="text-xs text-green-700">Approved</p>
-            <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
-          </div>
-        </div>
-      </div>
-      <CorrectionRequestAdminPanel
-        sessionToken={sessionToken}
-        entries={timeEntries}
-        onEntriesChanged={() => loadData({ silent: true })}
-        reviewRequestId={correctionReviewRequestId}
-        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
-      />
-      {swapRequests.length > 0 && (
-        <AdminSection title="Schedule swap requests" icon={RefreshCw} tone="blue" count={swapRequests.length}>
-          <ul className="mt-1 space-y-1">
-            {swapRequests.map((req) => (
-              <li key={req.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-blue-100 bg-white/70 px-2 py-1.5 text-xs">
-                <div className="min-w-0">
-                  <span className="font-medium">{req.requester_email}</span>
-                  <span className="mx-1 text-gray-400">???</span>
-                  <span className="font-medium">{req.partner_email}</span>
-                  {req.reason && <p className="text-[10px] text-gray-500">"{req.reason}"</p>}
-                </div>
-                <div className="flex gap-1">
-                  <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "approve")} className="h-6 px-2 text-[10px] text-emerald-700">Approve swap</Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "reject")} className="h-6 px-2 text-[10px] text-red-600">Reject</Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </AdminSection>
-      )}
-      {adminNotes.length > 0 && (
-        <AdminSection title="Employee notes" icon={MessageSquare} tone="blue" count={adminNotes.length}>
-          <ul className="mt-1 space-y-1">
-            {adminNotes.map((note) => (
-              <li key={note.id} className="rounded border border-blue-100 bg-white/70 px-2 py-1.5 text-xs">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium">{note.user_name || note.user_email}</span>
-                  <span className="text-[10px] text-gray-400">{note.requested_at ? new Date(note.requested_at).toLocaleString() : ""}</span>
-                </div>
-                <p className="mt-1 whitespace-pre-wrap text-gray-700">{note.note}</p>
-                <div className="mt-1.5 flex justify-end">
-                  <Button type="button" size="sm" variant="outline" onClick={() => ackAdminNote(note)} className="h-6 px-2 text-[10px] text-emerald-700">Acknowledge</Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </AdminSection>
-      )}
-      <TimeOffApprovalPanel sessionToken={sessionToken} />
-      <TimeClockPunchExceptionReport
-        punchExceptions={punchExceptions}
-        timeEntries={timeEntries}
-        correctionRequests={correctionRequests}
-        onReviewEntry={setDetailEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-      />
-      </AdminSection>
+
 
       <AdminSection title="Live Status" icon={Clock3} tone="green" defaultOpen
         subtitle="Who is working right now">
