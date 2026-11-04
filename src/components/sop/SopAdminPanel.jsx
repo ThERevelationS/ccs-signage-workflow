@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, X, Loader2, Save, Users, MessageSquarePlus } from "lucide-react";
 import { sopSaveSettings, sopAckReport } from "./sopService";
+import TrainingAdminTab from "@/components/training/TrainingAdminTab";
 
 // Admin drawer: department categories, named SOP editors, module defaults,
 // and the read-receipt report. Saves go through manageSops save_settings
@@ -41,7 +42,7 @@ function CategoryRow({ cat, inUse, onChange, onRemove }) {
   );
 }
 
-export default function SopAdminPanel({ open, onClose, settings, settingsUpdatedDate, sops, onSaved, onResolveSuggestion }) {
+export default function SopAdminPanel({ open, onClose, settings, settingsUpdatedDate, sops, me, onSaved, onResolveSuggestion }) {
   const [form, setForm] = useState(null);
   const [editorInput, setEditorInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -135,7 +136,7 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
         </SheetHeader>
 
         <Tabs defaultValue="categories" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="categories">Departments</TabsTrigger>
             <TabsTrigger value="editors">Editors</TabsTrigger>
             <TabsTrigger value="defaults">Defaults</TabsTrigger>
@@ -146,6 +147,7 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
               )}
             </TabsTrigger>
             <TabsTrigger value="acks" onClick={() => { if (!report && !reportBusy) loadReport(); }}>Receipts</TabsTrigger>
+            <TabsTrigger value="training">Training</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories" className="space-y-3 pt-3">
@@ -293,6 +295,10 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
                 )}
               </div>
             ))}
+          </TabsContent>
+
+          <TabsContent value="training">
+            <TrainingAdminTab sops={sops} me={me} />
           </TabsContent>
         </Tabs>
 
