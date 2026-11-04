@@ -802,9 +802,15 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 
             {prefs?.show_week_strip !== false && weeklyDaily.length === 7 && (
               <div className="mt-4">
-                <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-500">
-                  <span>This week{yesterdayMinutes !== null ? ` · yesterday ${formatClock(yesterdayMinutes, "hours_minutes")}` : ""}{weekAvgMinutes ? ` · avg ${formatClock(weekAvgMinutes, "hours_minutes")}/day` : ""}</span>
-                  <span>{formatClock(live?.weekly || 0, "hours_minutes")} / {formatClock(weekGoal, "hours_minutes")}</span>
+                <div className="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-semibold text-slate-500">
+                  <span className="min-w-0">
+                    This week
+                    <span className="text-slate-800 dark:text-slate-100"> {formatClock(live?.weekly || 0, "hours_minutes")}</span>
+                    <span className="font-normal"> / {formatClock(weekGoal, "hours_minutes")}</span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
+                    {[yesterdayMinutes !== null ? `yesterday ${formatClock(yesterdayMinutes, "hours_minutes")}` : "", weekAvgMinutes ? `avg ${formatClock(weekAvgMinutes, "hours_minutes")}/day` : ""].filter(Boolean).join(" · ")}
+                  </span>
                 </div>
                 <div className="flex items-end gap-1">
                   {weeklyDaily.map((minutes, index) => {
