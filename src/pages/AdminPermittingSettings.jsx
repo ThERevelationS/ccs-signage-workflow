@@ -10,6 +10,7 @@ import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonit
 import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
 import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
 import PermittingRulesList from "@/components/admin/PermittingRulesList";
+import CoverageMap from "@/components/permitting/CoverageMap";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -409,6 +410,8 @@ export default function AdminPermittingSettings() {
             </div>
 
             <PermittingRulesList />
+
+            <CoverageMap jurisdictions={jurisdictions} />
 
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
