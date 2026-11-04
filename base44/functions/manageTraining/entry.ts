@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         const [items, assignments, staffRows] = await Promise.all([
           listAll(TrainingItem, 'sort_order', 'training items'),
           listAll(TrainingAssignment, '-updated_date', 'training assignments'),
-          AuthorizedEmail.filter({ active: true }, null, 500).catch(() => []),
+          AuthorizedEmail.filter({}, null, 500).catch(() => []),
         ]);
         payload.items = items || [];
         payload.assignments = decorate(assignments || []);
@@ -247,10 +247,29 @@ Deno.serve(async (req) => {
       const trainingId = String(body?.training_id || '').trim();
       const item = await TrainingItem.get(trainingId).catch(() => null);
       if (!item?.id) return Response.json({ error: 'Training item not found.' }, { status: 404 });
+      if (item.active === false) return Response.json({ error: 'This training item is inactive.' }, { status: 400 });
+      // SOP-typed items must point at a real published SOP; assignees who
+      // already acknowledged the current version close out immediately —
+      // the acknowledge op early-returns on re-ack, so the hook never fires.
+      let sopRow: any = null;
+      if (String(item.type) === 'sop' && item.sop_id) {
+        const Sop = (base44.asServiceRole.entities as any).Sop;
+        sopRow = Sop ? await Sop.get(String(item.sop_id)).catch(() => null) : null;
+        if (!sopRow?.id || sopRow.status !== 'published') {
+          return Response.json({ error: 'The linked SOP is missing or not published.' }, { status: 400 });
+        }
+      }
+      const sopVersion = Number(sopRow?.version) || 0;
+      const alreadyAcked = (em: string) => (Array.isArray(sopRow?.acknowledged_viewers) ? sopRow.acknowledged_viewers : [])
+        .some((v: any) => String(v?.email || '').toLowerCase() === em && Number(v?.version) === sopVersion);
       const emails = [...new Set((Array.isArray(body?.emails) ? body.emails : []).map(cleanEmail).filter(Boolean))].slice(0, MAX_ASSIGN_EMAILS);
       if (!emails.length) throw bad('Pick at least one employee.');
       const dueDate = cleanDate(body?.due_date);
       const notes = cleanText(body?.notes, 1000);
+      // Per-submission nonce from the client: the same retried call dedupes,
+      // but a later deliberate re-assign (after completion/cancel) keys
+      // differently so it isn't swallowed by the old row's dedupe record.
+      const assignKey = cleanText(body?.assign_key, 80);
       const staff = await AuthorizedEmail.filter({}, null, 500).catch(() => []);
       const nameOf = (em: string) => {
         const row = (Array.isArray(staff) ? staff : []).find((s: any) => String(s?.email || '').toLowerCase() === em);
@@ -261,6 +280,7 @@ Deno.serve(async (req) => {
       for (const em of emails) {
         const pending = await TrainingAssignment.filter({ training_id: item.id, assignee_email: em, status: 'pending' }, null, 1).catch(() => []);
         if (Array.isArray(pending) && pending.length > 0) { skipped.push(em); continue; }
+        const preAcked = sopRow ? alreadyAcked(em) : false;
         const { record } = await createWithRecovery(TrainingAssignment, {
           training_id: item.id,
           training_title: String(item.title || ''),
@@ -275,9 +295,11 @@ Deno.serve(async (req) => {
           assigned_by: email,
           assigned_at: nowIso,
           due_date: dueDate,
-          status: 'pending',
+          status: preAcked ? 'completed' : 'pending',
+          completed_at: preAcked ? nowIso : null,
+          completed_method: preAcked ? 'sop_ack' : null,
           notes,
-          creation_request_key: `${item.id}:${em}`,
+          creation_request_key: `${item.id}:${em}${assignKey ? `:${assignKey}` : ''}`,
         }, { training_id: item.id, assignee_email: em, status: 'pending' });
         if (record?.id) created.push(record);
       }
@@ -290,7 +312,10 @@ Deno.serve(async (req) => {
       if (!current?.id) return Response.json({ error: 'Assignment not found.' }, { status: 404 });
       const nextStatus = action === 'cancel' ? 'cancelled' : 'pending';
       const patch: any = { status: nextStatus };
-      if (action === 'reopen') { patch.completed_at = null; patch.completed_method = null; patch.expires_at = null; }
+      // Clearing completion fields on both paths: cancel on a completed row
+      // must not leave stale completed_at/expires_at behind, and reopen
+      // resets them so the assignee gets a clean pending row.
+      patch.completed_at = null; patch.completed_method = null; patch.expires_at = null;
       const saved = await updateExact(TrainingAssignment, body, patch, 'Assignment');
       return Response.json({ record: saved });
     }
