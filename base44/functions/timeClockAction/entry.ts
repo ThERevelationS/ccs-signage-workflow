@@ -8340,6 +8340,111 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, decision, group_id: decision === 'same_day' ? groupId : null, anchor_date: promptNow.anchor_date, user: publicEmployee(target) });
     }
 
+    if (action === 'group_work_day') {
+      // On-demand grouping from the employee's shift list: merge this entry
+      // with the most recent completed shift before it inside the 12h window.
+      // Joins the previous shift's existing group when it has one.
+      const entryId = String(body?.entry_id || '').trim();
+      if (!entryId) return Response.json({ success: false, error: 'A shift id is required.' }, { status: 400 });
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      const entryIsActive = entry.status === 'clocked_in' && String(state?.active_entry_id || '') === entry.id;
+      if (entry.status !== 'clocked_out' && !entryIsActive) {
+        return Response.json({ success: false, error: 'Only completed shifts or your current shift can be grouped.' }, { status: 400 });
+      }
+      if (entry.pay_period_id || entryIsPayPeriodLocked(entry)) {
+        return Response.json({ success: false, error: 'This shift is locked by a finalized pay period.' }, { status: 409 });
+      }
+      const inMs = new Date(String(entry.clock_in || '')).getTime();
+      if (!Number.isFinite(inMs)) return Response.json({ success: false, error: 'This shift has an invalid Clock In.' }, { status: 400 });
+      const rows = await entryEntity.filter({
+        user_email: target.email, status: 'clocked_out',
+        archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+      }, '-clock_in', 40);
+      if (!Array.isArray(rows)) throw new Error('Work-day group lookup did not return a record list.');
+      const previous = rows
+        .filter((row: any) => {
+          if (row.id === entry.id || row.pay_period_id) return false;
+          const pIn = new Date(String(row.clock_in || '')).getTime();
+          const pOut = new Date(String(row.clock_out || '')).getTime();
+          return Number.isFinite(pIn) && Number.isFinite(pOut) && pOut <= inMs && inMs - pIn <= WORK_DAY_WINDOW_MS;
+        })
+        .sort((a: any, b: any) => new Date(String(b.clock_out)).getTime() - new Date(String(a.clock_out)).getTime())[0] || null;
+      if (!previous?.id) {
+        return Response.json({ success: false, error: 'No completed shift within 12 hours before this one was found.' }, { status: 404 });
+      }
+      const decidedAt = new Date().toISOString();
+      const groupId = String(previous.work_day_group_id || '').trim() || `wdg:${previous.id}`;
+      const anchor = String(previous.work_day_anchor_date || '').trim() || dateKeyInCompanyTime(previous.clock_in);
+      const writeSet = {
+        work_day_group_id: groupId, work_day_anchor_date: anchor,
+        work_day_confirmed_at: decidedAt, work_day_confirmed_by: actorEmail,
+        work_day_declined_signature: '',
+      };
+      for (const member of [previous, entry]) {
+        const fresh = await entryEntity.get(member.id).catch(() => null);
+        if (!fresh?.id || asEmail(fresh.user_email) !== target.email || fresh.pay_period_id) {
+          return Response.json({ success: false, error: 'A shift in this group changed. Reload and try again.' }, { status: 409 });
+        }
+        if (String(fresh.work_day_group_id || '') === groupId && String(fresh.work_day_anchor_date || '') === anchor) continue;
+        const upd = await entryEntity.updateMany(
+          { id: fresh.id, updated_date: fresh.updated_date, user_email: target.email, status: fresh.status },
+          { $set: writeSet },
+        );
+        if (!upd || upd.updated !== 1) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The work-day group changed while saving. Retry this request.' }, { status: 409 });
+        }
+      }
+      await ensureUserActionAudit(auditEntity, {
+        action: 'work_day_decision', outcome: 'confirmed',
+        user_email: target.email, user_name: target.full_name || target.email,
+        actor_email: actorEmail, actor_role: actor.role, authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: decidedAt, request_id: requestId,
+        reason: 'Employee manually combined shifts into one work day',
+        details: { group_id: groupId, anchor_date: anchor, entry_ids: [previous.id, entry.id], manual: true },
+      }, 'Work-day manual group audit');
+      return Response.json({ success: true, group_id: groupId, anchor_date: anchor, entry_ids: [previous.id, entry.id], user: publicEmployee(target) });
+    }
+
+    if (action === 'ungroup_work_day') {
+      // Removes ONE entry from its work-day group; the other members keep
+      // theirs. The tracker reverts this entry to its own calendar day.
+      const entryId = String(body?.entry_id || '').trim();
+      if (!entryId) return Response.json({ success: false, error: 'A shift id is required.' }, { status: 400 });
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      if (!entry.work_day_group_id) return Response.json({ success: true, ungrouped: true, user: publicEmployee(target) });
+      if (entry.pay_period_id || entryIsPayPeriodLocked(entry)) {
+        return Response.json({ success: false, error: 'This shift is locked by a finalized pay period.' }, { status: 409 });
+      }
+      const decidedAt = new Date().toISOString();
+      const priorGroup = String(entry.work_day_group_id);
+      const upd = await entryEntity.updateMany(
+        { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: entry.status },
+        { $set: {
+          work_day_group_id: '', work_day_anchor_date: '',
+          work_day_confirmed_at: '', work_day_confirmed_by: '',
+          work_day_declined_signature: `manual-ungroup:${decidedAt}`,
+        } },
+      );
+      if (!upd || upd.updated !== 1) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The work-day group changed while saving. Retry this request.' }, { status: 409 });
+      }
+      await ensureUserActionAudit(auditEntity, {
+        action: 'work_day_decision', outcome: 'declined',
+        user_email: target.email, user_name: target.full_name || target.email,
+        actor_email: actorEmail, actor_role: actor.role, authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: decidedAt, request_id: requestId,
+        reason: 'Employee removed a shift from a combined work day',
+        details: { group_id: priorGroup, entry_ids: [entry.id], manual: true },
+      }, 'Work-day ungroup audit');
+      return Response.json({ success: true, ungrouped: true, user: publicEmployee(target) });
+    }
+
     if (action === 'update_notes') {
       if (actor.role === 'badge' || actorEmail !== target.email) {
         return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to edit notes.' }, { status: 403 });
