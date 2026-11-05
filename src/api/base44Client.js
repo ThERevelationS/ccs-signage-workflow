@@ -35,6 +35,36 @@ const NOTIFICATION_READ_ACTIONS = new Set([
 const SMARTSHEET_READ_ACTIONS = new Set(['conflict_count']);
 const WORKSPACE_PREFS_READ_ACTIONS = new Set(['prefs_get']);
 const ANNOUNCEMENT_READ_ACTIONS = new Set(['active_feed']);
+
+// Short-TTL response cache for advisory reads: identical invokes inside the
+// TTL share one response instead of one in-flight call, which collapses the
+// sequential duplicates in a mount wave (dedupe only covers simultaneous
+// calls). Writes advance the governor epoch and epoch is folded into the key,
+// so any post-write read still refetches. Only advisory feeds/prefs/notifiers
+// belong here — stock levels and edit surfaces must stay live.
+const READ_TTL_ACTIONS = new Map([
+  ['workspacePrefsAction:prefs_get', 30000],
+  ['opportunityWorkspaceAction:attention_feed', 20000],
+  ['opportunityWorkspaceAction:check_watches', 20000],
+  ['opportunityWorkspaceAction:list_watches', 20000],
+  ['opportunityWorkspaceAction:search_customers', 15000],
+  ['notificationAction:list_mine', 15000],
+  ['notificationAction:unread_count', 15000],
+  ['notificationAction:get_preferences', 15000],
+  ['manageAnnouncements:active_feed', 20000],
+  ['smartsheetSyncAction:conflict_count', 20000],
+]);
+const READ_RESPONSE_CACHE_MAX = 200;
+const readResponseCache = new Map();
+const readTtlMs = (fnName, payload) => READ_TTL_ACTIONS.get(`${fnName}:${payload?.action}`) || 0;
+const readCacheSet = (key, value) => {
+  if (readResponseCache.size >= READ_RESPONSE_CACHE_MAX) {
+    const now = Date.now();
+    for (const [k, v] of readResponseCache) { if (now - v.at > 60000) readResponseCache.delete(k); }
+    while (readResponseCache.size >= READ_RESPONSE_CACHE_MAX) readResponseCache.delete(readResponseCache.keys().next().value);
+  }
+  readResponseCache.set(key, { at: Date.now(), value });
+};
 // Verified write-free actions in opportunityWorkspaceAction — attention_feed
 // and check_watches used to ride the write lane, so the AttentionBell +
 // AttentionFeed double-mount paid two uncapped invokes per page.
@@ -249,7 +279,17 @@ const functionsProxy = new Proxy(rawClient.functions, {
           (r) => { noteRateLimitSuccess(); return r; },
           (e) => { if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 60000)); throw e; },
         );
-        if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, tracked, copyResponse);
+        if (read) {
+          const key = `fn:${fnName}:${JSON.stringify(payload ?? null)}`;
+          const ttl = readTtlMs(fnName, payload);
+          if (ttl > 0) {
+            const cacheKey = `${governor.getEpoch()}|${key}`;
+            const hit = readResponseCache.get(cacheKey);
+            if (hit && Date.now() - hit.at < ttl) return Promise.resolve(copyResponse(hit.value));
+            return governor.dedupe(key, () => tracked().then((v) => { readCacheSet(cacheKey, v); return v; }), copyResponse);
+          }
+          return governor.dedupe(key, tracked, copyResponse);
+        }
         // A write may commit even when its response is lost, so reads requested
         // after it settles must never reuse a response fetched before it.
         governor.bumpEpoch();
