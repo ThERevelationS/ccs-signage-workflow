@@ -42,7 +42,7 @@ export default function PermittingRulesList() {
     try {
       await staffEntities.PermitResolutionRule.update(rule.id, { active: false });
       setRules((r) => r.map((x) => x.id === rule.id ? { ...x, active: false } : x));
-    } catch {} finally { setRetiring(null); }
+    } catch (e) { setError(`Could not retire rule "${rule.jurisdiction_name || rule.id}": ${e?.message || e}`); } finally { setRetiring(null); }
   };
 
   const active = rules.filter((r) => r.active !== false);
