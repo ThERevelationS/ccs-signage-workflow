@@ -27,6 +27,10 @@
       "type": "string",
       "description": "Official office that publishes the source (e.g. 'Boone County Planning Commission', 'Boone County Building Department')."
     },
+    "office_id": {
+      "type": "string",
+      "description": "PermitLocality.offices[].id this document belongs to \u2014 the durable office\u2192file link (resolved by name/host match; blank when unassigned)."
+    },
     "source_type": {
       "type": "string",
       "enum": [
@@ -419,9 +423,25 @@
     "jurisdiction_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__permittingsourcedocument_backend_only__" } },
-    "read": { "user_condition": { "role": "__permittingsourcedocument_backend_only__" } },
-    "update": { "user_condition": { "role": "__permittingsourcedocument_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permittingsourcedocument_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__permittingsourcedocument_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__permittingsourcedocument_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__permittingsourcedocument_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__permittingsourcedocument_backend_only__"
+      }
+    }
   }
 }
