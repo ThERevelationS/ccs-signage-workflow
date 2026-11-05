@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -44,15 +45,18 @@ export default function AdminRosterPanels({ sessionToken }) {
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
+      // Cached read path — stable payload (no request_id) so the 15s shared
+      // dedupe slot covers mount + poll overlap and any sibling consumers.
+      const adminRead = (action) => invokeTimeClockAction({ action, sessionToken, payload: { session_token: sessionToken, scope: "admin" } }).catch(() => null);
       const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes, compareRes, devRes] = await Promise.all([
-        base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "list_shift_templates", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "list_pending_requests", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "pto_liability_report", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "admin_period_compare", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
-        base44.functions.invoke("timeClockAction", { action: "list_devices", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        adminRead("who_is_in"),
+        adminRead("list_face_enrollment"),
+        adminRead("list_timeclock_audit"),
+        adminRead("list_shift_templates"),
+        adminRead("list_pending_requests"),
+        adminRead("pto_liability_report"),
+        adminRead("admin_period_compare"),
+        adminRead("list_devices"),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
