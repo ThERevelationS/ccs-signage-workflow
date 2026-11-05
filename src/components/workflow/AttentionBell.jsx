@@ -139,7 +139,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
   // clears timers on unmount and only refreshes on focus when due (#330).
   // First badge paint waits out the mount burst — ambient count, so the
   // delayed badge beats a 429'd first load + retry stack.
-  const { runNow } = usePolling(load, 60000, { initialDelayMs: 45000 });
+  const { runNow } = usePolling(load, 60000, { initialDelayMs: 80000 });
 
   // Keep the sound flag live — the feed strip and the prefs tab both write it.
   useEffect(() => {
