@@ -11,6 +11,16 @@ const READ_ONLY_ACTIONS = new Set([
   "time_tracker_snapshot",
   "list_correction_requests",
   "my_history",
+  // Admin roster reads — AdminRosterPanels fires all eight on a 60s poll;
+  // the shared TTL keeps concurrent consumers on one call per window.
+  "who_is_in",
+  "list_face_enrollment",
+  "list_timeclock_audit",
+  "list_shift_templates",
+  "list_pending_requests",
+  "pto_liability_report",
+  "admin_period_compare",
+  "list_devices",
 ]);
 
 const readCache = new Map();
