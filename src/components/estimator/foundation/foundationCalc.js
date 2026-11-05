@@ -15,6 +15,7 @@ import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery } from "./lega
 import { calcWalls } from "./wallCalculator";
 import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
+import { foundationAssemblyCatalogIssues } from "./foundationCatalogIntegrity";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -159,7 +160,10 @@ export function calcProject(project, inventory, settings = {}) {
 
   totals.grand_total = itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
-  return { items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery };
+  return {
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery,
+    catalogIssues: foundationAssemblyCatalogIssues(project, inventory),
+  };
 }
 
 export const money = (n) =>
