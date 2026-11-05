@@ -287,8 +287,12 @@ function descriptorConfigured(src: any): { configured: boolean; via: string[] } 
   for (const f of MODIFIER_FIELDS) {
     if (Array.isArray(src[f]) && src[f].length > 0) { via.push('formula_modifiers'); break; }
   }
-  if (firstFinite(src, MIN_CHARGE_FIELDS) !== null) via.push('minimum_charge');
-  if (firstFinite(src, SETUP_FEE_FIELDS) !== null) via.push('setup_fee');
+  // min/setup floors engage only above zero — 0 is an unset artifact (same
+  // zero-default class as fixed/market; markup is the sole any-finite field).
+  const minCharge = firstFinite(src, MIN_CHARGE_FIELDS);
+  if (minCharge !== null && minCharge > 0) via.push('minimum_charge');
+  const setupFee = firstFinite(src, SETUP_FEE_FIELDS);
+  if (setupFee !== null && setupFee > 0) via.push('setup_fee');
   for (const f of TIER_RULES_FIELDS) {
     if (Array.isArray(src[f]) && src[f].length > 0) { via.push('tier_rules'); break; }
   }
