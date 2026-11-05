@@ -290,17 +290,9 @@ async function pullDataset(
   sheetPageGuard.assertComplete();
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
-  // Sales retains its existing sheet-size guard. An Order-only pull must
-  // examine the full sheet to establish permanent-ID matches and then cap
-  // actual proposed Base44 updates (never the read-only downloaded row count).
-  if (dataset === 'sales' && allRows.length > massLimit) {
-    return {
-      dataset,
-      direction: 'pull',
-      skipped: true,
-      reason: `${allRows.length} Smartsheet rows exceed the mass-change hard stop of ${massLimit}. Raise the limit in settings.`,
-    };
-  }
+  // Both datasets examine the full sheet to establish permanent-ID matches
+  // and then cap actual proposed Base44 writes (never the read-only
+  // downloaded row count — a large sheet with a small change set must sync).
 
   // Load existing Base44 records already linked to this Smartsheet sheet.
   // Filtering by smartsheet_sheet_id returns only synced records, avoiding the
@@ -767,6 +759,20 @@ async function pullDataset(
       itemLabel: `Compared ${allRows.length} Order Request rows`,
       detail: `${toUpdate.length} linked Orders queued for update; ${unchangedSkipped} already matched`,
     });
+  }
+  if (dataset === 'sales') {
+    // Same contract as the Order pull below: cap real proposed writes after
+    // the diff, not the downloaded sheet size. A large sheet whose linked
+    // records all still match yields zero proposed writes and must sync.
+    const proposedWrites = toUpdate.length + toCreate.length;
+    if (proposedWrites > massLimit) return {
+      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+      reason: `${proposedWrites} Smartsheet-driven Sales changes exceed the mass-change hard stop of ${massLimit}. Raise the limit in settings.`,
+      rows_examined: allRows.length,
+      planned_updates: toUpdate.length,
+      planned_creates: toCreate.length,
+      mass_change_limit_count: massLimit,
+    };
   }
   if (dataset === 'orders') {
     // This preflight precedes every Order business-field, snapshot and date
@@ -2135,14 +2141,9 @@ async function pushDataset(
       reason: `${requestedRecordIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
       records_examined: records.length };
   }
-  if (records.length > massLimit) {
-    return {
-      dataset,
-      direction: 'push',
-      skipped: true,
-      reason: `${records.length} records exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
-    };
-  }
+  // The mass-change hard stop applies to records that actually differ from
+  // their stored snapshot (pendingRecords below) — never the loaded candidate
+  // set. A large pipeline with a small real change set must remain syncable.
 
   // Direct WorkOrder edits can introduce a competing permanent-row claim
   // outside the selected Sales push population. Check exact row ownership
@@ -2193,6 +2194,16 @@ async function pushDataset(
       ? records.filter((record: any) => !orderPushRecordUnchanged(record, sheetId, buildSnapshot(record, bindings, 'orders')))
       : records;
   const unchangedSkipped = records.length - pendingRecords.length;
+  if (pendingRecords.length > massLimit) {
+    return {
+      dataset,
+      direction: 'push',
+      skipped: true,
+      reason: `${pendingRecords.length} changed ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
+      records_examined: records.length,
+      unchanged_skipped: unchangedSkipped,
+    };
+  }
   if (dataset === 'sales' && pendingRecords.length === 0) {
     return { dataset, direction: 'push', sheet_id: sheetId, records_examined: records.length, ...preservedSalesReview,
       created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
