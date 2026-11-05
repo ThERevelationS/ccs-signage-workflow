@@ -382,7 +382,7 @@ function summarizeMatchedLocalityAuthority(locality) {
 // base44/shared/permittingSpatialResolution.mjs
 var CENSUS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb";
 var LOCATION_SOURCES = { county: `${CENSUS}/State_County/MapServer/1`, place: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/4`, township: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/1`, oh_city: "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0", oh_township: "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3", ky_city: "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0" };
-var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
+var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township|twp\.?|twp)$/, "").replace(/\s+/g, " ");
 var loose = (value) => norm(value).replace(/\bst\.?\b/g, "saint").replace(/\bft\.?\b/g, "fort").replace(/\bmt\.?\b/g, "mount").replace(/[^a-z0-9]/g, "");
 var sameJ = (a, b) => {
   const x = norm(a), y = norm(b);
@@ -445,6 +445,8 @@ function applyResolutionRules(rules, { enteredCity, enteredAddr, state, countyNa
     if (hit) return { pick: hit, rule: r };
     if (target && sameJ(target.name, r.jurisdiction_name)) return { pick: target, rule: r };
     if (/county/i.test(String(r.jurisdiction_type || "")) && sameJ(r.jurisdiction_name, countyName)) return { pick: { name: countyName, type: "county" }, rule: r };
+    if ((rt === "address_override" || rt === "postal_name_map") && r.jurisdiction_name)
+      return { pick: { name: r.jurisdiction_name, state, type: r.jurisdiction_type || "municipality", county: countyName || r.county || "", geoid: String(r.geoid || ""), resolved_by: "resolution_rule" }, rule: r };
   }
   return null;
 }
@@ -876,7 +878,26 @@ function indexWrite(base44, entry) {
   })().catch(() => {
   });
 }
-function buildIndexEntry({ address, point, resolution, geocode, revision, fingerprint, source = "resolver", ttlDays = 30 }) {
+function officeRefs(offices) {
+  const out = [];
+  for (const o of Array.isArray(offices) ? offices : []) {
+    const roles = (o?.authority_roles || []).filter(Boolean);
+    if (!roles.length) continue;
+    out.push({
+      office_id: o?.id || "",
+      name: o?.name || "",
+      office_type: o?.office_type || "",
+      roles,
+      verification: o?.authority_verification_status || "",
+      contact_phone: o?.contact_phone || "",
+      contact_email: o?.contact_email || "",
+      contact_website: o?.contact_website || "",
+      contact_address: o?.contact_address || ""
+    });
+  }
+  return out.slice(0, 12);
+}
+function buildIndexEntry({ address, point, resolution, geocode, revision, fingerprint, source = "resolver", ttlDays = 30, offices = null }) {
   const target = resolution?.target || {};
   const status = resolution?.status === "location_verified" ? "verified" : resolution?.status === "invalid_input" ? "rejected" : null;
   if (!status) return null;
@@ -906,7 +927,7 @@ function buildIndexEntry({ address, point, resolution, geocode, revision, finger
       reason: resolution?.reason || "",
       corroborated_by: resolution?.corroborated_by || ""
     },
-    office_refs: [],
+    office_refs: officeRefs(offices),
     lookup_revision: revision || "",
     ruleset_fingerprint: fingerprint || "",
     source,
