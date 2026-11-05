@@ -1,7 +1,7 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-export async function handler(request: Request) {
+Deno.serve(async (request: Request) => {
   try {
     const base44 = createClientFromRequest(request);
     const body = await request.json().catch(() => ({}));
@@ -95,6 +95,4 @@ export async function handler(request: Request) {
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'Access request failed' }, { status: e?.status || 500 });
   }
-}
-
-Deno.serve(handler);
+});
