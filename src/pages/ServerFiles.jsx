@@ -57,7 +57,12 @@ export default function ServerFiles() {
       setLinks((await fbCall("link_review").then((x) => x?.data ?? x).catch(() => null))?.suggestions || []);
       if (!rootKey && h?.roots?.length) setRootKey(h.roots[0].root_key);
     } catch (e) {
-      setHealthErr(String(e?.response?.data?.error || e?.message || e));
+      const raw = String(e?.response?.data?.error || e?.message || e);
+      // A bare machine code ("user-exception") isn't a user-facing message —
+      // describe what happened and keep the code visible for support.
+      setHealthErr(raw && !/\s/.test(raw)
+        ? `The File Bridge service reported an internal error (${raw}). Try again.`
+        : raw);
     }
   }, [rootKey]);
 
