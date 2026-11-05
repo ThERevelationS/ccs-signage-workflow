@@ -407,6 +407,9 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       return Date.now() > end.getTime();
     })();
 
+    // Catch-up toasts collapse to the single most recent pending event — a
+    // mount mid-shift must not stack a backlog of reminder + nudge toasts.
+    const pending = [];
     for (const r of source) {
       const minute = Number(typeof r === "object" && r !== null && Number(r.percent) > 0
         ? Number(r.percent) * goalMinutes
@@ -417,16 +420,20 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       if (displayMinutes >= minute && !next.includes(marker)) {
         next.push(marker);
         if (!outsideSchedule) {
-          toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
-          if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+          pending.push({ at: minute, description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
         }
       }
       // Escalation: if the reminder was ignored, re-fire once 10 minutes later.
       const nudge = 30000 + minute;
       if (displayMinutes >= minute + 10 && !next.includes(nudge)) {
         next.push(nudge);
-        toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"} - still on the clock` });
+        pending.push({ at: minute + 10, description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"} - still on the clock` });
       }
+    }
+    if (pending.length) {
+      pending.sort((a, b) => a.at - b.at);
+      toast({ description: pending[pending.length - 1].description });
+      if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
     }
     if (next.length !== fired.length) writeMilestones(email, snapshot.company_day, next);
   }, [enabled, live, displayMinutes, prefs, email, snapshot?.company_day, toast]);
