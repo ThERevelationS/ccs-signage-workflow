@@ -388,7 +388,12 @@ export default function QuickClockSection({
     try {
       let key = localStorage.getItem("ccs_kiosk_device_id");
       if (!key) { key = `kiosk-${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem("ccs_kiosk_device_id", key); }
-      base44.functions.invoke("timeClockAction", { action: "register_device", device_key: key, device_name: `Kiosk ${key.slice(-4)}`, scope: "kiosk", request_id: `devreg-${Date.now().toString(36)}` }).catch(() => {});
+      const regPayload = () => ({ action: "register_device", device_key: key, device_name: `Kiosk ${key.slice(-4)}`, scope: "kiosk", request_id: `devreg-${Date.now().toString(36)}` });
+      base44.functions.invoke("timeClockAction", regPayload()).catch(() => {
+        // First attempt lost (429/offline) — retry once after the mount burst; a
+        // failed registration silently drops this kiosk from the device list.
+        setTimeout(() => base44.functions.invoke("timeClockAction", regPayload()).catch((e) => console.warn("Kiosk device registration failed:", e?.message || e)), 15000);
+      });
     } catch {}
   }, []);
   const geoStamp = () => (geoCacheRef.current.data && Date.now() - geoCacheRef.current.at < 600000 ? geoCacheRef.current.data : null);
