@@ -144,6 +144,7 @@ export default function CommsFollowups() {
         entity: AllInOneEstimate,
         query: { status: "sent" },
         sort: "-updated_date",
+        cacheTtlMs: 30000,
         label: "Follow-up estimates",
       }),
   });
@@ -154,6 +155,7 @@ export default function CommsFollowups() {
       loadAllEntityRows({
         entity: OpportunityActivity,
         sort: "-updated_date",
+        cacheTtlMs: 30000,
         label: "Follow-up activity log",
       }),
   });
