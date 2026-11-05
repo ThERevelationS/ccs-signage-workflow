@@ -52,15 +52,22 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
           <select
             className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
             value={wall.materialId || ""}
+            aria-label="Wall material"
             onChange={(e) => set({ materialId: e.target.value })}
           >
             <option value="">Select material…</option>
+            {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
+              <option value={wall.materialId} disabled>{`Catalog material unavailable (${wall.materialId})`}</option>
+            )}
             {options.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.material_name}
               </option>
             ))}
           </select>
+          {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
+            <span className="block text-[10px] text-amber-700 mt-1">Catalog material unavailable; current pricing needs review.</span>
+          )}
         </label>
       </div>
 
@@ -80,15 +87,22 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
               <select
                 className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
                 value={wall.internalMaterialId || ""}
+                aria-label="Internal wall material"
                 onChange={(e) => set({ internalMaterialId: e.target.value })}
               >
                 <option value="">Select material…</option>
+                {wall.internalMaterialId && !options.some((o) => o.id === wall.internalMaterialId) && (
+                  <option value={wall.internalMaterialId} disabled>{`Catalog material unavailable (${wall.internalMaterialId})`}</option>
+                )}
                 {options.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.material_name}
                   </option>
                 ))}
               </select>
+              {wall.internalMaterialId && !options.some((o) => o.id === wall.internalMaterialId) && (
+                <span className="block text-[10px] text-amber-700 mt-1">Catalog material unavailable; current pricing needs review.</span>
+              )}
             </label>
             <label className="text-xs text-gray-500">
               Fill height (in)
@@ -136,7 +150,7 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
 
   const removeWall = (index) => {
     const name = walls[index]?.name || `Wall ${index + 1}`;
-    if (!window.confirm(`Remove ${name}?`)) return;
+    if (!window.confirm(`Remove ${name}? Wall caps attached to it are retained for review.`)) return;
     onChange(walls.filter((_, i) => i !== index));
   };
 
@@ -162,7 +176,7 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
       ) : (
         walls.map((wall, index) => (
           <WallRow
-            key={index}
+            key={wall.component_id || index}
             wall={wall}
             index={index}
             options={options}
