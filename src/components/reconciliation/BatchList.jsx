@@ -31,6 +31,7 @@ const fmtDate = (iso) => {
   return Number.isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString();
 };
 
+const EMPTY = [];
 const VarianceBadge = ({ value }) => {
   const v = Number(value) || 0;
   if (Math.abs(v) < 0.005) return <StatusChip tone="emerald" label="Balanced" />;
@@ -46,8 +47,8 @@ const inputCls = filterInputCls;
 export default function BatchList({
   sessionToken,
   invoke,
-  locations = [],
-  salesLocations = [],
+  locations = EMPTY,
+  salesLocations = EMPTY,
   onOpen,
   reloadToken = 0,
 }) {
