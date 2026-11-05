@@ -32,7 +32,11 @@ const KIT_TOKENS = {
   ],
   "src/pages/Reconciliation.jsx": [
     "PageHeader", "breadcrumbs", "Financials", "Reconciliation",
-    "KpiStrip", "DataTableShell", "StatusChip", "emptyState",
+    "KpiStrip",
+  ],
+  // Reconciliation is a composition shell — its table lives in BatchList.
+  "src/components/reconciliation/BatchList.jsx": [
+    "DataTableShell", "StatusChip", "emptyState",
   ],
   "src/pages/CustomerStatements.jsx": [
     "PageHeader", "breadcrumbs", "Financials", "Customer Statements",
@@ -81,7 +85,10 @@ for (const file of ["src/components/procurement/VendorStatement.jsx", "src/compo
 const HANDLER_BASELINE = {
   "src/pages/Invoices.jsx": 43,
   "src/pages/PurchaseOrders.jsx": 20,
-  "src/pages/Reconciliation.jsx": 7,
+  "src/pages/Reconciliation.jsx": 3,
+  // Handlers moved with the table into the reconciliation components.
+  "src/components/reconciliation/BatchList.jsx": 2,
+  "src/components/reconciliation/BatchDetail.jsx": 7,
   "src/pages/CustomerStatements.jsx": 8,
   "src/pages/JobCosting.jsx": 9,
   "src/components/invoicing/CreditRefundDialogs.jsx": 7,
