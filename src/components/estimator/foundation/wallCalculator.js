@@ -124,12 +124,19 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
 export function calcWalls(project, inventory, settings = {}) {
   const find = (id) => inventory.find((i) => i.id === id);
   return (project.walls || []).map((wall) => {
+    const wallMaterial = find(wall.materialId);
+    const internalMaterial = find(wall.internalMaterialId);
+    if (!wallMaterial || (wall.includeInternalWall && !internalMaterial)) {
+      // Keep one coherent saved wall snapshot, rather than mixing a new outer
+      // wall price with a silently omitted internal wall.
+      return { ...wall, calculatedCosts: { ...(wall.calculatedCosts || {}) } };
+    }
     const costs =
       calcWallCosts({
         wall,
         wallShape: wall.shape,
-        wallMaterial: find(wall.materialId),
-        internalMaterial: find(wall.internalMaterialId),
+        wallMaterial,
+        internalMaterial,
         includeInternalWall: wall.includeInternalWall,
         wallHeightInches: wall.heightInches || 24,
         internalWallHeightInches: wall.internalWallHeightInches || wall.heightInches || 24,
