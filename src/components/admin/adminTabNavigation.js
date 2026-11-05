@@ -132,6 +132,10 @@ export function getAdminCategoryKeyboardTarget(key, index, count) {
 export const ADMIN_NESTED_TABS = {
   timeclock: [
     { value: 'entries', label: 'Time Entries', keywords: 'punches clock in clock out shifts' },
+    { value: 'live_status', label: 'Live Status', keywords: 'who is working clocked in right now on break' },
+    { value: 'pay_periods', label: 'Pay Periods & History', keywords: 'pay period finalize lock audit trail' },
+    { value: 'punch_locations', label: 'Punch Location Review', keywords: 'gps location punches geo outliers' },
+    { value: 'devices', label: 'Registered Devices', keywords: 'kiosk tablet registered devices' },
     { value: 'reports', label: 'Reports', keywords: 'timeclock payroll reports' },
     { value: 'pto', label: 'PTO Policies', keywords: 'paid time off vacation leave' },
     { value: 'overtime', label: 'Overtime Rules', keywords: 'payroll overtime hours' },
