@@ -96,3 +96,5 @@ export async function handler(request: Request) {
     return Response.json({ success: false, error: e?.message || 'Access request failed' }, { status: e?.status || 500 });
   }
 }
+
+Deno.serve(handler);
