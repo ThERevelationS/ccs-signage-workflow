@@ -82,14 +82,21 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     // the widget stops spending the shared rate budget in the background.
     const interval = setInterval(
       () => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); },
-      compactOrderForm && status?.status === 'running' ? 1000 : 120000);
+      compactOrderForm && status?.status === 'running' ? 5000 : 120000);
     return () => clearInterval(interval);
   }, [loadStatus, compactOrderForm, status?.status]);
 
+  const lastEventRefreshRef = useRef(0);
   useEffect(() => {
-    const refresh = () => loadStatus();
+    const refresh = () => {
+      // focus + online + visibility can fire together; one guarded call per
+      // 15s window instead of 3 back-to-back GlobalSettings reads.
+      if (Date.now() - lastEventRefreshRef.current < 15000) return;
+      lastEventRefreshRef.current = Date.now();
+      loadStatus();
+    };
     const refreshVisible = () => {
-      if (document.visibilityState === 'visible') loadStatus();
+      if (document.visibilityState === 'visible') refresh();
     };
     window.addEventListener('online', refresh);
     window.addEventListener('focus', refresh);
@@ -350,7 +357,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             <div className="flex flex-wrap items-center gap-2">
               <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Review sync settings →</Link>
               {canRecoverStaleOrderRun && (
-                <button type="button"
+                <button
                   type="button"
                   onClick={recoverStaleRun}
                   disabled={recoveringStaleRun}
