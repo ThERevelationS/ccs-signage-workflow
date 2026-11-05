@@ -75,6 +75,7 @@ const OPPORTUNITY_READ_ACTIONS = new Set([
   'status_timeline',
 ]);
 const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
+const SALESFILTER_READ_ACTIONS = new Set(['preferences_get', 'default_sort_get', 'roster']);
 
 function isReadFunctionInvocation(fnName, payload) {
   if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
@@ -85,6 +86,7 @@ function isReadFunctionInvocation(fnName, payload) {
   if (fnName === 'manageAnnouncements') return ANNOUNCEMENT_READ_ACTIONS.has(payload?.action);
   if (fnName === 'opportunityWorkspaceAction') return OPPORTUNITY_READ_ACTIONS.has(payload?.action);
   if (fnName === 'inventoryAction') return INVENTORY_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'manageSalesFilters') return SALESFILTER_READ_ACTIONS.has(payload?.action);
   return false;
 }
 
