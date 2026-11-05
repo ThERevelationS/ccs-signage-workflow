@@ -15,6 +15,7 @@ function buildInitial(user) {
   const subtabs = perms?.subtabs && typeof perms.subtabs === "object" ? perms.subtabs : {};
   return {
     fullAdmin: user?.is_full_admin === true,
+    owner: user?.is_owner === true,
     tabs,
     subtabs,
   };
@@ -37,8 +38,9 @@ function presetChecks(groupIds) {
   return { tabs, subtabs: {} };
 }
 
-export default function AdminAccessDialog({ user, open, onOpenChange, sessionToken, onSaved, admins = [] }) {
+export default function AdminAccessDialog({ user, actorIsOwner = false, open, onOpenChange, sessionToken, onSaved, admins = [] }) {
   const [fullAdmin, setFullAdmin] = useState(() => buildInitial(user).fullAdmin);
+  const [isOwner, setIsOwner] = useState(() => buildInitial(user).owner);
   const [tabChecks, setTabChecks] = useState(() => buildInitial(user).tabs);
   const [subtabChecks, setSubtabChecks] = useState(() => buildInitial(user).subtabs);
   const [deniedChecks, setDeniedChecks] = useState(() => new Set(user?.admin_permissions?.denied_tabs || []));
@@ -103,7 +105,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
       };
       const saved = await updateAuthorizedUserAdmin({
         record: user,
-        nextFields: { is_full_admin: fullAdmin, admin_permissions: perms },
+        nextFields: { is_full_admin: fullAdmin || isOwner, is_owner: isOwner, admin_permissions: perms },
         sessionToken,
       });
       onSaved?.(saved);
@@ -124,12 +126,30 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
         </DialogHeader>
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
 
+        <div className="flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <div>
+            <div className="font-semibold text-sm">Owner</div>
+            <div className="text-xs text-gray-600">The highest tier — full administrator plus the power to grant or revoke Owner. Only an owner can change this.</div>
+          </div>
+          <Switch
+            checked={isOwner}
+            onCheckedChange={(checked) => {
+              setIsOwner(checked === true);
+              if (checked === true) setFullAdmin(true);
+            }}
+            disabled={busy || !actorIsOwner}
+          />
+        </div>
+        {!actorIsOwner && (
+          <p className="text-[11px] text-amber-700 -mt-1">Only an owner can grant or revoke the Owner role.</p>
+        )}
+
         <div className="flex items-center justify-between rounded-lg border border-purple-200 bg-purple-50 p-3">
           <div>
             <div className="font-semibold text-sm">Full Administrator</div>
             <div className="text-xs text-gray-600">Sees every Admin page and may approve their own time clock and HR records.</div>
           </div>
-          <Switch checked={fullAdmin} onCheckedChange={setFullAdmin} disabled={busy} />
+          <Switch checked={fullAdmin || isOwner} onCheckedChange={setFullAdmin} disabled={busy || isOwner} />
         </div>
 
         {admins.length > 0 && (
