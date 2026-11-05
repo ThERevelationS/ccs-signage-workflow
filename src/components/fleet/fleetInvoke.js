@@ -47,7 +47,12 @@ export async function invokeFleet(name, payload = {}) {
       }),
       // base44Client already retries retryable reads once — retrying here on
       // top of that would multiply the attempts.
-      { retryOnRateLimit: !isRetryableFunction(name, payload) },
+      { retryOnRateLimit: !isRetryableFunction(name, payload),
+        // staffEntityWrite ends every op in a single terminal entity call, so a
+        // 429 is provably pre-write — deep retry cannot double-apply and CAS
+        // guards replays anyway. ~5 backed-off attempts ride out a congestion
+        // wave instead of surfacing "app is busy" on the first collision.
+        ...(name === 'staffEntityWrite' ? { maxAttempts: 6 } : {}) },
     );
   } finally {
     if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;
