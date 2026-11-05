@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {
   COMMAND_SPECS, canTransition, isTerminal, commandAllowed, routeAgent,
   resolveRole, normalizeFileBridgeSettings, normPath, pathKey, parentPath,
@@ -148,7 +149,7 @@ async function stitchStaged(sr: any, cmd: any, ordered: any[], agentId: string, 
 
 Deno.serve(async (req) => {
   const rawBody = await req.text();
-  const client = createClientFromRequest(req);
+  const client = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 3 });
   const sr = (client as any).asServiceRole;
   let body: any = {};
   try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { return Response.json({ error: 'bad json' }, { status: 400 }); }
