@@ -600,7 +600,8 @@ Deno.serve(async (req) => {
       // Two-admin rule: promoting someone to full admin directly is blocked —
       // it must come through an approved AccessRequest (the approve path
       // applies grants via service-role writes and bypasses this check).
-      if (desired.is_full_admin === true && current?.is_full_admin !== true) {
+      // Owners are the exception: the top tier may grant full admin directly.
+      if (desired.is_full_admin === true && current?.is_full_admin !== true && !isOwnerRecord(actor)) {
         const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         let approved: any[] = [];
         try {
