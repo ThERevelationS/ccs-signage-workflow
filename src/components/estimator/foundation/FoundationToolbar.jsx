@@ -48,6 +48,7 @@ export default function FoundationToolbar({
   onShareLink,
   onHelp,
   onBack,
+  pricingUnavailable = false,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-sm p-3 mb-3">
@@ -75,7 +76,7 @@ export default function FoundationToolbar({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[13px] font-bold text-gray-900 mr-1">Total: {money(total)}</span>
+        <span className="text-[13px] font-bold text-gray-900 mr-1">Total: {pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : money(total)}</span>
         <Btn icon={HelpCircle} label="Help" onClick={onHelp} />
         <Btn icon={Undo2} label="Undo" onClick={onUndo} disabled={!canUndo} />
         <Btn icon={Redo2} label="Redo" onClick={onRedo} disabled={!canRedo} />
