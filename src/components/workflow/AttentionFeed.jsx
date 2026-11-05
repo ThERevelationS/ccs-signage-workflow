@@ -62,13 +62,14 @@ const readLegacyHandled = () => {
   try { return JSON.parse(localStorage.getItem("attention_handled") || "[]").map((id) => ({ id: String(id), handled_at: "migrated" })); } catch { return []; }
 };
 
+const EMPTY = [];
 export default function AttentionFeed() {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [feed, setFeed] = useState(null);
   const [computed, setComputed] = useState(null);
   const [persisted, setPersisted] = useState([]);
-  const { data: allWorkOrders = [] } = useAllWorkOrders({ enabled: !!sessionToken });
+  const { data: allWorkOrders = EMPTY } = useAllWorkOrders({ enabled: !!sessionToken });
   const overdueProductRows = useMemo(() => overdueProducts(allWorkOrders), [allWorkOrders]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
