@@ -80,7 +80,9 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
         if (activeJobs.length === 0) return;
         syncJob(activeJobs[0]);
       } catch (err) {
-        console.error("Failed to restore import job:", err);
+        // Mount-burst 429s exhaust retries here; the row restores on next
+        // mount and an active poll self-heals, so this is cosmetic noise.
+        console.warn("Import job restore skipped this mount:", err?.message || err);
       }
     };
     restoreActiveImport();
@@ -116,7 +118,9 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     };
 
     poll();
-    const timer = setInterval(poll, 1000);
+    // 3s keeps the bar live-feeling while an import runs; 1s was ~300 point
+    // reads over a typical 5-minute job for no perceptible gain.
+    const timer = setInterval(poll, 3000);
     return () => {
       mounted = false;
       clearInterval(timer);
