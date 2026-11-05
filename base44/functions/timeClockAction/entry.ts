@@ -604,10 +604,13 @@ function workDayClusterSignature(members: any[]) {
   return members.map((m: any) => String(m.id)).sort().join('|');
 }
 
-// Detects a cluster of completed shifts that all fit inside one 12-hour
-// window (earliest Clock In to latest Clock Out). The employee decides
-// whether they are one work day; the decision is never guessed server-side.
-async function workDayPromptSummary({ entryEntity, userEmail, nowMs }: any) {
+// Detects a cluster of shifts that all fit inside one 12-hour window
+// (earliest Clock In to latest Clock Out / now for an in-progress shift).
+// The employee decides whether they are one work day; the decision is never
+// guessed server-side. When activeEntry is supplied the in-progress shift
+// joins the candidate set as a pending member so the prompt can fire at the
+// second+ Clock In, not only after Clock Out.
+async function workDayPromptSummary({ entryEntity, userEmail, nowMs, activeEntry = null }: any) {
   const rows = await entryEntity.filter({
     user_email: userEmail,
     status: 'clocked_out',
@@ -622,6 +625,17 @@ async function workDayPromptSummary({ entryEntity, userEmail, nowMs }: any) {
       return Number.isFinite(inMs) && Number.isFinite(outMs) && inMs >= cutoffMs;
     })
     .sort((a: any, b: any) => new Date(String(a.clock_in)).getTime() - new Date(String(b.clock_in)).getTime());
+  const pendingId = activeEntry?.id && activeEntry.status === 'clocked_in'
+    && asEmail(activeEntry.user_email) === userEmail
+    && !activeEntry.archived_test_data && !activeEntry.archived_admin
+    ? String(activeEntry.id) : '';
+  if (pendingId) {
+    const pendingInMs = new Date(String(activeEntry.clock_in || '')).getTime();
+    if (Number.isFinite(pendingInMs) && pendingInMs >= cutoffMs) {
+      candidates.push({ ...activeEntry, clock_out: new Date(nowMs).toISOString(), _pending_member: true });
+      candidates.sort((a: any, b: any) => new Date(String(a.clock_in)).getTime() - new Date(String(b.clock_in)).getTime());
+    }
+  }
   let best: any[] = [];
   let cluster: any[] = [];
   const flush = () => {
@@ -630,8 +644,15 @@ async function workDayPromptSummary({ entryEntity, userEmail, nowMs }: any) {
       const outMs = new Date(String(cluster[cluster.length - 1].clock_out)).getTime();
       const signature = workDayClusterSignature(cluster);
       const declined = cluster.some((row: any) => String(row.work_day_declined_signature || '') === signature);
-      const ungrouped = cluster.every((row: any) => !row.work_day_group_id && !row.pay_period_id);
-      if (outMs - inMs <= WORK_DAY_WINDOW_MS && ungrouped && !declined) best = cluster.slice();
+      const groupIds = new Set(cluster.map((row: any) => String(row.work_day_group_id || '')).filter(Boolean));
+      const lockedMember = cluster.some((row: any) => Boolean(row.pay_period_id));
+      // A cluster is askable when every member is ungrouped, or when every
+      // grouped member already shares one group the pending member can join.
+      const joinable = groupIds.size === 0
+        || (groupIds.size === 1 && !cluster.every((row: any) => String(row.work_day_group_id || '') === [...groupIds][0]));
+      if (outMs - inMs <= WORK_DAY_WINDOW_MS && !lockedMember && !declined && joinable) {
+        if (!pendingId || cluster.some((row: any) => String(row.id) === pendingId)) best = cluster.slice();
+      }
     }
     cluster = [];
   };
@@ -645,11 +666,19 @@ async function workDayPromptSummary({ entryEntity, userEmail, nowMs }: any) {
   }
   flush();
   if (!best.length) return null;
+  const sharedGroupId = String(best.find((row: any) => row.work_day_group_id)?.work_day_group_id || '');
+  const sharedAnchor = sharedGroupId ? String(best.find((row: any) => row.work_day_group_id)?.work_day_anchor_date || '') : '';
   return {
     signature: workDayClusterSignature(best),
-    anchor_date: dateKeyInCompanyTime(best[0].clock_in),
+    anchor_date: sharedAnchor || dateKeyInCompanyTime(best[0].clock_in),
+    existing_group_id: sharedGroupId || null,
     span_minutes: Math.round((new Date(String(best[best.length - 1].clock_out)).getTime() - new Date(String(best[0].clock_in)).getTime()) / 60000),
-    entries: best.map((row: any) => ({ id: row.id, clock_in: row.clock_in, clock_out: row.clock_out, total_hours: row.total_hours ?? null })),
+    entries: best.map((row: any) => ({
+      id: row.id, clock_in: row.clock_in,
+      clock_out: row._pending_member ? null : row.clock_out,
+      total_hours: row._pending_member ? null : (row.total_hours ?? null),
+      pending: row._pending_member === true,
+    })),
   };
 }
 
@@ -3834,7 +3863,12 @@ Deno.serve(async (req) => {
       const correctedShiftReview = isManagerSession ? await correctedShiftReviewSummary({
         entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
       }) : null;
-      const workDayPrompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() });
+      let promptActiveEntry: any = null;
+      if (state.status === 'clocked_in' && state.active_entry_id) {
+        promptActiveEntry = await entryEntity.get(state.active_entry_id).catch(() => null);
+        if (promptActiveEntry?.status !== 'clocked_in' || asEmail(promptActiveEntry?.user_email) !== target.email) promptActiveEntry = null;
+      }
+      const workDayPrompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now(), activeEntry: promptActiveEntry });
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
         ...(correctedShiftReview ? { pending_shift_review: correctedShiftReview } : {}),
@@ -8258,18 +8292,29 @@ Deno.serve(async (req) => {
       }
       const expectedSignature = String(body?.signature || '').trim();
       if (!expectedSignature) return Response.json({ success: false, error: 'The loaded work-day signature is required.' }, { status: 400 });
-      const promptNow = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() });
+      const resolveActiveEntry = state?.active_entry_id
+        ? await entryEntity.get(state.active_entry_id).catch(() => null)
+        : null;
+      const promptNow = await workDayPromptSummary({
+        entryEntity, userEmail: target.email, nowMs: Date.now(),
+        activeEntry: resolveActiveEntry?.status === 'clocked_in' ? resolveActiveEntry : null,
+      });
       if (!promptNow?.signature || promptNow.signature !== expectedSignature) {
         return Response.json({ success: false, error: 'The reported work-day grouping changed. Reload and try again.' }, { status: 409 });
       }
       const decidedAt = new Date().toISOString();
-      const groupId = 'wdg:' + promptNow.entries[0].id;
+      const groupId = promptNow.existing_group_id || 'wdg:' + promptNow.entries[0].id;
       const writeSet = decision === 'same_day'
         ? { work_day_group_id: groupId, work_day_anchor_date: promptNow.anchor_date, work_day_confirmed_at: decidedAt, work_day_confirmed_by: actorEmail, work_day_declined_signature: '' }
         : { work_day_group_id: '', work_day_anchor_date: '', work_day_confirmed_at: '', work_day_confirmed_by: '', work_day_declined_signature: expectedSignature };
       for (const member of promptNow.entries) {
         const fresh = await entryEntity.get(member.id).catch(() => null);
-        if (!fresh?.id || fresh.status !== 'clocked_out' || asEmail(fresh.user_email) !== target.email) {
+        // Pending members were still in progress when the prompt was built —
+        // they may legitimately be clocked_in or have just clocked out.
+        const statusOk = member.pending === true
+          ? ['clocked_in', 'clocked_out'].includes(String(fresh?.status || ''))
+          : fresh?.status === 'clocked_out';
+        if (!fresh?.id || !statusOk || asEmail(fresh.user_email) !== target.email) {
           return Response.json({ success: false, error: 'The work-day group changed while deciding. Reload and try again.' }, { status: 409 });
         }
         const already = writeSet.work_day_group_id
@@ -8277,7 +8322,7 @@ Deno.serve(async (req) => {
           : String(fresh.work_day_declined_signature || '') === expectedSignature && !fresh.work_day_group_id;
         if (already) continue;
         const upd = await entryEntity.updateMany(
-          { id: fresh.id, updated_date: fresh.updated_date, user_email: target.email, status: 'clocked_out' },
+          { id: fresh.id, updated_date: fresh.updated_date, user_email: target.email, status: fresh.status },
           { $set: writeSet },
         );
         if (!upd || upd.updated !== 1) {
@@ -9718,6 +9763,31 @@ Deno.serve(async (req) => {
         }, { status: 409 });
       }
       const now = new Date().toISOString();
+      // A manager correction is itself the review act — approve immediately
+      // unless an egregious condition still demands a separate human decision.
+      let correctionAutoApprove = false;
+      let correctionAutoApproveSkip = '';
+      if (clockOut) {
+        if (totalMinutes === null || totalMinutes > 24 * 60) {
+          correctionAutoApproveSkip = 'corrected shift exceeds 24 hours';
+        } else {
+          const [openPunchCases, unresolvedCorrections, siblingEntries] = await Promise.all([
+            punchExceptionEntity.filter({ time_entry_id: entry.id, status: { $in: ['open', 'pending_manager_review', 'rejected'] } }).catch(() => []),
+            correctionRequestEntity.filter({ time_entry_id: entry.id, status: { $in: ['pending', 'reviewing'] } }).catch(() => []),
+            entryEntity.filter({ user_email: target.email, status: { $in: ['clocked_in', 'clocked_out'] }, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, '-clock_in', 60).catch(() => []),
+          ]);
+          const overlapsSibling = (siblingEntries || []).some((row: any) => {
+            if (row.id === entry.id) return false;
+            const sibIn = new Date(String(row.clock_in || '')).getTime();
+            const sibOut = new Date(String(row.clock_out || row.clock_in || '')).getTime() || Number.MAX_SAFE_INTEGER;
+            return Number.isFinite(sibIn) && sibIn < clockOut.getTime() && sibOut > clockIn.getTime();
+          });
+          if (openPunchCases?.length) correctionAutoApproveSkip = 'shift has an open punch exception';
+          else if (unresolvedCorrections?.length) correctionAutoApproveSkip = 'shift has an unresolved correction request';
+          else if (overlapsSibling) correctionAutoApproveSkip = 'corrected shift overlaps another shift';
+          else correctionAutoApprove = true;
+        }
+      }
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
         clock_out: clockOut ? clockOut.toISOString() : null,
@@ -9731,7 +9801,14 @@ Deno.serve(async (req) => {
         last_corrected_by: actorEmail,
         last_correction_reason: reason,
         last_correction_request_id: requestId,
-        approval_status: clockOut ? 'needs_review' : (entry.approval_status || 'unreviewed'),
+        last_correction_original: entryAuditSnapshot(entry),
+        approval_status: clockOut ? (correctionAutoApprove ? 'approved' : 'needs_review') : (entry.approval_status || 'unreviewed'),
+        ...(correctionAutoApprove ? {
+          approved_at: now,
+          approved_by: actorEmail,
+          approval_note: `Auto-approved with manager correction: ${reason.slice(0, 200)}`,
+          approval_request_id: requestId,
+        } : {}),
         ...(activeForceClose ? {
           break_tracking_used: breakSummary.count > 0,
           tracked_break_minutes: breakSummary.total_minutes,
@@ -9781,7 +9858,7 @@ Deno.serve(async (req) => {
 
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-        { $set: nextFields, ...(clockOut ? { $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' } } : {}) },
+        { $set: nextFields, ...(clockOut && !correctionAutoApprove ? { $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' } } : {}) },
       );
       if (!updateResult || updateResult.updated !== 1) {
         if (claimedState) {
@@ -10201,6 +10278,88 @@ Deno.serve(async (req) => {
           }
         }
       }
+    }
+
+    if (action === 'admin_auto_review') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to run the automatic shift review.' }, { status: 403 });
+      const sweepRequestId = requestId || `auto-review-${crypto.randomUUID()}`;
+      // Completed, never-flagged shifts approve automatically — a shift with no
+      // conflicts, errors, or corrections does not need a human click. Anything
+      // carrying a flag stays visible in Needs Attention for a manager decision.
+      const candidates = await entryEntity.filter({
+        status: 'clocked_out', approval_status: 'unreviewed',
+        archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+        pay_period_id: { $in: [null, ''] },
+      }, '-clock_in', 120);
+      if (!Array.isArray(candidates)) throw new Error('Automatic review lookup did not return a record list.');
+      const [openPunchRows, pendingCorrectionRows] = await Promise.all([
+        punchExceptionEntity.filter({ status: { $in: ['open', 'pending_manager_review', 'rejected'] } }).catch(() => []),
+        correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } }).catch(() => []),
+      ]);
+      const flaggedEntryIds = new Set<string>([
+        ...(Array.isArray(openPunchRows) ? openPunchRows : []).map((row: any) => String(row.time_entry_id || '')),
+        ...(Array.isArray(pendingCorrectionRows) ? pendingCorrectionRows : []).map((row: any) => String(row.time_entry_id || '')),
+      ]);
+      const siblingCache = new Map<string, any[]>();
+      const siblingsFor = async (email: string) => {
+        if (!siblingCache.has(email)) {
+          const rows = await entryEntity.filter({
+            user_email: email, status: { $in: ['clocked_in', 'clocked_out'] },
+            archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+          }, '-clock_in', 120).catch(() => []);
+          siblingCache.set(email, Array.isArray(rows) ? rows : []);
+        }
+        return siblingCache.get(email) || [];
+      };
+      const now = new Date().toISOString();
+      const approvedIds: string[] = [];
+      let conflictCount = 0;
+      let skippedCount = 0;
+      for (const entry of candidates) {
+        const email = asEmail(entry.user_email);
+        const inMs = new Date(String(entry.clock_in || '')).getTime();
+        const outMs = new Date(String(entry.clock_out || '')).getTime();
+        const minutes = Number.isFinite(inMs) && Number.isFinite(outMs) ? (outMs - inMs) / 60000 : NaN;
+        const flagged = !Number.isFinite(minutes)
+          || minutes <= 0 || minutes > 24 * 60
+          || flaggedEntryIds.has(entry.id)
+          || Boolean(String(entry.punch_exception_id || '').trim())
+          || Boolean(String(entry.last_correction_request_id || '').trim())
+          || Boolean(String(entry.last_corrected_by || '').trim());
+        if (flagged) { skippedCount += 1; continue; }
+        const siblings = await siblingsFor(email);
+        const overlap = siblings.some((row: any) => {
+          if (row.id === entry.id) return false;
+          const sibIn = new Date(String(row.clock_in || '')).getTime();
+          const sibOut = new Date(String(row.clock_out || row.clock_in || '')).getTime() || Number.MAX_SAFE_INTEGER;
+          return Number.isFinite(sibIn) && sibIn < outMs && sibOut > inMs;
+        });
+        if (overlap) { conflictCount += 1; continue; }
+        const perEntryRequestId = `${sweepRequestId.slice(0, 100)}-${String(entry.id).slice(-8)}`;
+        const result = await entryEntity.updateMany(
+          { id: entry.id, approval_status: 'unreviewed', status: 'clocked_out', updated_date: String(entry.updated_date || ''), archived_test_data: { $ne: true }, archived_admin: { $ne: true }, pay_period_id: { $in: [null, ''] } },
+          { $set: {
+            approval_status: 'approved', approved_at: now, approved_by: actorEmail,
+            approval_note: 'Automatic approval — this shift had no conflicts, errors, or corrections.',
+            approval_request_id: perEntryRequestId,
+          } },
+        );
+        if (!result || result.updated !== 1) { skippedCount += 1; continue; }
+        await auditEntity.create({
+          action: 'time_approval', outcome: 'confirmed', user_email: email,
+          user_name: entry.user_name || email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, { email }), server_timestamp: now,
+          request_id: perEntryRequestId, time_entry_id: entry.id,
+          reason: 'Automatic approval: this shift had no conflicts, errors, or corrections.',
+          details: { auto_review: true, sweep_request_id: sweepRequestId, original: entryAuditSnapshot(entry), decision: 'approve' },
+        }).catch(() => null);
+        approvedIds.push(entry.id);
+      }
+      return Response.json({
+        success: true, approved_count: approvedIds.length,
+        conflict_count: conflictCount, skipped_count: skippedCount,
+        approved_entry_ids: approvedIds.slice(0, 25),
+      });
     }
 
     if (action === 'admin_archive_entry') {
@@ -11357,7 +11516,13 @@ Deno.serve(async (req) => {
           await emitTimeClockEvent(base44, 'time_clock_in_late', entry.id, actorEmail);
         }
 
-        return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
+        const clockInWorkDayPrompt = await workDayPromptSummary({
+          entryEntity, userEmail: target.email, nowMs: Date.now(), activeEntry: entry,
+        }).catch(() => null);
+        return Response.json({
+          success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true,
+          ...(clockInWorkDayPrompt ? { work_day_prompt: clockInWorkDayPrompt } : {}),
+        });
       } finally {
         let releaseFailed = false;
         try {
