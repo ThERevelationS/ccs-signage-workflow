@@ -189,9 +189,12 @@ for (const name of files) {
     violations.push(`direct source import w/o esbuild bundle: ${[...new Set(directImports)].join(', ')}`);
   }
 
-  // (d) DOM globals in node-run code
+  // (d) DOM globals in node-run code — globalThis.<dom> = ... assignment
+  // statements are sanctioned shims for esbuild-bundled sources (base44Client
+  // reads browser globals at eval); strip them before counting reads.
+  const domScan = codeText.replace(/globalThis\s*\.\s*(?:window|document|localStorage)[^;]*;/g, '');
   const domHits = [];
-  for (const m of codeText.matchAll(DOM_RE)) domHits.push(`${m[0]}@L${lineOf(m.index)}`);
+  for (const m of domScan.matchAll(DOM_RE)) domHits.push(`${m[0]}@L${lineOf(m.index)}`);
   if (domHits.length) {
     const counts = {};
     for (const h of domHits) { const id = h.split('@')[0]; counts[id] = (counts[id] || 0) + 1; }
