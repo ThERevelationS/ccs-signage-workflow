@@ -540,7 +540,7 @@ export default function Financials() {
 
             {/* Project Manager Filter */}
             <Select value={filterPM} onValueChange={setFilterPM}>
-              <SelectTrigger className="w-40 h-8">
+              <SelectTrigger className="w-48 h-8">
                 <SelectValue placeholder="All PMs" />
               </SelectTrigger>
               <SelectContent>
