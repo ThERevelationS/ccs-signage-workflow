@@ -492,7 +492,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const existing = saveAttemptRef.current;
     if (existing) return existing.promise;
     if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before saving.");
+      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before saving.");
       setDirty(true);
       return Promise.resolve({ ...staleOutcome, status: "failed", error: new Error("Save paused: catalog pricing is incomplete.") });
     }
@@ -650,7 +650,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;
     if (saveAttemptRef.current || saveSessionRef.current?.isSaving()) return null;
     if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before copying.");
+      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before copying.");
       return null;
     }
     const gen = saveContext.generation;
@@ -723,7 +723,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const live = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId || live.estimateId !== saveContext.estimateId || live.editRevision !== saveContext.editRevision) return null;
     if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before swapping.");
+      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before swapping.");
       return null;
     }
     setSaving(true);
@@ -757,7 +757,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
         {catalogBlocked && (
           <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
-            <div className="font-semibold">Pricing unavailable: selected pole, cap or wall catalog materials need attention. Amounts shown are saved snapshots, not current prices. Save and estimate handoff are paused.</div>
+            <div className="font-semibold">Pricing unavailable: selected materials or rental items need attention. Unavailable items show saved amounts only; other amounts may be recalculated. Save and estimate handoff are paused.</div>
             <ul className="mt-1 list-disc pl-5">
               {calc.catalogIssues.map((i, idx) => <li key={idx}>{i.message}</li>)}
             </ul>
