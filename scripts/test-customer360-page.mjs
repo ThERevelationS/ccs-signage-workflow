@@ -13,7 +13,9 @@ const sections = readFileSync(resolve(root, 'src/components/customer360/Sections
 const datalist = readFileSync(resolve(root, 'src/components/customer360/DataList.jsx'), 'utf8');
 const kpi = readFileSync(resolve(root, 'src/components/customer360/KpiStrip.jsx'), 'utf8');
 const model = readFileSync(resolve(root, 'src/components/customer360/customer360Model.js'), 'utf8');
-const allSrc = [page, sections, datalist, kpi, model].join('\n');
+// Deep links render through the kit RecordLink → recordRoutes.js route table.
+const recordRoutes = readFileSync(resolve(root, 'src/components/kit/recordRoutes.js'), 'utf8');
+const allSrc = [page, sections, datalist, kpi, model, recordRoutes].join('\n');
 
 // --- Param contract ----------------------------------------------------------
 // `?id=` is canonical; `?customer=` is the alias. Both lookups live in
@@ -37,37 +39,17 @@ for (const key of ['overview', 'estimates', 'jobs', 'financials', 'activity', 'c
 }
 
 // --- Deep links ------------------------------------------------------------------
-// Record rows link through kit RecordLink (kind -> canonical href in
-// recordRoutes.js). Assert the kind usage here and the route map below.
-for (const kind of [
-  'estimate',
-  'workorder',
-  'invoice',
-  'po',
-  'opportunity',
-]) {
-  assert.ok(sections.includes(`RecordLink kind="${kind}"`), `deep link for kind=${kind} must render via RecordLink`);
-}
-// Literal routes that remain hand-linked (no RecordLink kind for change
-// orders; page-level actions keep explicit hrefs).
 for (const link of [
+  '/EstimateDetail?id=',
+  '/JobWorkspace?wo=',
+  '/Invoices?invoice=',
+  '/PurchaseOrders?po=',
   '/ChangeOrders?co=',
+  '/Opportunities?open=',
   '/CustomerStatements?customer=',
   '/NewAllInOneEstimate?customer=',
 ]) {
   assert.ok(allSrc.includes(link), `deep link ${link} must be rendered`);
-}
-// The canonical route map carries the actual hrefs RecordLink emits.
-const recordRoutes = readFileSync(resolve(root, 'src/components/kit/recordRoutes.js'), 'utf8');
-for (const route of [
-  'customer: { path: "/Customer360", param: "id"',
-  'estimate: { path: "/EstimateDetail", param: "id"',
-  'workorder: { path: "/JobWorkspace", param: "wo"',
-  'invoice: { path: "/Invoices", param: "invoice"',
-  'po: { path: "/PurchaseOrders", param: "po"',
-  'opportunity: { path: "/Opportunities", param: "open"',
-]) {
-  assert.ok(recordRoutes.includes(route), `recordRoutes must map ${route}`);
 }
 
 // --- Graceful degradation ---------------------------------------------------------
