@@ -41,6 +41,14 @@ Deno.serve(async (req: Request) => {
     };
     if (jurisdictionFilter) query.jurisdiction_name = jurisdictionFilter;
 
+    // Local-pipeline mode: the local source-monitor owns fetch+diff+assess.
+    // Scheduled runs no-op; manual admin invocations still run.
+    const modeRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'permittingPipelineMode' }, 'created_date', 1, 0).catch(() => ({ items: [] }));
+    const modeVal = String(modeRows?.items?.[0]?.setting_value?.mode || modeRows?.items?.[0]?.setting_value || '').toLowerCase();
+    if (isScheduledRun && modeVal === 'local') {
+      return Response.json({ success: true, skipped: 'local_pipeline_mode', scanned: 0 });
+    }
+
     const monitorPage = await base44.asServiceRole.entities.SourceMonitorState.filter(
       query,
       { sort: "next_check_due", limit, fields: ["id", "source_document_id", "official_url", "jurisdiction_name", "jurisdiction_id", "source_title", "source_type", "authority_classification", "last_known_hash", "last_known_etag", "last_known_last_modified", "last_known_content_length", "schedule_cadence", "failure_count"] },
