@@ -107,6 +107,7 @@ const fmt = (value, col) => {
 
 const alignCls = (align) => (align === "right" ? "text-right" : "text-left");
 
+const EMPTY = [];
 function ReportTable({ report, onClearFilters }) {
   const { columns, rows, totals, rowLinks } = report;
   return (
@@ -207,7 +208,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
   }, [reportKey]);
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
 
-  const { data: workOrders = [], isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
+  const { data: workOrders = EMPTY, isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
 
   const needSet = useMemo(
     () => new Set(Array.isArray(def.needs) ? def.needs : [def.needs]),
