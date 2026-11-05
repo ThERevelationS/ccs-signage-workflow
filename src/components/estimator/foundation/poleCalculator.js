@@ -26,7 +26,9 @@ export const calcPolePaintingCost = (p, inv, settings) => {
 export function calcPoles(poles = [], inventory = [], settings = {}) {
   return (poles || []).map((p) => {
     const inv = inventory.find((i) => i.id === p.pole_id);
-    if (!inv) return { ...p, pole_cost: 0, pole_painting_cost: 0, total_cost: 0, pole_name: "" };
+    // Preserve the last saved amounts, not a fabricated free pole. The project
+    // availability gate prevents these historical values becoming a new quote.
+    if (!inv) return { ...p };
 
     const totalPoleInches = (p.height_inches || 0) + (p.y_offset_inches || 0);
     let poleCost;
