@@ -42,6 +42,8 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
 import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt } from "@/components/estimator/foundation/foundationSyncRecovery";
+import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from "@/components/estimator/foundation/foundationAssemblyModel";
+import { prepareFoundationTemplatePatch } from "@/components/estimator/foundation/foundationTemplateModel";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { convertFoundationToBrickStone } from "@/components/estimator/foundation/convertToBrickStone";
 import { createEstimateReadOnlyShareLink } from "@/components/estimator/moduleShared/moduleProjectActions";
@@ -116,10 +118,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const saveAttemptRef = useRef(null);
   const exitGenerationRef = useRef(-1);
   const [saveError, setSaveError] = useState("");
+  const [reloadRevision, setReloadRevision] = useState(0);
   const [linkedEstimate, setLinkedEstimate] = useState(null);
   const [recoveryRequired, setRecoveryRequired] = useState(false);
 
-  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}`;
+  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}|${reloadRevision}`;
   if (contextKeyRef.current !== contextKey) {
     contextKeyRef.current = contextKey;
     editRevisionRef.current += 1;
@@ -141,7 +144,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   };
 
   const copyAttemptRef = useRef({ signature: "", key: "" });
+  const copyFlightRef = useRef(null);
+  const sourceRefreshRef = useRef(null);
+  const sourceWriteEpochRef = useRef(new Map()); // sourceId -> {epoch,lastSavedVersion}; own delayed writes only
+  const projectRef = useRef(null);
   const swapAttemptRef = useRef({ signature: "", key: "" });
+  projectRef.current = contextLoaded ? project : null;
 
   useEffect(() => {
     copyAttemptRef.current = { signature: "", key: "" };
@@ -165,6 +173,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       return;
     }
     let active = true;
+    const epochAtStart = sourceWriteEpochRef.current.get(id)?.epoch || 0;
     setLoading(true);
     setLoadError("");
     setSaveError("");
@@ -184,6 +193,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           if (estimateId && est?.id !== estimateId) setLoadError("Linked estimate could not be verified.");
           return;
         }
+        const epochNow = sourceWriteEpochRef.current.get(proj.id);
+        if (epochNow && epochNow.epoch > epochAtStart && proj.updated_date !== epochNow.lastSavedVersion) {
+          // Our own delayed write landed during this read; the snapshot is
+          // older than the known saved version — one bounded fresh read.
+          setReloadRevision((r) => r + 1);
+          return;
+        }
         setLinkedEstimate(est || null);
         const merged = {
           ...proj,
@@ -198,7 +214,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           landscape: proj.landscape || { cell_size_inches: 12, cells: {} },
           selected_equipment: proj.selected_equipment || [],
         };
-        setProject(merged);
+        let normalized;
+        try {
+          normalized = normalizeFoundationAssembly(merged, {
+            createId: (kind) => newCreationRequestKey(`foundation_${kind}`),
+          }).project;
+        } catch (e) {
+          setLoadError(e?.message || "Foundation assembly could not be normalized.");
+          return;
+        }
+        if (sourceRefreshRef.current?.sourceId === proj.id) sourceRefreshRef.current = null;
+        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date };
+        setProject(normalized);
+        projectRef.current = normalized;
         const rec = foundationSyncRecoveryState({ project: merged, estimateId, estimate: est });
         if (["pending", "unsupported", "mismatch"].includes(rec.status)) {
           setRecoveryRequired(true);
@@ -218,12 +246,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [id, estimateId]);
+  }, [id, estimateId, reloadRevision]);
 
   const calc = useMemo(
     () => (project ? calcProject(project, inventory, settings) : null),
     [project, inventory, settings]
   );
+
+  const assemblyIssues = useMemo(() => (project ? foundationAssemblyIssues(project) : []), [project]);
 
   const catalog = useMemo(
     () => ({
@@ -272,10 +302,25 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
   const commit = (updater) => {
+    const live = currentEditorRef.current;
+    if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId) return false;
+    const prev = projectRef.current ?? project;
+    let next;
+    try {
+      next = normalizeFoundationAssembly(
+        { ...prev, ...updater(prev) },
+        { previous: prev, createId: (kind) => newCreationRequestKey(`foundation_${kind}`) }
+      ).project;
+    } catch (e) {
+      setSaveError(e?.message || "Foundation assembly update was rejected.");
+      return false;
+    }
     bumpEdit();
-    setHistory((h) => ({ past: [...h.past.slice(-40), project], future: [] }));
-    setProject((prev) => ({ ...prev, ...updater(prev) }));
+    setHistory((h) => ({ past: [...h.past.slice(-40), prev], future: [] }));
+    projectRef.current = next;
+    setProject(next);
     setDirty(true);
+    return true;
   };
 
   const patch = (changes) => commit(() => changes);
@@ -287,14 +332,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const removeItem = (index) => {
     const label = project.items?.[index]?.description || `item ${index + 1}`;
-    if (!window.confirm(`Delete "${label}"?`)) return;
+    if (!window.confirm(`Delete "${label}"? Dependent placements are retained for review.`)) return;
     commit((prev) => ({ items: prev.items.filter((_, i) => i !== index) }));
   };
 
   const duplicateItem = (index) =>
     commit((prev) => {
       const items = [...prev.items];
-      items.splice(index + 1, 0, { ...items[index] });
+      items.splice(index + 1, 0, { ...JSON.parse(JSON.stringify(items[index])), component_id: newCreationRequestKey("foundation_item") });
       return { items };
     });
 
@@ -312,6 +357,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     bumpEdit();
     const prevState = history.past[history.past.length - 1];
     setHistory((h) => ({ past: h.past.slice(0, -1), future: [project, ...h.future] }));
+    projectRef.current = prevState;
     setProject(prevState);
     setDirty(true);
   };
@@ -321,6 +367,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     bumpEdit();
     const nextState = history.future[0];
     setHistory((h) => ({ past: [...h.past, project], future: h.future.slice(1) }));
+    projectRef.current = nextState;
     setProject(nextState);
     setDirty(true);
   };
@@ -329,6 +376,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     project_name: project.project_name,
     notes: project.notes,
     status: "calculated",
+    assembly_schema_version: project.assembly_schema_version ?? 1,
     items: calc.items,
     selected_equipment: calc.equipment,
     walls: calc.walls,
@@ -384,6 +432,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const staleOutcome = { status: "superseded", sourceId: saveContext.sourceId, sourceVersion: null, savedEditRevision: saveContext.editRevision, sourceSaved: false, builderSync: "not_required", error: null, warnings: [] };
     if (!(mountedRef.current && saveContext.loaded && liveNow.loaded && liveNow.sourceId === saveContext.sourceId && liveNow.generation === saveContext.generation && liveNow.editRevision === saveContext.editRevision)) {
       return Promise.resolve(staleOutcome);
+    }
+    if (copyFlightRef.current) return Promise.resolve(staleOutcome);
+    {
+      const marker = sourceRefreshRef.current;
+      if (marker && liveNow.loaded && liveNow.sourceId === marker.sourceId && liveNow.generation === marker.generation) {
+        return Promise.resolve({ ...staleOutcome, status: "conflict", error: new Error("The project must be reloaded after the earlier save finished.") });
+      }
     }
     const existing = saveAttemptRef.current;
     if (existing) return existing.promise;
@@ -467,6 +522,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       const live = currentEditorRef.current;
       const sameContext = live.generation === saveContext.generation && live.sourceId === saveContext.sourceId;
       const fullyCurrent = sameContext && live.editRevision === saveContext.editRevision && live.loaded;
+      if (outcome.sourceSaved && live.generation !== saveContext.generation) {
+        const prevEpoch = sourceWriteEpochRef.current.get(outcome.sourceId) || { epoch: 0 };
+        sourceWriteEpochRef.current.set(outcome.sourceId, { epoch: prevEpoch.epoch + 1, lastSavedVersion: outcome.sourceVersion });
+      }
+      if (outcome.sourceSaved && live.loaded && live.sourceId === outcome.sourceId && live.generation !== saveContext.generation && projectRef.current?.updated_date !== outcome.sourceVersion) {
+        sourceRefreshRef.current = { sourceId: live.sourceId, generation: live.generation, sourceVersion: outcome.sourceVersion };
+        setDirty(true);
+        setSaveError("An earlier save finished after you navigated away. Reload the saved project before saving again.");
+      }
       if (outcome.sourceSaved && outcome.sourceVersion && sameContext) {
         acknowledgedVersionRef.current = { sourceId: outcome.sourceId, updated_date: outcome.sourceVersion };
       }
@@ -504,6 +568,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const handleSave = () => runSave("save");
   saveRef.current = handleSave;
 
+  const handleReloadSaved = () => {
+    const marker = sourceRefreshRef.current;
+    const live = currentEditorRef.current;
+    if (!marker || !mountedRef.current || !live.loaded || live.sourceId !== marker.sourceId || live.generation !== marker.generation) return;
+    if (dirty && !window.confirm("Reload the saved project and discard current unsaved changes?")) return;
+    currentEditorRef.current = { ...currentEditorRef.current, loaded: false };
+    setReloadRevision((r) => r + 1);
+  };
+
   const backTo = estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator";
 
   const handleSaveAndExit = async () => {
@@ -517,36 +590,73 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     return outcome;
   };
 
-  const handleSaveAsCopy = async () => {
-    setSaving(true);
+  const handleSaveAsCopy = () => {
+    if (copyFlightRef.current) return copyFlightRef.current;
+    const live0 = currentEditorRef.current;
+    if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;
+    if (saveAttemptRef.current || saveSessionRef.current?.isSaving()) return null;
+    const gen = saveContext.generation;
+    const sourceId = saveContext.sourceId;
+    const estimateKey = saveContext.estimateId;
+    const editRev = saveContext.editRevision;
+    let attempt;
     try {
-      const copyData = {
+      const baseData = {
         ...payload(),
         project_name: `${project.project_name || "Foundation"} (Copy)`,
         client_name: project.client_name,
         customer_id: project.customer_id,
       };
-      const signature = JSON.stringify(copyData);
+      const signature = JSON.stringify(baseData);
       if (copyAttemptRef.current.signature !== signature) {
-        copyAttemptRef.current = {
-          signature,
-          key: newCreationRequestKey("foundation_project_copy"),
-        };
+        const { components } = cloneFoundationComponents(
+          {
+            items: calc.items || [],
+            walls: calc.walls || [],
+            poles: calc.poles || [],
+            wall_caps: calc.wallCaps || [],
+            signage_cabinets: project.signage_cabinets || [],
+          },
+          { createId: (kind) => newCreationRequestKey(`foundation_${kind}`) }
+        );
+        const data = { ...baseData, ...components, status: "draft" };
+        delete data.builder_sync_attempt;
+        copyAttemptRef.current = { signature, key: newCreationRequestKey("foundation_project_copy"), data };
       }
-      const copy = await ensureIdempotentEntityCreate({
-        entity: staffEntities.FoundationProject,
-        keyField: "creation_request_key",
-        key: copyAttemptRef.current.key,
-        data: copyData,
-        label: "Foundation project copy",
-      });
-      if (!copy?.id) throw new Error("Foundation project copy could not be verified.");
-      navigate(`/FoundationEstimator?id=${copy.id}`);
+      attempt = copyAttemptRef.current;
     } catch (e) {
-      console.error(e); alert("Save failed: " + e.message);
-    } finally {
-      setSaving(false);
+      setSaveError(e?.message || "Foundation project copy could not be prepared.");
+      return null;
     }
+    const run = Promise.resolve().then(async () => {
+      const live = currentEditorRef.current;
+      if (!mountedRef.current || !live.loaded || live.generation !== gen || live.sourceId !== sourceId || live.estimateId !== estimateKey || live.editRevision !== editRev) return;
+      setSaving(true);
+      try {
+        const copy = await ensureIdempotentEntityCreate({
+          entity: staffEntities.FoundationProject,
+          keyField: "creation_request_key",
+          key: attempt.key,
+          data: attempt.data,
+          label: "Foundation project copy",
+        });
+        if (!copy?.id) throw new Error("Foundation project copy could not be verified.");
+        const live2 = currentEditorRef.current;
+        if (!mountedRef.current || !live2.loaded || live2.generation !== gen || live2.sourceId !== sourceId || live2.estimateId !== estimateKey || live2.editRevision !== editRev) return;
+        navigate(`/FoundationEstimator?id=${encodeURIComponent(copy.id)}`);
+      } catch (e) {
+        if (mountedRef.current && currentEditorRef.current.loaded && currentEditorRef.current.generation === gen && currentEditorRef.current.sourceId === sourceId) {
+          console.error(e); alert("Save failed: " + e.message);
+        }
+      }
+    });
+    const wrapped = run.finally(() => {
+      if (copyFlightRef.current !== wrapped) return;
+      copyFlightRef.current = null;
+      if (mountedRef.current) setSaving(Boolean(saveSessionRef.current?.isSaving()) || Boolean(saveAttemptRef.current));
+    });
+    copyFlightRef.current = wrapped;
+    return wrapped;
   };
 
   // #77 — create a fresh Brick & Stone draft carrying the shared identity
@@ -582,6 +692,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         {saveError && <div role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">{saveError}</div>}
 
         {(() => {
+          const marker = sourceRefreshRef.current;
+          const live = currentEditorRef.current;
+          if (!marker || !live.loaded || live.sourceId !== marker.sourceId || live.generation !== marker.generation) return null;
+          return (
+            <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
+              An earlier save finished after this view changed. Reload the saved project before saving again.
+              <button type="button" onClick={handleReloadSaved} className="ml-2 font-semibold underline">Reload saved project</button>
+            </div>
+          );
+        })()}
+
+        {(() => {
           const recovery = foundationSyncRecoveryState({ project, estimateId, estimate: linkedEstimate });
           if (!["pending", "unsupported", "mismatch"].includes(recovery.status) && !recoveryRequired) return null;
           const detail = recovery.status === "mismatch" && recovery.attempt?.estimate_id
@@ -596,6 +718,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             </div>
           );
         })()}
+
+        {assemblyIssues.length > 0 && (
+          <div role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+            <span className="font-semibold">Unresolved placements</span>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              {assemblyIssues.map((issue, i) => (
+                <li key={`${issue.code}-${issue.kind}-${issue.componentId || ""}-${issue.parentId || ""}-${i}`}>{issue.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <FoundationToolbar
           title="Edit Concrete | Masonry | Poles Estimate"
@@ -683,7 +816,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   <div className="space-y-3">
                     {calc.items.map((item, index) => (
                       <FoundationItemCard
-                        key={index}
+                        key={item.component_id || index}
                         item={item}
                         index={index}
                         catalog={catalog}
@@ -831,7 +964,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         mode={templateMode}
         onClose={() => setTemplateMode(null)}
         project={project}
-        onApply={(data) => patch(data)}
+        onApply={(data) => {
+          let patchData;
+          try {
+            patchData = prepareFoundationTemplatePatch(data, {
+              createId: (kind) => newCreationRequestKey(`foundation_${kind}`),
+            });
+          } catch (e) {
+            setSaveError(e?.message || "Template assembly could not be applied.");
+            return false;
+          }
+          return commit(() => patchData);
+        }}
       />
     </div>
   );
