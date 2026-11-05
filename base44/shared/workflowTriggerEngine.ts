@@ -2,6 +2,21 @@ import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from './wo
 import { loadAllEntityRows } from './pagedEntityRows.ts';
 import { matchesRecordFilters, supportsRecordDestination } from './automationRecordPolicy.mjs';
 
+// ---- per-isolate read caches (shared entity budget) ----
+// Every emitted event used to pay >=4 entity reads before any rule matched
+// (pause flag + quiet hours + full enabled-rule table) plus a full roster
+// read per send_email action. These short TTL caches collapse that to ~zero
+// on warm isolates. Errors are never cached — a failed read falls through
+// to the existing fail-open handling and the next event retries the fetch.
+const wteReadCache: Record<string, { at: number; value: any }> = {};
+async function wteCached<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {
+  const hit = wteReadCache[key];
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+  const value = await loader();
+  wteReadCache[key] = { at: Date.now(), value };
+  return value;
+}
+
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const PERMIT_CONTEXT_FIELDS = [
@@ -510,12 +525,14 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   // fail-open: a prefs read failure must never block a configured send.
   let sendList = [...new Set(recipients)];
   try {
-    const prefUsers = await base44.asServiceRole.entities.AuthorizedEmail.list('-created_date', 500);
-    const optedOut = new Set(
-      (prefUsers || [])
-        .filter((u: any) => u?.notification_prefs?.automation_emails === false)
-        .map((u: any) => String(u?.email || '').trim().toLowerCase()),
-    );
+    const optedOut: Set<string> = await wteCached('pref_optout_emails', 60_000, async () => {
+      const prefUsers = await base44.asServiceRole.entities.AuthorizedEmail.list('-created_date', 500);
+      return new Set(
+        (prefUsers || [])
+          .filter((u: any) => u?.notification_prefs?.automation_emails === false)
+          .map((u: any) => String(u?.email || '').trim().toLowerCase()),
+      );
+    });
     sendList = sendList.filter((to) => !optedOut.has(String(to).trim().toLowerCase()));
   } catch { /* prefs lookup is best-effort */ }
   if (sendList.length === 0) return { skipped: true, reason: 'All recipients opted out' };
@@ -714,7 +731,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   // setting_value:{paused:true}} halts every rule until resumed. Read failures
   // fail OPEN so a settings hiccup never silently disables automation.
   try {
-    const pauseRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'automations_paused' });
+    const pauseRows = await wteCached('automations_paused', 30_000, () => base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'automations_paused' }));
     if (Array.isArray(pauseRows) && pauseRows.some((r) => r?.setting_value?.paused === true)) {
       return { success: true, paused: true, triggered_count: 0, actions: [] };
     }
@@ -725,7 +742,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   // actions inside the window (overnight ranges wrap). Fail OPEN.
   let quietHoursActive = false;
   try {
-    const qhRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'notificationQuietHours' });
+    const qhRows = await wteCached('notificationQuietHours', 60_000, () => base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'notificationQuietHours' }));
     const qh = qhRows?.[0]?.setting_value;
     if (qh?.enabled === true && qh.start && qh.end) {
       const now = new Date();
@@ -736,7 +753,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     }
   } catch { /* fail open */ }
 
-  const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
+  const automations = await wteCached('automation_rules_enabled', 60_000, () => loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' }));
   const triggeredActions: any[] = [];
   const runStampWarnings: string[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
