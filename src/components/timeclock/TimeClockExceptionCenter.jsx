@@ -41,6 +41,45 @@ function severityBadge(severity) {
   return "bg-blue-100 text-blue-800 border-blue-200";
 }
 
+function describeShiftChanges(original, current) {
+  const orig = original || {};
+  const cur = current || {};
+  const lines = [];
+  const push = (label, from, to, fmt) => {
+    const a = fmt(from);
+    const b = fmt(to);
+    if (a !== b) lines.push(`${label}: ${a} → ${b}`);
+  };
+  const fmtTime = (v) => (v ? formatPunchTime(v) : "none");
+  const fmtMin = (v) => `${Math.max(0, Math.round(Number(v) || 0))}m`;
+  const fmtHours = (v) => `${(Number(v) || 0).toFixed(2)}h`;
+  const fmtText = (v) => String(v || "").trim() || "none";
+  push("Clock In", orig.clock_in, cur.clock_in, fmtTime);
+  push("Clock Out", orig.clock_out, cur.clock_out, fmtTime);
+  push("Lunch", orig.lunch_minutes, cur.lunch_minutes, fmtMin);
+  push("Total", orig.total_hours, cur.total_hours, fmtHours);
+  if (String(cur.notes || "").trim() && fmtText(orig.notes) !== fmtText(cur.notes)) {
+    lines.push(`Notes: ${fmtText(orig.notes)} → ${fmtText(cur.notes).slice(0, 80)}`);
+  }
+  return lines;
+}
+
+function shiftChangeSource(entry, correctionRequest) {
+  if (correctionRequest?.original_snapshot && correctionRequest?.requested_changes) {
+    return describeShiftChanges(correctionRequest.original_snapshot, {
+      clock_in: correctionRequest.requested_changes.clock_in ?? entry?.clock_in,
+      clock_out: correctionRequest.requested_changes.clock_out ?? entry?.clock_out,
+      lunch_minutes: correctionRequest.requested_changes.lunch_minutes ?? entry?.lunch_minutes,
+      total_hours: correctionRequest.requested_changes.total_hours ?? entry?.total_hours,
+      notes: correctionRequest.requested_changes.notes ?? entry?.notes,
+    });
+  }
+  if (entry?.last_correction_original) {
+    return describeShiftChanges(entry.last_correction_original, entry);
+  }
+  return [];
+}
+
 export default function TimeClockExceptionCenter({
   timeEntries = [],
   employeeStates = [],
@@ -54,6 +93,7 @@ export default function TimeClockExceptionCenter({
   needsReviewEntries = [],
   otWatch = [],
   otProjected = [],
+  otFlagHours = 40,
   swapRequests = [],
   adminNotes = [],
   timeOffRequests = [],
@@ -89,6 +129,10 @@ export default function TimeClockExceptionCenter({
   const laborByEntryId = new Map();
   const punchCasesByEntryId = new Map();
   const pendingCorrectionByEntryId = new Map();
+  const correctionByRequestId = new Map();
+  for (const request of correctionRequests) {
+    if (request?.request_id) correctionByRequestId.set(String(request.request_id), request);
+  }
 
   const addGrouped = (map, key, row) => {
     if (!key) return;
@@ -127,14 +171,21 @@ export default function TimeClockExceptionCenter({
   }
 
   for (const entry of correctedNeedsReviewEntries) {
+    const linkedRequest = correctionByRequestId.get(String(entry.last_correction_request_id || "")) || null;
+    const changeLines = shiftChangeSource(entry, linkedRequest);
+    const correctedBy = String(entry.last_corrected_by || "").trim();
+    const whoCorrected = String(entry.clock_source || "") === "admin_correction"
+      ? ` by ${correctedBy || "a manager"}`
+      : correctedBy ? ` (applied by ${correctedBy})` : "";
     exceptions.push({
       key: `corrected-shift-review:${entry.id}`,
       severity: "warning",
       icon: FileWarning,
       title: "Corrected shift awaits final approval",
       employee: entry.user_name || entry.user_email,
-      detail: "The employee correction has been applied and the missed-punch review is complete, but this completed shift is still Needs Review. A separate manager shift approval is required before pay-period finalization.",
+      detail: `A correction${whoCorrected} changed this shift and it is still Needs Review. A manager approval is required before pay-period finalization.${entry.last_correction_reason ? ` Reason: "${entry.last_correction_reason}"` : ""}`,
       approvalEntry: entry,
+      changeLines,
     });
   }
 
@@ -686,6 +737,7 @@ export default function TimeClockExceptionCenter({
   const correctedEntryIds = new Set(correctedNeedsReviewEntries.map(entry => entry.id));
   for (const entry of needsReviewEntries) {
     if (correctedEntryIds.has(entry.id)) continue;
+    const linkedRequest = correctionByRequestId.get(String(entry.last_correction_request_id || "")) || null;
     exceptions.push({
       key: `needs-review:${entry.id}`,
       severity: "warning",
@@ -694,6 +746,7 @@ export default function TimeClockExceptionCenter({
       employee: entry.user_name || entry.user_email,
       detail: "This completed shift is flagged Needs Review and must be approved by a manager before the pay period can be finalized.",
       approvalEntry: entry,
+      changeLines: shiftChangeSource(entry, linkedRequest),
     });
   }
 
@@ -762,11 +815,12 @@ export default function TimeClockExceptionCenter({
       const p = otProjected.find(x => x.name === r.name);
       return `${r.name} ${r.hours.toFixed(1)}h${p ? ` (projected ${p.projected.toFixed(1)}h)` : ""}`;
     }).join("; ");
+    const overCount = otWatch.filter(r => r.hours >= otFlagHours).length;
     exceptions.push({
       key: "ot-watch",
-      severity: "info",
+      severity: overCount > 0 ? "warning" : "info",
       icon: Clock3,
-      title: `${otWatch.length} employee${otWatch.length === 1 ? "" : "s"} near or over 40h this week`,
+      title: `${otWatch.length} employee${otWatch.length === 1 ? "" : "s"} near or over ${otFlagHours}h this week`,
       employee: "Overtime watch",
       detail: otDetail,
     });
@@ -825,6 +879,16 @@ export default function TimeClockExceptionCenter({
                       </div>
                       <p className="text-xs font-medium mt-1">{item.employee}</p>
                       <p className="text-xs mt-1 opacity-90">{item.detail}</p>
+                      {Array.isArray(item.changeLines) && item.changeLines.length > 0 && (
+                        <div className="mt-1.5 rounded-md border border-current/20 bg-white/60 px-2 py-1.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">What changed</p>
+                          <ul className="mt-0.5 space-y-0.5">
+                            {item.changeLines.map((line) => (
+                              <li key={line} className="text-xs font-medium">{line}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {item.correctionRequest && typeof onReviewCorrection === "function" ? (
@@ -832,9 +896,16 @@ export default function TimeClockExceptionCenter({
                       Review Correction
                     </Button>
                   ) : item.approvalEntry && typeof onApproveEntry === "function" ? (
-                    <Button type="button" size="sm" variant="outline" onClick={() => onApproveEntry(item.approvalEntry)} className="shrink-0 bg-white/80 text-green-700">
-                      Approve Shift
-                    </Button>
+                    <div className="flex shrink-0 flex-col gap-1.5">
+                      <Button type="button" size="sm" variant="outline" onClick={() => onApproveEntry(item.approvalEntry)} className="bg-white/80 text-green-700">
+                        Approve Shift
+                      </Button>
+                      {typeof onReviewEntry === "function" && (
+                        <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.approvalEntry)} className="bg-white/80">
+                          Review / Adjust
+                        </Button>
+                      )}
+                    </div>
                   ) : item.entry && typeof onReviewEntry === "function" ? (
                     <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.entry)} className="shrink-0 bg-white/80">
                       Review Shift
