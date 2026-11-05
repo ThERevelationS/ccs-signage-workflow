@@ -102,7 +102,7 @@ async function pendingCommands(sr: any, agentId: string, limit = 10) {
   return rows.slice(0, limit);
 }
 
-const BUNDLE_REV = 'fb-ingest-2026-11-03b';
+const BUNDLE_REV = 'fb-ingest-2026-11-05a';
 
 // Assemble staged FileBridgeChunk rows for a command → UploadFile → stamp
 // FileIndex.delivered_url → purge chunks → complete command. Shared by
