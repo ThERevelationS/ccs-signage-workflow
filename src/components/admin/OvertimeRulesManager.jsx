@@ -32,7 +32,9 @@ const DEFAULT_OT_SETTINGS = {
   double_time_threshold: 0, // 0 = disabled
   double_time_multiplier: 2.0,
   exclude_pto_from_ot: true, // OH law: PTO doesn't count toward OT
-  week_starts_on: 0 // 0 = Sunday
+  week_starts_on: 0, // 0 = Sunday
+  flag_enabled: true,
+  flag_weekly_hours: 40 // Needs Attention flags anyone near or over this
 };
 
 export default function OvertimeRulesManager() {
@@ -172,6 +174,38 @@ export default function OvertimeRulesManager() {
                 </Select>
               </div>
             </div>
+          </div>
+
+          {/* Needs Attention flagging */}
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs">FLAG</span>
+                  Overtime Flag in Needs Attention
+                </h4>
+                <p className="text-sm text-gray-500 mt-1">Time Clock Admin lists employees approaching or over this weekly total. Informational only — it never blocks punches or approvals.</p>
+              </div>
+              <Switch
+                checked={settings.flag_enabled !== false}
+                onCheckedChange={(val) => setSettings({ ...settings, flag_enabled: val })}
+              />
+            </div>
+
+            {settings.flag_enabled !== false && (
+              <div>
+                <Label>Flag employees over (hours/week)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="168"
+                  value={settings.flag_weekly_hours ?? settings.weekly_threshold}
+                  onChange={(e) => setSettings({ ...settings, flag_weekly_hours: parseFloat(e.target.value) || 0 })}
+                  className="mt-1 w-32"
+                />
+                <p className="text-xs text-gray-500 mt-1">Employees within 4h of this show as approaching; over it shows as over.</p>
+              </div>
+            )}
           </div>
 
           {/* Daily OT */}
