@@ -1083,6 +1083,7 @@ export default function AdminSettings() {
       const groups = await loadAllEntityRows({
         entity: EmailGroup,
         sort: null,
+        cacheTtlMs: 30000,
         label: "Admin Settings email groups",
       });
       if (requestSequence === emailGroupsLoadSequence.current) {
@@ -1125,6 +1126,7 @@ export default function AdminSettings() {
     const users = await loadAllEntityRows({
       entity: staffEntities.AuthorizedEmail,
       sort: null,
+      cacheTtlMs: 30000,
       label: "Admin Settings authorized users",
     });
     setAllUsers(users);
@@ -1174,6 +1176,7 @@ export default function AdminSettings() {
       const rules = await withAutomationReadDeadline(() => loadAllEntityRows({
         entity: AutomationRule,
         sort: "-created_date",
+        cacheTtlMs: 30000,
         label: "Admin Settings automation rules",
       }));
       if (requestSequence !== automationLoadSequence.current ||
@@ -1756,7 +1759,7 @@ export default function AdminSettings() {
         nextFields: { approval_status: 'approved' }, adminCapability: writeCapability,
       });
       if (saved?.id) setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
-    } catch { /* leave the pending badge retryable */ }
+    } catch (err) { setPauseError(`Rule "${rule?.name || rule?.id}" could not be approved: ${err?.message || err}`); }
   };
 
   const reconcileAutomationOperation = async (acknowledge = false) => {
@@ -2061,7 +2064,7 @@ export default function AdminSettings() {
       if (patch.enabled !== undefined) setQuietEnabled(patch.enabled);
       if (patch.start) setQuietStart(patch.start);
       if (patch.end) setQuietEnd(patch.end);
-    } catch { /* leave prior values */ } finally { setQuietBusy(false); }
+    } catch (err) { setPauseError(`Quiet hours not saved: ${err?.message || err}`); } finally { setQuietBusy(false); }
   };
 
   const handleSort = (field) => {
@@ -2631,7 +2634,7 @@ export default function AdminSettings() {
                 className="lg:hidden inline-flex min-h-8 items-center justify-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700"
                 aria-label="Open all admin pages">☰ Pages</button>
               {availableAdminGroups.map((group) => (
-                <button type="button"
+                <button
                   key={group.id}
                   type="button"
                   data-admin-category={group.id}
