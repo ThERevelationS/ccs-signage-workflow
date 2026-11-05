@@ -3,6 +3,7 @@ import {
   FB_HEALTHY_AGE_MS, FB_RECENT_RING_CAP, MATCH_AUTO, matchCustomerFolders,
   normalizeFileBridgeSettings,
 } from '../../shared/fileBridgeModel.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // fileBridgeMaintenance — scheduled hands-off sweeps (workflow: every 5 min).
 // 1. Expire queued commands past expires_at_ms; requeue stale leases once.
@@ -18,7 +19,7 @@ const now = () => Date.now();
 const DAY = 86_400_000;
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 200 });
   const sr = (base44 as any).asServiceRole;
   const out: any = { at: new Date().toISOString(), sweeps: {} };
 
@@ -173,12 +174,44 @@ Deno.serve(async (req) => {
     { status: { $in: ['confirmed', 'suggested', 'broken'] } }, 'folder_path', 500,
   ).catch(() => []);
   const escRx = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Broken-link check, batched: one $in filter per root_key (chunks of 100
+  // paths) instead of a per-link point read — was ~1 read per link. On a
+  // batch error we fall back to per-link reads rather than trusting an
+  // empty result (a silent miss would mass-mark links broken).
+  const linksByRoot = new Map<string, any[]>();
   for (const l of allLinks || []) {
-    recStats.checked += 1;
+    const arr = linksByRoot.get(l.root_key) || [];
+    arr.push(l);
+    linksByRoot.set(l.root_key, arr);
+  }
+  const aliveLinks = new Set<string>();
+  const perLinkCheck = async (l: any): Promise<boolean> => {
     const dir = await sr.entities.FileIndex.filter(
       { root_key: l.root_key, path: l.folder_path, is_dir: true }, '-updated_date', 1,
     ).catch(() => []);
-    const alive = !!dir?.[0] && !dir[0].missing;
+    return !!dir?.[0] && !dir[0].missing;
+  };
+  for (const [rootKey, links] of linksByRoot) {
+    const paths = [...new Set(links.map((l: any) => l.folder_path))];
+    const found = new Set<string>();
+    let batched = true;
+    for (let i = 0; i < paths.length; i += 100) {
+      const rows: any = await sr.entities.FileIndex.filter(
+        { root_key: rootKey, is_dir: true, path: { $in: paths.slice(i, i + 100) } },
+        '-updated_date', 500,
+      ).catch((e: any) => ({ __err: String(e?.message || e) }));
+      if (rows?.__err || !Array.isArray(rows)) { batched = false; break; }
+      for (const r of rows) if (!r.missing) found.add(r.path);
+    }
+    if (batched) {
+      for (const l of links) if (found.has(l.folder_path)) aliveLinks.add(l.id);
+    } else {
+      for (const l of links) if (await perLinkCheck(l)) aliveLinks.add(l.id);
+    }
+  }
+  for (const l of allLinks || []) {
+    recStats.checked += 1;
+    const alive = aliveLinks.has(l.id);
     if (!alive && l.status !== 'broken') {
       await sr.entities.CustomerFolderLink.update(l.id, {
         status: 'broken', broken_at: now(), prev_status: l.status,
@@ -192,20 +225,43 @@ Deno.serve(async (req) => {
     }
   }
   let cidBudget = 100;
+  // customer_ids re-derivation, batched: one alternation-regex filter per
+  // root_key per 15-folder chunk instead of a per-link filter — was ~1 read
+  // per confirmed link. Updates are collected first, so a row under several
+  // confirmed folders still receives every customer id in a single write.
+  const confByRoot = new Map<string, any[]>();
   for (const l of (allLinks || []).filter((x: any) => x.status === 'confirmed')) {
-    if (cidBudget <= 0) break;
-    const rows = await sr.entities.FileIndex.filter(
-      { root_key: l.root_key, path: { $regex: `^${escRx(l.folder_path)}(/|$)` }, missing: { $ne: true } },
-      'path', 500,
-    ).catch(() => []);
-    for (const f of rows || []) {
-      if (cidBudget <= 0) break;
-      const ids = new Set(f.customer_ids || []);
-      if (ids.has(l.customer_id)) continue;
-      ids.add(l.customer_id);
-      const u = await sr.entities.FileIndex.update(f.id, { customer_ids: [...ids] }).catch(() => null);
-      if (u !== null) { recStats.cid_updates += 1; cidBudget -= 1; }
+    const arr = confByRoot.get(l.root_key) || [];
+    arr.push(l);
+    confByRoot.set(l.root_key, arr);
+  }
+  const pendingCids = new Map<string, Set<string>>();
+  for (const [rootKey, links] of confByRoot) {
+    const folders = [...new Set(links.map((l: any) => l.folder_path))];
+    const linkByFolder = new Map(links.map((l: any) => [l.folder_path, l]));
+    for (let i = 0; i < folders.length; i += 15) {
+      const chunk = folders.slice(i, i + 15);
+      const rx = `^(${chunk.map(escRx).join('|')})(/|$)`;
+      const rows = await sr.entities.FileIndex.filter(
+        { root_key: rootKey, missing: { $ne: true }, path: { $regex: rx } },
+        'path', 2500,
+      ).catch(() => []);
+      for (const f of rows || []) {
+        for (const folder of chunk) {
+          if (f.path !== folder && !f.path.startsWith(folder + '/')) continue;
+          const l = linkByFolder.get(folder);
+          if (!l || (f.customer_ids || []).includes(l.customer_id)) continue;
+          const pending = pendingCids.get(f.id) || new Set(f.customer_ids || []);
+          pending.add(l.customer_id);
+          pendingCids.set(f.id, pending);
+        }
+      }
     }
+  }
+  for (const [rowId, ids] of pendingCids) {
+    if (cidBudget <= 0) break;
+    const u = await sr.entities.FileIndex.update(rowId, { customer_ids: [...ids] }).catch(() => null);
+    if (u !== null) { recStats.cid_updates += 1; cidBudget -= 1; }
   }
   out.sweeps.link_reconcile = recStats;
 
