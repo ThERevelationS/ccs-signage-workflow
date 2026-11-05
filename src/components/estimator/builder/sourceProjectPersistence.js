@@ -60,6 +60,11 @@ export async function updateBuilderSourceProject({
 
   await preflightBuilderSourceMutation({ estimateId });
 
+  const verified = (record) => !!record && record.id === sourceId
+    && typeof record.updated_date === "string" && record.updated_date.length > 0
+    && sourcePatchMatches(record, data);
+  const conflict = () => new Error(`${label} changed in another session. Reload it before saving.`);
+
   let result;
   try {
     result = await entity.updateMany(
@@ -68,26 +73,27 @@ export async function updateBuilderSourceProject({
     );
   } catch (error) {
     const current = await entity.get(sourceId).catch(() => null);
-    if (current && sourcePatchMatches(current, data)) return current;
+    if (verified(current)) return current;
     throw error;
   }
 
-  if (!result || typeof result.updated !== "number") {
+  if (!result || !Number.isInteger(result.updated) || (result.updated !== 0 && result.updated !== 1)) {
     throw new Error(`${label} conditional-update result could not be verified.`);
   }
 
   if (result.updated === 1) {
     const saved = await entity.get(sourceId).catch(() => null);
     if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+    if (!verified(saved)) throw conflict();
     return saved;
   }
 
   const current = await entity.get(sourceId).catch(() => null);
-  if (current && sourcePatchMatches(current, data)) {
+  if (verified(current)) {
     // Exact retry after a lost successful response. Do not rewrite the row merely
     // to refresh its timestamp; reuse the already-persisted intended state.
     return current;
   }
 
-  throw new Error(`${label} changed in another session. Reload it before saving.`);
+  throw conflict();
 }
