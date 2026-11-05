@@ -399,14 +399,14 @@ implemented and verified remote.
 
 ## 32. Time Clock — Review & Payroll Hardening (301–311) — requested 2026-11-05
 
-301. **[F]** Remove the "NEW" badge on Admin tabs entirely (kill RECENTLY_CHANGED_TABS render + tracking)
-302. **[UX]** Remove the "Recent:" tab row from the admin page bar (confusing; keep Ctrl+K as the fast path)
-303. **[UX]** "Exact retry mode" banner must only appear when a genuinely interrupted request is being resumed/retried — never during a normal in-flight approval
-304. **[UX]** Warning-severity bars gain the same quick-fill/adjust path red bars get (Review/Adjust opens the entry editor with TimeQuickPick alongside Approve)
-305. **[F]** Corrected-shift bars must show what changed: before → after (clock-in/out, lunch, notes) from the linked correction request, not just "awaits final approval"
-306. **[H]** Auto-approve clean shifts — completed entries with no correction, no punch exception, no needs_review flag, no pay-period lock, no overlap are auto-approved via a backend sweep (admin_auto_review) driven on admin page load
-307. **[H]** Admin/owner-corrected shifts auto-approve — a successful admin_correct_entry approves immediately unless an egregious condition exists (overlap, open punch exception, >24h duration, pay-period lock already blocks)
-308. **[F]** OT flag threshold — overtimeRules setting gains flag_over_hours (weekly, default 40) consumed by Needs Attention OT bars; OvertimeRulesManager UI fields
-309. **[F]** Time Clock gets its own sub-pages: Live Status, Pay Periods & History, Punch Location Review, Registered Devices become nested subtabs (extracted from the monolithic Time Entries page)
-310. **[F]** Work-day grouping asked at clock-IN — second+ clock-in inside a 12h window prompts "same work day or separate?" with the previous session shown (extends existing work_day_prompt/resolve_work_day machinery which currently only fires on clock-out clustering)
-311. **[H]** Time Tracker honors work_day_group_id in day totals so grouped multi-segment days count as one work day
+301. **[F]*[DONE]* Remove the "NEW" badge on Admin tabs entirely (kill RECENTLY_CHANGED_TABS render + tracking)
+302. **[UX]*[DONE]* Remove the "Recent:" tab row from the admin page bar (confusing; keep Ctrl+K as the fast path)
+303. **[UX]*[DONE]* "Exact retry mode" banner must only appear when a genuinely interrupted request is being resumed/retried — never during a normal in-flight approval
+304. **[UX]*[DONE]* Warning-severity bars gain the same quick-fill/adjust path red bars get (Review/Adjust opens the entry editor with TimeQuickPick alongside Approve)
+305. **[F]*[DONE]* Corrected-shift bars must show what changed: before → after (clock-in/out, lunch, notes) from the linked correction request, not just "awaits final approval"
+306. **[H]*[DONE]* Auto-approve clean shifts — completed entries with no correction, no punch exception, no needs_review flag, no pay-period lock, no overlap are auto-approved via a backend sweep (admin_auto_review) driven on admin page load
+307. **[H]*[DONE]* Admin/owner-corrected shifts auto-approve — a successful admin_correct_entry approves immediately unless an egregious condition exists (overlap, open punch exception, >24h duration, pay-period lock already blocks)
+308. **[F]*[DONE]* OT flag threshold — overtimeRules setting gains flag_over_hours (weekly, default 40) consumed by Needs Attention OT bars; OvertimeRulesManager UI fields
+309. **[F]*[DONE]* Time Clock gets its own sub-pages: Live Status, Pay Periods & History, Punch Location Review, Registered Devices become nested subtabs (extracted from the monolithic Time Entries page)
+310. **[F]*[DONE]* Work-day grouping asked at clock-IN — second+ clock-in inside a 12h window prompts "same work day or separate?" with the previous session shown (extends existing work_day_prompt/resolve_work_day machinery which currently only fires on clock-out clustering)
+311. **[H]*[DONE]* Time Tracker honors work_day_group_id in day totals so grouped multi-segment days count as one work day
