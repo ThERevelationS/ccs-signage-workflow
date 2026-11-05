@@ -7,8 +7,9 @@ import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCust
 // Snapshot of the last authenticated Order pull. Only an administrator can
 // explicitly apply the separately reverified and audited unlink resolution;
 // the comparison and preflight themselves never mutate production records.
+const EMPTY = [];
 export default function OrderLinkedCustomerReview({
-  count = 0, items = [], orders = [], workOrders = [], isAdmin = false, sessionToken = '',
+  count = 0, items = EMPTY, orders = EMPTY, workOrders = EMPTY, isAdmin = false, sessionToken = '',
   canResolve = false, onResolutionApplied = null,
 }) {
   const [open, setOpen] = useState(false);
