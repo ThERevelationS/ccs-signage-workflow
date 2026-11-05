@@ -2631,7 +2631,7 @@ export default function AdminSettings() {
                 className="lg:hidden inline-flex min-h-8 items-center justify-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700"
                 aria-label="Open all admin pages">☰ Pages</button>
               {availableAdminGroups.map((group) => (
-                <button
+                <button type="button"
                   key={group.id}
                   type="button"
                   data-admin-category={group.id}

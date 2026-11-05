@@ -350,7 +350,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             <div className="flex flex-wrap items-center gap-2">
               <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Review sync settings →</Link>
               {canRecoverStaleOrderRun && (
-                <button
+                <button type="button"
                   type="button"
                   onClick={recoverStaleRun}
                   disabled={recoveringStaleRun}

@@ -136,7 +136,7 @@ const [query, setQuery] = useState("");
             className="h-10 w-full min-w-0 rounded-lg border border-red-200 bg-white/85 py-2 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
           />
           {hasQuery && (
-            <button
+            <button type="button"
               type="button"
               aria-label="Clear Admin search"
               title="Clear search"
@@ -180,7 +180,7 @@ const [query, setQuery] = useState("");
             <>
               <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className={`grid min-w-0 grid-cols-1 overflow-y-auto sm:grid-cols-2 ${dense ? "max-h-40 gap-0.5" : "max-h-60 gap-1.5"}`}>
                 {results.map((result, index) => (
-                  <button
+                  <button type="button"
                     id={`${resultsListId}-option-${index}`}
                     key={result.id}
                     type="button"

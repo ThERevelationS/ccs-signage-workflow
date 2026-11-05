@@ -68,7 +68,7 @@ function RowDetails({ row }) {
   const reconciliation = row?.historical_reconciliation;
   return (
     <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <button
+      <button type="button"
         type="button"
         onClick={() => setOpen((value) => !value)}
         className="flex min-h-11 w-full items-start gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
@@ -194,7 +194,7 @@ export default function OpportunityBridgeReview() {
               Live server-side simulation of the WorkOrder → Opportunity compatibility bridge. This screen has no apply action and the backend reports write capability disabled.
             </p>
           </div>
-          <button
+          <button type="button"
             type="button"
             onClick={() => runSimulation()}
             disabled={loading}
@@ -337,7 +337,7 @@ export default function OpportunityBridgeReview() {
           </div>
           <div className="flex flex-wrap gap-2">
             {FILTERS.map((item) => (
-              <button
+              <button type="button"
                 type="button"
                 key={item.key}
                 onClick={() => setFilter(item.key)}
