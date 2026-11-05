@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenLine } from "lucide-react";
 import { money } from "./foundationCalc";
+import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import WallShapeEditor from "./WallShapeEditor";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -10,6 +11,10 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 function WallRow({ wall, index, options, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
   const set = (changes) => onChange(index, changes);
+  const outerMissing = !options.some((o) => o.id === wall.materialId);
+  const innerMissing = !!wall.includeInternalWall && !options.some((o) => o.id === wall.internalMaterialId);
+  const catalogMissing = outerMissing || innerMissing;
+  const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
   const [showEditor, setShowEditor] = React.useState(false);
 
   return (
@@ -22,7 +27,7 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
           onChange={(e) => set({ name: e.target.value })}
         />
         <div className="flex items-center gap-3">
-          <span className="font-bold text-gray-900">{money(c.totalCost)}</span>
+          <span className="font-bold text-gray-900">{amt(c.totalCost)}</span>
           <Button variant="ghost" size="icon" onClick={() => onRemove(index)}>
             <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
           </Button>
@@ -119,11 +124,12 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
         <div>Units: <span className="font-semibold text-gray-900">{Math.round(num(c.totalBricks))}</span></div>
         <div>Courses: <span className="font-semibold text-gray-900">{Math.ceil(num(c.numCourses))}</span></div>
-        <div>Material: <span className="font-semibold text-gray-900">{money(c.materialCost)}</span></div>
-        <div>Mortar: <span className="font-semibold text-gray-900">{money(c.mortarCost)}</span></div>
-        <div>Labor: <span className="font-semibold text-gray-900">{money(c.laborCost)}</span></div>
+        <div>Material: <span className="font-semibold text-gray-900">{amt(c.materialCost)}</span></div>
+        <div>Mortar: <span className="font-semibold text-gray-900">{amt(c.mortarCost)}</span></div>
+        <div>Labor: <span className="font-semibold text-gray-900">{amt(c.laborCost)}</span></div>
         <div>Labor hrs: <span className="font-semibold text-gray-900">{num(c.laborHours).toFixed(1)}</span></div>
         <div>Linear in: <span className="font-semibold text-gray-900">{Math.round(num(c.totalLinearInches))}</span></div>
+        {catalogMissing && <div className="col-span-full text-[10px] font-semibold text-amber-700">Saved amounts (not current pricing)</div>}
       </div>
 
       <div className="flex items-center gap-2">
