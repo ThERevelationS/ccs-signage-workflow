@@ -253,6 +253,55 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     [project, inventory, settings]
   );
 
+  const catalogBlocked = Boolean(calc?.catalogIssues?.length);
+  const [catalogReloading, setCatalogReloading] = useState(false);
+  const catalogReloadRef = useRef(null);
+
+  const handleCatalogReload = async () => {
+    const live = currentEditorRef.current;
+    const generation = live.generation;
+    const sourceId = live.sourceId;
+    const estimateKey = live.estimateId;
+    if (!mountedRef.current || !live.loaded || saveAttemptRef.current || copyFlightRef.current || saveSessionRef.current?.isSaving() || catalogReloadRef.current) return;
+    const isCurrentFlight = (flight) => {
+      const l = currentEditorRef.current;
+      return mountedRef.current && catalogReloadRef.current === flight && l.loaded
+        && l.sourceId === sourceId && l.estimateId === estimateKey && l.generation === generation;
+    };
+    const flight = (async () => {
+      const [inv, concreteServices, settingRows] = await Promise.all([
+        loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
+        loadAllEntityRows({ entity: staffEntities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
+        loadAllEntityRows({ entity: staffEntities.Settings, sort: "created_date", label: "Estimator Settings" }),
+      ]);
+      if (!isCurrentFlight(flight)) return; // stale reply: never install into a newer context
+      bumpEdit();
+      setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+      setSettings(Object.fromEntries((settingRows || []).map((r) => [r.setting_name, r.setting_value])));
+      setAutoSave(false);
+      setDirty(true);
+      setSaveError("");
+    })();
+    catalogReloadRef.current = flight;
+    setCatalogReloading(true);
+    try { await flight; }
+    catch (e) {
+      if (isCurrentFlight(flight)) setSaveError("Catalog reload failed: " + (e?.message || "unknown error") + " Last known catalog retained; retry.");
+    } finally {
+      if (catalogReloadRef.current === flight) {
+        const current = isCurrentFlight(flight);
+        catalogReloadRef.current = null;
+        if (current) setCatalogReloading(false);
+      }
+    }
+  };
+
+  // Invalidate an in-flight catalog reload on route/reload context change.
+  useEffect(() => {
+    catalogReloadRef.current = null;
+    setCatalogReloading(false);
+  }, [id, estimateId, reloadRevision]);
+
   const assemblyIssues = useMemo(() => (project ? foundationAssemblyIssues(project) : []), [project]);
 
   const catalog = useMemo(
@@ -273,10 +322,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!autoSave || !dirty || recoveryRequired) return;
+    if (!autoSave || !dirty || recoveryRequired || catalogBlocked || catalogReloading || catalogReloadRef.current) return;
     const t = setTimeout(() => saveRef.current?.(), 2000);
     return () => clearTimeout(t);
-  }, [autoSave, dirty, project, recoveryRequired]);
+  }, [autoSave, dirty, project, recoveryRequired, catalogBlocked, catalogReloading]);
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -442,6 +491,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
     const existing = saveAttemptRef.current;
     if (existing) return existing.promise;
+    if (catalogBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before saving.");
+      setDirty(true);
+      return Promise.resolve({ ...staleOutcome, status: "failed", error: new Error("Save paused: catalog pricing is incomplete.") });
+    }
     const captured = {
       project, estimateId, basePayload: payload(),
       items: calc.items, equipment: calc.equipment, walls: calc.walls,
@@ -595,6 +649,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const live0 = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;
     if (saveAttemptRef.current || saveSessionRef.current?.isSaving()) return null;
+    if (catalogBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before copying.");
+      return null;
+    }
     const gen = saveContext.generation;
     const sourceId = saveContext.sourceId;
     const estimateKey = saveContext.estimateId;
@@ -662,6 +720,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   // #77 — create a fresh Brick & Stone draft carrying the shared identity
   // fields; the Foundation source is left untouched.
   const handleSwapToBrickStone = async () => {
+    const live = currentEditorRef.current;
+    if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId || live.estimateId !== saveContext.estimateId || live.editRevision !== saveContext.editRevision) return null;
+    if (catalogBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: selected pole, cap or wall catalog materials need attention. Resolve catalog availability before swapping.");
+      return null;
+    }
     setSaving(true);
     try {
       const draft = await convertFoundationToBrickStone({ project, attemptRef: swapAttemptRef });
@@ -690,6 +754,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         <FoundationSectionBanner sectionName={project.project_name} />
 
         {saveError && <div role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">{saveError}</div>}
+
+        {catalogBlocked && (
+          <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+            <div className="font-semibold">Pricing unavailable: selected pole, cap or wall catalog materials need attention. Amounts shown are saved snapshots, not current prices. Save and estimate handoff are paused.</div>
+            <ul className="mt-1 list-disc pl-5">
+              {calc.catalogIssues.map((i, idx) => <li key={idx}>{i.message}</li>)}
+            </ul>
+            <button type="button" onClick={handleCatalogReload} disabled={catalogReloading || loading || saving}
+              className="mt-2 rounded-sm border border-amber-400 bg-white px-2 py-1 text-[12px] font-semibold text-amber-800 disabled:opacity-50">
+              {catalogReloading ? "Reloading catalogs…" : "Reload catalogs"}
+            </button>
+          </div>
+        )}
 
         {(() => {
           const marker = sourceRefreshRef.current;
@@ -739,6 +816,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           dirty={dirty}
           lastSavedAt={project?.updated_date}
           autoSave={autoSave}
+          pricingUnavailable={catalogBlocked}
           onToggleAutoSave={() => setAutoSave((v) => !v)}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
@@ -898,7 +976,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
-                  <FoundationTotals totals={calc.totals} />
+                  <FoundationTotals totals={calc.totals} pricingUnavailable={catalogBlocked} />
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <div className="flex justify-between">
                       <span>Signage cabinets</span>
@@ -910,7 +988,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     </div>
                   </div>
                   <div className="mt-2 text-right text-[12px] text-gray-500">
-                    Section total flowing to estimate: <b className="text-red-700">{money(sectionTotal)}</b>
+                    Section total flowing to estimate: {catalogBlocked ? <b className="text-amber-700">Estimate handoff paused</b> : <b className="text-red-700">{money(sectionTotal)}</b>}
                   </div>
                   <Link
                     to="/FoundationCatalog"
@@ -933,6 +1011,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               </TabsContent>
 
               <TabsContent value="pricing" className="space-y-4">
+                {catalogBlocked ? (
+                  <div className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800">Customer pricing unavailable: catalog pricing is incomplete. Resolve catalog materials first.</div>
+                ) : (<>
                 <CustomerPricingPanel
                   cost={sectionTotal}
                   project={project}
@@ -949,6 +1030,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
                   })}
                 />
+                </>)}
               </TabsContent>
             </Tabs>
           </div>
