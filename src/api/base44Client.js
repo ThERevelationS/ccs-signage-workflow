@@ -35,6 +35,16 @@ const NOTIFICATION_READ_ACTIONS = new Set([
 const SMARTSHEET_READ_ACTIONS = new Set(['conflict_count']);
 const WORKSPACE_PREFS_READ_ACTIONS = new Set(['prefs_get']);
 const ANNOUNCEMENT_READ_ACTIONS = new Set(['active_feed']);
+// Verified write-free actions in opportunityWorkspaceAction — attention_feed
+// and check_watches used to ride the write lane, so the AttentionBell +
+// AttentionFeed double-mount paid two uncapped invokes per page.
+const OPPORTUNITY_READ_ACTIONS = new Set([
+  'attention_feed', 'check_watches', 'customer_workspace', 'get_customer_360',
+  'get_opportunity', 'global_search', 'list_estimating_requests',
+  'list_follow_ups', 'list_opportunities', 'list_watches', 'search_customers',
+  'status_timeline',
+]);
+const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
 
 function isReadFunctionInvocation(fnName, payload) {
   if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
@@ -43,6 +53,8 @@ function isReadFunctionInvocation(fnName, payload) {
   if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
   if (fnName === 'workspacePrefsAction') return WORKSPACE_PREFS_READ_ACTIONS.has(payload?.action);
   if (fnName === 'manageAnnouncements') return ANNOUNCEMENT_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'opportunityWorkspaceAction') return OPPORTUNITY_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'inventoryAction') return INVENTORY_READ_ACTIONS.has(payload?.action);
   return false;
 }
 
