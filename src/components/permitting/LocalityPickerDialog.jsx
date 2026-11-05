@@ -600,10 +600,12 @@ function LocalityPickerSession({
     if (!isOpen || !addressNeedsCheck || !locId) return;
     let dead = false;
     const poll = async () => {
+      // Hidden tabs don't need the office-watch status line — skip the reads.
+      if (document.hidden) return;
       try {
         const [locs, profs] = await Promise.all([
-          loadAllEntityRows({ entity: staffEntities.PermitLocality, query: { id: locId }, label: 'Live office watch' }),
-          profId ? loadAllEntityRows({ entity: staffEntities.JurisdictionProfile, query: { id: profId }, label: 'Live office watch' }) : Promise.resolve([]),
+          loadAllEntityRows({ entity: staffEntities.PermitLocality, query: { id: locId }, cacheTtlMs: 30000, label: 'Live office watch' }),
+          profId ? loadAllEntityRows({ entity: staffEntities.JurisdictionProfile, query: { id: profId }, cacheTtlMs: 30000, label: 'Live office watch' }) : Promise.resolve([]),
         ]);
         const loc = locs?.[0], prof = profs?.[0];
         if (dead || !loc) return;
