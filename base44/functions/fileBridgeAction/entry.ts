@@ -5,6 +5,7 @@ import {
   normalizeFileBridgeSettings, canDelete, canMove, isDeliveryStale,
   parseQualifiers, FB_HEALTHY_AGE_MS, FB_BULK_DELETE_CAP, mergeServerCopies,
 } from '../../shared/fileBridgeModel.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // fileBridgeAction — session-authenticated staff API. Every staff-facing read
 // and queue-write for the File Bridge flows through here (entities are
@@ -13,6 +14,30 @@ import {
 
 const uuid = () => crypto.randomUUID();
 const now = () => Date.now();
+
+let fbSettingsCache: { rows: any[] | null; at: number } = { rows: null, at: 0 };
+let fbSettingsLastGood: { rows: any[] | null; at: number } = { rows: null, at: 0 };
+// command_status is polled sub-second by browsers — cache the settings row
+// 60s so the hot poll costs 0 reads. Actions that WRITE settings bypass the
+// cache so their {...settings, ...} merges never re-apply stale values.
+const FB_SETTINGS_WRITE_ACTIONS = new Set(['admin_settings', 'promote_agent', 'demote_agent', 'save_root', 'delete_root']);
+async function getFileBridgeSettingsRows(sr: any, fresh = false) {
+  if (!fresh && fbSettingsCache.at && now() - fbSettingsCache.at < 60_000) return { rows: fbSettingsCache.rows };
+  const rows = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)
+    .catch((e: any) => ({ __err: String(e?.message || e) }));
+  if (rows?.__err || !Array.isArray(rows)) {
+    if (!fresh && fbSettingsLastGood.at && now() - fbSettingsLastGood.at < 600_000)
+      return { rows: fbSettingsLastGood.rows, stale: true };
+    return { __err: rows?.__err || 'settings_unavailable' };
+  }
+  if (fresh) {
+    fbSettingsCache = { rows: null, at: 0 }; // a write follows — stop serving possibly-stale rows
+  } else {
+    fbSettingsCache = { rows, at: now() };
+    if (rows.length) fbSettingsLastGood = { rows, at: now() };
+  }
+  return { rows };
+}
 
 const RATE_LIMITS: Record<string, { max: number; window_ms: number }> = {
   fetch_bytes: { max: 30, window_ms: 60_000 },
@@ -84,7 +109,7 @@ async function enqueue(sr: any, user: any, type: string, args: Record<string, an
 }
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 2 });
   const body = await req.json().catch(() => ({}));
   if (JSON.stringify(body || {}).length > 500_000) {
     return Response.json({ error: 'Request too large.' }, { status: 400 });
@@ -95,9 +120,9 @@ Deno.serve(async (req) => {
   const action = String(body?.action || '').trim();
   const isAdmin = user.role === 'admin';
 
-  const settingsRow = await sr.entities.GlobalSettings.filter({ setting_key: 'fileBridge' }, '-updated_date', 1)
-    .catch((e: any) => ({ __err: String(e?.message || e) }));
-  if ((settingsRow as any)?.__err) return Response.json({ error: 'settings_unavailable' }, { status: 503 });
+  const sRes = await getFileBridgeSettingsRows(sr, FB_SETTINGS_WRITE_ACTIONS.has(action));
+  if ((sRes as any).__err) return Response.json({ error: 'settings_unavailable' }, { status: 503 });
+  const settingsRow = sRes.rows;
   const settings = normalizeFileBridgeSettings(settingsRow?.[0]?.setting_value);
   if (!settings.enabled && action !== 'admin_settings') {
     return Response.json({ error: 'File Bridge is not enabled yet.' }, { status: 503 });
