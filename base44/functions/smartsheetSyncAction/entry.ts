@@ -3748,8 +3748,9 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         success: true,
         // Read-only deployment fingerprint. An absent marker means the active
         // backend has not yet picked up the Order run-scoped cleanup contract.
-        order_sync_backend_contract: 'order-run-scoped-cleanup-v1',
+        order_sync_backend_contract: 'order-run-scoped-cleanup-v2-marker-release',
         dataset_coordinators: 'per-dataset-v1',
+        deploy_marker: 'marker-absent-release-2026-11-05a',
         status_orders: orderStatusRecord?.setting_value || null,
         status_sales: salesStatusRecord?.setting_value || null,
         status_warning: statusWarnings.length ? statusWarnings.join("; ") : undefined,
