@@ -46,12 +46,9 @@ function WorkflowReportingTab() {
     let active = true;
     setLoading(true);
     setReadError("");
-    loadAllEntityRows({
-      entity: staffEntities.WorkOrder,
-      query: { deleted: false },
-      sort: "created_date",
-      label: "Workflow reporting Work Orders",
-    }).then((wos) => {
+    // Shares the boardFeed snapshot every other surface reads — snapshot-first
+    // paint plus cross-tab dedupe instead of a second full WorkOrder pull.
+    fetchAllWorkOrders({ preferSnapshot: true }).then((wos) => {
       if (!active) return;
       setAllWorkOrders(wos || []);
     }).catch((error) => {
@@ -62,10 +59,11 @@ function WorkflowReportingTab() {
     return () => { active = false; };
   }, []);
 
-  const active = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
-  const completed = allWorkOrders.filter(wo => wo.completed && !wo.deleted);
-  const completionRate = allWorkOrders.length > 0
-    ? Math.round((completed.length / allWorkOrders.length) * 100) : 0;
+  const visible = allWorkOrders.filter(wo => !wo.deleted);
+  const active = visible.filter(wo => !wo.completed);
+  const completed = visible.filter(wo => wo.completed);
+  const completionRate = visible.length > 0
+    ? Math.round((completed.length / visible.length) * 100) : 0;
   const asapCount = active.filter(wo => wo.asap).length;
   const today = new Date();
   const startOfToday = new Date(today); startOfToday.setHours(0, 0, 0, 0);
@@ -291,7 +289,7 @@ export default function Financials() {
 
   const loadActiveFilters = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Financials saved filters" });
+    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, cacheTtlMs: 30000, label: "Financials saved filters" });
     const userEmail = currentUser?.email || "";
     const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
     setActiveFilters(selected);
