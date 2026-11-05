@@ -5,6 +5,7 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 export function calcWallCaps(wallCaps = [], inventory = []) {
   const caps = (wallCaps || []).map((cap) => {
     const inv = inventory.find((i) => i.id === cap.cap_inventory_id);
+    if (!inv) return { ...cap };
     return {
       ...cap,
       cap_name: inv?.material_name || "",
@@ -23,10 +24,10 @@ export function calcWallCaps(wallCaps = [], inventory = []) {
         cost: 0,
       };
       acc[c.cap_inventory_id].qty += 1;
-      acc[c.cap_inventory_id].cost += c.cost;
+      acc[c.cap_inventory_id].cost += num(c.cost);
       return acc;
     }, {})
   );
 
-  return { caps, byInventory, total: caps.reduce((s, c) => s + c.cost, 0) };
+  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };
 }
