@@ -144,6 +144,15 @@ Deno.serve(async (req) => {
       loadSingleton(Settings, PERMITTING_RESEARCH_STATE_KEY),
     ]);
 
+    // Local-pipeline mode: the local fleet owns document archive + text
+    // extraction. Automatic cycles no-op here (manual admin invocations still
+    // run the full path — staff intent is explicit).
+    const modeRecord = await loadSingleton(Settings, 'permittingPipelineMode').catch(() => null);
+    const pipelineMode = String(modeRecord?.setting_value?.mode || modeRecord?.setting_value || '').toLowerCase();
+    if (!manual && pipelineMode === 'local') {
+      return Response.json({ success: true, skipped: 'local_pipeline_mode', mode: 'local' });
+    }
+
     let stateRecord=loadedStateRecord;
     const preferAddressArchives=loadedStateRecord?.setting_value?.collection_cycle?.stages?.archive?.archive_queue!=='address';
     const config = normalizePermittingResearchConfig(configRecord?.setting_value || {});
