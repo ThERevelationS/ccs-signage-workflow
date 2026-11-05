@@ -10,7 +10,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
     onChange(poles.map((p, i) => (i === index ? { ...p, ...changes } : p)));
 
   const removePole = (index) => {
-    if (!window.confirm(`Remove Pole ${index + 1}?`)) return;
+    if (!window.confirm(`Remove Pole ${index + 1}? Cabinets mounted on it are retained for review.`)) return;
     onChange(poles.filter((_, i) => i !== index));
   };
 
@@ -34,32 +34,40 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
         </Button>
       </div>
 
-      {options.length === 0 ? (
-        <div className="text-center py-6 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm">
-          No poles in the catalog yet — add them under Catalog → Pole.
+      {options.length === 0 && (
+        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+          Pole catalog unavailable — existing rows remain editable; new poles cannot be added.
         </div>
-      ) : poles.length === 0 ? (
+      )}
+      {poles.length === 0 ? (
         <div className="text-center py-6 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm">
           No poles on this section.
         </div>
       ) : (
         poles.map((pole, index) => (
-          <div key={index} className="bg-white rounded-xl border border-gray-200 p-3">
+          <div key={pole.component_id || index} className="bg-white rounded-xl border border-gray-200 p-3">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
               <label className="text-xs text-gray-500 md:col-span-2">
                 Pole
                 <select
                   className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
                   value={pole.pole_id || ""}
+                  aria-label="Pole material"
                   onChange={(e) => patchPole(index, { pole_id: e.target.value })}
                 >
                   <option value="">Select pole…</option>
+                  {pole.pole_id && !options.some((o) => o.id === pole.pole_id) && (
+                    <option value={pole.pole_id} disabled>{`Catalog pole unavailable (${pole.pole_id})`}</option>
+                  )}
                   {options.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.material_name}
                     </option>
                   ))}
                 </select>
+                {pole.pole_id && !options.some((o) => o.id === pole.pole_id) && (
+                  <span className="block text-[10px] text-amber-700 mt-1">Catalog pole unavailable; current pricing needs review.</span>
+                )}
               </label>
               <label className="text-xs text-gray-500">
                 Height above grade (in)
@@ -81,16 +89,23 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                 Foundation
                 <select
                   className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
-                  value={pole.foundation_idx ?? ""}
-                  onChange={(e) =>
+                  value={pole.foundation_component_id ?? ""}
+                  aria-label="Pole foundation"
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const i = items.findIndex((it) => it.component_id === id);
                     patchPole(index, {
-                      foundation_idx: e.target.value === "" ? undefined : Number(e.target.value),
-                    })
-                  }
+                      foundation_component_id: id,
+                      foundation_idx: id === "" || i < 0 ? undefined : i,
+                    });
+                  }}
                 >
                   <option value="">Unassigned</option>
+                  {pole.foundation_component_id && !items.some((it) => it.component_id === pole.foundation_component_id) && (
+                    <option value={pole.foundation_component_id} disabled>{`Missing foundation (${String(pole.foundation_component_id).slice(0, 18)}…)`}</option>
+                  )}
                   {items.map((it, i) => (
-                    <option key={i} value={i}>
+                    <option key={it.component_id || i} value={it.component_id || ""}>
                       {it.description || `Foundation ${i + 1}`}
                     </option>
                   ))}
