@@ -933,7 +933,7 @@ for (const h of stable) {
 }
 
 if (violations.length === 0) {
-  console.log('\nPASS stable-hook-defaults');
+  console.log('PASS stable-hook-defaults');
   process.exit(0);
 }
 console.log(`\nFAIL stable-hook-defaults (${violations.length} violations)`);
