@@ -44,6 +44,9 @@
         }
       }
     },
+    "assembly_schema_version": {
+      "type": "integer"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -67,6 +70,9 @@
       "items": {
         "type": "object",
         "properties": {
+          "component_id": {
+            "type": "string"
+          },
           "foundation_type": {
             "type": "string",
             "enum": [
@@ -313,6 +319,12 @@
           "y_offset_inches": {
             "type": "number"
           },
+          "component_id": {
+            "type": "string"
+          },
+          "foundation_component_id": {
+            "type": "string"
+          },
           "foundation_idx": {
             "type": "number"
           },
@@ -325,7 +337,12 @@
           "signs": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "component_id": {
+                  "type": "string"
+                }
+              }
             }
           }
         }
@@ -336,6 +353,9 @@
       "items": {
         "type": "object",
         "properties": {
+          "component_id": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -385,7 +405,12 @@
               "segments": {
                 "type": "array",
                 "items": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "component_id": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -449,6 +474,15 @@
           "cap_inventory_id": {
             "type": "string"
           },
+          "component_id": {
+            "type": "string"
+          },
+          "wall_component_id": {
+            "type": "string"
+          },
+          "segment_component_id": {
+            "type": "string"
+          },
           "wall_index": {
             "type": "number"
           },
@@ -493,6 +527,15 @@
               "pole"
             ],
             "default": "foundation"
+          },
+          "component_id": {
+            "type": "string"
+          },
+          "foundation_component_id": {
+            "type": "string"
+          },
+          "pole_component_id": {
+            "type": "string"
           },
           "foundation_index": {
             "type": "number"
