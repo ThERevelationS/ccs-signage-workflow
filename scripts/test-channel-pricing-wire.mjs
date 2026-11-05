@@ -47,6 +47,14 @@ eq(cfgOf({ letters_total_override: true, letters_total: 500 }).configured, false
 eq(cfgOf({ qty: 5, unit_cost: 100, total_cost: 500 }).configured, false, 'plain purchase row');
 eq(cfgOf({ fixed_price: 25 }).configured, true, 'fixed_price');
 eq(cfgOf({ price_override: 0 }).configured, false, 'fixed price must be positive');
+// Zero artifacts are unset defaults across every family (markup stays any-finite).
+eq(cfgOf({ fixed_price: 0 }).configured, false, 'fixed_price 0 not config');
+eq(cfgOf({ market_retail: 0 }).configured, false, 'market_retail 0 not config');
+eq(cfgOf({ market_discount_pct: 0 }).configured, false, 'market_discount_pct 0 not config');
+eq(cfgOf({ minimum_charge: 0 }).configured, false, 'minimum_charge 0 not config');
+eq(cfgOf({ setup_fee: 0 }).configured, false, 'setup_fee 0 not config');
+eq(cfgOf({ markup: 0 }).configured, true, 'markup spelling: markup 0 is config');
+eq(cfgOf({ markup_percent: 0 }).configured, true, 'markup spelling: markup_percent 0 is config');
 eq(cfgOf({ tier_ref: 'gold' }).configured, true, 'tier_ref');
 eq(cfgOf({ tier_name: 'gold' }).configured, true, 'tier_name');
 eq(cfgOf({ per_unit_breaks: [{ qty: 5, unit_price: 9 }] }).configured, true, 'break chart');
