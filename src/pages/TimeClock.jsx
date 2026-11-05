@@ -292,6 +292,7 @@ export default function TimeClock() {
       const users = await loadAllEntityRows({
         entity: AuthorizedEmail,
         sort: null,
+        cacheTtlMs: 30000,
         label: "Time Clock authorized users",
       });
       setAllUsers(users);
@@ -300,10 +301,12 @@ export default function TimeClock() {
       console.error("Error loading users:", err);
       // An empty roster silently disables face identify for the whole page
       // lifetime - keep retrying while the page is open so a transient entity-
-      // budget 429 cannot kill face scan for the session.
+      // budget 429 cannot kill face scan for the session. Slower and fewer:
+      // each retry is a full-table read, so a persistent 429 used to become
+      // twelve more full reads inside two minutes.
       rosterRetryRef.current.tries += 1;
-      if (rosterRetryRef.current.tries <= 12) {
-        rosterRetryRef.current.timer = setTimeout(() => { void loadAllUsers(); }, 10000);
+      if (rosterRetryRef.current.tries <= 8) {
+        rosterRetryRef.current.timer = setTimeout(() => { void loadAllUsers(); }, 20000);
       }
     }
     setIsLoading(false);
