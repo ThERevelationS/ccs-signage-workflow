@@ -16,6 +16,7 @@ import { calcWalls } from "./wallCalculator";
 import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
 import { foundationAssemblyCatalogIssues } from "./foundationCatalogIntegrity";
+import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -54,14 +55,23 @@ export function calcItem(item, project, inventory, settings = {}) {
 }
 
 // Equipment rental — ported from SignEstimate Pro `equipmentTotal`.
-export function calcEquipment(selected, inventory) {
-  return (selected || []).map((entry) => {
-    const eq = inventory.find((i) => i.id === entry.equipment_id);
-    if (!eq) return { ...entry, equipment_cost: 0 };
-
+export function calcEquipmentPricing(selected, inventory = []) {
+  return (selected || []).map((storedEntry, index) => {
+    const entry = storedEntry || {};
+    const bindings = resolveFoundationEquipment(entry, inventory, index);
+    const eq = bindings.equipment;
     const rentalPeriod = entry.rental_period || "day";
     const durationOverride =
       entry.custom_qty !== undefined && entry.custom_qty !== null ? entry.custom_qty : entry.rental_duration || 1;
+    const context = { ...bindings, rentalPeriod, duration: durationOverride };
+    if (bindings.issues.length) {
+      return {
+        ...context, pricedEntry: { ...entry }, baseCost: null, deliveryCost: null,
+        totalCost: entry.equipment_cost,
+        attachmentRows: bindings.attachmentRows.map(row => ({ ...row, cost: null })),
+        subAttachmentRows: bindings.subAttachmentRows.map(row => ({ ...row, cost: null })),
+      };
+    }
 
     const getRentalCost = (item, rateOverride) => {
       if (rateOverride !== undefined && rateOverride !== null) return rateOverride * durationOverride;
@@ -71,44 +81,37 @@ export function calcEquipment(selected, inventory) {
       return 0;
     };
 
-    let entryTotal = getRentalCost(eq, entry.custom_rate);
+    const baseCost = getRentalCost(eq, entry.custom_rate);
+    let entryTotal = baseCost;
     const deliveryCharge =
       entry.custom_delivery_charge !== undefined && entry.custom_delivery_charge !== null
         ? entry.custom_delivery_charge
         : num(eq.pickup_delivery_cost);
     if (entry.include_delivery) entryTotal += deliveryCharge;
 
-    // Current CCS rows may use normalized `attachments[]`; SignEstimate Pro
-    // also persisted attachment_counts / attachment_ids / sub_attachment_counts.
-    // Honor every source storage shape so reopening an older configuration does
-    // not silently drop equipment costs.
-    if (entry.attachments?.length) {
-      entry.attachments.forEach((att) => {
-        const id = att.id || att.inventory_id;
-        const a = inventory.find((i) => i.id === id);
-        if (a) entryTotal += getRentalCost(a) * (att.qty || 1);
-      });
-    } else if (entry.attachment_counts) {
-      Object.entries(entry.attachment_counts).forEach(([id, qty]) => {
-        const a = inventory.find((i) => i.id === id && i.material_type === "attachment");
-        if (a) entryTotal += getRentalCost(a) * num(qty, 0);
-      });
-    } else if (entry.attachment_ids?.length) {
-      entry.attachment_ids.forEach((id) => {
-        const a = inventory.find((i) => i.id === id && i.material_type === "attachment");
-        if (a) entryTotal += getRentalCost(a);
-      });
-    }
-
-    if (entry.sub_attachment_counts) {
-      Object.entries(entry.sub_attachment_counts).forEach(([id, qty]) => {
-        const sub = inventory.find((i) => i.id === id && i.material_type === "sub_attachment");
-        if (sub) entryTotal += getRentalCost(sub) * num(qty, 0);
-      });
-    }
-
-    return { ...entry, equipment_cost: entryTotal };
+    const pricedLines = rows => rows.map(row => {
+      // Zero-count legacy keys may point at removed records and are not rented.
+      if (!row.inventory) return { ...row, cost: 0 };
+      const cost = getRentalCost(row.inventory) * row.quantity;
+      entryTotal += cost;
+      return { ...row, cost };
+    });
+    const attachmentRows = pricedLines(bindings.attachmentRows);
+    const subAttachmentRows = pricedLines(bindings.subAttachmentRows);
+    return {
+      ...context, pricedEntry: { ...entry, equipment_cost: entryTotal },
+      baseCost, deliveryCost: entry.include_delivery ? deliveryCharge : 0,
+      attachmentRows, subAttachmentRows, totalCost: entryTotal,
+    };
   });
+}
+
+export function calcEquipment(selected, inventory = []) {
+  return calcEquipmentPricing(selected, inventory).map(row => row.pricedEntry);
+}
+
+export function equipmentCostTotal(pricedEntries = []) {
+  return pricedEntries.reduce((sum, entry) => sum + num(entry.equipment_cost), 0);
 }
 
 export function calcProject(project, inventory, settings = {}) {
@@ -131,7 +134,7 @@ export function calcProject(project, inventory, settings = {}) {
   const itemsTotal = sum("item_total_cost") + delivery.concreteTotal;
   const wallTotal = walls.reduce((s, w) => s + num(w.calculatedCosts?.totalCost), 0);
   const polesTotal = poles.reduce((s, p) => s + num(p.total_cost), 0);
-  const equipmentTotal = equipment.reduce((s, e) => s + num(e.equipment_cost), 0);
+  const equipmentTotal = equipmentCostTotal(equipment);
 
   const totals = {
     // Bagged concrete is priced per item; ready-mix is priced per delivered truck.
