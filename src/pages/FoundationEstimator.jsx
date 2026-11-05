@@ -41,6 +41,7 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
+import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt } from "@/components/estimator/foundation/foundationSyncRecovery";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { convertFoundationToBrickStone } from "@/components/estimator/foundation/convertToBrickStone";
 import { createEstimateReadOnlyShareLink } from "@/components/estimator/moduleShared/moduleProjectActions";
@@ -115,6 +116,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const saveAttemptRef = useRef(null);
   const exitGenerationRef = useRef(-1);
   const [saveError, setSaveError] = useState("");
+  const [linkedEstimate, setLinkedEstimate] = useState(null);
+  const [recoveryRequired, setRecoveryRequired] = useState(false);
 
   const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}`;
   if (contextKeyRef.current !== contextKey) {
@@ -123,7 +126,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     contextGenerationRef.current += 1;
     acknowledgedVersionRef.current = project?.id ? { sourceId: project.id, updated_date: project.updated_date } : null;
   }
-  const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id;
+  const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id && (!estimateId || linkedEstimate?.id === estimateId);
   currentEditorRef.current = {
     sourceId: contextLoaded ? project.id : null,
     estimateId: estimateId || null,
@@ -153,6 +156,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   useEffect(() => {
     if (!id) {
       setLoading(false);
+      setProject(null);
+      setLinkedEstimate(null);
+      setRecoveryRequired(false);
+      setDirty(false);
+      setHistory({ past: [], future: [] });
+      setSaveError("");
       return;
     }
     let active = true;
@@ -166,14 +175,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
       loadAllEntityRows({ entity: staffEntities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
       loadAllEntityRows({ entity: staffEntities.Settings, sort: "created_date", label: "Estimator Settings" }),
+      estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
     ])
-      .then(([proj, inv, concreteServices, settingRows]) => {
+      .then(([proj, inv, concreteServices, settingRows, est]) => {
         if (!active) return;
-        if (!proj?.id) {
-          setProject(null);
+        if (proj?.id !== id || (estimateId && est?.id !== estimateId)) {
+          setProject(proj?.id === id ? proj : null);
+          if (estimateId && est?.id !== estimateId) setLoadError("Linked estimate could not be verified.");
           return;
         }
-        setProject({
+        setLinkedEstimate(est || null);
+        const merged = {
           ...proj,
           excavation_method: proj.excavation_method || "hand_dig",
           project_concrete_type: proj.project_concrete_type || "4000_ae",
@@ -185,7 +197,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           signage_cabinets: proj.signage_cabinets || [],
           landscape: proj.landscape || { cell_size_inches: 12, cells: {} },
           selected_equipment: proj.selected_equipment || [],
-        });
+        };
+        setProject(merged);
+        const rec = foundationSyncRecoveryState({ project: merged, estimateId, estimate: est });
+        if (["pending", "unsupported", "mismatch"].includes(rec.status)) {
+          setRecoveryRequired(true);
+          setDirty(true);
+        } else {
+          setRecoveryRequired(false);
+        }
         setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
         setSettings(
           Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
@@ -198,7 +218,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [id]);
+  }, [id, estimateId]);
 
   const calc = useMemo(
     () => (project ? calcProject(project, inventory, settings) : null),
@@ -223,10 +243,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!autoSave || !dirty) return;
+    if (!autoSave || !dirty || recoveryRequired) return;
     const t = setTimeout(() => saveRef.current?.(), 2000);
     return () => clearTimeout(t);
-  }, [autoSave, dirty, project]);
+  }, [autoSave, dirty, project, recoveryRequired]);
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -241,11 +261,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   }, [saving]);
   // Block accidental navigation while a save is in flight.
   useEffect(() => {
-    if (!saving) return undefined;
+    if (!saving && !dirty && !recoveryRequired) return undefined;
     const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [saving]);
+  }, [saving, dirty, recoveryRequired]);
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
@@ -397,13 +417,30 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             throw Object.assign(new Error("Save superseded by a newer edit or route change."), { superseded: true });
           }
         }
+        {
+          const prior = captured.project.builder_sync_attempt;
+          if (prior != null) {
+            const ok = validateFoundationSyncAttempt(prior)
+              && prior.source_project_id === captured.project.id
+              && (!!captured.estimateId && prior.estimate_id === captured.estimateId);
+            if (!ok) throw new Error("An unrecognised Builder sync receipt blocks saving. Reload and retry.");
+          }
+        }
+        if (captured.estimateId) {
+          captured.syncAttempt = createFoundationSyncAttempt({
+            sourceId: captured.project.id,
+            estimateId: captured.estimateId,
+            key: newCreationRequestKey("foundation_sync"),
+            requestedAt: new Date().toISOString(),
+          });
+        }
         const ack = acknowledgedVersionRef.current;
         const expectedUpdatedAt = ack?.sourceId === saveContext.sourceId ? ack.updated_date : captured.project.updated_date;
         return updateBuilderSourceProject({
           entity: staffEntities.FoundationProject,
           sourceId: saveContext.sourceId,
           expectedUpdatedAt,
-          data: { ...captured.basePayload, customer_pricing: customerPricing },
+          data: { ...captured.basePayload, customer_pricing: customerPricing, ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : {}) },
           estimateId: captured.estimateId,
           label: "Foundation project",
         });
@@ -418,6 +455,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               builder_calculation: { totals: captured.totals, delivery: captured.delivery, cabinet_cost: captured.cabinetCost, landscape_cost: captured.landscapeCost, section_total: captured.sectionTotal },
             },
             liveTotal: captured.sectionTotal,
+          }).then((result) => {
+            const ackLine = result?.line || result;
+            assertFoundationBuilderAcknowledgment({ sourceProject: savedProject, estimateId: captured.estimateId, line: ackLine });
+            captured.ackLine = ackLine;
+            return result;
           })
         : null,
     }).then((outcome) => {
@@ -429,11 +471,20 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         acknowledgedVersionRef.current = { sourceId: outcome.sourceId, updated_date: outcome.sourceVersion };
       }
       if (outcome.status === "saved" && fullyCurrent) {
-        setProject((prev) => (prev && prev.id === outcome.sourceId ? { ...prev, updated_date: outcome.sourceVersion, ...(captured.computedPricing !== undefined ? { customer_pricing: captured.computedPricing } : {}) } : prev));
+        setRecoveryRequired(false);
+        setProject((prev) => (prev && prev.id === outcome.sourceId ? { ...prev, updated_date: outcome.sourceVersion, ...(captured.computedPricing !== undefined ? { customer_pricing: captured.computedPricing } : {}), ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : {}) } : prev));
+        if (captured.ackLine) {
+          setLinkedEstimate((prev) => (prev && prev.id === captured.estimateId ? { ...prev, line_items: (prev.line_items || []).map((it) => (it.module_key === "foundation" && it.project_id === outcome.sourceId ? captured.ackLine : it)) } : prev));
+        }
         setDirty(false);
         setSaveError("");
         try { onSaved?.(); } catch (e) { console.error(e); outcome.warnings.push("observer_error"); }
+      } else if (sameContext && outcome.status === "superseded" && outcome.builderSync === "pending") {
+        setRecoveryRequired(true);
+        setSaveError("Source saved; estimate/Builder sync incomplete. Retry save.");
+        setDirty(true);
       } else if (sameContext && outcome.status === "partial") {
+        setRecoveryRequired(true);
         setSaveError("Source saved; estimate/Builder sync incomplete. Retry save.");
         setDirty(true);
       } else if (sameContext && (outcome.status === "conflict" || outcome.status === "failed")) {
@@ -530,6 +581,22 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
         {saveError && <div role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">{saveError}</div>}
 
+        {(() => {
+          const recovery = foundationSyncRecoveryState({ project, estimateId, estimate: linkedEstimate });
+          if (!["pending", "unsupported", "mismatch"].includes(recovery.status) && !recoveryRequired) return null;
+          const detail = recovery.status === "mismatch" && recovery.attempt?.estimate_id
+            ? "Open the linked estimate to review." : recovery.message || "A saved Builder sync attempt is still unacknowledged.";
+          return (
+            <div role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900 flex items-center gap-3">
+              <span>{detail} Current displayed totals will be synchronized; accepted quote prices remain under the platform workflow. {dirty ? "You also have unsaved local edits." : ""}</span>
+              {recovery.status === "mismatch" && recovery.attempt?.estimate_id && (
+                <a className="underline" href={`/EstimateDetail?id=${encodeURIComponent(recovery.attempt.estimate_id)}`}>Open estimate</a>
+              )}
+              <button type="button" disabled={saving || recovery.status === "unsupported" || recovery.status === "mismatch"} className="px-2 py-1 rounded bg-amber-600 text-white disabled:opacity-50" onClick={() => saveRef.current?.()}>Review and retry Save</button>
+            </div>
+          );
+        })()}
+
         <FoundationToolbar
           title="Edit Concrete | Masonry | Poles Estimate"
           subtitle="Engineering, foundation, excavation, wall & pole estimating"
@@ -552,7 +619,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           onSwapToBrickStone={handleSwapToBrickStone}
           onShareLink={estimateId ? handleShareLink : undefined}
           onHelp={() => setShowHelp((v) => !v)}
-          onBack={embedded ? onClose : undefined}
+          onBack={embedded
+            ? () => {
+                if (saving) return;
+                if ((dirty || recoveryRequired) && !window.confirm("You have unsaved changes or an unacknowledged Builder sync. Leave without saving?")) return;
+                onClose?.();
+              }
+            : () => {
+                if (saving) return;
+                if ((dirty || recoveryRequired) && !window.confirm("You have unsaved changes or an unacknowledged Builder sync. Leave without saving?")) return;
+                navigate(backTo);
+              }}
         />
 
         {showHelp && (
