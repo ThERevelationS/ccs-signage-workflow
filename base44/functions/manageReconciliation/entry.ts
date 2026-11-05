@@ -152,6 +152,9 @@ async function unstampPayments({ Payment, batchId, ids }: any) {
   const results = await Promise.all((ids || []).map(async (rawId: any) => {
     const id = clean(rawId);
     if (!id) return { id, unstamped: false };
+    // CAS-anchored unstamp: a null result means the payment kept some other
+    // batch's lock or errored — the skipped list reports every such row to
+    // the caller rather than silently dropping it.
     const result = await Payment.updateMany(
       { id, reconciliation_batch_id: batchId },
       { $set: { reconciliation_batch_id: '' } },
