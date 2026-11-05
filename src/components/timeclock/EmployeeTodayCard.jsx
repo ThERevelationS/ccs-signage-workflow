@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 
 function formatDuration(totalMinutes) {
   const minutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
@@ -40,12 +40,13 @@ export default function EmployeeTodayCard({
     const requestSeq = ++statusSeqRef.current;
     setLoading(true);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      // Read-cache path shares the 15s dedupe slot with the provider's status
+      // escalation — key order must match TimeClockStatusContext's payload.
+      const data = await invokeTimeClockAction({
         action: "status",
-        session_token: sessionToken,
-        target_email: user.email,
+        sessionToken,
+        payload: { session_token: sessionToken, target_email: user.email },
       });
-      const data = response?.data || response;
       if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
       if (!data?.success) throw new Error(data?.error || "Current Time Clock status could not be verified.");
       if (String(data?.user?.email || "").trim().toLowerCase() !== requestEmail) return;
