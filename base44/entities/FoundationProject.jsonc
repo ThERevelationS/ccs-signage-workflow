@@ -23,6 +23,27 @@
       "type": "string",
       "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
     },
+    "builder_sync_attempt": {
+      "type": "object",
+      "description": "Internal source-save receipt; synchronization is acknowledged by the linked estimate line at the same source updated_date.",
+      "properties": {
+        "schema_version": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "source_project_id": {
+          "type": "string"
+        },
+        "estimate_id": {
+          "type": "string"
+        },
+        "requested_at": {
+          "type": "string"
+        }
+      }
+    },
     "status": {
       "type": "string",
       "enum": [
