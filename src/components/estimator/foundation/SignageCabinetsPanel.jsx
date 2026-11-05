@@ -2,12 +2,14 @@ import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { money } from "./foundationCalc";
 
-const blankCabinet = (mount, index) => ({
+const blankCabinet = (mount, index, canonId) => ({
   id: `cab_${Date.now()}`,
   description: "",
   mount,
   foundation_index: mount === "foundation" ? index : undefined,
+  foundation_component_id: mount === "foundation" ? canonId || "" : "",
   pole_index: mount === "pole" ? index : undefined,
+  pole_component_id: mount === "pole" ? canonId || "" : "",
   width_inches: 48,
   height_inches: 24,
   depth_inches: 8,
@@ -65,14 +67,46 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
     if (!window.confirm("Remove this cabinet?")) return;
     onChange(cabinets.filter((_, i) => i !== idx));
   };
-  const add = (mount, index) => onChange([...cabinets, blankCabinet(mount, index)]);
+  const add = (mount, index) => {
+    const parent = mount === "foundation" ? items[index] : poles[index];
+    onChange([...cabinets, blankCabinet(mount, index, parent?.component_id)]);
+  };
+
+  const canonParentId = (c) => (c.mount === "pole" ? c.pole_component_id : c.foundation_component_id);
+  const hasCanonProp = (c) => (c.mount === "pole" ? Object.prototype.hasOwnProperty.call(c, "pole_component_id") : Object.prototype.hasOwnProperty.call(c, "foundation_component_id"));
 
   const group = (mount, index) =>
     cabinets
       .map((c, i) => ({ c, i }))
-      .filter(({ c }) =>
-        mount === "foundation" ? c.mount === "foundation" && c.foundation_index === index : c.mount === "pole" && c.pole_index === index
-      );
+      .filter(({ c }) => {
+        if (c.mount !== mount) return false;
+        const parent = mount === "foundation" ? items[index] : poles[index];
+        const canon = canonParentId(c);
+        if (hasCanonProp(c)) return canon !== "" && canon === parent?.component_id;
+        return mount === "foundation" ? c.foundation_index === index : c.pole_index === index;
+      });
+
+  const orphans = cabinets
+    .map((c, i) => ({ c, i }))
+    .filter(({ c }) => {
+      if (c.mount !== "pole" && c.mount !== "foundation") return true;
+      const canon = canonParentId(c);
+      const pool = c.mount === "pole" ? poles : items;
+      if (hasCanonProp(c)) {
+        if (canon === "") return true;
+        return !pool.some((p) => p?.component_id === canon);
+      }
+      const legacy = c.mount === "pole" ? c.pole_index : c.foundation_index;
+      const resolved = typeof legacy === "number" && Number.isInteger(legacy) && legacy >= 0 && pool[legacy] !== undefined;
+      return !resolved;
+    });
+
+  const reassign = (i, mount, canonId) => {
+    const pool = mount === "pole" ? poles : items;
+    const index = pool.findIndex((p) => p?.component_id === canonId);
+    if (mount === "pole") update(i, { mount: "pole", pole_component_id: canonId, pole_index: canonId === "" || index < 0 ? undefined : index, foundation_component_id: "", foundation_index: undefined });
+    else update(i, { mount: "foundation", foundation_component_id: canonId, foundation_index: canonId === "" || index < 0 ? undefined : index, pole_component_id: "", pole_index: undefined });
+  };
 
   return (
     <div className="space-y-4">
@@ -107,7 +141,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                   <div className="space-y-2">
                     {rows.map(({ c, i }) => (
                       <CabinetRow
-                        key={c.id || i}
+                        key={c.component_id || c.id || i}
                         cabinet={c}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
@@ -151,7 +185,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                   <div className="space-y-2">
                     {rows.map(({ c, i }) => (
                       <CabinetRow
-                        key={c.id || i}
+                        key={c.component_id || c.id || i}
                         cabinet={c}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
@@ -162,6 +196,45 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
               </div>
             );
           })
+        )}
+
+        {orphans.length > 0 && (
+          <div data-orphan="true" className="border border-amber-300 bg-amber-50 rounded-sm p-2 mt-2">
+            <span className="text-[12px] font-semibold text-amber-800">Unassigned cabinets</span>
+            <div className="space-y-2 mt-2">
+              {orphans.map(({ c, i }) => (
+                <div key={c.component_id || c.id || i}>
+                  <CabinetRow
+                    cabinet={c}
+                    onChange={(changes) => update(i, changes)}
+                    onRemove={() => remove(i)}
+                  />
+                  <label className="block text-[10px] text-amber-800 mt-1">
+                    Reassign
+                    <select
+                      className="ml-2 h-7 rounded-sm border border-amber-300 bg-white px-1 text-[11px]"
+                      value=""
+                      aria-label="Reassign cabinet"
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "") return;
+                        if (v.startsWith("pole:")) reassign(i, "pole", v.slice(5));
+                        else if (v.startsWith("foundation:")) reassign(i, "foundation", v.slice(11));
+                      }}
+                    >
+                      <option value="">Select parent…</option>
+                      {items.map((it, ix) => (
+                        <option key={it.component_id || ix} value={`foundation:${it.component_id}`}>{it.description || `Foundation ${ix + 1}`}</option>
+                      ))}
+                      {poles.map((po, ix) => (
+                        <option key={po.component_id || ix} value={`pole:${po.component_id}`}>{po.description || `Pole ${ix + 1}`}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
