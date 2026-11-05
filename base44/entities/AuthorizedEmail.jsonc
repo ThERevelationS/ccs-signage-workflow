@@ -210,6 +210,16 @@
       "default": false,
       "description": "Admin-only grant to approve the user's own Time Clock shifts. OFF by default - without it, another administrator must approve."
     },
+    "is_full_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Full administrator - can manage roles and admin privileges (granted only via approved access request)."
+    },
+    "is_owner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Owner - the top privilege tier above full admin. Only an existing owner can grant or revoke it; email-anchored owners (APP_OWNER_EMAILS) cannot be revoked through the app."
+    },
     "face_descriptors": {
       "type": "array",
       "description": "Stored face recognition descriptors for this user",
