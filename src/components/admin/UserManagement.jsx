@@ -147,7 +147,8 @@ export default function UserManagement() {
     can_view_resources: false,
     employment_type: "hourly",
     can_work_pause: false,
-    can_self_approve_shifts: false
+    can_self_approve_shifts: false,
+    is_owner: false
   });
   const activeAccountDraft = useRef(formData);
   activeAccountDraft.current = formData;
@@ -301,7 +302,7 @@ export default function UserManagement() {
       sales_roles: ["Task Assigned"], can_import_export: false,
       can_order_export: false, can_view_resources: false,
       employment_type: "hourly", can_work_pause: false,
-      can_self_approve_shifts: false,
+      can_self_approve_shifts: false, is_owner: false,
     });
     // A prior session may still have an invitation in flight. Release only its
     // UI ownership; never let it resume onboarding or Smartsheet actions.
@@ -411,7 +412,7 @@ export default function UserManagement() {
     const rows = [
       ["Name", "Email", "Role", "Full Admin", "Sales Roles", "Pages Access"],
       ...visibleUsers.map((u) => [
-        u.full_name || "", u.email || "", u.role || "",
+        u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
         u.is_full_admin === true ? "yes" : "",
         (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
         u.role === "admin" ? getAdminAccessSummary(u) : "",
@@ -430,7 +431,7 @@ export default function UserManagement() {
     const rows = [
       ["Name", "Email", "Role", "Full Admin", ...tabs.map(t => t.label)],
       ...visibleUsers.map((u) => [
-        u.full_name || "", u.email || "", u.role || "",
+        u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
         u.is_full_admin === true ? "yes" : "",
         ...tabs.map((t) => {
           if (u.is_full_admin === true) return "yes";
@@ -449,7 +450,7 @@ export default function UserManagement() {
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const tabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ label: `${g.label}: ${t.label}`, value: t.value })));
     const userRows = visibleUsers.map((u) => [
-      u.full_name || "", u.email || "", u.role || "",
+      u.full_name || "", u.email || "", u.is_owner === true ? "owner" : (u.role || ""),
       u.is_full_admin === true ? "yes" : "",
       (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
       u.role === "admin" ? getAdminAccessSummary(u) : "",
@@ -509,6 +510,10 @@ export default function UserManagement() {
       default: return an.localeCompare(bn);
     }
   });
+
+  // The signed-in admin's own record — Owner-tier powers (granting Owner,
+  // demoting an owner) are gated on this flag, not merely on role: 'admin'.
+  const actorIsOwner = users.some((u) => u.email?.toLowerCase() === selfEmail && u.is_owner === true);
 
   const loadUsers = async () => {
     // A stale mutation must not even start a read with its previous token.
@@ -1659,6 +1664,7 @@ export default function UserManagement() {
         role: verifiedUser.role || "user",
         sales_roles: Array.isArray(verifiedUser.sales_roles) ? verifiedUser.sales_roles : [],
         is_full_admin: verifiedUser.is_full_admin === true,
+        is_owner: verifiedUser.is_owner === true,
         can_self_approve_shifts: verifiedUser.can_self_approve_shifts === true,
         admin_permissions: verifiedUser.admin_permissions && typeof verifiedUser.admin_permissions === "object" ? verifiedUser.admin_permissions : {},
       });
@@ -1678,8 +1684,16 @@ export default function UserManagement() {
     }
   };
 
-  const getRoleBadge = (role) => {
-    if (role === "admin") {
+  const getRoleBadge = (user) => {
+    if (user?.is_owner === true) {
+      return (
+        <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">
+          <Crown className="w-3 h-3" />
+          Owner
+        </Badge>
+      );
+    }
+    if (user?.role === "admin") {
       return (
         <Badge className="bg-purple-100 text-purple-700 flex items-center gap-1">
           <Crown className="w-3 h-3" />
@@ -2255,7 +2269,9 @@ export default function UserManagement() {
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
                     style={{
-                      background: user.role === 'admin'
+                      background: user.is_owner === true
+                        ? 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)'
+                        : user.role === 'admin'
                         ? 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)'
                         : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)'
                     }}
@@ -2267,7 +2283,7 @@ export default function UserManagement() {
                       <span className="font-medium text-gray-800">
                         {user.full_name || "No name set"}
                       </span>
-                      {getRoleBadge(user.role)}
+                      {getRoleBadge(user)}
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
                     {user.reports_to && <span className="text-[11px] text-gray-400">reports to {user.reports_to}</span>}
@@ -2531,13 +2547,19 @@ export default function UserManagement() {
                   <div>
                     <Label>Role</Label>
                     <Select
-                      value={formData.role}
-                      onValueChange={(val) => changeAccountDraft({
-                        role: val,
-                        can_order_export: val === 'admin' ? activeAccountDraft.current.can_order_export : false,
-                        // Auto-enable resources for admins
-                        can_view_resources: val === 'admin' ? true : activeAccountDraft.current.can_view_resources
-                      })}
+                      value={formData.is_owner === true ? "owner" : formData.role}
+                      disabled={!actorIsOwner && formData.is_owner === true}
+                      onValueChange={(val) => {
+                        const owner = val === 'owner';
+                        const role = owner ? 'admin' : val;
+                        changeAccountDraft({
+                          role,
+                          is_owner: owner,
+                          can_order_export: role === 'admin' ? activeAccountDraft.current.can_order_export : false,
+                          // Auto-enable resources for admins
+                          can_view_resources: role === 'admin' ? true : activeAccountDraft.current.can_view_resources
+                        });
+                      }}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue />
@@ -2555,8 +2577,19 @@ export default function UserManagement() {
                             Admin
                           </div>
                         </SelectItem>
+                        {(actorIsOwner || formData.is_owner === true) && (
+                          <SelectItem value="owner">
+                            <div className="flex items-center gap-2">
+                              <Crown className="w-4 h-4 text-amber-600" />
+                              Owner
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
+                    {formData.is_owner === true && (
+                      <p className="text-xs text-amber-700 mt-1">Owner — the highest tier. Only an owner can change or remove this.</p>
+                    )}
                   </div>
 
                   <div>
@@ -3285,6 +3318,7 @@ export default function UserManagement() {
       {/* Admin Access Dialog */}
       <AdminAccessDialog
         user={accessUser}
+        actorIsOwner={actorIsOwner}
         open={!!accessUser}
         onOpenChange={(open) => { if (!open) setAccessUser(null); }}
         sessionToken={sessionToken}
