@@ -3662,8 +3662,8 @@ Deno.serve(async (req) => {
         }
       }
 
-      let elapsedToday = 0;
-      let paidToday = 0;
+      let activeElapsed = 0;
+      let activePaid = 0;
       let breakMinutes = 0;
       let paidBreakMinutes = 0;
       let pauseMinutes = 0;
@@ -3674,8 +3674,8 @@ Deno.serve(async (req) => {
         paidBreakMinutes = Math.max(0, Number(breakSummary?.paid_minutes || 0));
         pauseMinutes = Math.max(0, Number(pauseSummary?.total_minutes || 0));
         const startMs = new Date(String(entry.clock_in || '')).getTime();
-        elapsedToday = Number.isFinite(startMs) ? Math.max(0, (nowMs - startMs) / 60000) : 0;
-        paidToday = Math.max(0, elapsedToday
+        activeElapsed = Number.isFinite(startMs) ? Math.max(0, (nowMs - startMs) / 60000) : 0;
+        activePaid = Math.max(0, activeElapsed
           - Math.max(0, Number(breakSummary?.unpaid_minutes || 0))
           - pauseMinutes
           - liveUnpaidMinutes
@@ -3688,6 +3688,8 @@ Deno.serve(async (req) => {
       const weeklyDaily = [0, 0, 0, 0, 0, 0, 0];
       let weeklyPaid = 0;
       let monthlyPaid = 0;
+      let paidToday = 0;
+      let elapsedToday = 0;
       let lastClockOutMs = 0;
       const workedDayKeys = new Set<string>();
       if (weekStartKey) {
@@ -3702,14 +3704,32 @@ Deno.serve(async (req) => {
           const outMs = row.clock_out ? new Date(String(row.clock_out)).getTime() : 0;
           if (Number.isFinite(outMs) && outMs > lastClockOutMs && outMs < nowMs) lastClockOutMs = outMs;
           const paid = row.id === entry?.id
-            ? paidToday
+            ? activePaid
             : await trackerPaidMinutesForEntry({ entry: row, breakEntity, workPauseEntity, userEmail: target.email, nowMs });
           if (monthKey && dayKey.startsWith(monthKey)) monthlyPaid += paid;
+          // "Today" counts every segment anchored to today — completed shifts
+          // plus the live one — so combining shifts visibly updates the figure.
+          if (dayKey === todayKey) {
+            paidToday += paid;
+            if (row.id === entry?.id) {
+              elapsedToday += activeElapsed;
+            } else {
+              const inMs = new Date(String(row.clock_in || '')).getTime();
+              const endMs = outMs > inMs ? outMs : inMs;
+              if (Number.isFinite(inMs) && Number.isFinite(endMs)) elapsedToday += Math.max(0, (endMs - inMs) / 60000);
+            }
+          }
           if (dayKey < weekStartKey) continue;
           const dayIndex = (new Date(`${dayKey}T00:00:00Z`).getUTCDay() + 6) % 7;
           weeklyDaily[dayIndex] += paid;
           weeklyPaid += paid;
         }
+      }
+      // No entries bucketed today but a live shift still counts toward today
+      // when it is not anchored to an earlier combined workday.
+      if (entry && paidToday === 0 && elapsedToday === 0) {
+        const activeDayKey = String(entry.work_day_anchor_date || '').trim() || dateKeyInCompanyTime(entry.clock_in);
+        if (activeDayKey === todayKey) { paidToday = activePaid; elapsedToday = activeElapsed; }
       }
       // Consecutive worked days ending today, and hours since the last punch out.
       let consecutiveDays = 0;
