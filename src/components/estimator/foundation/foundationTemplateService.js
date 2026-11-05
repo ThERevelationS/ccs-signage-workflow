@@ -11,12 +11,22 @@ export async function saveFoundationTemplate({ idempotencyKey, data }) {
   });
 }
 
+const isNotFound = (e) => e?.status === 404 || e?.response?.status === 404;
+
 export async function deleteFoundationTemplate(templateId) {
   const id = String(templateId || "").trim();
   if (!id) throw new Error("Foundation template id is required.");
 
-  const current = await base44.entities.ProjectTemplate.get(id).catch(() => null);
-  if (!current) return true;
+  let current;
+  try {
+    current = await base44.entities.ProjectTemplate.get(id);
+  } catch (e) {
+    if (isNotFound(e)) return true;
+    throw e;
+  }
+  if (current === null || current === undefined || typeof current !== "object" || Array.isArray(current) || current.id !== id) {
+    throw new Error("Foundation template record could not be verified; delete aborted.");
+  }
   await deleteEntityIfUnchanged({
     entity: base44.entities.ProjectTemplate,
     record: current,
@@ -24,3 +34,4 @@ export async function deleteFoundationTemplate(templateId) {
   });
   return true;
 }
+
