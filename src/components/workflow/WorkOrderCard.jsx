@@ -1012,14 +1012,14 @@ export default function WorkOrderCard({
                 className={`h-5 px-2 text-xs font-bold rounded-full transition-all ${
                 isAsap ?
                 'bg-red-600 hover:bg-red-700 text-white' :
-                'bg-transparent hover:bg-gray-100 text-gray-400'}`
+                'bg-transparent hover:bg-gray-100 text-gray-500'}`
                 }
                 style={isAsap ? {
                   fontSize: '10px',
                   boxShadow: '0 0 8px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
                 } : {
                   fontSize: '10px',
-                  opacity: 0.4
+                  opacity: 0.75
                 }}
               >
                 <span className={!isAsap ? 'line-through' : ''}>ASAP</span>
