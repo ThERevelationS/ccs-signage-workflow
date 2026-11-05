@@ -1,3 +1,5 @@
+import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
+
 // Availability only: this does not validate rates, geometry, or engineering.
 export function foundationAssemblyCatalogIssues(project, inventory = []) {
   const available = new Set(inventory.map((row) => row.id));
@@ -29,10 +31,11 @@ export function foundationAssemblyCatalogIssues(project, inventory = []) {
       check(wall, index, "internal_wall", "internalMaterialId", "Internal wall");
     }
   }
-  return issues;
+  return [...issues, ...foundationEquipmentCatalogIssues(project?.selected_equipment || [], inventory)];
 }
 
 // A missing snapshot is not evidence of a free material.
 export function hasFoundationCostSnapshot(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
+
