@@ -32,7 +32,8 @@ const SOURCE_LABEL = {
   default_markup: "default",
 };
 
-export default function MatrixSuggestPanel({ estimate, lines = [], onApplyLine, readOnly = false }) {
+const EMPTY = [];
+export default function MatrixSuggestPanel({ estimate, lines = EMPTY, onApplyLine, readOnly = false }) {
   const [open, setOpen] = useState(false);
   const [catalog, setCatalog] = useState(null);
   const [loading, setLoading] = useState(false);
