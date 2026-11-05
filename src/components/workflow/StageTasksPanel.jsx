@@ -21,6 +21,7 @@ export default function StageTasksPanel({ stage }) {
         entity: GeneralTask,
         query: { completed: false },
         sort: "created_date",
+        cacheTtlMs: 30000,
         label: `Open ${stage} office tasks`,
       });
       const filtered = (all || []).filter(t => t.stage === stage);
