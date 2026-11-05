@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { isOwnerRecord, isOwnerEmail, roleLabelFor } from '../../shared/ownerRole.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { runDeletionImpactChecks } from '../../shared/deletionImpactBoundedChecks.mjs';
 
@@ -69,7 +70,9 @@ function adminUserView(row: any) {
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
     can_self_approve_shifts: row?.role === 'admin' && row?.can_self_approve_shifts === true,
-    is_full_admin: row?.is_full_admin === true,
+    is_owner: isOwnerRecord(row),
+    role_label: roleLabelFor(row),
+    is_full_admin: row?.is_full_admin === true || isOwnerRecord(row),
     admin_permissions: row?.admin_permissions && typeof row.admin_permissions === 'object' && !Array.isArray(row.admin_permissions) ? row.admin_permissions : {},
     hr_data: row?.hr_data && typeof row.hr_data === 'object' && !Array.isArray(row.hr_data) ? row.hr_data : {},
     onboarding_complete: row?.onboarding_complete === true,
@@ -127,6 +130,7 @@ function cleanManagedFields(value: any) {
   if (Object.prototype.hasOwnProperty.call(input, 'force_password_reset')) out.force_password_reset = input.force_password_reset === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_deactivated')) out.is_deactivated = input.is_deactivated === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_owner')) out.is_owner = input.is_owner === true;
   if (Object.prototype.hasOwnProperty.call(input, 'admin_permissions')) {
     const perms = input.admin_permissions;
     if (!perms || typeof perms !== 'object' || Array.isArray(perms) || JSON.stringify(perms).length > 20000) {
@@ -488,6 +492,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
     can_work_pause: input?.can_work_pause === true,
     can_self_approve_shifts: role === 'admin' && input?.can_self_approve_shifts === true,
     can_approve_quotes: input?.can_approve_quotes === true,
+    is_owner: input?.is_owner === true,
     onboarding_complete: false,
   };
 
@@ -572,6 +577,9 @@ Deno.serve(async (req) => {
       if (createWantsAdmin && actor?.is_full_admin !== true) {
         return Response.json({ error: 'Only a full admin can create administrator accounts.' }, { status: 403 });
       }
+      if (body?.data?.is_owner === true && !isOwnerRecord(actor)) {
+        return Response.json({ error: 'Only an owner can grant the Owner role.' }, { status: 403 });
+      }
       const result = await createUser(AuthorizedEmail, body?.data);
       return Response.json({ success: true, ...result });
     }
@@ -584,7 +592,8 @@ Deno.serve(async (req) => {
       const desired = cleanManagedFields(body?.next_fields);
       const touchesPrivilege = Object.prototype.hasOwnProperty.call(desired, 'role') ||
         Object.prototype.hasOwnProperty.call(desired, 'is_full_admin') ||
-        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions');
+        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions') ||
+        Object.prototype.hasOwnProperty.call(desired, 'is_owner');
       if (touchesPrivilege && actor?.is_full_admin !== true) {
         return Response.json({ error: 'Only a full admin can change roles or admin privileges.' }, { status: 403 });
       }
@@ -604,6 +613,26 @@ Deno.serve(async (req) => {
           (Array.isArray(r?.requested_sections) && r.requested_sections.includes('full_admin')));
         if (!valid) {
           return Response.json({ error: 'Full-admin grants require an approved access request. Create one via request admin access, then have a second admin approve it.' }, { status: 403 });
+        }
+      }
+      // Owner tier: granting or revoking Owner requires the actor to already
+      // be an owner. Email-anchored owners (the ownerRole bootstrap list)
+      // cannot be revoked or demoted through the app — that anchor is what
+      // guarantees at least one privileged account always exists.
+      if (Object.prototype.hasOwnProperty.call(desired, 'is_owner')) {
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can grant or revoke the Owner role.' }, { status: 403 });
+        }
+        if (desired.is_owner === false && isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be revoked here.' }, { status: 409 });
+        }
+      }
+      if (isOwnerRecord(current) && desired.role && desired.role !== 'admin') {
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can demote an Owner account.' }, { status: 403 });
+        }
+        if (isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be demoted here.' }, { status: 409 });
         }
       }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
@@ -639,7 +668,7 @@ Deno.serve(async (req) => {
         // Existing users predate the Order Export field. Its absent stored
         // value means false, but the conditional write must retain the actual
         // absent baseline rather than falsely treating it as a conflict.
-        const legacyUnsetOrderExport = (field === 'can_order_export' || field === 'can_self_approve_shifts') && current?.[field] == null;
+        const legacyUnsetOrderExport = (field === 'can_order_export' || field === 'can_self_approve_shifts' || field === 'is_owner') && current?.[field] == null;
         const currentValue = legacyUnsetOrderExport ? false : current?.[field];
         if (!sameValue(currentValue, expectedInput[field]) && !sameValue(currentValue, desired[field])) {
           return Response.json({ error: `Authorized user changed in another session (${field}). Reload before saving.` }, { status: 409 });
@@ -702,6 +731,14 @@ Deno.serve(async (req) => {
       const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
       if (!expectedUpdatedDate || String(current.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ error: 'Authorized user changed in another session and was not removed.' }, { status: 409 });
+      }
+      if (isOwnerRecord(current)) {
+        if (isOwnerEmail(current.email)) {
+          return Response.json({ error: 'This account is anchored as an application owner and cannot be deleted here.' }, { status: 409 });
+        }
+        if (!isOwnerRecord(actor)) {
+          return Response.json({ error: 'Only an owner can remove an Owner account.' }, { status: 403 });
+        }
       }
       if (current.role === 'admin') await ensureAnotherAdminExists(AuthorizedEmail, id);
 
