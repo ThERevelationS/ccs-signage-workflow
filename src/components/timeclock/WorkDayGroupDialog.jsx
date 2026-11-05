@@ -7,13 +7,14 @@ import {
   formatMinutes,
 } from "@/components/timeclock/timeClockCompanyTime";
 
-// Shown after a clock-out (or status restore) when several completed shifts
-// all fit inside one 12-hour window. "Same work day" groups them for Time
-// Tracker day totals; "Separate" leaves each on its own day. The decision is
-// the employee's - the server only records it.
+// Shown at the second+ Clock In inside a 12-hour window (or after clock-out
+// when it went unanswered). The in-progress shift is marked "in progress" and
+// prior sessions show their recorded times. "Same work day" groups them for
+// Time Tracker day totals; "Separate" leaves each on its own day. The decision
+// is the employee's - the server only records it; punches are never changed.
 export default function WorkDayGroupDialog({
   open,
-  prompt, // { signature, anchor_date, span_minutes, entries: [{id,clock_in,clock_out,total_hours}] }
+  prompt, // { signature, anchor_date, span_minutes, entries: [{id,clock_in,clock_out,total_hours,pending}] }
   userName,
   busy = false,
   error = "",
@@ -24,6 +25,7 @@ export default function WorkDayGroupDialog({
   const [localError, setLocalError] = useState("");
   const shownError = localError || error;
   const entries = Array.isArray(prompt?.entries) ? prompt.entries : [];
+  const pendingCount = entries.filter((entry) => entry.pending).length;
 
   const act = async (fn) => {
     setLocalError("");
@@ -45,16 +47,19 @@ export default function WorkDayGroupDialog({
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            These shifts all fall inside one {prompt?.span_minutes ? formatMinutes(prompt.span_minutes) : "12-hour"} window. If they were really one work day with breaks in between, say so - your tracker will count all of them toward that day.
+            {pendingCount > 0
+              ? `You just clocked in again within one ${prompt?.span_minutes ? formatMinutes(prompt.span_minutes) : "12-hour"} window. Was this new shift part of the same work day as the session${entries.length - pendingCount === 1 ? "" : "s"} below?`
+              : `These shifts all fall inside one ${prompt?.span_minutes ? formatMinutes(prompt.span_minutes) : "12-hour"} window. If they were really one work day with breaks in between, say so - your tracker will count all of them toward that day.`}
           </p>
           <ul className="space-y-1.5">
             {entries.map((entry) => (
-              <li key={entry.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+              <li key={entry.id} className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${entry.pending ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
                 <span className="font-medium text-slate-800">
-                  {formatCompanyDateTime(entry.clock_in)} <span className="text-slate-400">-&gt;</span> {formatCompanyDateTime(entry.clock_out)}
+                  {formatCompanyDateTime(entry.clock_in)} <span className="text-slate-400">-&gt;</span>{" "}
+                  {entry.pending ? <span className="font-semibold text-blue-700">in progress</span> : formatCompanyDateTime(entry.clock_out)}
                 </span>
                 <span className="shrink-0 text-xs font-semibold text-slate-600">
-                  {Number.isFinite(Number(entry.total_hours)) ? `${Number(entry.total_hours).toFixed(2)}h` : ""}
+                  {entry.pending ? "now" : Number.isFinite(Number(entry.total_hours)) ? `${Number(entry.total_hours).toFixed(2)}h` : ""}
                 </span>
               </li>
             ))}
