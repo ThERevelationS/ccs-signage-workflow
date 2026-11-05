@@ -704,14 +704,6 @@ export default function AdminSettings() {
     }
   }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
 
-  useEffect(() => {
-    if (!isUnlocked || !selectedAdminTab) return;
-    setRecentTabs((prev) => {
-      const next = [selectedAdminTab, ...prev.filter((v) => v !== selectedAdminTab)].slice(0, 5);
-      try { localStorage.setItem("admin_recent_tabs", JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  }, [isUnlocked, selectedAdminTab]);
   const [emailGroups, setEmailGroups] = useState([]);
   const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
   const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
@@ -898,20 +890,12 @@ export default function AdminSettings() {
     window.addEventListener("online", on); window.addEventListener("offline", off);
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
-  const RECENTLY_CHANGED_TABS = new Set(["automations", "task_assignments", "users", "timeclock", "activity", "sync_conflicts", "corebridge", "permitting_rules", "backend", "integrations"]);
   const [tourSeen, setTourSeen] = useState(() => {
     try { return localStorage.getItem("admin_tour_seen") === "1"; } catch { return true; }
-  });
-  const [visitedTabs, setVisitedTabs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
   });
   const [pinnedTabs, setPinnedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
   });
-  const [recentTabs, setRecentTabs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("admin_recent_tabs") || "[]"); } catch { return []; }
-  });
-
   const togglePin = (tabValue) => {
     setPinnedTabs((prev) => {
       const next = prev.includes(tabValue) ? prev.filter((v) => v !== tabValue) : [...prev, tabValue];
@@ -2557,15 +2541,7 @@ export default function AdminSettings() {
             </div>
           </div>
         )}
-        <Tabs value={selectedAdminTab} onValueChange={(v) => {
-          handleAdminTabChange(v);
-          setVisitedTabs((cur) => {
-            if (cur.includes(v)) return cur;
-            const next = [...cur, v];
-            try { localStorage.setItem("admin_visited_tabs_v1", JSON.stringify(next)); } catch { /* ignore */ }
-            return next;
-          });
-        }} className={`w-full min-w-0 max-w-full space-y-6 ${adminSidebar ? "lg:flex lg:items-start lg:gap-4 lg:space-y-0" : ""}`}>
+        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className={`w-full min-w-0 max-w-full space-y-6 ${adminSidebar ? "lg:flex lg:items-start lg:gap-4 lg:space-y-0" : ""}`}>
           <div className={`clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm ${adminSidebar ? "lg:w-56 lg:shrink-0" : ""}`} style={{ background: '#FEE2E2' }}>
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1"><AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} /></div>
@@ -2656,21 +2632,6 @@ export default function AdminSettings() {
                 </button>
               ))}
             </div>
-            {recentTabs.length > 0 && (
-              <div className="mb-1 flex flex-wrap items-center gap-1 px-1 text-[11px] text-gray-500">
-                <span className="font-medium">Recent:</span>
-                {recentTabs.map((v) => {
-                  const t = activeAdminGroup.tabs.find((x) => x.value === v) ||
-                    availableAdminGroups.flatMap((g) => g.tabs).find((x) => x.value === v);
-                  return t ? (
-                    <button key={v} type="button" onClick={() => handleAdminTabChange(v)}
-                      className={`rounded-full border px-2 py-0.5 ${v === selectedAdminTab ? "border-red-300 bg-white font-semibold" : "border-gray-200 bg-white/60 hover:border-red-300"}`}>
-                      {t.label}
-                    </button>
-                  ) : null;
-                })}
-              </div>
-            )}
             <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className={`mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full items-stretch gap-1 bg-transparent p-1 ${adminSidebar ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
               {[...activeAdminGroup.tabs].sort((a, b) => (pinnedTabs.includes(b.value) ? 1 : 0) - (pinnedTabs.includes(a.value) ? 1 : 0)).map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
@@ -2687,9 +2648,6 @@ export default function AdminSettings() {
                       className={`ml-0.5 text-[10px] leading-none ${pinnedTabs.includes(tab.value) ? "text-amber-500" : "text-gray-300 hover:text-amber-500"}`}>
                       {pinnedTabs.includes(tab.value) ? "*" : "-"}
                     </button>
-                    {RECENTLY_CHANGED_TABS.has(tab.value) && !visitedTabs.includes(tab.value) && tab.value !== selectedAdminTab && (
-                      <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none text-white" title="Updated recently">new</span>
-                    )}
                     {tab.value === "timeclock" && openExceptionCount > 0 && (
                       <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                         title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
@@ -2742,14 +2700,30 @@ export default function AdminSettings() {
             <>
               <AdminPanelContent value="timeclock">
                 <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList ref={(node) => { nestedTabListsRef.current.timeclock = node; }} aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4">
+                  <TabsList ref={(node) => { nestedTabListsRef.current.timeclock = node; }} aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4 lg:grid-cols-8">
                     <TabsTrigger value="entries" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
+                    <TabsTrigger value="live_status" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Live Status</TabsTrigger>
+                    <TabsTrigger value="pay_periods" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Pay Periods</TabsTrigger>
+                    <TabsTrigger value="punch_locations" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Punch Locations</TabsTrigger>
+                    <TabsTrigger value="devices" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Devices</TabsTrigger>
                     <TabsTrigger value="reports" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
                     <TabsTrigger value="pto" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
                     <TabsTrigger value="overtime" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <AdminPanelContent value="entries">
                     <TimeClockAdmin />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="live_status">
+                    <TimeClockAdmin view="live_status" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="pay_periods">
+                    <TimeClockAdmin view="pay_periods" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="punch_locations">
+                    <TimeClockAdmin view="punch_locations" />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="devices">
+                    <TimeClockAdmin view="devices" />
                   </AdminPanelContent>
                   <AdminPanelContent value="reports">
                     <TimeClockReportsDashboard />
