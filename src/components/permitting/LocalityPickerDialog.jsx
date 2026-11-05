@@ -101,7 +101,7 @@ function mintResolutionRule({address, resolution, pickedName, pickedType, forCit
     created_from_address: String(address).slice(0,300),
     active: true,
   };
-  staffEntities.PermitResolutionRule.create(data).catch(()=>{});
+  staffEntities.PermitResolutionRule.create(data).catch((e)=>console.warn("PermitResolutionRule mint failed (apply still succeeded):", e?.message||e));
 }
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
