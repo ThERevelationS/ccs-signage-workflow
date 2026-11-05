@@ -19,6 +19,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   Inventory: new Set(['create', 'updateMany']),
   Customer: new Set(['updateMany']),
   CustomerLocation: new Set(['create', 'updateMany']),
+  FoundationProject: new Set(['create', 'updateMany']),
   // GeneralTask is backend-only RLS — the CAS helpers (updateGeneralTaskIfUn-
   // changed/deleteGeneralTaskIfUnchanged) drive updateMany/deleteMany, and the
   // plain update/delete pair covers the simple paths. Staff-wide: general
@@ -296,6 +297,9 @@ Deno.serve(async (req) => {
       // rejected outright.
       const query = body?.query;
       const update = body?.update;
+      if (entityName === 'FoundationProject' && (typeof query?.id !== 'string' || typeof query?.updated_date !== 'string')) {
+        throw bad('A foundation conditional update requires string id and updated_date values.');
+      }
       const queryKeys = query && typeof query === 'object' && !Array.isArray(query) ? Object.keys(query) : [];
       const queryId = String((query as any)?.id || '').trim();
       const queryVersion = String((query as any)?.updated_date || '').trim();
