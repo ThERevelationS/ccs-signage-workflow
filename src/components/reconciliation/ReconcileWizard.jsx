@@ -13,7 +13,8 @@ const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-
 // "New Reconciliation" wizard: lists every unreconciled payment grouped by
 // tender bucket with expected totals, takes counted amounts plus an optional
 // cash adjustment, and closes the batch through manageReconciliation.
-export default function ReconcileWizard({ sessionToken, payments, batches, locations, salesLocations = [], invoke, onClose, onClosed }) {
+const EMPTY = [];
+export default function ReconcileWizard({ sessionToken, payments, batches, locations, salesLocations = EMPTY, invoke, onClose, onClosed }) {
   const expected = useMemo(() => batchTotals(payments), [payments]);
   const previewNumber = useMemo(() => nextBatchNumber(batches), [batches]);
   const [counted, setCounted] = useState(() => Object.fromEntries(TENDER_BUCKETS.map((b) => [b, ""])));
