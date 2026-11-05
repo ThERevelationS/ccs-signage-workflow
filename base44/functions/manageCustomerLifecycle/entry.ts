@@ -458,6 +458,8 @@ Deno.serve(async (req) => {
         for (let attempt = 0; attempt < 2; attempt += 1) {
           const anchor = clean(keep?.updated_date);
           if (!anchor) { winnerWarning = 'winner row had no version anchor — patch skipped'; break; }
+          // CAS write — null signals conflict-or-error; the retry loop +
+          // winnerWarning surface the outcome to the caller, never silently.
           const res = await Customer.updateMany({ id: keepId, updated_date: anchor }, { $set: winnerPatch }).catch(() => null);
           if (res && res.updated === 1) { winnerWarning = ''; break; }
           const fresh = await Customer.get(keepId).catch(() => null);
@@ -500,7 +502,9 @@ Deno.serve(async (req) => {
       let auditId = '';
       try {
         const audit = buildMergeAuditRow({ keep, lose: loseRow, actor, runKey, status: 'merged', entities, masterDecision: master, at: nowIso() });
-        const existing = await OpportunityActivity.filter({ creation_request_key: mergeAuditRequestKey(runKey) }, null, 5).catch(() => []);
+        const existing = await OpportunityActivity.filter({ creation_request_key: mergeAuditRequestKey(runKey) }, null, 5)
+          // deliberate: dedupe read — empty = "no prior audit row"; creation_request_key still guards
+          .catch(() => []);
         const found = (Array.isArray(existing) ? existing : []).find((r: any) => clean(r?.creation_request_key) === mergeAuditRequestKey(runKey));
         if (found?.id) auditId = clean(found.id);
         else {
