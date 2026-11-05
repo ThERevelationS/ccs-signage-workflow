@@ -118,6 +118,16 @@ Deno.serve(async req => {
       return Response.json(await importEvidenceCandidate({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
         runEntity:entities.PermittingRuleExtractionRun,ruleEntity:Rules,runId:String(body.run_id || ''),candidateIndex:body.candidate_index}));
     }
+    if (action==='run_by_key') {
+      // Read-only locator for the local extraction lane: request_key is the
+      // deterministic identity the lane stamps on every run it creates.
+      const key=String(body.request_key || '');
+      if (!/^(manual|local)-rule-evidence:[a-zA-Z0-9_-]{1,140}$/.test(key)) throw evidenceError('A valid extraction request key is required.',400);
+      const rows=await entities.PermittingRuleExtractionRun.filter({request_key:key},'created_date',2,0);
+      if (rows.length>1) throw evidenceError('Extraction request identity is ambiguous.',409);
+      const run=rows[0] || null;
+      return Response.json({success:true,run_id:run?.id || null,status:run?.status || null,not_found:!run,rules_created:0,llm_calls:0});
+    }
     if (action==='supersede') return Response.json({error:'Supersession requires a reviewed replacement and durable reconciliation. No rule was changed.'},{status:409});
     const id=String(body.rule_id || '');
     if (!id) throw evidenceError('Select a rule.',400);
