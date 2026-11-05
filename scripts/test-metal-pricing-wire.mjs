@@ -195,6 +195,16 @@ const plainProject = () => ({
   // config detection — engine vocab ONLY; metal type/unit/cost fields are NOT.
   ok(!descriptorHasPricingContent(null), 'null descriptor');
   ok(!descriptorHasPricingContent({}), 'empty descriptor');
+  // Zero artifacts are unset defaults, not authored config — the engine only
+  // fires these families above zero (markup is the exception: 0 = sell-at-cost).
+  ok(!descriptorHasPricingContent({ fixed_price: 0 }), 'fixed_price 0 not config');
+  ok(!descriptorHasPricingContent({ market_retail: 0 }), 'market_retail 0 not config');
+  ok(!descriptorHasPricingContent({ market_discount_pct: 0 }), 'market_discount_pct 0 not config');
+  ok(!descriptorHasPricingContent({ minimum_charge: 0 }), 'minimum_charge 0 not config');
+  ok(!descriptorHasPricingContent({ setup_fee: 0 }), 'setup_fee 0 not config');
+  ok(descriptorHasPricingContent({ markup_pct: 0 }), 'explicit markup_pct 0 is config (sell-at-cost)');
+  ok(descriptorHasPricingContent({ markup: 0 }), 'markup spelling: markup 0 is config');
+  ok(descriptorHasPricingContent({ markup_percent: 0 }), 'markup spelling: markup_percent 0 is config');
   ok(!descriptorHasPricingContent({ item_type: 'cabinet_sign' }), 'item_type cabinet_sign not config');
   ok(!descriptorHasPricingContent({ item_type: 'monument_sign', material_type: 'steel' }), 'type+material not config');
   ok(!descriptorHasPricingContent({ item_type: 'flat_cut_letters' }), 'flat_cut_letters not config');
@@ -427,6 +437,13 @@ const plainProject = () => ({
   const res = wire(rec, { baselineSell: 10 });
   eq(res.lines[0].engine.minimum_applied, true, 'floor fired');
   eq(res.customer_price, 50, 'extension floored to 50');
+  const rec0 = { items: [{ builder_item_id: 'a', quantity: 1, material_cost: 6, fabrication_cost: 4, markup_pct: 0 }], total_cost: 15, markup_percent: 50, subtotal: 10, markup_amount: 5 };
+  const res0 = wire(rec0, { baselineSell: 15 });
+  eq(res0.lines[0].priced, true, 'markup_pct 0 alone engages the engine');
+  eq(res0.lines[0].engine.unit_price, 10, 'markup_pct 0 sells at cost');
+  eq(res0.lines[0].engine.price_source, 'markup');
+  eq(res0.lines[0].engine.tier_source, 'part_tier', 'part markup-0 layer wins');
+  eq(res0.customer_price, 10, 'customer pays cost — module markup replaced on the configured line');
   const rec2 = { items: [{ builder_item_id: 'a', quantity: 1, material_cost: 60, fabrication_cost: 40, markup_pct: 20, setup_fee: 25 }], total_cost: 100, subtotal: 100 };
   const res2 = wire(rec2, { baselineSell: 100 });
   eq(res2.lines[0].engine.setup_fee, 25, 'setup fee captured');
