@@ -432,8 +432,8 @@ function nullCheckSurfacesError(node, sf) {
 // Adjacent justifying comment: scan a window of source lines around the hit.
 function adjacentComment(lines, hitLine) {
   const lo = Math.max(0, hitLine - 8), hi = Math.min(lines.length, hitLine + 2);
-  const window = lines.slice(lo, hi).join('\n');
-  const comments = window.match(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g) || [];
+  const winLines = lines.slice(lo, hi).join('\n');
+  const comments = winLines.match(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g) || [];
   for (const c of comments) {
     if (JUSTIFY_RE.test(c)) return c.replace(/\s+/g, ' ').slice(0, 140);
   }
