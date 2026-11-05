@@ -202,8 +202,8 @@ export default function AttentionFeed() {
     if (!sessionToken) return;
     const soft = (p) => p.catch(() => null);
     const [activities, estimates, rulesRow, invoiceRes, poRes, reconRes] = await Promise.all([
-      soft(loadAllEntityRows({ entity: OpportunityActivity, sort: "-updated_date", label: "Attention feed activities" })),
-      soft(loadAllEntityRows({ entity: AllInOneEstimate, query: { status: "sent" }, sort: "-updated_date", label: "Attention feed estimates" })),
+      soft(loadAllEntityRows({ entity: OpportunityActivity, sort: "-updated_date", cacheTtlMs: 30000, label: "Attention feed activities" })),
+      soft(loadAllEntityRows({ entity: AllInOneEstimate, query: { status: "sent" }, sort: "-updated_date", cacheTtlMs: 30000, label: "Attention feed estimates" })),
       soft(loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: "followupAutomationRules", label: "Attention feed follow-up rules" })),
       soft(base44.functions.invoke("invoicingAction", { session_token: sessionToken, action: "list_invoices" })),
       soft(base44.functions.invoke("purchaseOrderAction", { session_token: sessionToken, action: "list_purchase_orders" })),
