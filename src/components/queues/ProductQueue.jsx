@@ -94,6 +94,7 @@ const dateInputValue = (v) => String(v || "").slice(0, 10);
 // while the product's proof is out for the customer (statusGateAllows).
 // Sends the proof_ready template through the sendStaffEmail bridge and writes
 // the standard OpportunityActivity audit row (details.notify_kind).
+const EMPTY = [];
 function ProofNotifyButton({ row, workOrder, sessionToken, actor }) {
   const [state, setState] = useState({ status: "idle", message: "", error: false });
   const product = row?.product || {};
@@ -319,7 +320,7 @@ export default function ProductQueue({
 }) {
   // M-03 — one composed queueFeed pull (projected WOs + scoped extras in a
   // single call); fails open to the shared board feed when unavailable.
-  const { data: workOrders = [], isFetched } = useQueueWorkOrders();
+  const { data: workOrders = EMPTY, isFetched } = useQueueWorkOrders();
   const { currentUser, sessionToken } = useAuth();
   const actor = String(currentUser?.email || "").trim();
   const workOrderById = useMemo(
