@@ -28,7 +28,8 @@ import {
   Settings,
   Pause,
   LockKeyhole,
-  Ban
+  Ban,
+  Layers
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
@@ -256,6 +257,45 @@ export default function TimeClock() {
   const [cancellingTimeOffId, setCancellingTimeOffId] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
   const [sessionNotice, setSessionNotice] = useState(null);
+  const [workDayBusyId, setWorkDayBusyId] = useState("");
+
+  const WORK_DAY_WINDOW_MS = 12 * 60 * 60 * 1000;
+  const previousShiftFor = (entry) => {
+    const inMs = new Date(entry.clock_in).getTime();
+    if (!Number.isFinite(inMs)) return null;
+    return (timeEntries || [])
+      .filter((e) => e.id !== entry.id && e.status === "clocked_out" && e.clock_out
+        && !e.pay_period_id && !e.archived_admin && !e.archived_test_data
+        && new Date(e.clock_out).getTime() <= inMs
+        && inMs - new Date(e.clock_in).getTime() <= WORK_DAY_WINDOW_MS)
+      .sort((a, b) => new Date(b.clock_out) - new Date(a.clock_out))[0] || null;
+  };
+  const workDayMembers = (entry) =>
+    entry?.work_day_group_id
+      ? (timeEntries || []).filter((e) => e.work_day_group_id === entry.work_day_group_id)
+      : [];
+
+  const handleWorkDayGroup = async (entry, mode) => {
+    if (!timeClockSessionToken || !entry?.id || workDayBusyId) return;
+    setWorkDayBusyId(entry.id);
+    setTimeEntryError("");
+    try {
+      const res = await base44.functions.invoke("timeClockAction", {
+        action: mode === "ungroup" ? "ungroup_work_day" : "group_work_day",
+        session_token: timeClockSessionToken,
+        target_email: loggedInUser.email,
+        entry_id: entry.id,
+        request_id: newRequestId(),
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "The work day could not be updated.");
+      await loadData();
+    } catch (err) {
+      setTimeEntryError(err?.response?.data?.error || err?.message || "The work day could not be updated.");
+    } finally {
+      setWorkDayBusyId("");
+    }
+  };
   const idleTimerRef = useRef(null);
   const lastActivityAtRef = useRef(0);
   const loginReportRunRef = useRef(0);
@@ -986,6 +1026,41 @@ export default function TimeClock() {
                             )}
                           </div>
                         )}
+
+                        {["clocked_out", "clocked_in"].includes(entry.status) && !entry.archived_admin && (() => {
+                          const groupId = String(entry.work_day_group_id || "");
+                          const members = groupId ? workDayMembers(entry) : [];
+                          const prev = !groupId ? previousShiftFor(entry) : null;
+                          if (!groupId && !prev) return null;
+                          return (
+                            <div className="mt-3 pt-3 border-t">
+                              <p className="text-xs font-medium text-gray-500 mb-1.5">Work day</p>
+                              {groupId ? (
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-800">
+                                    <Layers className="w-3 h-3" />
+                                    Combined work day{members.length > 1 ? ` · ${members.length} shifts count as one day` : ""}
+                                  </span>
+                                  {!entry.pay_period_id && (
+                                    <button type="button" className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-700 disabled:opacity-50"
+                                      disabled={workDayBusyId === entry.id}
+                                      onClick={() => handleWorkDayGroup(entry, "ungroup")}>
+                                      {workDayBusyId === entry.id ? "Separating…" : "Separate this shift"}
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <button type="button" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900 disabled:opacity-50"
+                                  disabled={workDayBusyId === entry.id || !timeClockSessionToken}
+                                  title={`Count this shift and the ${format(parseISO(prev.clock_in), "MMM d h:mm a")} shift as one work day in your tracker`}
+                                  onClick={() => handleWorkDayGroup(entry, "group")}>
+                                  {workDayBusyId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Layers className="w-3 h-3" />}
+                                  {workDayBusyId === entry.id ? "Combining…" : `Combine with previous shift (${format(parseISO(prev.clock_in), "MMM d")})`}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </StaggerItem>
                     );})
                   )}
