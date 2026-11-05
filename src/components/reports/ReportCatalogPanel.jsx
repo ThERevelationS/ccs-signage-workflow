@@ -164,6 +164,7 @@ async function deleteReportDefinition({ record, sessionToken }) {
 // opportunityWorkspaceAction for the backend-only opportunity list. Reads
 // degrade to [] on denial — a report missing a dataset renders empty rather
 // than breaking the catalog.
+const EMPTY = [];
 function makeLoaders({ sessionToken, workOrders }) {
   const rows = (entity, sort, label) =>
     loadAllEntityRows({ entity, sort, label }).catch(() => []);
@@ -402,7 +403,7 @@ export default function ReportCatalogPanel({ sessionToken: sessionTokenProp, isA
   const [saving, setSaving] = useState(false);
   const [newDefOpen, setNewDefOpen] = useState(false);
 
-  const { data: workOrders = [] } = useAllWorkOrders();
+  const { data: workOrders = EMPTY } = useAllWorkOrders();
   const dataCacheRef = useRef({});                    // need → Promise<rows>
 
   const loadDefinitions = async () => {
