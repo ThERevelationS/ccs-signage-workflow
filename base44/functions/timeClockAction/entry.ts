@@ -43,6 +43,9 @@ async function hmacSign(message: string, secret: string) {
   return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
 }
 
+const tcSessionAuthCache = new Map<string, { user: any; expires: number }>();
+const TC_SESSION_AUTH_CACHE_MS = 60_000;
+
 async function verifySessionToken(token: string, secret: string, authorized: any) {
   if (!token || !secret) return null;
   const parts = String(token).split('.');
@@ -65,11 +68,19 @@ async function verifySessionToken(token: string, secret: string, authorized: any
     !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
   ) return null;
 
+  // payloadStr uniquely identifies this token's claims (email+iat+exp) —
+  // safe as a cache key. Mirrors signShopSession.ts: cached auth skips the
+  // per-invoke roster read; revocation lags <=60s, same as every gateway.
+  const cachedAuth = tcSessionAuthCache.get(payloadStr);
+  if (cachedAuth && cachedAuth.expires > Date.now()) return cachedAuth.user;
+
   const rows = await authorized.filter({ email: String(payload.email).trim().toLowerCase() });
   if (!Array.isArray(rows) || rows.length !== 1) return null;
   const user = rows[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
+  if (tcSessionAuthCache.size > 500) tcSessionAuthCache.clear();
+  tcSessionAuthCache.set(payloadStr, { user, expires: Date.now() + TC_SESSION_AUTH_CACHE_MS });
   return user;
 }
 
@@ -3378,7 +3389,9 @@ Deno.serve(async (req) => {
       if (wantedEmail !== actorEmail && actor.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin access is required to clock another employee.' }, { status: 403 });
       }
-      target = await uniqueRow(authorized, { email: wantedEmail }, 'Authorized employee');
+      target = wantedEmail === actorEmail
+        ? actor
+        : await uniqueRow(authorized, { email: wantedEmail }, 'Authorized employee');
     } else if (badgeCode) {
       const badgeAuth = await verifyBadgeCredential(badgeCode, badgeEntity, authorized);
       if (!badgeAuth?.target?.id) {
