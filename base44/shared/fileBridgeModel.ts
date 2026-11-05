@@ -221,7 +221,8 @@ export const COMMAND_SPECS: Record<string, CommandSpec> = {
 const TERMINAL: CommandStatus[] = ['completed', 'failed', 'expired', 'cancelled'];
 const TRANSITIONS: Record<CommandStatus, CommandStatus[]> = {
   queued: ['leased', 'expired', 'cancelled'],
-  leased: ['running', 'queued', 'expired', 'cancelled'],
+  // leased→completed/failed direct: agents complete short commands w/o a progress hop
+  leased: ['running', 'completed', 'failed', 'queued', 'expired', 'cancelled'],
   running: ['completed', 'failed', 'queued', 'expired'],
   completed: [], failed: [], expired: [], cancelled: [],
 };
@@ -364,7 +365,7 @@ export function mergeServerCopies<T extends { agent_id?: string; path_key?: stri
   for (const r of rows) {
     const k = r.path_key
       ? String(r.path_key).split('|').slice(1).join('|')
-      : ` solo:${(r as any).id ?? JSON.stringify(r)}`;
+      : `__solo__${(r as any).id ?? JSON.stringify(r)}`;
     const g = groups.get(k) || [];
     g.push({ ...r, copies: 0 });
     groups.set(k, g);
