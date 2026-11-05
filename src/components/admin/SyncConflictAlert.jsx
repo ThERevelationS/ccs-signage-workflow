@@ -32,11 +32,15 @@ async function loadConflictCount(sessionToken) {
 
 export default function SyncConflictAlert({currentUser,sessionToken}) {
   const [count,setCount]=useState(0),[records,setRecords]=useState(0),[error,setError]=useState('');
+  const [ambientGate,setAmbientGate]=useState(false);
+  // Gate the poll start — its 60s ticks cluster the mount wave's tail; first
+  // call lands ~75s once the gate opens.
+  useEffect(()=>{ const t=setTimeout(()=>setAmbientGate(true),15000); return ()=>clearTimeout(t); },[]);
   useEffect(()=>{ if(currentUser?.role!=='admin')setCount(0); },[currentUser?.role]);
   usePolling(async()=>{
     if(isFleetCoolingDown())return;
     try{const v=await loadConflictCount(sessionToken);setCount(v.count);setRecords(v.records);setError('');}catch{setError('Conflict alerts unavailable');}
-  },60000,{enabled:currentUser?.role==='admin',initialDelayMs:90000});
+  },60000,{enabled:currentUser?.role==='admin'&&ambientGate});
   if(currentUser?.role!=='admin'||!count&&!error)return null;
   return <Link to="/AdminSettings?tab=sync_conflicts" role="status" className="fixed bottom-20 right-3 z-40 flex min-h-11 max-w-xs items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-lg"><AlertTriangle className="h-4 w-4 shrink-0"/>{error||`${count} value differences across ${records} record${records===1?'':'s'} — not write errors`}</Link>;
 }
