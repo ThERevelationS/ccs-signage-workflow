@@ -5,7 +5,7 @@ import { createAdminAccountDraft } from "./adminAccountDraft.js";
 const FIELDS = [
   "full_name", "username", "role", "sales_roles", "can_import_export",
   "can_order_export", "can_view_resources", "employment_type", "can_work_pause",
-  "can_self_approve_shifts"
+  "can_self_approve_shifts", "is_owner"
 ];
 const same = (field, a, b) => field === "sales_roles"
   ? JSON.stringify([...new Set(a || [])].sort()) === JSON.stringify([...new Set(b || [])].sort())
@@ -40,7 +40,7 @@ export function isSameVerifiedAccountSnapshot(reviewed, fresh) {
     // Normalized editor defaults can mask raw invalid permission states.
     // Preserve strict equality for authority-bearing fields instead of
     // treating an unexpected grant as unchanged.
-    (!["can_order_export", "can_view_resources", "can_self_approve_shifts"].includes(field) ||
+    (!["can_order_export", "can_view_resources", "can_self_approve_shifts", "is_owner"].includes(field) ||
       Object.is(reviewed[field], fresh[field]))
   );
 }
