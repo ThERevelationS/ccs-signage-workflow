@@ -20,6 +20,8 @@ export async function resolveFleetStaffUser(base44: any, sessionToken: unknown) 
       email: actor.email,
       full_name: actor.full_name,
       role,
+      is_full_admin: actor.is_full_admin === true,
+      is_owner: actor.is_owner === true,
     };
   } catch (error: any) {
     // Only a rejected identity means "not signed in". A verification that could
