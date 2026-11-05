@@ -1,38 +1,136 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Move, ZoomIn, ZoomOut } from "lucide-react";
-
-const CANVAS_INCHES = 480; // 40 ft of site shown across the canvas
+import {
+  FOUNDATION_LAYOUT_WIDTH_INCHES,
+  FOUNDATION_LAYOUT_DEPTH_INCHES,
+  layoutPointInches,
+  foundationLayoutFootprint,
+  layoutPositionInches,
+  layoutItemKey,
+  layoutItemFingerprint,
+} from "./foundationLayoutModel";
 
 export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveItem }) {
   const boxRef = useRef(null);
   const [zoom, setZoom] = useState(1);
-  const [dragIndex, setDragIndex] = useState(null);
+  const dragRef = useRef(null);
+  const [preview, setPreview] = useState(null); // {key,x,z} transient only
+  const editable = typeof onMoveItem === "function";
 
-  const toInches = (e) => {
-    const rect = boxRef.current.getBoundingClientRect();
-    const scale = CANVAS_INCHES / (rect.width * zoom);
-    return {
-      x_inches: Math.round((e.clientX - rect.left) * scale),
-      z_inches: Math.round((e.clientY - rect.top) * scale),
-    };
+  const pctW = (inches) => `${(inches / FOUNDATION_LAYOUT_WIDTH_INCHES) * 100}%`;
+  const pctD = (inches) => `${(inches / FOUNDATION_LAYOUT_DEPTH_INCHES) * 100}%`;
+
+  const findCurrentIndex = (d) => {
+    if (d.identityKind === "index") {
+      // id-less legacy fallback: index identity only, cancel if array changed
+      return items.length === d.count ? d.legacyIndex : -1;
+    }
+    return items.findIndex((it, i) => layoutItemKey(it, i) === d.key);
   };
 
-  const pct = (inches) => `${(inches / CANVAS_INCHES) * 100}%`;
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; dragRef.current = null; }; }, []);
+
+  const cancelDrag = (e) => {
+    if (e?.pointerId !== undefined && dragRef.current && e.pointerId !== dragRef.current.pointerId) return;
+    dragRef.current = null;
+    setPreview(null);
+  };
+
+  const onPointerDown = (e, item, index) => {
+    if (!mountedRef.current || !editable || e.button !== 0) return;
+    if (e.isPrimary === false || dragRef.current) return; // secondary touch must not replace an active gesture
+    const fp = foundationLayoutFootprint(item);
+    const pos = layoutPositionInches(item);
+    if (!fp || !pos.valid) return;
+    const rect = boxRef.current?.getBoundingClientRect();
+    const point = layoutPointInches(e.clientX, e.clientY, rect);
+    if (!point) return;
+    const key = layoutItemKey(item, index);
+    const [kind] = key.split(":");
+    dragRef.current = {
+      pointerId: e.pointerId,
+      key,
+      identityKind: kind,
+      legacyIndex: index,
+      count: items.length,
+      corner: { x: pos.x_inches, z: pos.z_inches },
+      grab: { dx: point.x_inches - pos.x_inches, dz: point.z_inches - pos.z_inches },
+      fingerprint: layoutItemFingerprint(item),
+      moved: false,
+    };
+    try { boxRef.current.setPointerCapture(e.pointerId); }
+    catch { cancelDrag(); return; }
+    setPreview({ key, x: pos.x_inches, z: pos.z_inches });
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
+    if (!point) return;
+    d.moved = true;
+    d.last = { x: point.x_inches - d.grab.dx, z: point.z_inches - d.grab.dz };
+    setPreview({ key: d.key, x: d.last.x, z: d.last.z });
+  };
+
+  const commitDrag = (e) => {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    dragRef.current = null; // clear before release/callback — one commit per gesture
+    try { boxRef.current?.releasePointerCapture(e.pointerId); } catch { }
+    setPreview(null);
+    if (!mountedRef.current) return;
+    // final corner from the release point itself, not the last move preview
+    const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
+    if (!point) return;
+    const raw = { x: point.x_inches - d.grab.dx, z: point.z_inches - d.grab.dz };
+    if (raw.x === d.corner.x && raw.z === d.corner.z) return; // unchanged incl. fractional legacy corners
+    const roundX = Math.round(raw.x), roundZ = Math.round(raw.z);
+    if (roundX === d.corner.x && roundZ === d.corner.z) return; // sub-inch wiggle rounded to same corner
+    const index = findCurrentIndex(d);
+    if (index < 0) return; // deleted during gesture
+    const live = items[index];
+    if (layoutItemFingerprint(live) !== d.fingerprint) return; // authoritative change mid-drag
+    if (typeof onMoveItem !== "function") return;
+    onMoveItem(index, { x_inches: roundX, z_inches: roundZ });
+  };
+
+  const onKeyDown = (e, item, index) => {
+    if (!mountedRef.current || !editable) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const step = e.shiftKey ? 12 : 1;
+    const dirs = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    const dir = dirs[e.key];
+    if (!dir) return;
+    const fp = foundationLayoutFootprint(item);
+    const pos = layoutPositionInches(item);
+    if (!fp || !pos.valid) return;
+    e.preventDefault();
+    onMoveItem(index, { x_inches: pos.x_inches + dir[0], z_inches: pos.z_inches + dir[1] });
+  };
+
+  const invalidNotes = items.map((item, index) => ({ item, index }))
+    .filter(({ item }) => !foundationLayoutFootprint(item) || !layoutPositionInches(item).valid);
 
   return (
     <div className="bg-white rounded-sm border border-gray-200 p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div>
           <h3 className="text-[13px] font-bold text-gray-900">Layout Canvas</h3>
-          <p className="text-[11px] text-gray-400">Drag foundations to position them on the site.</p>
+          <p className="text-[11px] text-gray-400">
+            {editable ? "Drag a foundation, or focus it and use arrow keys (Shift for larger steps)." : "Foundation positions (read-only)."}
+          </p>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-gray-600">
+        <div className="flex items-center gap-2 flex-wrap text-[11px] text-gray-600">
           <span className="flex items-center gap-1">
             <Move className="w-3 h-3" aria-hidden="true" /> Move Foundation
           </span>
+          <span className="text-gray-400">40ft × 26ft 8in</span>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
+            aria-label="Zoom layout out"
             className="w-6 h-6 flex items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-50"
           >
             <ZoomOut className="w-3 h-3" aria-hidden="true" />
@@ -41,6 +139,7 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(2, +(z + 0.25).toFixed(2)))}
+            aria-label="Zoom layout in"
             className="w-6 h-6 flex items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-50"
           >
             <ZoomIn className="w-3 h-3" aria-hidden="true" />
@@ -51,12 +150,10 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
       <div className="overflow-auto rounded-sm border border-gray-300 bg-gray-50">
         <div
           ref={boxRef}
-          onMouseMove={(e) => {
-            if (dragIndex === null) return;
-            onMoveItem(dragIndex, toInches(e));
-          }}
-          onMouseUp={() => setDragIndex(null)}
-          onMouseLeave={() => setDragIndex(null)}
+          onPointerMove={onPointerMove}
+          onPointerUp={commitDrag}
+          onPointerCancel={cancelDrag}
+          onLostPointerCapture={(e) => cancelDrag(e)}
           className="relative aspect-[3/2] select-none"
           style={{
             width: `${zoom * 100}%`,
@@ -66,21 +163,29 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
           }}
         >
           {items.map((item, index) => {
-            const w = item.foundation_type === "pillar" ? item.diameter || 24 : item.length_inches || 36;
-            const d = item.foundation_type === "pillar" ? item.diameter || 24 : item.width_inches || 36;
+            const fp = foundationLayoutFootprint(item);
+            const pos = layoutPositionInches(item);
+            if (!fp || !pos.valid) return null;
+            const key = layoutItemKey(item, index);
+            const shown = preview && preview.key === key ? { x_inches: preview.x, z_inches: preview.z } : pos;
             return (
               <div
-                key={index}
-                onMouseDown={() => setDragIndex(index)}
-                className={`absolute flex items-center justify-center cursor-move border-2 border-dashed border-amber-500 bg-amber-100/70 text-[10px] font-semibold text-amber-800 ${
-                  item.foundation_type === "pillar" ? "rounded-full" : "rounded-sm"
-                }`}
+                key={key}
+                role={editable ? "button" : undefined}
+                tabIndex={editable ? 0 : undefined}
+                aria-label={editable ? `Move Foundation ${index + 1}` : undefined}
+                onPointerDown={editable ? (e) => onPointerDown(e, item, index) : undefined}
+                onKeyDown={editable ? (e) => onKeyDown(e, item, index) : undefined}
+                className={`absolute flex items-center justify-center border-2 border-dashed border-amber-500 bg-amber-100/70 text-[10px] font-semibold text-amber-800 ${
+                  editable ? "cursor-move" : ""
+                } ${item.foundation_type === "pillar" ? "rounded-full" : "rounded-sm"}`}
                 style={{
-                  left: pct(item.x_inches || 0),
-                  top: pct(item.z_inches || 0),
-                  width: pct(w),
-                  height: pct(d),
+                  left: pctW(shown.x_inches),
+                  top: pctD(shown.z_inches),
+                  width: pctW(fp.width),
+                  height: pctD(fp.depth),
                   transform: `rotate(${item.rotation_degrees || 0}deg)`,
+                  touchAction: editable ? "none" : undefined,
                 }}
                 title={`Foundation ${index + 1}`}
               >
@@ -89,16 +194,33 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
             );
           })}
 
+          {preview && (
+            <div className="absolute left-1 top-1 z-10 rounded-sm bg-amber-50/90 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" style={{ pointerEvents: "none" }}>
+              Move preview - release to apply
+            </div>
+          )}
+
           {poles.map((pole, index) => (
             <div
-              key={`pole-${index}`}
+              key={layoutItemKey(pole, index)}
               className="absolute w-2.5 h-2.5 rounded-full bg-slate-700 border border-white"
-              style={{ left: pct(pole.x_inches || 0), top: pct(pole.z_inches || 0) }}
+              style={{
+                left: pctW(pole.x_inches || 0),
+                top: pctD(pole.z_inches || 0),
+                transform: "translate(-50%,-50%)",
+                pointerEvents: "none",
+              }}
               title={`Pole ${index + 1}`}
             />
           ))}
         </div>
       </div>
+
+      {invalidNotes.map(({ index }) => (
+        <p key={index} className="mt-1 text-[11px] text-amber-700">
+          Foundation {index + 1} needs valid dimensions/coordinates before placement.
+        </p>
+      ))}
     </div>
   );
 }
