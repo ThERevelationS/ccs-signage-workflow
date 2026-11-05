@@ -15,23 +15,24 @@ const OUTCOME_STYLE = {
 };
 
 export default function DrainLiveFeed() {
-  const [rows, setRows] = useState({ active: [], done: [], remaining: 0, total: 0 });
+  const [rows, setRows] = useState({ active: [], done: [], remaining: 0, capped: false, total: 0 });
   useEffect(() => {
     let stop = false;
     const tick = async () => {
       if ((typeof document !== "undefined" && document.hidden) || isFleetCoolingDown()) return;
       try {
-        const [inFlight, recent, remaining, total] = await Promise.all([
+        // Bounded reads — the "remaining" badge shows "500+" past the cap and the
+        // done list renders 15, so the old 2,000/500-row pulls were pure payload.
+        const [inFlight, recent, remaining] = await Promise.all([
           Q.filter({ status: "source_discovery" }, "-updated_date", 25, 0),
-          Q.filter({}, "-updated_date", 500, 0),
-          Q.filter({ status: "not_started" }, undefined, 2000, 0),
-          Q.filter({}, undefined, 1, 0),
+          Q.filter({}, "-updated_date", 60, 0),
+          Q.filter({ status: "not_started" }, undefined, 501, 0),
         ]);
         if (stop) return;
         const done = (recent || [])
           .filter(r => ["sources_found","partial_gaps","blocked","verified_current"].includes(r.status) && r.research_dispatch_attempts > 0)
           .slice(0, 15);
-        setRows({ active: inFlight || [], done, remaining: (remaining || []).length, total: 0 });
+        setRows({ active: inFlight || [], done, remaining: (remaining || []).length, capped: (remaining || []).length > 500, total: 0 });
       } catch { /* poll again next tick */ }
     };
     tick();
@@ -44,7 +45,7 @@ export default function DrainLiveFeed() {
       <div className="flex items-center gap-2 mb-2">
         <Radio className="w-4 h-4 text-purple-600 animate-pulse" />
         <span className="text-sm font-semibold text-gray-800">Research drain — live</span>
-        <span className="ml-auto text-xs text-gray-500">{rows.remaining} queued</span>
+        <span className="ml-auto text-xs text-gray-500">{rows.capped ? "500+" : rows.remaining} queued</span>
       </div>
       {rows.active.length > 0 && (
         <div className="mb-2 space-y-1">
