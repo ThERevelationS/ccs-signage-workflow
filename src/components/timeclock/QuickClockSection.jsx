@@ -817,6 +817,11 @@ export default function QuickClockSection({
 
       lastPunchRef.current = { email: normEmail, at: Date.now() };
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
+      const clockInPrompt = data.work_day_prompt?.signature ? data.work_day_prompt : null;
+      if (clockInPrompt && !workDayDismissedRef.current.has(clockInPrompt.signature)) {
+        setWorkDayError("");
+        setWorkDayPrompt(clockInPrompt);
+      }
       const clockInAt = data.entry?.clock_in ? new Date(data.entry.clock_in) : new Date();
       const lunchEta = new Date(clockInAt.getTime() + 4.5 * 3600000);
       const schedStart = data.todays_schedule?.scheduled_start || data.todays_schedule?.start_time || "";
