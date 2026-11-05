@@ -137,9 +137,15 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
 
   // usePolling already pauses when document.hidden, skips open 429 breakers,
   // clears timers on unmount and only refreshes on focus when due (#330).
-  // First badge paint waits out the mount burst — ambient count, so the
-  // delayed badge beats a 429'd first load + retry stack.
-  const { runNow } = usePolling(load, 60000, { initialDelayMs: 80000 });
+  // Gate the poll start instead of initialDelayMs — the hook's delay adds an
+  // EXTRA call while the interval ticks at 60s regardless. First call lands
+  // ~75s, past the mount wave and the 65s status_lite poll.
+  const [ambientGate, setAmbientGate] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAmbientGate(true), 15000);
+    return () => clearTimeout(t);
+  }, []);
+  const { runNow } = usePolling(load, 60000, { enabled: ambientGate });
 
   // Keep the sound flag live — the feed strip and the prefs tab both write it.
   useEffect(() => {
