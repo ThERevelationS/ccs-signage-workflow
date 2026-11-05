@@ -25,7 +25,8 @@ const tierFields = (row) => ({
 const TIER_LIMIT = 8;
 const REAPPLY_BATCH = 25;
 
-export default function MarkupTierPanel({ tiers = [], categories = [], onSaved }) {
+const EMPTY = [];
+export default function MarkupTierPanel({ tiers = EMPTY, categories = EMPTY, onSaved }) {
   const [edits, setEdits] = useState({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
