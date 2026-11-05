@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,8 @@ import {
   formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
 import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -186,7 +188,7 @@ function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen 
   );
 }
 
-export default function TimeClockAdmin() {
+export default function TimeClockAdmin({ view = "entries" }) {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
   const [bulkCloseOpen, setBulkCloseOpen] = useState(false);
@@ -267,16 +269,47 @@ export default function TimeClockAdmin() {
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
   const [approvalRetryPayload, setApprovalRetryPayload] = useState(null);
+  const [approvalRetryMode, setApprovalRetryMode] = useState(false);
   const [pendingApprovalRecovery, setPendingApprovalRecovery] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
   const [expandedEmail, setExpandedEmail] = useState(null);
   const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
   const [auditInvestigation, setAuditInvestigation] = useState(null);
+  const autoReviewRan = useRef(false);
+  const [autoReviewResult, setAutoReviewResult] = useState(null);
+  const [otRules, setOtRules] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "overtimeRules", label: "Overtime rules" })
+      .then((record) => { if (alive) setOtRules(record?.setting_value || {}); })
+      .catch(() => { if (alive) setOtRules({}); });
+    return () => { alive = false; };
+  }, []);
+
+  // Clean shifts (no conflicts, errors, or corrections) approve automatically —
+  // one advisory sweep per page mount; flagged shifts always stay for a human.
+  useEffect(() => {
+    if (!sessionToken || autoReviewRan.current) return;
+    autoReviewRan.current = true;
+    (async () => {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", {
+          action: "admin_auto_review", session_token: sessionToken, request_id: newRequestId(),
+        });
+        const d = functionData(res);
+        if (d?.success && Number(d.approved_count || 0) > 0) {
+          setAutoReviewResult(d);
+          await loadData({ silent: true });
+        }
+      } catch { /* advisory sweep — never blocks the page */ }
+    })();
+  }, [sessionToken]);
 
   const loadData = async (opts) => {
     // Silent refreshes keep the review view mounted and preserve the last good data on failure.
@@ -446,8 +479,10 @@ export default function TimeClockAdmin() {
   const duplicateActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in" && duplicateActiveEmails.includes(entry.user_email));
   const missingBreakEntries = completedEntries.filter(entry => (entry.total_hours || 0) >= 5 && !entry.lunch_minutes && !entry.pay_period_id);
 
-  // Overtime pacing ??? total hours this calendar week per employee; flag
-  // anyone at 36h+ (approaching 40) or already over.
+  // Overtime pacing — total hours this calendar week per employee; flag
+  // anyone approaching or over the configured weekly flag threshold.
+  const otFlagHours = otRules?.flag_enabled === false ? null
+    : Math.max(1, Number(otRules?.flag_weekly_hours ?? otRules?.weekly_threshold ?? 40) || 40);
   const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
   weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
   const otByEmail = {};
@@ -457,7 +492,9 @@ export default function TimeClockAdmin() {
     const row = otByEmail[k] = otByEmail[k] || { name: e.user_name || k, hours: 0 };
     row.hours += e.total_hours || 0;
   }
-  const otWatch = Object.values(otByEmail).filter(r => r.hours >= 36).sort((a, b) => b.hours - a.hours);
+  const otWatch = otFlagHours === null ? [] : Object.values(otByEmail)
+    .filter(r => r.hours >= Math.max(1, otFlagHours - 4))
+    .sort((a, b) => b.hours - a.hours);
   // Projected week-end hours: current hours + (avg per worked weekday ??
   // remaining weekdays) ??? rough payroll forecast for the open week.
   const workday = (weekStart.getDay() + 6) % 7; // Mon=0
@@ -618,6 +655,7 @@ export default function TimeClockAdmin() {
       setApprovalError("This is an interrupted approval action. Retry uses the exact original shift version, decision, note, and request ID.");
       setApprovalRequestId(recoveredPayload.request_id);
       setApprovalRetryPayload(recoveredPayload);
+      setApprovalRetryMode(true);
       return;
     }
     if (recoveredRequestId && !recoveredPayload) {
@@ -652,6 +690,7 @@ export default function TimeClockAdmin() {
     setApprovalError(loadNotice);
     setApprovalRequestId(requestId);
     setApprovalRetryPayload(null);
+    setApprovalRetryMode(false);
   };
 
   const resumeApprovalRecovery = (payload) => {
@@ -665,6 +704,7 @@ export default function TimeClockAdmin() {
     setApprovalNote(payload.note || "");
     setApprovalRequestId(payload.request_id);
     setApprovalRetryPayload(payload);
+    setApprovalRetryMode(true);
     setApprovalError("Retrying the exact interrupted manager approval payload. Values are frozen until the server confirms or rejects this request.");
   };
 
@@ -789,6 +829,7 @@ export default function TimeClockAdmin() {
       setApprovalNote("");
       setApprovalRequestId("");
       setApprovalRetryPayload(null);
+      setApprovalRetryMode(false);
       setPendingApprovalRecovery(null);
       await loadData({ silent: true });
     } catch (err) {
@@ -800,6 +841,7 @@ export default function TimeClockAdmin() {
         clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
         clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
         setApprovalRetryPayload(null);
+        setApprovalRetryMode(false);
         setPendingApprovalRecovery(null);
         await loadData({ silent: true });
         setApprovalEntry(null);
@@ -808,6 +850,7 @@ export default function TimeClockAdmin() {
         setTimeEntryError(message);
       } else {
         setPendingApprovalRecovery(frozenPayload);
+        setApprovalRetryMode(true);
       }
     } finally {
       setApprovalBusy(false);
@@ -1151,6 +1194,7 @@ export default function TimeClockAdmin() {
           </Button>
         </div>
       )}
+      {view === "entries" && (<Fragment>
       <div className="clay-card p-3 sm:p-4 space-y-4">
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
@@ -1319,6 +1363,16 @@ export default function TimeClockAdmin() {
             </div>
           </div>
         </div>
+        {autoReviewResult && (
+          <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+            <div>
+              <strong>{autoReviewResult.approved_count} clean shift{autoReviewResult.approved_count === 1 ? "" : "s"} auto-approved.</strong>
+              {" "}Only shifts with no conflicts, errors, or corrections were approved — everything flagged still waits in Needs Attention.
+              {autoReviewResult.conflict_count > 0 && ` ${autoReviewResult.conflict_count} shift${autoReviewResult.conflict_count === 1 ? "" : "s"} skipped for overlapping time.`}
+            </div>
+            <button type="button" onClick={() => setAutoReviewResult(null)} className="shrink-0 text-xs font-medium underline">Dismiss</button>
+          </div>
+        )}
         <TimeClockExceptionCenter
           timeEntries={timeEntries}
           employeeStates={employeeStates}
@@ -1332,6 +1386,7 @@ export default function TimeClockAdmin() {
           needsReviewEntries={needsReviewEntries}
           otWatch={otWatch}
           otProjected={otProjected}
+          otFlagHours={otFlagHours}
           swapRequests={swapRequests}
           adminNotes={adminNotes}
           timeOffRequests={timeOffRequests.filter((r) => r.status === "pending")}
@@ -1834,9 +1889,9 @@ export default function TimeClockAdmin() {
           </div>
         );
       })()}
+      </Fragment>)}
 
-
-
+      {view === "live_status" && (
       <AdminSection title="Live Status" icon={Clock3} tone="green" defaultOpen
         subtitle="Who is working right now">
       <TimeClockManagementDashboard
@@ -1958,7 +2013,9 @@ export default function TimeClockAdmin() {
         )}
       </div>
       </AdminSection>
+      )}
 
+      {view === "pay_periods" && (
       <AdminSection title="Pay Periods & History" icon={CalendarIcon} tone="purple"
         subtitle="Pay period finalization, audit trail and diagnostics">
       <PayPeriodManager
@@ -1985,8 +2042,9 @@ export default function TimeClockAdmin() {
         />
       </div>
       </AdminSection>
+      )}
 
-      {(() => {
+      {view === "entries" && (() => {
         const byJob = {};
         for (const e of timeEntries || []) {
           const key = e.work_order_id ? (e.work_order_title || e.client_name || e.work_order_id) : null;
@@ -1995,7 +2053,7 @@ export default function TimeClockAdmin() {
         }
         const jobs = Object.entries(byJob).map(([k, h]) => ({ name: k, hours: h })).sort((a, b) => b.hours - a.hours).slice(0, 10);
         return jobs.length ? (
-          <AdminSection title="Hours by Job" icon={Clock3} count={jobs.length}>
+          <AdminSection title="Hours by Job" icon={Clock3} count={jobs.length} key="hours-by-job">
             <ul className="space-y-1">
               {jobs.map((j) => (
                 <li key={j.name} className="flex items-center justify-between gap-2 text-xs">
@@ -2008,7 +2066,7 @@ export default function TimeClockAdmin() {
         ) : null;
       })()}
 
-      {(() => {
+      {view === "punch_locations" && (() => {
         const geoPunches = (timeEntries || []).filter((e) => e.clock_in_geo?.lat || e.clock_out_geo?.lat);
         if (!geoPunches.length) return null;
         const lats = geoPunches.map((e) => (e.clock_in_geo?.lat ?? e.clock_out_geo?.lat)).filter(Number.isFinite).sort((a, b) => a - b);
@@ -2044,6 +2102,7 @@ export default function TimeClockAdmin() {
         );
       })()}
 
+      {view === "devices" && (
       <AdminSection title="Registered Devices" icon={Clock3} count={devices.length}
         subtitle="Kiosks and tablets that have signed in to the time clock.">
         {devices.length === 0 ? (
@@ -2067,6 +2126,7 @@ export default function TimeClockAdmin() {
           </div>
         )}
       </AdminSection>
+      )}
 
       <TimeClockShiftDetail
         entry={detailEntry}
@@ -2215,6 +2275,7 @@ export default function TimeClockAdmin() {
             setApprovalNote("");
             setApprovalRequestId("");
             setApprovalRetryPayload(null);
+            setApprovalRetryMode(false);
             setApprovalError("");
           }
         }}
@@ -2243,7 +2304,7 @@ export default function TimeClockAdmin() {
                   : "This removes the current approval and marks the shift Needs Review. The prior approval remains preserved in the audit history."}
               </div>
 
-              {approvalRetryPayload && (
+              {approvalRetryMode && approvalRetryPayload && (
                 <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                   <strong>Exact retry mode.</strong> The original shift version, decision, note, and request ID are frozen. This prevents a reload or second manager change from silently changing an interrupted request.
                 </div>
@@ -2259,7 +2320,7 @@ export default function TimeClockAdmin() {
                   rows={3}
                   maxLength={500}
                   placeholder={approvalDecision === "approve" ? "Optional review note" : "Explain why this shift needs review again."}
-                  disabled={approvalBusy || Boolean(approvalRetryPayload)}
+                  disabled={approvalBusy || approvalRetryMode}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   {approvalDecision === "approve" ? "Optional. Approval identity and server timestamp are always audited." : "Required when reopening an approved shift."}
@@ -2280,6 +2341,7 @@ export default function TimeClockAdmin() {
                     setApprovalNote("");
                     setApprovalRequestId("");
                     setApprovalRetryPayload(null);
+                    setApprovalRetryMode(false);
                     setApprovalError("");
                   }}
                 >
