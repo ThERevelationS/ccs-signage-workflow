@@ -118,18 +118,20 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!busy) onOpenChange(o); }}>
-      <DialogContent className="clay-card border-none max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="clay-card border-none max-w-xl max-h-[85vh] p-0 flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100">
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-purple-600" /> Admin Access — {user?.full_name || user?.email}
           </DialogTitle>
         </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
 
         <div className="flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
           <div>
             <div className="font-semibold text-sm">Owner</div>
-            <div className="text-xs text-gray-600">The highest tier — full administrator plus the power to grant or revoke Owner. Only an owner can change this.</div>
+            <div className="text-xs text-gray-600">The highest tier — full administrator plus the power to grant or revoke Owner.{!actorIsOwner && <span className="text-amber-700"> Only an owner can change this.</span>}</div>
           </div>
           <Switch
             checked={isOwner}
@@ -140,9 +142,6 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
             disabled={busy || !actorIsOwner}
           />
         </div>
-        {!actorIsOwner && (
-          <p className="text-[11px] text-amber-700 -mt-1">Only an owner can grant or revoke the Owner role.</p>
-        )}
 
         <div className="flex items-center justify-between rounded-lg border border-purple-200 bg-purple-50 p-3">
           <div>
@@ -169,7 +168,7 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
             <p className="text-xs text-gray-500">Unchecked pages are hidden from this admin's Admin navigation.</p>
             <div className="flex flex-wrap gap-1">
               {PRESETS.map((p) => (
-                <button type="button" key={p.label} type="button" disabled={busy} onClick={() => applyPreset(p)}
+                <button type="button" key={p.label} disabled={busy} onClick={() => applyPreset(p)}
                   className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">
                   {p.label}
                 </button>
@@ -243,8 +242,8 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <div className="text-xs font-semibold text-gray-700 mb-1">This admin will see:</div>
-          {fullAdmin ? (
-            <p className="text-xs text-gray-600">Every Admin page — Full Administrator bypasses all page restrictions.</p>
+          {fullAdmin || isOwner ? (
+            <p className="text-xs text-gray-600">{isOwner ? "Every Admin page — Owner bypasses all page restrictions." : "Every Admin page — Full Administrator bypasses all page restrictions."}</p>
           ) : permittedLabels.length === 0 ? (
             <p className="text-xs text-red-600 font-medium">Nothing — this admin will be locked out of every Admin page.</p>
           ) : (
@@ -252,17 +251,16 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" disabled={busy} onClick={() => onOpenChange(false)}>Cancel</Button>
-        <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-2">
-          <Checkbox checked={readOnly} onCheckedChange={(c) => setReadOnly(c === true)} />
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+          <Checkbox checked={readOnly} onCheckedChange={(c) => setReadOnly(c === true)} className="mt-0.5" />
           <label className="text-xs text-gray-700">Read-only — can open Admin and view every tab, but every save is refused</label>
         </div>
-        <div className="mt-2 border-t border-gray-100 pt-2">
+
+        <div className="rounded-lg border border-red-200 bg-red-50/40 p-3">
           <p className="text-xs font-medium text-red-700">Explicit blocks — denied tabs override every grant, including full admin:</p>
-          <div className="mt-1 flex flex-wrap gap-1">
+          <div className="mt-2 flex flex-wrap gap-1">
             {ADMIN_TAB_GROUPS.flatMap((g) => g.tabs).map((t) => (
-              <button type="button" key={t.value} type="button"
+              <button type="button" key={t.value}
                 aria-pressed={deniedChecks.has(t.value)}
                 onClick={() => setDeniedChecks((cur) => { const next = new Set(cur); next.has(t.value) ? next.delete(t.value) : next.add(t.value); return next; })}
                 className={`rounded-full border px-2 py-0.5 text-[10px] ${deniedChecks.has(t.value) ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500"}`}>
@@ -271,6 +269,10 @@ export default function AdminAccessDialog({ user, actorIsOwner = false, open, on
             ))}
           </div>
         </div>
+        </div>
+
+        <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-3 flex gap-2">
+          <Button variant="outline" className="flex-1" disabled={busy} onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button className="flex-1" disabled={busy} onClick={save}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Access"}
           </Button>
