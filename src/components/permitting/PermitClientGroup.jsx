@@ -94,6 +94,8 @@ export default function PermitClientGroup({
     if (!pendingLocalityId || !group?.work_order_id || !isRegistered) { setPendStatus(''); return; }
     let dead = false;
     const tick = async () => {
+      // Hidden tabs don't need the office-watch status line — skip the reads.
+      if (document.hidden) return;
       const loc = await staffEntities.PermitLocality.get(pendingLocalityId).catch(() => null);
       if (dead || !loc?.id) return;
       const stillQueued = (Array.isArray(loc.pending_applies) ? loc.pending_applies : [])
@@ -487,25 +489,44 @@ export default function PermitClientGroup({
             </div>
           )}
           {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office(s)…</Button>
-            {appliedLocality && onRemoveLocality && (
-              <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
-                <Trash2 className="w-3 h-3" /> Remove {appliedLocality.name}
-              </Button>
-            )}
-            {(() => {
-              const latest = [...(appliedLocality?.office_change_log || [])].pop();
-              if (!latest?.at) return null;
-              const fresh = Date.now() - new Date(latest.at).getTime() < 14 * 864e5;
-              return (
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${fresh ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
-                  title={`Office data last changed ${latest.at}`}
-                >
-                  <AlertTriangle className={`w-3.5 h-3.5 ${fresh ? '' : 'opacity-40'}`} />
-                  Office info changed{latest.summary ? ` — ${latest.summary}` : ''}
-                </span>
-              );
-            })()}
+            {appliedLocality && onRemoveLocality && (
+
+              <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
+
+                <Trash2 className="w-3 h-3" /> Remove {appliedLocality.name}
+
+              </Button>
+
+            )}
+
+            {(() => {
+
+              const latest = [...(appliedLocality?.office_change_log || [])].pop();
+
+              if (!latest?.at) return null;
+
+              const fresh = Date.now() - new Date(latest.at).getTime() < 14 * 864e5;
+
+              return (
+
+                <span
+
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${fresh ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
+
+                  title={`Office data last changed ${latest.at}`}
+
+                >
+
+                  <AlertTriangle className={`w-3.5 h-3.5 ${fresh ? '' : 'opacity-40'}`} />
+
+                  Office info changed{latest.summary ? ` — ${latest.summary}` : ''}
+
+                </span>
+
+              );
+
+            })()}
+
           </div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
