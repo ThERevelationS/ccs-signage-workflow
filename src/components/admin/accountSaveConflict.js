@@ -4,7 +4,8 @@
 const ACCOUNT_FIELDS = new Set([
   "full_name", "username", "role", "sales_roles",
   "can_import_export", "can_order_export", "can_view_resources",
-  "employment_type", "can_work_pause", "can_self_approve_shifts"
+  "employment_type", "can_work_pause", "can_self_approve_shifts",
+  "is_owner"
 ]);
 
 export function rejectedAdminAccountField(error) {
