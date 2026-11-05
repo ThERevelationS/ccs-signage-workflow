@@ -88,13 +88,21 @@ export default function EmployeeTodayCard({
     });
   }, [timeEntries, now]);
 
-  const completedTodayMinutes = todayEntries
+  // Minute totals follow the workday anchor: a shift combined into a previous
+  // workday counts there, not on the day its clock-in happened.
+  const todayKey = format(now, "yyyy-MM-dd");
+  const anchorDayOf = (entry) =>
+    String(entry?.work_day_anchor_date || "").trim() ||
+    (safeDate(entry?.clock_in) ? format(safeDate(entry.clock_in), "yyyy-MM-dd") : "");
+  const countedTodayEntries = todayEntries.filter((entry) => anchorDayOf(entry) === todayKey);
+
+  const completedTodayMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Math.round(Number(entry.total_hours || 0) * 60)), 0);
-  const completedPauseMinutes = todayEntries
+  const completedPauseMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Number(entry.tracked_work_pause_minutes || 0)), 0);
-  const completedBreakMinutes = todayEntries
+  const completedBreakMinutes = countedTodayEntries
     .filter(entry => entry.status === "clocked_out")
     .reduce((sum, entry) => sum + Math.max(0, Number(entry.tracked_break_minutes || 0)), 0);
 
@@ -109,12 +117,13 @@ export default function EmployeeTodayCard({
   const activePauseStart = safeDate(statusData?.active_work_pause?.started_at);
   const activePauseElapsed = activePauseStart ? Math.max(0, Math.floor((now.getTime() - activePauseStart.getTime()) / 60000)) : 0;
   const activeUnpaidBreakElapsed = statusData?.break_status === "on_break" && statusData?.active_break?.is_paid !== true ? activeBreakElapsed : 0;
-  const activeWorkedMinutes = activeEntry
+  const activeCountsToday = !activeEntry || anchorDayOf(activeEntry) === todayKey;
+  const activeWorkedMinutes = activeEntry && activeCountsToday
     ? Math.max(0, activeSpanMinutes - completedActiveUnpaidBreak - completedActivePause - activeUnpaidBreakElapsed - activePauseElapsed)
     : 0;
   const todayWorkedMinutes = completedTodayMinutes + activeWorkedMinutes;
-  const todayPauseMinutes = completedPauseMinutes + completedActivePause + activePauseElapsed;
-  const todayBreakMinutes = completedBreakMinutes + completedActiveBreak + activeBreakElapsed;
+  const todayPauseMinutes = completedPauseMinutes + (activeCountsToday ? completedActivePause + activePauseElapsed : 0);
+  const todayBreakMinutes = completedBreakMinutes + (activeCountsToday ? completedActiveBreak + activeBreakElapsed : 0);
 
   const pendingCorrections = correctionRequests.filter(request => ["pending", "reviewing"].includes(request.status));
   const pendingShiftReviewCount = Math.max(0, Number(statusData?.pending_shift_review?.count || 0));
