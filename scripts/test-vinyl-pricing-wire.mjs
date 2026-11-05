@@ -120,6 +120,16 @@ const plainProject = () => ({
   // config detection — engine vocab only; vinyl unit enums are NOT config.
   ok(!descriptorHasPricingContent(null), 'null descriptor');
   ok(!descriptorHasPricingContent({}), 'empty descriptor');
+  // Zero artifacts are unset defaults, not authored config — the engine only
+  // fires these families above zero (markup is the exception: 0 = sell-at-cost).
+  ok(!descriptorHasPricingContent({ fixed_price: 0 }), 'fixed_price 0 not config');
+  ok(!descriptorHasPricingContent({ market_retail: 0 }), 'market_retail 0 not config');
+  ok(!descriptorHasPricingContent({ market_discount_pct: 0 }), 'market_discount_pct 0 not config');
+  ok(!descriptorHasPricingContent({ minimum_charge: 0 }), 'minimum_charge 0 not config');
+  ok(!descriptorHasPricingContent({ setup_fee: 0 }), 'setup_fee 0 not config');
+  ok(descriptorHasPricingContent({ markup_pct: 0 }), 'explicit markup_pct 0 is config (sell-at-cost)');
+  ok(descriptorHasPricingContent({ markup: 0 }), 'markup spelling: markup 0 is config');
+  ok(descriptorHasPricingContent({ markup_percent: 0 }), 'markup spelling: markup_percent 0 is config');
   ok(!descriptorHasPricingContent({ pricing_mode: 'per_sqft' }), 'unit enum per_sqft not config');
   ok(!descriptorHasPricingContent({ pricing_mode: 'per_roll' }), 'unit enum per_roll not config');
   ok(!descriptorHasPricingContent({ mode: 'per_piece' }), 'per_piece not config');
@@ -277,6 +287,18 @@ const plainProject = () => ({
   const res2 = wire(rec2, { baselineSell: 150 });
   eq(res2.lines[0].engine.setup_fee, 25, 'setup fee captured');
   eq(res2.customer_price, 145, '120 extension + 25 setup');
+}
+
+{
+  // markup_pct:0 alone = explicit sell-at-cost — engages the engine and lands
+  // on unit cost, replacing the line's module-markup baseline contribution.
+  const rec = { items: [{ id: 'a', quantity: 1, item_total_cost: 10, markup_pct: 0 }], total_cost: 15, markup_percent: 50, subtotal: 10, markup_amount: 5 };
+  const res = wire(rec, { baselineSell: 15 });
+  eq(res.lines[0].priced, true, 'markup_pct 0 alone engages the engine');
+  eq(res.lines[0].engine.unit_price, 10, 'markup_pct 0 sells at cost');
+  eq(res.lines[0].engine.price_source, 'markup');
+  eq(res.lines[0].engine.tier_source, 'part_tier', 'part markup-0 layer wins');
+  eq(res.customer_price, 10, 'customer pays cost — module markup replaced on the configured line');
 }
 
 {
