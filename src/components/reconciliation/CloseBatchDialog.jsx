@@ -41,7 +41,8 @@ const METHOD_OPTIONS = [
 // close_batch with the exact payment_ids plus a creation_request_key held in
 // a ref — a retried submit converges on the same batch instead of opening a
 // second one.
-export default function CloseBatchDialog({ sessionToken, invoke, locations = [], salesLocations = [], onClose, onClosed }) {
+const EMPTY = [];
+export default function CloseBatchDialog({ sessionToken, invoke, locations = EMPTY, salesLocations = EMPTY, onClose, onClosed }) {
   const [locKey, setLocKey] = useState("");
   const [method, setMethod] = useState("");
   const [dateStart, setDateStart] = useState("");
