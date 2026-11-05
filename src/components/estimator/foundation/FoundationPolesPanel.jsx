@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
+import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
@@ -123,9 +124,10 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                 Paint pole
               </label>
               <div className="flex items-center gap-3 text-xs text-gray-600">
-                <span>Pole {money(pole.pole_cost)}</span>
-                <span>Paint {money(pole.pole_painting_cost)}</span>
-                <span className="font-bold text-gray-900 text-sm">{money(pole.total_cost)}</span>
+                <span>Pole {hasFoundationCostSnapshot(pole.pole_cost) ? money(pole.pole_cost) : "Not saved"}</span>
+                <span>Paint {hasFoundationCostSnapshot(pole.pole_painting_cost) ? money(pole.pole_painting_cost) : "Not saved"}</span>
+                <span className="font-bold text-gray-900 text-sm">{hasFoundationCostSnapshot(pole.total_cost) ? money(pole.total_cost) : "Not saved"}</span>
+                {(!options.some((o) => o.id === pole.pole_id)) && <span className="col-span-full text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
                 <Button variant="ghost" size="icon" onClick={() => removePole(index)}>
                   <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
