@@ -92,7 +92,8 @@ const draftChanged = (d) => {
     d._breaksText !== base._breaksText || d._modsText !== base._modsText;
 };
 
-export default function PricingMatrixTable({ rows = [], tierOptions = [], categoryOptions = [], onSaved, updatedBy = "" }) {
+const EMPTY = [];
+export default function PricingMatrixTable({ rows = EMPTY, tierOptions = EMPTY, categoryOptions = EMPTY, onSaved, updatedBy = "" }) {
   const [drafts, setDrafts] = useState(() => rows.map(toDraft));
   const [deleted, setDeleted] = useState(() => new Set());
   const [saving, setSaving] = useState(false);
