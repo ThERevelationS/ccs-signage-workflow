@@ -1,4 +1,5 @@
 import { constantTimeEqual } from './constantTime.ts';
+import { applyOwnerCapabilities } from './ownerRole.ts';
 
 // Short-lived auth cache — every function call used to spend ~2 entity_list
 // reads re-verifying the same session (AuthorizedEmail + UserSession). Deno
@@ -91,7 +92,7 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
 
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
+  if (cachedAuth && cachedAuth.expires > Date.now()) return applyOwnerCapabilities(stripExpiredGrant(cachedAuth.user));
 
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
@@ -113,7 +114,9 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     // UserSession may not exist yet — treat lookup failures as non-blocking.
   }
 
-  const user = stripExpiredGrant(users[0]);
+  // Owner normalization runs AFTER grant-expiry strip — an owner (anchored or
+  // granted) is never demoted by a lapsed break-glass grant.
+  const user = applyOwnerCapabilities(stripExpiredGrant(users[0]));
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
   sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ''));
