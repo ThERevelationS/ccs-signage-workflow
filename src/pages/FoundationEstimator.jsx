@@ -40,6 +40,7 @@ import { normalizeConcreteSupplier } from "@/components/estimator/foundation/leg
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { convertFoundationToBrickStone } from "@/components/estimator/foundation/convertToBrickStone";
 import { createEstimateReadOnlyShareLink } from "@/components/estimator/moduleShared/moduleProjectActions";
@@ -103,6 +104,39 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const [templateMode, setTemplateMode] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
   const saveRef = useRef(null);
+  const saveSessionRef = useRef(null);
+  if (!saveSessionRef.current) saveSessionRef.current = createFoundationSaveSession();
+  const editRevisionRef = useRef(0);
+  const acknowledgedVersionRef = useRef(null);
+  const currentEditorRef = useRef({ sourceId: null, editRevision: 0, loaded: false });
+  const contextKeyRef = useRef(null);
+  const contextGenerationRef = useRef(0);
+  const mountedRef = useRef(true);
+  const saveAttemptRef = useRef(null);
+  const exitGenerationRef = useRef(-1);
+  const [saveError, setSaveError] = useState("");
+
+  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}`;
+  if (contextKeyRef.current !== contextKey) {
+    contextKeyRef.current = contextKey;
+    editRevisionRef.current += 1;
+    contextGenerationRef.current += 1;
+    acknowledgedVersionRef.current = project?.id ? { sourceId: project.id, updated_date: project.updated_date } : null;
+  }
+  const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id;
+  currentEditorRef.current = {
+    sourceId: contextLoaded ? project.id : null,
+    estimateId: estimateId || null,
+    generation: contextGenerationRef.current,
+    editRevision: editRevisionRef.current,
+    loaded: contextLoaded,
+  };
+
+  const bumpEdit = () => {
+    editRevisionRef.current += 1;
+    currentEditorRef.current = { ...currentEditorRef.current, editRevision: editRevisionRef.current };
+  };
+
   const copyAttemptRef = useRef({ signature: "", key: "" });
   const swapAttemptRef = useRef({ signature: "", key: "" });
 
@@ -112,6 +146,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   }, [id]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
@@ -119,6 +158,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     let active = true;
     setLoading(true);
     setLoadError("");
+    setSaveError("");
+    setDirty(false);
+    setHistory({ past: [], future: [] });
     Promise.all([
       staffEntities.FoundationProject.get(id),
       loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
@@ -127,6 +169,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     ])
       .then(([proj, inv, concreteServices, settingRows]) => {
         if (!active) return;
+        if (!proj?.id) {
+          setProject(null);
+          return;
+        }
         setProject({
           ...proj,
           excavation_method: proj.excavation_method || "hand_dig",
@@ -206,6 +252,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
   const commit = (updater) => {
+    bumpEdit();
     setHistory((h) => ({ past: [...h.past.slice(-40), project], future: [] }));
     setProject((prev) => ({ ...prev, ...updater(prev) }));
     setDirty(true);
@@ -242,6 +289,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const undo = () => {
     if (!history.past.length) return;
+    bumpEdit();
     const prevState = history.past[history.past.length - 1];
     setHistory((h) => ({ past: h.past.slice(0, -1), future: [project, ...h.future] }));
     setProject(prevState);
@@ -250,6 +298,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const redo = () => {
     if (!history.future.length) return;
+    bumpEdit();
     const nextState = history.future[0];
     setHistory((h) => ({ past: [...h.past, project], future: h.future.slice(1) }));
     setProject(nextState);
@@ -308,68 +357,113 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     total_wall_cap_cost: calc.totals.total_wall_cap_cost,
   });
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const basePayload = payload();
-      const customerPricing = project.customer_pricing?.applied === true
-        ? await calculateSavedCustomerPricing({
-            project: { ...project, ...basePayload },
-            categorize: categorizeFoundationProject,
-            tierNumber: project.customer_pricing?.tier_number,
-          })
-        : project.customer_pricing;
-      const dataToSave = { ...basePayload, customer_pricing: customerPricing };
-      const savedProject = await updateBuilderSourceProject({
-        entity: staffEntities.FoundationProject,
-        sourceId: project.id,
-        expectedUpdatedAt: project.updated_date,
-        data: dataToSave,
-        estimateId,
-        label: "Foundation project",
-      });
-      if (savedProject?.updated_date) {
-        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));
-      }
-
-      if (estimateId) {
-        await recordBuilderSave({
-          estimateId,
-          line: { project_id: project.id, module_key: "foundation" },
-          sourceProject: {
-            ...savedProject,
-            items: calc.items,
-            selected_equipment: calc.equipment,
-            walls: calc.walls,
-            poles: calc.poles,
-            wall_caps: calc.wallCaps,
-            builder_calculation: {
-              totals: calc.totals,
-              delivery: calc.delivery,
-              cabinet_cost: cabinetCost,
-              landscape_cost: landscapeCost,
-              section_total: sectionTotal,
-            },
-          },
-          liveTotal: sectionTotal,
-        });
-      }
-      setDirty(false);
-      onSaved?.();
-    } catch (e) {
-      console.error(e); alert("Save failed: " + e.message);
-    } finally {
-      setSaving(false);
+  const saveContext = { ...currentEditorRef.current };
+  const runSave = (intent) => {
+    const attemptKey = `${saveContext.generation}|${saveContext.editRevision}|${intent}`;
+    const liveNow = currentEditorRef.current;
+    const staleOutcome = { status: "superseded", sourceId: saveContext.sourceId, sourceVersion: null, savedEditRevision: saveContext.editRevision, sourceSaved: false, builderSync: "not_required", error: null, warnings: [] };
+    if (!(mountedRef.current && saveContext.loaded && liveNow.loaded && liveNow.sourceId === saveContext.sourceId && liveNow.generation === saveContext.generation && liveNow.editRevision === saveContext.editRevision)) {
+      return Promise.resolve(staleOutcome);
     }
+    const existing = saveAttemptRef.current;
+    if (existing) return existing.promise;
+    const captured = {
+      project, estimateId, basePayload: payload(),
+      items: calc.items, equipment: calc.equipment, walls: calc.walls,
+      poles: calc.poles, wallCaps: calc.wallCaps, delivery: calc.delivery,
+      totals: calc.totals, sectionTotal, cabinetCost, landscapeCost,
+      computedPricing: undefined,
+    };
+    if (!saveContext.loaded) {
+      return Promise.resolve(staleOutcome);
+    }
+    setSaveError("");
+    setSaving(true);
+    const promise = saveSessionRef.current.run({
+      sourceId: saveContext.sourceId,
+      editRevision: saveContext.editRevision,
+      getCurrent: () => ({ ...currentEditorRef.current, loaded: mountedRef.current && currentEditorRef.current.loaded }),
+      saveSource: async () => {
+        let customerPricing = captured.project.customer_pricing;
+        if (captured.project.customer_pricing?.applied === true) {
+          customerPricing = await calculateSavedCustomerPricing({
+            project: { ...captured.project, ...captured.basePayload },
+            categorize: categorizeFoundationProject,
+            tierNumber: captured.project.customer_pricing?.tier_number,
+          });
+          captured.computedPricing = customerPricing;
+          const live = currentEditorRef.current;
+          if (!(mountedRef.current && live.sourceId === saveContext.sourceId && live.generation === saveContext.generation && live.editRevision === saveContext.editRevision && live.loaded)) {
+            throw Object.assign(new Error("Save superseded by a newer edit or route change."), { superseded: true });
+          }
+        }
+        const ack = acknowledgedVersionRef.current;
+        const expectedUpdatedAt = ack?.sourceId === saveContext.sourceId ? ack.updated_date : captured.project.updated_date;
+        return updateBuilderSourceProject({
+          entity: staffEntities.FoundationProject,
+          sourceId: saveContext.sourceId,
+          expectedUpdatedAt,
+          data: { ...captured.basePayload, customer_pricing: customerPricing },
+          estimateId: captured.estimateId,
+          label: "Foundation project",
+        });
+      },
+      syncBuilder: captured.estimateId
+        ? async (savedProject) => recordBuilderSave({
+            estimateId: captured.estimateId,
+            line: { project_id: saveContext.sourceId, module_key: "foundation" },
+            sourceProject: {
+              ...savedProject, items: captured.items, selected_equipment: captured.equipment,
+              walls: captured.walls, poles: captured.poles, wall_caps: captured.wallCaps,
+              builder_calculation: { totals: captured.totals, delivery: captured.delivery, cabinet_cost: captured.cabinetCost, landscape_cost: captured.landscapeCost, section_total: captured.sectionTotal },
+            },
+            liveTotal: captured.sectionTotal,
+          })
+        : null,
+    }).then((outcome) => {
+      if (!mountedRef.current) return outcome;
+      const live = currentEditorRef.current;
+      const sameContext = live.generation === saveContext.generation && live.sourceId === saveContext.sourceId;
+      const fullyCurrent = sameContext && live.editRevision === saveContext.editRevision && live.loaded;
+      if (outcome.sourceSaved && outcome.sourceVersion && sameContext) {
+        acknowledgedVersionRef.current = { sourceId: outcome.sourceId, updated_date: outcome.sourceVersion };
+      }
+      if (outcome.status === "saved" && fullyCurrent) {
+        setProject((prev) => (prev && prev.id === outcome.sourceId ? { ...prev, updated_date: outcome.sourceVersion, ...(captured.computedPricing !== undefined ? { customer_pricing: captured.computedPricing } : {}) } : prev));
+        setDirty(false);
+        setSaveError("");
+        try { onSaved?.(); } catch (e) { console.error(e); outcome.warnings.push("observer_error"); }
+      } else if (sameContext && outcome.status === "partial") {
+        setSaveError("Source saved; estimate/Builder sync incomplete. Retry save.");
+        setDirty(true);
+      } else if (sameContext && (outcome.status === "conflict" || outcome.status === "failed")) {
+        setSaveError("Save failed: " + (outcome.error?.message || outcome.status));
+        setDirty(true);
+      }
+      return outcome;
+    }).finally(() => {
+      if (saveAttemptRef.current?.promise === promise) {
+        saveAttemptRef.current = null;
+        if (mountedRef.current) setSaving(saveSessionRef.current.isSaving());
+      }
+    });
+    saveAttemptRef.current = { key: attemptKey, promise };
+    return promise;
   };
+  const handleSave = () => runSave("save");
   saveRef.current = handleSave;
 
   const backTo = estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator";
 
   const handleSaveAndExit = async () => {
-    await handleSave();
-    if (embedded) onClose?.();
-    else navigate(backTo);
+    const outcome = await runSave("save_exit");
+    const c = currentEditorRef.current;
+    if (outcome?.status === "saved" && mountedRef.current && c.generation === saveContext.generation && c.sourceId === saveContext.sourceId && outcome.sourceId === c.sourceId && outcome.savedEditRevision === c.editRevision && c.editRevision === saveContext.editRevision && c.loaded === true && exitGenerationRef.current !== c.generation) {
+      exitGenerationRef.current = c.generation;
+      if (embedded) onClose?.();
+      else navigate(backTo);
+    }
+    return outcome;
   };
 
   const handleSaveAsCopy = async () => {
@@ -433,6 +527,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     <div className="clay-scope min-h-full bg-gray-50">
       <div className="max-w-[1500px] mx-auto p-4">
         <FoundationSectionBanner sectionName={project.project_name} />
+
+        {saveError && <div role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">{saveError}</div>}
 
         <FoundationToolbar
           title="Edit Concrete | Masonry | Poles Estimate"
