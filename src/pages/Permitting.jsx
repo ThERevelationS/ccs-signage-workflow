@@ -834,7 +834,15 @@ export default function Permitting() {
         if (Array.isArray(live?.pending_applies)) {
           await PermitLocality.update(localityId, { pending_applies: live.pending_applies.filter(p => String(p?.work_order_id || "") !== String(workOrderId)) });
         }
-      } catch {}
+      } catch (e1) {
+        console.warn("pending_applies cleanup failed, retrying once:", e1?.message || e1);
+        try {
+          const live = await PermitLocality.get(localityId);
+          if (Array.isArray(live?.pending_applies)) {
+            await PermitLocality.update(localityId, { pending_applies: live.pending_applies.filter(p => String(p?.work_order_id || "") !== String(workOrderId)) });
+          }
+        } catch (e2) { console.warn("pending_applies cleanup still failing (phantom poller may persist):", e2?.message || e2); }
+      }
     }
   }, [lineItems, workOrders, deletePermitLineItemSafely, updateWorkOrderField]);
 
