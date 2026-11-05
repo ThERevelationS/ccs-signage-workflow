@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
+import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
@@ -153,10 +154,11 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
             </div>
             <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
               <span>
-                Stock length: <span className="font-semibold text-gray-900">{cap.stock_length_inches || 0}"</span>
+                Stock length: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : "Not saved"}</span>
               </span>
               <div className="flex items-center gap-3">
-                <span className="font-bold text-gray-900">{money(cap.cost)}</span>
+                <span className="font-bold text-gray-900">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : "Not saved"}</span>
+                {(!options.some((o) => o.id === cap.cap_inventory_id)) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
                 <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
                   <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
