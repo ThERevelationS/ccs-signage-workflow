@@ -138,7 +138,7 @@ export function AnnouncementProvider({ children, currentPageName }) {
 
   // 5-minute ambient poll — first fire waits out the mount burst so the
   // banner load doesn't pay a 429 + retry stack on every page open.
-  usePolling(fetchActive, 300000, { initialDelayMs: 45000 });
+  usePolling(fetchActive, 300000, { initialDelayMs: 70000 });
 
   useEffect(() => {
     let unsubscribe = null;
