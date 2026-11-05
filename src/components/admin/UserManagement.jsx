@@ -237,7 +237,8 @@ export default function UserManagement() {
     try {
       const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: decision, request_id: requestId });
       if (r?.data?.success) setAccessRequests((cur) => cur.filter((x) => x.id !== requestId));
-    } catch { /* leave row retryable */ }
+      else setUserMutationError(r?.data?.error || "Access request decision failed.");
+    } catch (e) { setUserMutationError(`Access request ${decision} failed: ${e?.message || e}`); }
   };
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
