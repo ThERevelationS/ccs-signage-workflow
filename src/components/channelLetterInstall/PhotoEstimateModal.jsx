@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, Upload, Wand2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 
 const SCHEMA = {
   type: "object",
@@ -52,6 +53,7 @@ export default function PhotoEstimateModal({ open, onClose, onApply }) {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       const res = await base44.integrations.Core.InvokeLLM({
+        model: ESTIMATOR_AI_MODEL,
         prompt: `You're a sign installer reviewing a photo of a site where channel letters will be installed.
 Analyze the photo and estimate:
 - The install height (feet from ground to where letters will go)
