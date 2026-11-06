@@ -35,7 +35,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeFoundationProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
-import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
+import { calcProject, money, captureConcreteDeliverySnapshot } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -127,7 +127,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     contextKeyRef.current = contextKey;
     editRevisionRef.current += 1;
     contextGenerationRef.current += 1;
-    acknowledgedVersionRef.current = project?.id ? { sourceId: project.id, updated_date: project.updated_date } : null;
+    const previousAcknowledgment = acknowledgedVersionRef.current;
+    acknowledgedVersionRef.current = project?.id ? {
+      sourceId: project.id, updated_date: project.updated_date,
+      sourceSnapshot: previousAcknowledgment?.sourceId === project.id ? previousAcknowledgment.sourceSnapshot : null,
+    } : null;
   }
   const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id && (!estimateId || linkedEstimate?.id === estimateId);
   currentEditorRef.current = {
@@ -224,7 +228,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           return;
         }
         if (sourceRefreshRef.current?.sourceId === proj.id) sourceRefreshRef.current = null;
-        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date };
+        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date, sourceSnapshot: normalized };
         setProject(normalized);
         projectRef.current = normalized;
         const rec = foundationSyncRecoveryState({ project: merged, estimateId, estimate: est });
@@ -248,9 +252,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     return () => { active = false; };
   }, [id, estimateId, reloadRevision]);
 
+  const savedSourceProject = acknowledgedVersionRef.current?.sourceId === project?.id
+    ? acknowledgedVersionRef.current?.sourceSnapshot ?? null : null;
   const calc = useMemo(
-    () => (project ? calcProject(project, inventory, settings) : null),
-    [project, inventory, settings]
+    () => (project ? calcProject(project, inventory, settings, { savedProject: savedSourceProject }) : null),
+    [project, inventory, settings, savedSourceProject]
   );
 
   const catalogBlocked = Boolean(calc?.catalogIssues?.length);
@@ -460,6 +466,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     equipment_excavation_labor_rate: project.equipment_excavation_labor_rate,
     ai_engineering_recommendation: project.ai_engineering_recommendation,
     ai_engineering_data: project.ai_engineering_data,
+    concrete_delivery_snapshot: captureConcreteDeliverySnapshot(calc.delivery),
     total_concrete_cost: calc.totals.total_concrete_cost,
     total_rebar_cost: calc.totals.total_rebar_cost,
     total_excavation_cost: calc.totals.total_excavation_cost,
@@ -586,7 +593,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         setSaveError("An earlier save finished after you navigated away. Reload the saved project before saving again.");
       }
       if (outcome.sourceSaved && outcome.sourceVersion && sameContext) {
-        acknowledgedVersionRef.current = { sourceId: outcome.sourceId, updated_date: outcome.sourceVersion };
+        acknowledgedVersionRef.current = {
+          sourceId: outcome.sourceId, updated_date: outcome.sourceVersion,
+          sourceSnapshot: {
+            ...captured.project, ...captured.basePayload, id: outcome.sourceId, updated_date: outcome.sourceVersion,
+          },
+        };
       }
       if (outcome.status === "saved" && fullyCurrent) {
         setRecoveryRequired(false);
@@ -896,6 +908,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                       <FoundationItemCard
                         key={item.component_id || index}
                         item={item}
+                        pricing={calc.itemPricing[index]}
                         index={index}
                         catalog={catalog}
                         onChange={patchItem}
@@ -1007,6 +1020,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   delivery={calc.delivery}
                   totals={calc.totals}
                   inventory={inventory}
+                  itemPricing={calc.itemPricing}
+                  pricingUnavailable={catalogBlocked}
                 />
               </TabsContent>
 
