@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 import { getSessionToken } from "@/components/auth/EmailGate";
 
 const SCHEMA = {
@@ -61,7 +62,7 @@ export default function AddressAutocomplete({ value, onChange, placeholder, clas
 Each must look like a real mailing address (street number + street, city, state abbr, ZIP).
 Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`,
         response_json_schema: SCHEMA,
-        model: "gemini_3_flash"
+        model: ESTIMATOR_AI_MODEL
       });
       return llm?.suggestions || [];
     };
