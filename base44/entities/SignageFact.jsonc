@@ -1,0 +1,77 @@
+{
+  "name": "SignageFact",
+  "type": "object",
+  "description": "Structured signage-relevant fact extracted from an official jurisdiction source document. Every fact carries its evidence quote, source document, page, and confidence tier \u2014 displayed in-app as fact cards and returned by the signage ask-box. Facts are extracted locally (pattern + Devin-agent passes) and advance through the confidence ladder: pattern \u2192 agent \u2192 ai_verified \u2192 verified.",
+  "properties": {
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Exact jurisdiction this fact applies to (e.g. 'Boone County', 'City of Florence', 'West Chester Township'). Never merged across jurisdictions."
+    },
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "Canonical JurisdictionProfile id when linked."
+    },
+    "state": {
+      "type": "string",
+      "description": "OH | KY."
+    },
+    "sign_type": {
+      "type": "string",
+      "description": "Sign-type enum from signage-facts.mjs (wall, monument, emc_digital, temporary, \u2026). 'general' for jurisdiction-wide rules not tied to one type."
+    },
+    "fact_key": {
+      "type": "string",
+      "description": "Taxonomy fact key (max_height, permit_required, permit_fee, allowed_zones, \u2026)."
+    },
+    "value_json": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Structured value: {value, unit, condition} \u2014 e.g. {value:25,unit:'ft',condition:'in C-2 zones'} or {value:false} for prohibitions."
+    },
+    "fact_identity": {
+      "type": "string",
+      "description": "Deterministic dedupe/supersession key: jurisdiction|sign_type|fact_key|source_sha."
+    },
+    "evidence_quote": {
+      "type": "string",
+      "description": "Verbatim source text the fact was extracted from."
+    },
+    "source_document_id": {
+      "type": "string",
+      "description": "PermittingSourceDocument id the evidence came from."
+    },
+    "source_sha256": {
+      "type": "string",
+      "description": "Archive hash of the source file \u2014 supersession trigger on re-fetch."
+    },
+    "page_ref": {
+      "type": "integer",
+      "description": "Page number within the source document."
+    },
+    "official_url": {
+      "type": "string",
+      "description": "Retained official URL \u2014 the 'pulled from' quick link."
+    },
+    "confidence": {
+      "type": "string",
+      "description": "pattern | agent | ai_verified | verified \u2014 the display ladder; ai_verified means the local Devin-agent gate cleared it."
+    },
+    "ai_gate": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Local AI review record: {verdict:'pass'|'flag', checked_at, note}."
+    },
+    "active": {
+      "type": "boolean",
+      "description": "false when superseded by a newer source scan."
+    },
+    "supersedes_id": {
+      "type": "string",
+      "description": "SignageFact id this row replaces."
+    },
+    "superseded_by_id": {
+      "type": "string",
+      "description": "SignageFact id that replaced this row."
+    }
+  }
+}
