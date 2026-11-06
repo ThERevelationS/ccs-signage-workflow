@@ -291,6 +291,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   );
 
   const catalogBlocked = Boolean(calc?.catalogIssues?.length);
+  const inputIssues = calc?.inputIssues || [];
+  const inputBlocked = inputIssues.length > 0;
+  const pricingBlocked = catalogBlocked || inputBlocked;
   const [catalogReloading, setCatalogReloading] = useState(false);
   const catalogReloadRef = useRef(null);
 
@@ -360,10 +363,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!autoSave || !dirty || recoveryRequired || catalogBlocked || catalogReloading || catalogReloadRef.current || draftSessionRef.current.pending) return;
+    if (!autoSave || !dirty || recoveryRequired || pricingBlocked || catalogReloading || catalogReloadRef.current || draftSessionRef.current.pending) return;
     const t = setTimeout(() => saveRef.current?.(), 2000);
     return () => clearTimeout(t);
-  }, [autoSave, dirty, project, recoveryRequired, catalogBlocked, catalogReloading]);
+  }, [autoSave, dirty, project, recoveryRequired, pricingBlocked, catalogReloading]);
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -616,10 +619,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
     const existing = saveAttemptRef.current;
     if (existing) return existing.promise;
-    if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before saving.");
+    if (pricingBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: fix highlighted design inputs or catalog selections before saving.");
       setDirty(true);
-      return Promise.resolve({ ...staleOutcome, status: "failed", error: new Error("Save paused: catalog pricing is incomplete.") });
+      return Promise.resolve({ ...staleOutcome, status: "failed", error: new Error("Save paused: fix highlighted design inputs or catalog selections.") });
     }
     const captured = {
       project, estimateId, basePayload: payload(),
@@ -788,8 +791,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const live0 = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;
     if (saveAttemptRef.current || saveSessionRef.current?.isSaving()) return null;
-    if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before copying.");
+    if (pricingBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: fix highlighted design inputs or catalog selections before copying.");
       return null;
     }
     const gen = saveContext.generation;
@@ -862,8 +865,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     if (draftSessionRef.current.pending) return;
     const live = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId || live.estimateId !== saveContext.estimateId || live.editRevision !== saveContext.editRevision) return null;
-    if (catalogBlocked || catalogReloadRef.current) {
-      setSaveError("Pricing unavailable: selected materials or rental items need attention. Resolve catalog availability before swapping.");
+    if (pricingBlocked || catalogReloadRef.current) {
+      setSaveError("Pricing unavailable: fix highlighted design inputs or catalog selections before swapping.");
       return null;
     }
     setSaving(true);
@@ -906,6 +909,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               className="mt-2 rounded-sm border border-amber-400 bg-white px-2 py-1 text-[12px] font-semibold text-amber-800 disabled:opacity-50">
               {catalogReloading ? "Reloading catalogs…" : "Reload catalogs"}
             </button>
+          </div>
+        )}
+
+        {inputBlocked && (
+          <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+            <div className="font-semibold">Design input required: fix highlighted design inputs below. Save and estimate handoff are paused.</div>
+            <ul className="mt-1 list-disc pl-5">
+              {inputIssues.map((i, idx) => <li key={idx}>{i.message}</li>)}
+            </ul>
           </div>
         )}
 
@@ -990,7 +1002,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           dirty={dirty || draftSessionRef.current.pending}
           lastSavedAt={project?.updated_date}
           autoSave={autoSave}
-          pricingUnavailable={catalogBlocked}
+          pricingUnavailable={pricingBlocked}
           onToggleAutoSave={() => { if (!draftSessionRef.current.pending) setAutoSave((v) => !v); }}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
@@ -1151,7 +1163,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
-                  <FoundationTotals totals={calc.totals} pricingUnavailable={catalogBlocked} />
+                  <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} />
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <div className="flex justify-between">
                       <span>Signage cabinets</span>
@@ -1163,7 +1175,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     </div>
                   </div>
                   <div className="mt-2 text-right text-[12px] text-gray-500">
-                    Section total flowing to estimate: {catalogBlocked ? <b className="text-amber-700">Estimate handoff paused</b> : <b className="text-red-700">{money(sectionTotal)}</b>}
+                    Section total flowing to estimate: {pricingBlocked ? <b className="text-amber-700">Estimate handoff paused</b> : <b className="text-red-700">{money(sectionTotal)}</b>}
                   </div>
                   <Link
                     to="/FoundationCatalog"
@@ -1183,13 +1195,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   totals={calc.totals}
                   inventory={inventory}
                   itemPricing={calc.itemPricing}
-                  pricingUnavailable={catalogBlocked}
+                  pricingUnavailable={pricingBlocked}
                 />
               </TabsContent>
 
               <TabsContent value="pricing" className="space-y-4">
-                {catalogBlocked ? (
-                  <div className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800">Customer pricing unavailable: catalog pricing is incomplete. Resolve catalog materials first.</div>
+                {pricingBlocked ? (
+                  <div className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800">Customer pricing unavailable: fix highlighted design inputs or catalog selections.</div>
                 ) : (<>
                 <CustomerPricingPanel
                   cost={sectionTotal}
@@ -1213,7 +1225,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           </div>
 
           <div className="xl:sticky xl:top-4">
-            <Foundation3DPreview project={project} />
+            {inputBlocked ? (
+              <div className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800">3D preview hidden until the highlighted design inputs are corrected.</div>
+            ) : (
+              <Foundation3DPreview project={project} />
+            )}
           </div>
         </div>
         </fieldset>
