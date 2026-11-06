@@ -558,7 +558,7 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
   return { ...estimate, line_items: lineItems };
 }
 
-export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice }) {
+export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
   if (!estimateId || !line) return line;
   if (!sourceProject || typeof sourceProject !== "object") {
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
@@ -574,6 +574,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   ) || line;
 
   const existingPending = pendingBuilderMutation(currentLine);
+  if (expectedPendingKey !== undefined && existingPending?.key !== expectedPendingKey) {
+    throw new Error("The pending Builder operation changed before recovery. Reload the estimate before continuing.");
+  }
   if (existingPending) {
     if (existingPending.kind === "builder_product_remove") {
       throw new Error("This Product is being removed. Use Resume Product Remove before opening or saving its Builder again.");
