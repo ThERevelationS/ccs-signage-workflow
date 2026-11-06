@@ -2,6 +2,7 @@ import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { ESTIMATOR_AI_MODEL } from "../../../../base44/shared/estimatorAiModelPolicy.js";
 
 export default function AiEngineeringAssistant({ project, onResult }) {
   const [running, setRunning] = useState(false);
@@ -28,6 +29,7 @@ export default function AiEngineeringAssistant({ project, onResult }) {
       }));
 
       const res = await base44.integrations.Core.InvokeLLM({
+        model: ESTIMATOR_AI_MODEL,
         prompt: `You are a structural engineer sizing sign foundations and poles.
 Foundations: ${JSON.stringify(summary)}
 Poles: ${JSON.stringify(poles)}
