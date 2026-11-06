@@ -354,6 +354,18 @@ async function pullDataset(
 
   let orderUnlinkedRowCount = 0;
   let orderUnlinkedRowIds: string[] = [];
+  // Trailing fully-empty rows are routine Smartsheet residue, not evidence a
+  // human must reconcile. They are excluded from the unlinked review flag and
+  // from the create classifier below; a row holding any cell value — even
+  // obvious placeholder text — still flags for review on every run.
+  const orderEmptyRemoteRowIds = new Set(
+    (dataset === 'orders' ? allRows : [])
+      .filter((row: any) => !Array.isArray(row?.cells) ||
+        row.cells.every((cell: any) => cell?.value == null || String(cell.value).trim() === ''))
+      .map((row: any) => String(row?.id || '').trim())
+      .filter(Boolean),
+  );
+  let orderEmptyRowsIgnored = 0;
   // Order-only date preflight: do not mutate any Order if a legacy cell has
   // an untranslatable date or a duplicate permanent Base44 row link.
   // A received text choice is valid; an impossible date is not.
@@ -362,8 +374,21 @@ async function pullDataset(
       ? allRows.filter((row: any) => !deletedOrderLinkedRowIds.has(String(row?.id || '')))
       : allRows;
     const audit = auditOrderDateParity(existingRecords, activeAuditRows, bindings, sheetId);
-    orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows;
-    orderUnlinkedRowIds = audit.samples.unlinked_rows.map((sample: any) => sample.row_id);
+    const orderLinkedRemoteRowIds = new Set(
+      existingRecords
+        .filter((order: any) => order && order.deleted !== true &&
+          String(order?.smartsheet_sheet_id) === String(sheetId))
+        .map((order: any) => cleanText(order?.smartsheet_row_id, 40))
+        .filter((id: string) => /^\d+$/.test(id) && id !== '0'),
+    );
+    const unlinkedEmptyRemoteRowCount = activeAuditRows.filter((row: any) => {
+      const rowId = String(row?.id || '').trim();
+      return orderEmptyRemoteRowIds.has(rowId) && !orderLinkedRemoteRowIds.has(rowId);
+    }).length;
+    orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows - unlinkedEmptyRemoteRowCount;
+    orderUnlinkedRowIds = audit.samples.unlinked_rows
+      .map((sample: any) => String(sample.row_id))
+      .filter((rowId: string) => !orderEmptyRemoteRowIds.has(String(rowId)));
     if (audit.counts.invalid_date_values || audit.counts.duplicate_base44_links) {
       return { dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
         reason: 'Order Request date translation or permanent row links require review before pull. No Orders were changed.',
@@ -727,6 +752,7 @@ async function pullDataset(
     } else if (dataset === 'orders' && profile?.create_base44_from_smartsheet === true) {
       // Only a fully populated unlinked Order row may auto-create. Sparse,
       // blank/placeholder, and duplicate-looking rows stay flagged for review.
+      if (orderEmptyRemoteRowIds.has(String(rowId))) { orderEmptyRowsIgnored++; continue; }
       if (orderToCreate.length >= ORDER_PULL_CREATE_LIMIT) {
         orderCreatesHeldForReview.push({
           row_id: rowId, kind: 'create_cap_reached',
@@ -1539,6 +1565,7 @@ async function pullDataset(
       orders_created_from_smartsheet: orderVerifiedCreatedRowIds.size,
       order_creates_held_for_review: orderCreatesHeldForReview.length,
       order_creates_held_reasons: orderCreatesHeldForReview.slice(0, 10).map((item: any) => `${item.row_id}: ${item.reason}`),
+      blank_rows_ignored: orderEmptyRowsIgnored,
       create_verification_failures: orderCreateVerificationFailures,
       missing_permanent_row_links: orderMissingPermanentRows.length,
       missing_permanent_row_record_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.record.id),
