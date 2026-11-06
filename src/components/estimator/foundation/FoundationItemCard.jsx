@@ -70,7 +70,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           ))}
         </div>
       )}
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
           <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
