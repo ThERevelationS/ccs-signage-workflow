@@ -44,39 +44,38 @@ export default function AiEngineeringAssistant({ project, onResult }) {
     try {
       const res = await base44.integrations.Core.InvokeLLM(request);
       if (!mountedRef.current || token !== tokenRef.current) return;
-Concrete mix: ${project.project_concrete_type || "unspecified"}
-
-Give concise wind-load and sizing recommendations: assumed wind speed and exposure, overturning/embedment check per each foundation, whether the footing/pillar size and depth are adequate, recommended rebar, and any red flags. Use short markdown sections and keep it under 250 words.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            recommendation_markdown: { type: "string" },
-            adequate: { type: "boolean" },
-            assumed_wind_speed_mph: { type: "number" },
-          },
-        },
-      });
-
-      onResult({
-        ai_engineering_recommendation: res.recommendation_markdown || "",
-        ai_engineering_data: {
-          adequate: res.adequate,
-          assumed_wind_speed_mph: res.assumed_wind_speed_mph,
-          generated_at: new Date().toISOString(),
-        },
-      });
+      if (latestRef.current.key !== capturedKey) {
+        setError("The design changed while this review was running. Run a fresh review.");
+        return;
+      }
+      const patch = foundationAiReviewPatch(res, { sourceKey: capturedKey, generatedAt: new Date().toISOString() });
+      const accepted = latestRef.current.onResult(patch);
+      if (accepted === false) setError("The review could not be attached. No review changes were applied.");
     } catch (e) {
-      setError(e.message || "The engineering calculator could not run.");
+      if (!mountedRef.current || token !== tokenRef.current) return;
+      setError(e.message || "The preliminary review could not run.");
     } finally {
-      setRunning(false);
+      if (mountedRef.current && token === tokenRef.current) {
+        busyRef.current = false;
+        setRunning(false);
+      }
     }
   };
 
+  const recommendation = typeof project?.ai_engineering_recommendation === "string" ? project.ai_engineering_recommendation : "";
+  const meta = project?.ai_engineering_data;
+  const samePolicy = meta?.policy_version === FOUNDATION_AI_REVIEW_POLICY && typeof meta?.source_key === "string" && !!meta.source_key;
+  const stale = samePolicy && (!prepared || meta.source_key !== prepared.key);
+  const label = stale
+    ? "Design changed since this note. Run a fresh review."
+    : samePolicy && meta?.source_key
+      ? "Preliminary review"
+      : "Historical / unverified AI note";
+
   return (
     <div className="bg-violet-50 border border-violet-200 rounded-sm p-3 mb-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-2">
-          <Cpu className="w-4 h-4 text-violet-600 mt-0.5" aria-hidden="true" />
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-start gap-2 min-w-0">
           <div>
             <h3 className="text-[13px] font-bold text-violet-900">AI Engineering Assistant</h3>
             <p className="text-[11px] text-violet-700">
