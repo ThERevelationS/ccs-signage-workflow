@@ -41,6 +41,8 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
+import { createFoundationDraftStore } from "@/components/estimator/foundation/foundationDraftRecovery";
+import { useAuth } from "@/components/auth/EmailGate";
 import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt } from "@/components/estimator/foundation/foundationSyncRecovery";
 import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from "@/components/estimator/foundation/foundationAssemblyModel";
 import { prepareFoundationTemplatePatch } from "@/components/estimator/foundation/foundationTemplateModel";
@@ -94,6 +96,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const ownerId = currentUser?.id || null;
 
   const [project, setProject] = useState(null);
   const [inventory, setInventory] = useState([]);
@@ -117,23 +121,24 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const mountedRef = useRef(true);
   const saveAttemptRef = useRef(null);
   const exitGenerationRef = useRef(-1);
+  const loadedOwnerRef = useRef(null);
   const [saveError, setSaveError] = useState("");
   const [reloadRevision, setReloadRevision] = useState(0);
   const [linkedEstimate, setLinkedEstimate] = useState(null);
   const [recoveryRequired, setRecoveryRequired] = useState(false);
 
-  const contextKey = `${id || ""}|${estimateId || ""}|${project?.id || ""}|${reloadRevision}`;
+  const contextKey = JSON.stringify([ownerId, id, estimateId, project?.id, reloadRevision]);
   if (contextKeyRef.current !== contextKey) {
     contextKeyRef.current = contextKey;
     editRevisionRef.current += 1;
     contextGenerationRef.current += 1;
     const previousAcknowledgment = acknowledgedVersionRef.current;
     acknowledgedVersionRef.current = project?.id ? {
-      sourceId: project.id, updated_date: project.updated_date,
-      sourceSnapshot: previousAcknowledgment?.sourceId === project.id ? previousAcknowledgment.sourceSnapshot : null,
+      sourceId: project.id, updated_date: project.updated_date, ownerId,
+      sourceSnapshot: previousAcknowledgment?.sourceId === project.id && previousAcknowledgment?.ownerId === ownerId ? previousAcknowledgment.sourceSnapshot : null,
     } : null;
   }
-  const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id && (!estimateId || linkedEstimate?.id === estimateId);
+  const contextLoaded = mountedRef.current && !loading && !loadError && !!project && project.id === id && (!estimateId || linkedEstimate?.id === estimateId) && loadedOwnerRef.current === ownerId;
   currentEditorRef.current = {
     sourceId: contextLoaded ? project.id : null,
     estimateId: estimateId || null,
@@ -154,6 +159,16 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const projectRef = useRef(null);
   const swapAttemptRef = useRef({ signature: "", key: "" });
   projectRef.current = contextLoaded ? project : null;
+
+  // Unsent browser-tab draft recovery (per owner/source/estimate context).
+  const draftStore = useMemo(
+    () => createFoundationDraftStore({ getStorage: () => window.sessionStorage, ownerId, sourceId: id, estimateId: estimateId || null }),
+    [ownerId, id, estimateId],
+  );
+  const draftSessionRef = useRef({ store: null, revision: null, pending: false });
+  if (draftSessionRef.current.store !== draftStore) draftSessionRef.current = { store: draftStore, revision: null, pending: false };
+  const [draftOffer, setDraftOffer] = useState(null); // { store, revision, draft?, message?, warning? } scoped to current store
+  const draftVisible = draftOffer?.store === draftStore ? draftOffer : null;
 
   useEffect(() => {
     copyAttemptRef.current = { signature: "", key: "" };
@@ -228,7 +243,23 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           return;
         }
         if (sourceRefreshRef.current?.sourceId === proj.id) sourceRefreshRef.current = null;
-        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date, sourceSnapshot: normalized };
+        acknowledgedVersionRef.current = { sourceId: proj.id, updated_date: proj.updated_date, ownerId, sourceSnapshot: normalized };
+        loadedOwnerRef.current = ownerId;
+        const found = draftStore.read();
+        if (found.status === "found" || found.status === "invalid") {
+          draftSessionRef.current.revision = found.revision ?? null;
+          draftSessionRef.current.pending = true;
+          setAutoSave(false);
+          setDraftOffer(found.status === "found" ? { store: draftStore, revision: found.revision, draft: found.draft, savedAt: found.savedAt, baseUpdatedAt: found.baseUpdatedAt } : { store: draftStore, revision: found.revision, message: found.message });
+        } else if (found.status === "unavailable") {
+          draftSessionRef.current.revision = null;
+          draftSessionRef.current.pending = false;
+          setDraftOffer({ store: draftStore, warning: found.message });
+        } else {
+          draftSessionRef.current.revision = null;
+          draftSessionRef.current.pending = false;
+          setDraftOffer(null);
+        }
         setProject(normalized);
         projectRef.current = normalized;
         const rec = foundationSyncRecoveryState({ project: merged, estimateId, estimate: est });
@@ -250,9 +281,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [id, estimateId, reloadRevision]);
+  }, [id, estimateId, reloadRevision, ownerId, draftStore]);
 
-  const savedSourceProject = acknowledgedVersionRef.current?.sourceId === project?.id
+  const savedSourceProject = acknowledgedVersionRef.current?.sourceId === project?.id && acknowledgedVersionRef.current?.ownerId === ownerId
     ? acknowledgedVersionRef.current?.sourceSnapshot ?? null : null;
   const calc = useMemo(
     () => (project ? calcProject(project, inventory, settings, { savedProject: savedSourceProject }) : null),
@@ -264,6 +295,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const catalogReloadRef = useRef(null);
 
   const handleCatalogReload = async () => {
+    if (draftSessionRef.current.pending) return;
     const live = currentEditorRef.current;
     const generation = live.generation;
     const sourceId = live.sourceId;
@@ -306,7 +338,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   useEffect(() => {
     catalogReloadRef.current = null;
     setCatalogReloading(false);
-  }, [id, estimateId, reloadRevision]);
+  }, [id, estimateId, reloadRevision, ownerId]);
 
   const assemblyIssues = useMemo(() => (project ? foundationAssemblyIssues(project) : []), [project]);
 
@@ -328,7 +360,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!autoSave || !dirty || recoveryRequired || catalogBlocked || catalogReloading || catalogReloadRef.current) return;
+    if (!autoSave || !dirty || recoveryRequired || catalogBlocked || catalogReloading || catalogReloadRef.current || draftSessionRef.current.pending) return;
     const t = setTimeout(() => saveRef.current?.(), 2000);
     return () => clearTimeout(t);
   }, [autoSave, dirty, project, recoveryRequired, catalogBlocked, catalogReloading]);
@@ -346,19 +378,51 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   }, [saving]);
   // Block accidental navigation while a save is in flight.
   useEffect(() => {
-    if (!saving && !dirty && !recoveryRequired) return undefined;
+    if (!saving && !dirty && !recoveryRequired && !draftSessionRef.current.pending) return undefined;
     const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [saving, dirty, recoveryRequired]);
+  }, [saving, dirty, recoveryRequired, draftOffer]);
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
-  const commit = (updater) => {
+  const persistBrowserDraft = (next) => {
+    const session = draftSessionRef.current;
+    if (!session.store || session.store !== draftStore || !mountedRef.current) return;
+    const ack = acknowledgedVersionRef.current;
+    const base = ack?.sourceId === id && ack?.ownerId === ownerId ? ack.updated_date : null;
+    if (!base) { setDraftOffer({ store: draftStore, warning: "Latest edits could not be backed up; no saved source to anchor the browser draft." }); return; }
+    const result = session.store.write({
+      project: next,
+      baseUpdatedAt: base,
+      token: newCreationRequestKey("foundation_draft"),
+      savedAt: new Date().toISOString(),
+      expectedRevision: session.revision,
+    });
+    if (result.status === "stored") {
+      session.revision = result.revision;
+      session.pending = false;
+      setDraftOffer({ store: draftStore, backedUp: true, message: "Design edits backed up in this browser tab. Pricing/customer details are not included; save to keep all changes." });
+    } else if (result.status === "conflict") {
+      // Never overwrite — re-read latest and surface a decision.
+      const latest = session.store.read();
+      session.revision = latest.status !== "unavailable" ? latest.revision ?? null : result.revision ?? session.revision;
+      session.pending = true;
+      if (latest.status === "found") setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt, conflict: true });
+      else if (latest.status === "empty") { session.pending = false; setDraftOffer({ store: draftStore, warning: "Browser draft was removed elsewhere; nothing to merge." }); }
+      else if (latest.status === "unavailable") setDraftOffer({ store: draftStore, revision: session.revision, message: latest.message || "Draft changed in another tab; could not re-read." });
+      else setDraftOffer({ store: draftStore, revision: latest.revision ?? null, message: latest.message || "Draft changed in another tab; review before continuing." });
+    } else {
+      setDraftOffer({ store: draftStore, warning: `Latest edits could not be backed up; save before leaving. ${result.message || ""}` });
+    }
+  };
+
+  const commit = (updater, opts = {}) => {
     const live = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId) return false;
+    if (draftSessionRef.current.pending && !opts.restoreDraft) return false;
     const prev = projectRef.current ?? project;
     let next;
     try {
@@ -375,6 +439,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     projectRef.current = next;
     setProject(next);
     setDirty(true);
+    if (opts.restoreDraft) draftSessionRef.current.pending = false;
+    persistBrowserDraft(next);
     return true;
   };
 
@@ -400,6 +466,53 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const addItem = (type) => commit((prev) => ({ items: [...(prev.items || []), blankItem(type)] }));
 
+  const restoreBrowserDraft = () => {
+    const session = draftSessionRef.current;
+    const offer = draftVisible;
+    if (!session.store || session.store !== draftStore || !offer?.revision) return;
+    const latest = session.store.read();
+    if (latest.status !== "found" || latest.revision !== offer.revision) {
+      // Storage changed since the offer — surface the newest, never restore stale data.
+      // Preserve the known revision on a failed read so a retry does not conflict falsely.
+      if (latest.status !== "unavailable") session.revision = latest.revision ?? null;
+      if (latest.status === "found") setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt });
+      else if (latest.status === "empty") { session.pending = false; setDraftOffer({ store: draftStore, warning: "Browser draft was removed elsewhere; nothing to restore." }); }
+      else if (latest.status === "unavailable") setDraftOffer({ ...offer, warning: `Browser draft could not be read; try again. ${latest.message || ""}` });
+      else setDraftOffer({ store: draftStore, revision: latest.revision ?? null, message: latest.message || "Browser draft changed; nothing restored." });
+      return;
+    }
+    session.revision = latest.revision;
+    const baseChanged = latest.baseUpdatedAt && acknowledgedVersionRef.current?.updated_date !== latest.baseUpdatedAt;
+    if ((dirty || baseChanged) && !window.confirm("Restoring the browser draft replaces the current design edits in this editor. Continue?")) return;
+    setAutoSave(false);
+    // Single undoable edit through the normal commit path (restores sanitized design keys only).
+    if (!commit(() => latest.draft, { restoreDraft: true })) setSaveError("Browser draft could not be applied; offer retained.");
+  };
+
+  const discardBrowserDraft = () => {
+    const session = draftSessionRef.current;
+    const offer = draftVisible;
+    if (!session.store || session.store !== draftStore) return;
+    if (!window.confirm("Discard the unsent browser draft for this project?")) return;
+    const result = session.store.clear(offer?.revision ?? null);
+    if (result.status === "removed") {
+      session.revision = null;
+      session.pending = false;
+      setDraftOffer(null);
+      // Keep unsent in-memory edits backed up — never lose local newer edits on navigation.
+      if (dirty) persistBrowserDraft(projectRef.current ?? project);
+    } else if (result.status === "retained") {
+      const latest = session.store.read();
+      if (latest.status !== "unavailable") session.revision = latest.revision ?? null;
+      if (latest.status === "found") setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt });
+      else if (latest.status === "empty") { session.pending = false; setDraftOffer({ store: draftStore, warning: "Browser draft was removed elsewhere; nothing kept." }); }
+      else if (latest.status === "unavailable") setDraftOffer({ ...offer, warning: `Browser draft could not be re-read; try again. ${latest.message || ""}` });
+      else setDraftOffer({ store: draftStore, revision: latest.revision ?? null, message: latest.message || "Browser draft changed; kept." });
+    } else {
+      setDraftOffer({ ...offer, warning: `Browser draft could not be cleared. ${result.message || ""}` });
+    }
+  };
+
   const cabinetCost = (project.signage_cabinets || []).reduce(
     (s, c) => s + (c.unit_cost || 0) * (c.quantity || 1),
     0
@@ -408,23 +521,27 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const sectionTotal = calc.totals.grand_total + cabinetCost + landscapeCost;
 
   const undo = () => {
-    if (!history.past.length) return;
+    const live = currentEditorRef.current;
+    if (!history.past.length || !live.loaded || live.generation !== saveContext.generation || draftSessionRef.current.pending) return;
     bumpEdit();
     const prevState = history.past[history.past.length - 1];
     setHistory((h) => ({ past: h.past.slice(0, -1), future: [project, ...h.future] }));
     projectRef.current = prevState;
     setProject(prevState);
     setDirty(true);
+    persistBrowserDraft(prevState);
   };
 
   const redo = () => {
-    if (!history.future.length) return;
+    const live = currentEditorRef.current;
+    if (!history.future.length || !live.loaded || live.generation !== saveContext.generation || draftSessionRef.current.pending) return;
     bumpEdit();
     const nextState = history.future[0];
     setHistory((h) => ({ past: [...h.past, project], future: h.future.slice(1) }));
     projectRef.current = nextState;
     setProject(nextState);
     setDirty(true);
+    persistBrowserDraft(nextState);
   };
 
   const payload = () => ({
@@ -490,6 +607,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       return Promise.resolve(staleOutcome);
     }
     if (copyFlightRef.current) return Promise.resolve(staleOutcome);
+    if (draftSessionRef.current.pending) return Promise.resolve({ ...staleOutcome, status: "conflict", error: new Error("Resolve the unsent browser draft offer before saving.") });
     {
       const marker = sourceRefreshRef.current;
       if (marker && liveNow.loaded && liveNow.sourceId === marker.sourceId && liveNow.generation === marker.generation) {
@@ -505,6 +623,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
     const captured = {
       project, estimateId, basePayload: payload(),
+      draftStoreRef: draftStore, draftOwner: ownerId, draftRevision: draftSessionRef.current.revision,
       items: calc.items, equipment: calc.equipment, walls: calc.walls,
       poles: calc.poles, wallCaps: calc.wallCaps, delivery: calc.delivery,
       totals: calc.totals, sectionTotal, cabinetCost, landscapeCost,
@@ -594,7 +713,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       }
       if (outcome.sourceSaved && outcome.sourceVersion && sameContext) {
         acknowledgedVersionRef.current = {
-          sourceId: outcome.sourceId, updated_date: outcome.sourceVersion,
+          sourceId: outcome.sourceId, updated_date: outcome.sourceVersion, ownerId,
           sourceSnapshot: {
             ...captured.project, ...captured.basePayload, id: outcome.sourceId, updated_date: outcome.sourceVersion,
           },
@@ -608,6 +727,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         }
         setDirty(false);
         setSaveError("");
+        // Verified fully-current source save: clear the exact captured browser draft revision only.
+        if (draftSessionRef.current.store === captured.draftStoreRef && captured.draftOwner === ownerId && captured.draftRevision) {
+          const cleared = captured.draftStoreRef.clear(captured.draftRevision);
+          if (cleared.status === "removed") { draftSessionRef.current.revision = null; setDraftOffer((o) => (o?.store === draftStore ? { store: draftStore } : o)); }
+          else if (cleared.status === "unavailable") setDraftOffer((o) => (o?.store === draftStore ? { store: draftStore, warning: `Saved, but the browser draft backup could not be cleared. ${cleared.message || ""}` } : o));
+          else if (cleared.status === "retained") setDraftOffer((o) => (o?.store === draftStore ? { store: draftStore, warning: "Saved; a newer browser draft remains - review it before leaving." } : o));
+        }
         try { onSaved?.(); } catch (e) { console.error(e); outcome.warnings.push("observer_error"); }
       } else if (sameContext && outcome.status === "superseded" && outcome.builderSync === "pending") {
         setRecoveryRequired(true);
@@ -657,6 +783,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   };
 
   const handleSaveAsCopy = () => {
+    if (draftSessionRef.current.pending) return;
     if (copyFlightRef.current) return copyFlightRef.current;
     const live0 = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live0.loaded || live0.generation !== saveContext.generation || live0.sourceId !== saveContext.sourceId || live0.estimateId !== saveContext.estimateId || live0.editRevision !== saveContext.editRevision) return null;
@@ -732,6 +859,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   // #77 — create a fresh Brick & Stone draft carrying the shared identity
   // fields; the Foundation source is left untouched.
   const handleSwapToBrickStone = async () => {
+    if (draftSessionRef.current.pending) return;
     const live = currentEditorRef.current;
     if (!mountedRef.current || !saveContext.loaded || !live.loaded || live.generation !== saveContext.generation || live.sourceId !== saveContext.sourceId || live.estimateId !== saveContext.estimateId || live.editRevision !== saveContext.editRevision) return null;
     if (catalogBlocked || catalogReloadRef.current) {
@@ -751,6 +879,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // #88 — copy a read-only staff_view portal link for this estimate.
   const handleShareLink = async () => {
+    if (draftSessionRef.current.pending) return;
     try {
       const url = await createEstimateReadOnlyShareLink({ estimateId });
       await navigator.clipboard.writeText(url);
@@ -819,17 +948,50 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           </div>
         )}
 
+        {draftVisible?.backedUp && !draftVisible?.warning && (
+          <div role="status" className="mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[13px] text-blue-900">
+            {draftVisible.message}
+          </div>
+        )}
+        {draftVisible?.warning && (
+          <div role="alert" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">{draftVisible.warning}</div>
+        )}
+        {(draftVisible?.draft || draftVisible?.message) && draftSessionRef.current.pending && (
+          <div role="alert" className="mb-3 rounded border border-indigo-300 bg-indigo-50 px-3 py-2 text-[13px] text-indigo-900">
+            {draftVisible.draft ? (
+              <>
+                <div className="font-semibold">Unsent browser-tab draft found. Nothing restored or sent. {draftVisible.savedAt ? `Saved ${draftVisible.savedAt}.` : ""} Recovery covers design fields only.</div>
+                {draftVisible.baseUpdatedAt && acknowledgedVersionRef.current?.updated_date !== draftVisible.baseUpdatedAt && (
+                  <div className="mt-1">Saved project changed since these edits.</div>
+                )}
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={restoreBrowserDraft} className="rounded-sm border border-indigo-400 bg-white px-2 py-1 text-[12px] font-semibold text-indigo-800">Restore browser draft</button>
+                  <button type="button" onClick={discardBrowserDraft} className="rounded-sm border border-gray-400 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700">Discard browser draft</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="font-semibold">A browser draft exists but cannot be restored. {draftVisible.message || ""} Recovery covers design fields only.</div>
+                <div className="mt-2">
+                  <button type="button" onClick={discardBrowserDraft} className="rounded-sm border border-gray-400 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700">Discard browser draft</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <fieldset disabled={draftSessionRef.current.pending} className="contents min-w-0">
         <FoundationToolbar
           title="Edit Concrete | Masonry | Poles Estimate"
           subtitle="Engineering, foundation, excavation, wall & pole estimating"
           backTo={backTo}
           total={sectionTotal}
           saving={saving}
-          dirty={dirty}
+          dirty={dirty || draftSessionRef.current.pending}
           lastSavedAt={project?.updated_date}
           autoSave={autoSave}
           pricingUnavailable={catalogBlocked}
-          onToggleAutoSave={() => setAutoSave((v) => !v)}
+          onToggleAutoSave={() => { if (!draftSessionRef.current.pending) setAutoSave((v) => !v); }}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
           onUndo={undo}
@@ -837,8 +999,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           onSave={handleSave}
           onSaveAndExit={handleSaveAndExit}
           onSaveAsCopy={handleSaveAsCopy}
-          onSaveAsTemplate={() => setTemplateMode("save")}
-          onTemplates={() => setTemplateMode("load")}
+          onSaveAsTemplate={() => { if (!draftSessionRef.current.pending) setTemplateMode("save"); }}
+          onTemplates={() => { if (!draftSessionRef.current.pending) setTemplateMode("load"); }}
           onSwapToBrickStone={handleSwapToBrickStone}
           onShareLink={estimateId ? handleShareLink : undefined}
           onHelp={() => setShowHelp((v) => !v)}
@@ -1054,10 +1216,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             <Foundation3DPreview project={project} />
           </div>
         </div>
+        </fieldset>
       </div>
 
       <FoundationTemplateDialog
-        open={!!templateMode}
+        open={!!templateMode && !draftSessionRef.current.pending}
         mode={templateMode}
         onClose={() => setTemplateMode(null)}
         project={project}
