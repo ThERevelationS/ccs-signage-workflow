@@ -144,6 +144,7 @@ export function renderOriginalHtml(model, renderOptions = {}) {
 
   ${metaStrip(m.meta)}
 
+  <div class="wo-table-scroll" role="region" aria-label="Work Order products" tabindex="0">
   <table style="width:100%;margin-top:12px;border:1.5px solid #334155;">
     <thead>
       <tr style="background:#f1f5f9;">
@@ -155,6 +156,7 @@ export function renderOriginalHtml(model, renderOptions = {}) {
     </thead>
     <tbody>${productRows}</tbody>
   </table>
+  </div>
   <div style="margin-top:4px;font-size:10px;color:#64748b;">
     ${rows.length} line${rows.length === 1 ? "" : "s"}${m.piece_count ? ` · ${escapeHtml(m.piece_count)} total pieces` : ""}
   </div>
@@ -166,10 +168,12 @@ export function renderOriginalHtml(model, renderOptions = {}) {
         <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#475569;border-bottom:1px solid #cbd5e1;padding-bottom:3px;">
           Materials Manifest (internal) — ${materials.length}
         </div>
+        <div class="wo-table-scroll" role="region" aria-label="Work Order materials" tabindex="0">
         <table style="width:100%;margin-top:6px;">
           <thead><tr style="background:#f8fafc;">${th("Part")}${th("Type")}${th("Section")}${th("Qty", "center")}${th("Unit Cost", "right")}${th("Ext Cost", "right")}</tr></thead>
           <tbody>${materialRows}</tbody>
         </table>
+        </div>
       </div>`
     : ""}
 
@@ -202,6 +206,8 @@ export function renderOriginalHtml(model, renderOptions = {}) {
     extraCss: `
   @page { margin: 0.55in; }
   .sheet { max-width: 8.5in; }
+  .wo-table-scroll { max-width: 100%; overflow-x: auto; }
+  @media print { .wo-table-scroll { max-width: none; overflow: visible; } }
     `,
   });
 }
