@@ -1,38 +1,49 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { ESTIMATOR_AI_MODEL } from "../../../../base44/shared/estimatorAiModelPolicy.js";
+import {
+  prepareFoundationAiReview,
+  foundationAiReviewPatch,
+  FOUNDATION_AI_REVIEW_POLICY,
+} from "./foundationAiReview";
 
 export default function AiEngineeringAssistant({ project, onResult }) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
-  const recommendation = project.ai_engineering_recommendation;
+  const mountedRef = useRef(true);
+  const busyRef = useRef(false);
+  const tokenRef = useRef(0);
+  const latestRef = useRef({ key: null, onResult });
+  let inputError = "";
+  let prepared = null;
+  try {
+    prepared = prepareFoundationAiReview(project);
+  } catch (e) {
+    inputError = e?.message || "The foundation inputs cannot be reviewed.";
+  }
+  latestRef.current = { key: prepared?.key ?? null, onResult };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      tokenRef.current += 1;
+      busyRef.current = false;
+    };
+  }, []);
 
   const run = async () => {
+    if (busyRef.current || !prepared || typeof latestRef.current.onResult !== "function") return;
+    busyRef.current = true;
+    const token = ++tokenRef.current;
+    const capturedKey = prepared.key;
+    const request = prepared.request;
     setRunning(true);
     setError("");
     try {
-      const summary = (project.items || []).map((it, i) => ({
-        n: i + 1,
-        type: it.foundation_type,
-        quantity: it.quantity,
-        length_in: it.length_inches,
-        width_in: it.width_inches,
-        diameter_in: it.diameter,
-        depth_in: it.depth_inches,
-        rebar: it.include_rebar ? it.rebar_size : "none",
-      }));
-      const poles = (project.poles || []).map((p) => ({
-        height_in: p.height_inches,
-        signs: (p.signs || []).length,
-      }));
-
-      const res = await base44.integrations.Core.InvokeLLM({
-        model: ESTIMATOR_AI_MODEL,
-        prompt: `You are a structural engineer sizing sign foundations and poles.
-Foundations: ${JSON.stringify(summary)}
-Poles: ${JSON.stringify(poles)}
+      const res = await base44.integrations.Core.InvokeLLM(request);
+      if (!mountedRef.current || token !== tokenRef.current) return;
 Concrete mix: ${project.project_concrete_type || "unspecified"}
 
 Give concise wind-load and sizing recommendations: assumed wind speed and exposure, overturning/embedment check per each foundation, whether the footing/pillar size and depth are adequate, recommended rebar, and any red flags. Use short markdown sections and keep it under 250 words.`,
