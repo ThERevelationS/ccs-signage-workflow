@@ -12,6 +12,7 @@ import {
 import KpiStrip from "@/components/customer360/KpiStrip";
 import CustomerFilesPanel from "@/components/files/CustomerFilesPanel";
 import { EmptyState, PageHeader } from "@/components/kit";
+import ClientSignagePanel from "@/components/permitting/ClientSignagePanel";
 import {
   ActivityTab,
   ContactsTab,
@@ -430,7 +431,10 @@ export default function Customer360() {
 
       <div className="mt-4">
         {tab === "overview" && (
-          <OverviewTab data={data || {}} customer={c} backendReady={backendReady} truncatedNotice={truncatedNotice} />
+          <>
+            <ClientSignagePanel customer={c} />
+            <OverviewTab data={data || {}} customer={c} backendReady={backendReady} truncatedNotice={truncatedNotice} />
+          </>
         )}
         {tab === "estimates" && <EstimatesTab data={data || {}} truncatedNotice={truncatedNotice} />}
         {tab === "jobs" && <JobsTab data={data || {}} truncatedNotice={truncatedNotice} />}
