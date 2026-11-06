@@ -16,6 +16,8 @@ const WRITE_OPS: Record<string, Set<string>> = {
   PermittingRule: new Set(['create', 'update']),
   SourceMonitorState: new Set(['create', 'update']),
   RegulationAlert: new Set(['create', 'update']),
+  SignageFact: new Set(['create', 'update']),
+  SignageFactIndex: new Set(['create', 'update', 'updateMany']),
   GlobalSettings: new Set(['create', 'update']), // only SETTING_KEYS below
 };
 
