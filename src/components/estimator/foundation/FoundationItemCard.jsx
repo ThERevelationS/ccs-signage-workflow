@@ -64,7 +64,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
       {unavailable && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
           <p className="text-[11px] font-semibold text-amber-800">Saved amounts (not current pricing)</p>
-          <p className="text-[10px] text-amber-700">Saved quantities may not reflect current dimensions.</p>
+          <p className="text-[10px] text-amber-700">Saved quantities may not reflect the current design.</p>
           {(pricing.issues || []).map((i, k) => (
             <p key={k} className="text-[10px] text-amber-700">{i.message}</p>
           ))}
@@ -75,10 +75,15 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
           <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
           <select
-            value={item.foundation_type || "spread_foot"}
+            value={item.foundation_type || ""}
             onChange={(e) => set({ foundation_type: e.target.value })}
             className="h-8 rounded-md border border-input bg-transparent px-2 text-sm font-semibold"
           >
+            {item.foundation_type !== "spread_foot" && item.foundation_type !== "pillar" && (
+              <option value={item.foundation_type || ""} disabled>
+                {item.foundation_type ? `Unsupported type: ${item.foundation_type}` : "Choose foundation type"}
+              </option>
+            )}
             <option value="spread_foot">Spread Footing</option>
             <option value="pillar">Pillar / Caisson</option>
           </select>
