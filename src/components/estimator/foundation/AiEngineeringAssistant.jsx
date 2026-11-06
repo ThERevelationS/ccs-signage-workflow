@@ -76,29 +76,30 @@ export default function AiEngineeringAssistant({ project, onResult }) {
     <div className="bg-violet-50 border border-violet-200 rounded-sm p-3 mb-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-2 min-w-0">
-          <div>
-            <h3 className="text-[13px] font-bold text-violet-900">AI Engineering Assistant</h3>
+          <Cpu className="w-4 h-4 text-violet-600 mt-0.5" aria-hidden="true" />
+          <div className="min-w-0">
+            <h3 className="text-[13px] font-bold text-violet-900">AI Preliminary Review</h3>
             <p className="text-[11px] text-violet-700">
-              Generate concise wind load calculations and sizing recommendations for your foundation
-              and poles.
+              Identify missing inputs and questions for qualified engineering review; not structural calculations or approval.
             </p>
           </div>
         </div>
         <button
           type="button"
           onClick={run}
-          disabled={running}
+          disabled={running || !prepared || typeof onResult !== "function"}
           className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm bg-violet-600 text-white text-[12px] font-semibold hover:bg-violet-700 disabled:opacity-60 flex-shrink-0"
         >
           {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
-          {running ? "Calculating…" : "Run AI Engineering Calculator"}
+          {running ? "Reviewing…" : "Review Foundation Inputs"}
         </button>
       </div>
 
-      {error && <div role="alert" className="mt-2 text-[11px] text-red-600">{error}</div>}
+      {(inputError || error) && <div role="alert" className="mt-2 text-[11px] text-red-600">{inputError || error}</div>}
 
       {recommendation && (
         <div className="mt-3 bg-white border border-violet-200 rounded-sm p-3 text-[12px] text-gray-700 prose prose-sm max-w-none">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-500 mb-1">{label}</p>
           <ReactMarkdown>{recommendation}</ReactMarkdown>
         </div>
       )}
