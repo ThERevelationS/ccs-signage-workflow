@@ -3,6 +3,8 @@ import OfficeResearchFindings from './OfficeResearchFindings';
 import OfficialSourceRescans from "./OfficialSourceRescans";
 import ExternalPermittingReferrals from "./ExternalPermittingReferrals";
 import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
+import SignageFactsPanel from "./SignageFactsPanel";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -673,6 +675,8 @@ Answer only from the provided excerpts and cite the document title and official 
               size="sm"
               variant="outline"
               onClick={async () => {
+                // MP-11.5 — fetch the PermitLocality's offices then build the
+                // filing bundle PDF (contacts, forms, fees, docs, code).
                 try {
                   const locs = await base44.entities.PermitLocality.filter({ jurisdiction_profile_id: jurisdiction.id }).catch(() => []);
                   const locality = (Array.isArray(locs) ? locs : [])[0] || null;
@@ -1068,6 +1072,7 @@ Answer only from the provided excerpts and cite the document title and official 
            <p className="text-xs font-semibold text-green-800 mb-2">
              Documents ({jurisdiction.documents?.length || 0} collected links)
            </p>
+           <SignageFactsSection jurisdiction={jurisdiction} />
           <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} sourceRequest={sourceRequest} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
             if (expandedDoc === id) {
               const header = documentHeaderRefs.current.get(id);
@@ -1598,6 +1603,24 @@ Answer only from the provided excerpts and cite the document title and official 
         </div>
       </div>
       </>}
+    </div>
+  );
+}
+function SignageFactsSection({ jurisdiction }) {
+  const [facts, setFacts] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!jurisdiction?.id) { setFacts([]); return; }
+    staffEntities.SignageFact.filter({ jurisdiction_id: jurisdiction.id, active: true }, { limit: 500 })
+      .then(r => { if (alive) setFacts(r?.items || r || []); })
+      .catch(() => { if (alive) setFacts([]); });
+    return () => { alive = false; };
+  }, [jurisdiction?.id]);
+  if (!facts || !facts.length) return null;
+  return (
+    <div className="mb-3 bg-white/70 border border-green-200 rounded-lg p-2">
+      <p className="text-[11px] font-semibold text-green-900 mb-1">Signage facts — pulled from official sources</p>
+      <SignageFactsPanel facts={facts} jurisdictionName={jurisdiction.name} compact />
     </div>
   );
 }
