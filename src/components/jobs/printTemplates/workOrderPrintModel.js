@@ -14,6 +14,12 @@ const num = (v, fallback = null) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const moneyOrNull = (value) => {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+  return num(value, null);
+};
+
 const firstText = (...vals) => {
   for (const v of vals) {
     const s = clean(v);
@@ -138,12 +144,14 @@ export function buildWorkOrderPrintModel(workOrder, opts = {}) {
 
   const rows = (Array.isArray(wo.products) ? wo.products : []).map((p, i) => {
     const qty = fmtQty(p?.quantity);
-    const unitPrice = num(p?.quoted_unit_price);
-    const extPrice = num(p?.quoted_total) ?? (
+    const unitPrice = moneyOrNull(p?.quoted_unit_price);
+    const extPrice = moneyOrNull(p?.quoted_total) ?? (
       unitPrice != null && qty !== "" ? unitPrice * qty : null
     );
-    const unitCost = num(p?.unit_cost);
-    const extCost = unitCost != null && qty !== "" ? unitCost * qty : null;
+    const unitCost = moneyOrNull(p?.unit_cost);
+    const extCost = moneyOrNull(p?.ext_cost ?? p?.extended_cost) ?? (
+      unitCost != null && qty !== "" ? unitCost * qty : null
+    );
     return {
       line: i + 1,
       name: firstText(p?.customer_description, p?.description) || "Item",
@@ -164,7 +172,7 @@ export function buildWorkOrderPrintModel(workOrder, opts = {}) {
 
   const materials = (Array.isArray(wo.materials) ? wo.materials : []).map((mat) => {
     const qty = fmtQty(mat?.quantity);
-    const unitCost = num(mat?.unit_cost);
+    const unitCost = moneyOrNull(mat?.unit_cost);
     return {
       name: firstText(mat?.part_name, mat?.name, mat?.inventory_item_name) || "Part",
       type: clean(mat?.part_type),
@@ -172,7 +180,7 @@ export function buildWorkOrderPrintModel(workOrder, opts = {}) {
       qty,
       unit: clean(mat?.unit),
       unit_cost: unitCost,
-      ext_cost: num(mat?.extended_cost) ?? (unitCost != null && qty !== "" ? unitCost * qty : null),
+      ext_cost: moneyOrNull(mat?.ext_cost ?? mat?.extended_cost) ?? (unitCost != null && qty !== "" ? unitCost * qty : null),
     };
   });
 
@@ -194,11 +202,12 @@ export function buildWorkOrderPrintModel(workOrder, opts = {}) {
     (sum, row) => (row.internal.ext_cost == null ? sum : sum + row.internal.ext_cost),
     0,
   );
-  const hasCost = rows.some((row) => row.internal.ext_cost != null);
-  const totalMargin = hasCost ? subtotal - totalCost : null;
+  const hasCompleteCost = rows.length > 0 && rows.every((row) => row.internal.ext_cost != null);
+  const hasCompletePrice = rows.length > 0 && rows.every((row) => row.ext_price != null);
+  const totalMargin = hasCompleteCost && hasCompletePrice ? subtotal - totalCost : null;
 
-  const estimateAmount = num(wo.estimate_amount);
-  const depositAmount = num(wo.deposit_amount);
+  const estimateAmount = moneyOrNull(wo.estimate_amount);
+  const depositAmount = moneyOrNull(wo.deposit_amount);
   const contractTotal = estimateAmount ?? subtotal;
   const balanceDue = contractTotal == null
     ? null
@@ -275,13 +284,13 @@ export function buildWorkOrderPrintModel(workOrder, opts = {}) {
       deposit_invoiced: !!wo.deposit_invoiced,
       balance_due: balanceDue,
       internal: {
-        total_cost: hasCost ? totalCost : null,
+        total_cost: hasCompleteCost ? totalCost : null,
         total_margin: totalMargin,
         margin_pct: totalMargin != null && subtotal > 0
           ? Math.round((totalMargin / subtotal) * 100)
           : null,
-        actual_cost: num(wo.actual_cost),
-        profit_margin: num(wo.profit_margin),
+        actual_cost: moneyOrNull(wo.actual_cost),
+        profit_margin: moneyOrNull(wo.profit_margin),
       },
     },
     meta,
