@@ -1,0 +1,27 @@
+{
+  "name": "SignageFactIndex",
+  "type": "object",
+  "description": "Keyword index for the signage ask-box \u2014 one row per (jurisdiction, term, fact) so in-app search is an instant indexed read instead of a scan. Terms come from fact keys, sign types, and significant evidence-quote words.",
+  "properties": {
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "JurisdictionProfile id the fact belongs to."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Denormalized for display/address joins."
+    },
+    "term": {
+      "type": "string",
+      "description": "Normalized lowercase keyword (e.g. 'height', 'monument', 'permit')."
+    },
+    "fact_id": {
+      "type": "string",
+      "description": "SignageFact id this term resolves to."
+    },
+    "weight": {
+      "type": "number",
+      "description": "Relevance weight \u2014 fact-key terms rank higher than quote words."
+    }
+  }
+}
