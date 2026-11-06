@@ -91,6 +91,9 @@ export function mergeWorkOrderTasks(existing = [], incoming = []) {
 export async function buildEstimateMaterialsManifest(estimate, { parts = null } = {}) {
   const estimateId = str(estimate?.id);
   if (!estimateId) return [];
+  if (parts != null && !Array.isArray(parts)) {
+    throw new Error("Parts must be an array when provided for material conversion.");
+  }
   const lines = Array.isArray(estimate?.line_items) ? estimate.line_items : [];
   const lineByProduct = new Map();
   for (const line of lines) {
@@ -107,17 +110,21 @@ export async function buildEstimateMaterialsManifest(estimate, { parts = null } 
       query: { estimate_id: estimateId },
       sort: "created_date",
       label: "Conversion materials manifest",
-    }).catch(() => []);
+    });
     for (const p of byEstimate) {
       const id = str(p?.id);
       if (id && !seen.has(id)) { seen.add(id); allParts.push(p); }
     }
-    // Fallback: older parts predate estimate_id — resolve through each
-    // section's BuilderProduct link instead.
+    // A Product can mix stamped and older Parts. Read every linked Product,
+    // paging legacy rows too, rather than treating one stamped Part as complete.
     for (const bpid of lineByProduct.keys()) {
-      if (allParts.some((p) => str(p?.builder_product_id) === bpid)) continue;
-      const rows = await staffEntities.BuilderPart.filter({ builder_product_id: bpid }, "created_date", 500).catch(() => []);
-      for (const p of rows || []) {
+      const rows = await loadAllEntityRows({
+        entity: staffEntities.BuilderPart,
+        query: { builder_product_id: bpid },
+        sort: "created_date",
+        label: "Conversion Product materials manifest",
+      });
+      for (const p of rows) {
         const id = str(p?.id);
         if (id && !seen.has(id)) { seen.add(id); allParts.push(p); }
       }
@@ -348,7 +355,7 @@ export async function commitEstimateConversion({
   const generatedDescription = [src.notes, sections].filter(Boolean).join("\n\n");
   const materials = mergeWorkOrderMaterials(
     existing?.materials || [],
-    await buildEstimateMaterialsManifest(src).catch(() => []),
+    await buildEstimateMaterialsManifest(src),
   );
   const convertedFields = buildConvertedWorkOrderFields({
     estimate: src,
