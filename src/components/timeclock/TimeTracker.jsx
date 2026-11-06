@@ -809,8 +809,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 
             {prefs?.show_week_strip !== false && weeklyDaily.length === 7 && (
               <div className="mt-4">
-                <div className="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-semibold text-slate-500">
-                  <span className="min-w-0">
+                <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 text-xs font-semibold text-slate-500">
+                  <span className="whitespace-nowrap">
                     This week
                     <span className="text-slate-800 dark:text-slate-100"> {formatClock(live?.weekly || 0, "hours_minutes")}</span>
                     <span className="font-normal"> / {formatClock(weekGoal, "hours_minutes")}</span>
