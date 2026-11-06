@@ -20,6 +20,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   Customer: new Set(['updateMany']),
   CustomerLocation: new Set(['create', 'updateMany']),
   FoundationProject: new Set(['create', 'updateMany']),
+  FoundationInventory: new Set(['create', 'updateMany', 'deleteMany']),
   // GeneralTask is backend-only RLS — the CAS helpers (updateGeneralTaskIfUn-
   // changed/deleteGeneralTaskIfUnchanged) drive updateMany/deleteMany, and the
   // plain update/delete pair covers the simple paths. Staff-wide: general
@@ -87,6 +88,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
 // tax agencies, pricing configuration, queue reference data). Reads stay
 // staff-tier in staffDataRead; mutation is admin-only like TaxGroup.
 const ADMIN_ONLY_WRITE = new Set([
+  'FoundationInventory',
   'COGSAccount',
   'IncomeAccount',
   'TaxAgency',
@@ -259,7 +261,17 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, record: created });
     }
 
-    const id = String(body?.id || '').trim();
+    if (entityName === 'FoundationInventory' && op === 'deleteMany') {
+      const query = body?.query;
+      if (!query || typeof query !== 'object' || Array.isArray(query)
+        || typeof query.id !== 'string' || !query.id.trim()
+        || typeof query.updated_date !== 'string' || !query.updated_date.trim()
+        || (body?.id !== undefined && body.id !== query.id)) {
+        throw bad('A Foundation catalog conditional delete requires matching string id and updated_date anchors.');
+      }
+    }
+    const catalogDeleteId = entityName === 'FoundationInventory' && op === 'deleteMany' ? body?.query?.id : '';
+    const id = String(body?.id || catalogDeleteId || '').trim();
     if (!id) throw bad('Record id is required.');
     const current = await entity.get(id).catch(() => null);
     if (!current?.id) return Response.json({ error: 'Record not found.' }, { status: 404 });
