@@ -201,6 +201,27 @@
           "excavation_volume_cy": {
             "type": "number"
           },
+          "concrete_bags": {
+            "type": "number"
+          },
+          "concrete_rate": {
+            "type": "number"
+          },
+          "rebar_feet": {
+            "type": "number"
+          },
+          "rebar_weight_lbs": {
+            "type": "number"
+          },
+          "rebar_rate": {
+            "type": "number"
+          },
+          "excavation_hours": {
+            "type": "number"
+          },
+          "forming_qty": {
+            "type": "number"
+          },
           "concrete_cost": {
             "type": "number"
           },
@@ -256,6 +277,30 @@
             "type": "number"
           },
           "custom_rebar_cost_per_ft": {
+            "type": "number"
+          },
+          "custom_concrete_qty": {
+            "type": "number"
+          },
+          "custom_rebar_qty": {
+            "type": "number"
+          },
+          "custom_forming_rate": {
+            "type": "number"
+          },
+          "custom_forming_qty": {
+            "type": "number"
+          },
+          "custom_finishing_rate": {
+            "type": "number"
+          },
+          "custom_finishing_hours": {
+            "type": "number"
+          },
+          "custom_excavation_rate": {
+            "type": "number"
+          },
+          "custom_excavation_hours": {
             "type": "number"
           },
           "rebar_layers": {
@@ -688,6 +733,50 @@
     },
     "total_concrete_cost": {
       "type": "number"
+    },
+    "concrete_delivery_snapshot": {
+      "type": "object",
+      "description": "Versioned historical order snapshot saved atomically with the source design; never current pricing when catalog items are unavailable.",
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "concrete_total": {
+          "type": "number"
+        },
+        "rounded_yards": {
+          "type": "number"
+        },
+        "rate_per_yard": {
+          "type": "number"
+        },
+        "additional_stops_cost": {
+          "type": "number"
+        },
+        "trucks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "yards": {
+                "type": "number"
+              },
+              "rounded_yards": {
+                "type": "number"
+              },
+              "cost": {
+                "type": "number"
+              },
+              "small_order_fee": {
+                "type": "number"
+              },
+              "fuel_fee": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
     },
     "total_rebar_cost": {
       "type": "number"
