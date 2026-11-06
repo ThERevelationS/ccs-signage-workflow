@@ -20,6 +20,8 @@ const WRITE_OPS: Record<string, Set<string>> = {
   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
   SignageFact: new Set(['create', 'update']),
   SignageFactIndex: new Set(['create', 'update', 'updateMany']),
+  SignageFact: new Set(['create', 'update']),
+  SignageFactIndex: new Set(['create', 'update', 'updateMany']),
   GlobalSettings: new Set(['create', 'update']), // only SETTING_KEYS below
 };
 
