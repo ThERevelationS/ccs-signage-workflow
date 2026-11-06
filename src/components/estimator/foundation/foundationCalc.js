@@ -15,14 +15,28 @@ import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery } from "./lega
 import { calcWalls } from "./wallCalculator";
 import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
-import { foundationAssemblyCatalogIssues } from "./foundationCatalogIntegrity";
+import { foundationAssemblyCatalogIssues, foundationItemCatalogIssues, hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
 const REBAR_LB_PER_FT = { "#3": 0.376, "#4": 0.668, "#5": 1.043, "#6": 1.502, "#7": 2.044, "#8": 2.67 };
 
-export function calcItem(item, project, inventory, settings = {}) {
+const ITEM_SNAPSHOT_FIELDS = [
+  "concrete_volume_cy", "excavation_volume_cy", "concrete_bags", "rebar_feet", "rebar_weight_lbs",
+  "concrete_cost", "concrete_rate", "rebar_cost", "rebar_rate", "excavation_cost", "excavation_hours",
+  "forming_cost", "forming_qty", "pouring_cost", "finishing_cost", "finishing_hours", "item_total_cost",
+];
+
+export function calcItem(item, project, inventory, settings = {}, savedItem = item) {
+  if (foundationItemCatalogIssues(item, inventory).length) {
+    return {
+      quantity: Math.max(1, num(item.quantity, 1)),
+      ...Object.fromEntries(ITEM_SNAPSHOT_FIELDS.map(key => [
+        key, hasFoundationCostSnapshot(savedItem?.[key]) ? savedItem[key] : undefined,
+      ])),
+    };
+  }
   // Items without their own excavation method fall back to the project default.
   const legacy = legacyCalcItemCost(
     { ...item, excavation_method: item.excavation_method || project?.excavation_method },
@@ -114,10 +128,57 @@ export function equipmentCostTotal(pricedEntries = []) {
   return pricedEntries.reduce((sum, entry) => sum + num(entry.equipment_cost), 0);
 }
 
-export function calcProject(project, inventory, settings = {}) {
-  const items = (project.items || []).map((item) => ({ ...item, ...calcItem(item, project, inventory, settings) }));
+export function captureConcreteDeliverySnapshot(delivery) {
+  return {
+    version: 1, concrete_total: delivery.concreteTotal, rounded_yards: delivery.roundedYards,
+    rate_per_yard: delivery.ratePerYard, additional_stops_cost: delivery.additionalStopsCost,
+    trucks: delivery.trucksList.map(truck => ({
+      yards: truck.yards, rounded_yards: truck.roundedYards, cost: truck.cost,
+      small_order_fee: truck.smallOrderFee, fuel_fee: truck.fuelFee,
+    })),
+  };
+}
+
+function savedConcreteDelivery(project) {
+  const snapshot = project?.concrete_delivery_snapshot?.version === 1 ? project.concrete_delivery_snapshot : null;
+  const value = (record, key) => hasFoundationCostSnapshot(record?.[key]) ? record[key] : undefined;
+  return {
+    pricingUnavailable: true,
+    concreteTotal: value(snapshot, "concrete_total"), roundedYards: value(snapshot, "rounded_yards"),
+    ratePerYard: value(snapshot, "rate_per_yard"), additionalStopsCost: value(snapshot, "additional_stops_cost"),
+    trucksList: (Array.isArray(snapshot?.trucks) ? snapshot.trucks : []).map(truck => ({
+      yards: value(truck, "yards"), roundedYards: value(truck, "rounded_yards"), cost: value(truck, "cost"),
+      smallOrderFee: value(truck, "small_order_fee"), fuelFee: value(truck, "fuel_fee"),
+    })),
+    availableMixes: [], availableAdmixes: [],
+  };
+}
+
+export function calcProject(project, inventory, settings = {}, options = {}) {
+  const explicitSnapshot = Object.prototype.hasOwnProperty.call(options, "savedProject");
+  const savedProject = !explicitSnapshot ? project
+    : project.id !== undefined && project.id !== null && project.id !== "" && options.savedProject?.id === project.id
+      ? options.savedProject : null;
+  const sourceItems = project.items || [];
+  const savedItems = new Map();
+  const currentIds = new Map();
+  for (const item of savedProject?.items || []) {
+    if (item.component_id) savedItems.set(item.component_id, savedItems.has(item.component_id) ? null : item);
+  }
+  for (const item of sourceItems) currentIds.set(item.component_id, (currentIds.get(item.component_id) || 0) + 1);
+  const catalogIssues = foundationAssemblyCatalogIssues(project, inventory);
+  const itemPricing = sourceItems.map((item, index) => {
+    const issues = catalogIssues.filter(issue => issue.kind === "foundation" && issue.index === index);
+    return { available: issues.length === 0, issues };
+  });
+  const items = sourceItems.map((item) => {
+    const savedItem = !explicitSnapshot ? item
+      : item.component_id && currentIds.get(item.component_id) === 1 ? savedItems.get(item.component_id) || null : null;
+    return { ...item, ...calcItem(item, project, inventory, settings, savedItem) };
+  });
   const equipment = calcEquipment(project.selected_equipment, inventory);
-  const delivery = calcConcreteDelivery(
+  // An incomplete item has saved quantities, so its coupled order must not be repriced.
+  const delivery = itemPricing.some(item => !item.available) ? savedConcreteDelivery(savedProject) : calcConcreteDelivery(
     { ...project, settings },
     (project.items || []).map((i) => ({
       ...i,
@@ -129,25 +190,29 @@ export function calcProject(project, inventory, settings = {}) {
   const poles = calcPoles(project.poles, inventory, settings);
   const wallCaps = calcWallCaps(project.wall_caps, inventory);
 
-  const sum = (key) => items.reduce((s, i) => s + num(i[key]), 0);
+  const sum = (key) => items.some((item, index) => !itemPricing[index].available && !hasFoundationCostSnapshot(item[key]))
+    ? null : items.reduce((s, i) => s + num(i[key]), 0);
+  const addKnown = (a, b) => hasFoundationCostSnapshot(a) && hasFoundationCostSnapshot(b) ? a + b : null;
+  const category = (key, value) => value !== null ? value
+    : hasFoundationCostSnapshot(savedProject?.[key]) ? savedProject[key] : null;
 
-  const itemsTotal = sum("item_total_cost") + delivery.concreteTotal;
+  const itemsTotal = addKnown(sum("item_total_cost"), delivery.concreteTotal);
   const wallTotal = walls.reduce((s, w) => s + num(w.calculatedCosts?.totalCost), 0);
   const polesTotal = poles.reduce((s, p) => s + num(p.total_cost), 0);
   const equipmentTotal = equipmentCostTotal(equipment);
 
   const totals = {
     // Bagged concrete is priced per item; ready-mix is priced per delivered truck.
-    total_concrete_cost: sum("concrete_cost") + delivery.concreteTotal,
+    total_concrete_cost: category("total_concrete_cost", addKnown(sum("concrete_cost"), delivery.concreteTotal)),
     concrete_delivery_cost: delivery.concreteTotal,
     concrete_delivered_yards: delivery.roundedYards,
     concrete_rate_per_yard: delivery.ratePerYard,
     concrete_trucks: delivery.trucksList,
     additional_stops_cost: delivery.additionalStopsCost,
-    total_rebar_cost: sum("rebar_cost"),
-    total_excavation_cost: sum("excavation_cost"),
-    total_forming_materials_cost: sum("forming_cost"),
-    total_labor_cost: sum("pouring_cost") + sum("finishing_cost"),
+    total_rebar_cost: category("total_rebar_cost", sum("rebar_cost")),
+    total_excavation_cost: category("total_excavation_cost", sum("excavation_cost")),
+    total_forming_materials_cost: category("total_forming_materials_cost", sum("forming_cost")),
+    total_labor_cost: category("total_labor_cost", addKnown(sum("pouring_cost"), sum("finishing_cost"))),
     total_pole_cost: poles.reduce((s, p) => s + num(p.pole_cost), 0),
     total_pole_painting_cost: poles.reduce((s, p) => s + num(p.pole_painting_cost), 0),
     total_brick_cost: walls.reduce((s, w) => s + num(w.calculatedCosts?.materialCost), 0),
@@ -158,14 +223,13 @@ export function calcProject(project, inventory, settings = {}) {
     wall_caps_by_material: wallCaps.byInventory,
     total_concrete_volume_cy: sum("concrete_volume_cy"),
     total_excavation_volume_cy: sum("excavation_volume_cy"),
-    total_labor_hours: sum("finishing_hours") + sum("excavation_hours"),
+    total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
   };
 
-  totals.grand_total = itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
+  totals.grand_total = itemsTotal === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery,
-    catalogIssues: foundationAssemblyCatalogIssues(project, inventory),
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues,
   };
 }
 
