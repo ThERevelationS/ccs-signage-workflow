@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { money } from "./foundationCalc";
+import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
@@ -16,30 +17,74 @@ export default function FoundationBOM({
   delivery,
   totals = EMPTY_TOTALS,
   inventory = EMPTY_INVENTORY,
+  itemPricing = EMPTY_ITEMS,
+  pricingUnavailable = false,
 }) {
   const rows = useMemo(() => {
     const out = [];
-    const add = (material, quantity, cost) => {
-      if (num(quantity) <= 0 && num(cost) <= 0) return;
-      out.push({ material, quantity, cost });
+    // rawQty is the real numeric quantity; displayQty is the formatted label.
+    // A row with a positive quantity OR a known cost stays listed (free rows
+    // included) — the formatted string is never parsed for the drop test.
+    const add = (material, displayQty, cost, rawQty = num(displayQty)) => {
+      if (num(rawQty) <= 0 && !hasFoundationCostSnapshot(cost)) return;
+      out.push({ material, quantity: displayQty, cost });
     };
     const nameOf = (id) => inventory.find((i) => i.id === id)?.material_name || "Material";
+    const resolved = items.filter((_, i) => itemPricing[i]?.available !== false);
+    const blocked = items.filter((_, i) => itemPricing[i]?.available === false);
 
-    if (num(delivery?.roundedYards) > 0) {
-      add("Ready-mix concrete (delivered)", qty(delivery.roundedYards, "CY"), delivery.concreteTotal);
+    if (delivery?.pricingUnavailable) {
+      out.push({
+        material: "Concrete delivery/order (saved)",
+        quantity: Number.isFinite(delivery.roundedYards) ? qty(delivery.roundedYards, "CY") : "Not saved",
+        cost: hasFoundationCostSnapshot(delivery.concreteTotal) ? delivery.concreteTotal : "Not saved",
+        saved: true,
+      });
+    } else if (num(delivery?.roundedYards) > 0) {
+      add("Ready-mix concrete (delivered)", qty(delivery.roundedYards, "CY"), delivery.concreteTotal, delivery.roundedYards);
     }
-    const bags = items.reduce((s, i) => s + num(i.concrete_bags), 0);
-    const baggedCost = items.reduce((s, i) => s + num(i.concrete_cost), 0);
-    if (bags > 0) add("Bagged concrete", qty(bags, "bags"), baggedCost);
+    const bags = resolved.reduce((s, i) => s + num(i.concrete_bags), 0);
+    const baggedCost = resolved.reduce((s, i) => s + num(i.concrete_cost), 0);
+    if (bags > 0 || baggedCost > 0) add("Bagged concrete", qty(bags, "bags"), baggedCost, bags);
 
-    const rebarFt = items.reduce((s, i) => s + num(i.rebar_feet), 0);
-    const rebarLbs = items.reduce((s, i) => s + num(i.rebar_weight_lbs), 0);
+    const rebarFt = resolved.reduce((s, i) => s + num(i.rebar_feet), 0);
+    const rebarLbs = resolved.reduce((s, i) => s + num(i.rebar_weight_lbs), 0);
+    const rebarCost = resolved.reduce((s, i) => s + num(i.rebar_cost), 0);
     if (rebarFt > 0) {
-      add(`Rebar (${qty(rebarLbs, "lbs")})`, qty(rebarFt, "LF"), totals.total_rebar_cost);
+      add(`Rebar (${qty(rebarLbs, "lbs")})`, qty(rebarFt, "LF"), rebarCost, rebarFt);
     }
 
-    const formingQty = items.reduce((s, i) => s + num(i.forming_qty), 0);
-    if (formingQty > 0) add("Forming material", qty(formingQty, "units"), totals.total_forming_materials_cost);
+    const formingQty = resolved.reduce((s, i) => s + num(i.forming_qty), 0);
+    const formingCost = resolved.reduce((s, i) => s + num(i.forming_cost), 0);
+    if (formingQty > 0) add("Forming material", qty(formingQty, "units"), formingCost, formingQty);
+
+    blocked.forEach((i) => {
+      const label = `Foundation ${i.component_id ?? "?"} (saved)`;
+      {
+        out.push({
+          material: `${label} — concrete`,
+          quantity: Number.isFinite(i.concrete_bags) ? qty(i.concrete_bags, "bags") : "Not saved",
+          cost: hasFoundationCostSnapshot(i.concrete_cost) ? i.concrete_cost : "Not saved",
+          saved: true,
+        });
+      }
+      if (i.include_rebar) {
+        out.push({
+          material: `${label} — rebar`,
+          quantity: Number.isFinite(i.rebar_feet) ? qty(i.rebar_feet, "LF") : "Not saved",
+          cost: hasFoundationCostSnapshot(i.rebar_cost) ? i.rebar_cost : "Not saved",
+          saved: true,
+        });
+      }
+      if (i.include_forming) {
+        out.push({
+          material: `${label} — forming`,
+          quantity: Number.isFinite(i.forming_qty) ? qty(i.forming_qty, "units") : "Not saved",
+          cost: hasFoundationCostSnapshot(i.forming_cost) ? i.forming_cost : "Not saved",
+          saved: true,
+        });
+      }
+    });
 
     const poleGroups = {};
     poles.forEach((p) => {
@@ -69,16 +114,24 @@ export default function FoundationBOM({
       if (num(c.internalMortarCost) > 0) add(`${label} — internal mortar`, "—", c.internalMortarCost);
     });
 
-    (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost));
+    (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
 
     return out;
-  }, [items, poles, walls, delivery, totals, inventory]);
+  }, [items, poles, walls, delivery, totals, inventory, itemPricing]);
 
   const materialTotal = rows.reduce((s, r) => s + num(r.cost), 0);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h3 className="font-semibold text-gray-900 mb-3">Bill of Materials</h3>
+      {pricingUnavailable && (
+        <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
+          <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable — saved quantities may be outdated.</p>
+          {itemPricing.filter(p => p && p.available === false).flatMap((p, k) =>
+            (p.issues || []).map((i, j) => <p key={`${k}-${j}`} className="text-[10px] text-amber-700">{i.message}</p>)
+          )}
+        </div>
+      )}
       {rows.length === 0 ? (
         <p className="text-sm text-gray-500">No materials yet — add a foundation to build the list.</p>
       ) : (
@@ -96,14 +149,14 @@ export default function FoundationBOM({
                 <tr key={i} className="border-b border-gray-100 last:border-0">
                   <td className="py-1.5 text-gray-800">{r.material}</td>
                   <td className="py-1.5 text-gray-600">{r.quantity}</td>
-                  <td className="py-1.5 text-right text-gray-900">{money(r.cost)}</td>
+                  <td className="py-1.5 text-right text-gray-900">{hasFoundationCostSnapshot(r.cost) ? money(r.cost) : "Not saved"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div className="flex justify-between pt-3 mt-1 border-t border-gray-200 font-bold text-gray-900">
-            <span>Material total</span>
-            <span>{money(materialTotal)}</span>
+            <span>Listed cost subtotal</span>
+            <span>{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : money(materialTotal)}</span>
           </div>
         </>
       )}
