@@ -106,6 +106,9 @@ export async function replaceBuilderEntityFieldsIfUnchanged({
     if (result.updated === 1) {
       const saved = await entity.get(recordId).catch(() => null);
       if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+      if (!fieldNames.every((fieldName) => sameValue(saved[fieldName], desired[fieldName]))) {
+        throw new Error(`${label} was updated but its stored values do not match this save. Reload and review the record before retrying.`);
+      }
       return saved;
     }
   }
