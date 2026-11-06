@@ -17,6 +17,7 @@ import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
 import { foundationAssemblyCatalogIssues, foundationItemCatalogIssues, hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
+import { foundationItemInputIssues, foundationProjectInputIssues } from "./foundationInputValidation";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -29,9 +30,10 @@ const ITEM_SNAPSHOT_FIELDS = [
 ];
 
 export function calcItem(item, project, inventory, settings = {}, savedItem = item) {
-  if (foundationItemCatalogIssues(item, inventory).length) {
+  const inputIssues = foundationItemInputIssues(item);
+  if (inputIssues.length || foundationItemCatalogIssues(item, inventory).length) {
     return {
-      quantity: Math.max(1, num(item.quantity, 1)),
+      quantity: inputIssues.length ? item.quantity : Math.max(1, num(item.quantity, 1)),
       ...Object.fromEntries(ITEM_SNAPSHOT_FIELDS.map(key => [
         key, hasFoundationCostSnapshot(savedItem?.[key]) ? savedItem[key] : undefined,
       ])),
@@ -167,8 +169,12 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   }
   for (const item of sourceItems) currentIds.set(item.component_id, (currentIds.get(item.component_id) || 0) + 1);
   const catalogIssues = foundationAssemblyCatalogIssues(project, inventory);
+  const inputIssues = foundationProjectInputIssues(project);
   const itemPricing = sourceItems.map((item, index) => {
-    const issues = catalogIssues.filter(issue => issue.kind === "foundation" && issue.index === index);
+    const issues = [
+      ...catalogIssues.filter(issue => issue.kind === "foundation" && issue.index === index),
+      ...inputIssues.filter(issue => issue.index === index),
+    ];
     return { available: issues.length === 0, issues };
   });
   const items = sourceItems.map((item) => {
@@ -229,7 +235,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   totals.grand_total = itemsTotal === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues,
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,
   };
 }
 
