@@ -1,6 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
+import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+
+const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
+const num2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : "Not saved");
 
 const Field = ({ label, ...props }) => (
   <label className="text-xs text-gray-500">
@@ -16,31 +20,56 @@ const Check = ({ label, checked, onChange }) => (
   </label>
 );
 
-const Picker = ({ label, value, onChange, options, placeholder }) => (
-  <label className="text-xs text-gray-500">
-    {label}
-    <select
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
-    >
-      <option value="">{placeholder}</option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>
-          {o.material_name}
-        </option>
-      ))}
-    </select>
-  </label>
-);
+const Picker = ({ label, value, onChange, options, placeholder }) => {
+  const missing = value && !options.some((o) => o.id === value);
+  return (
+    <label className="text-xs text-gray-500">
+      {label}
+      <select
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+      >
+        <option value="">{placeholder}</option>
+        {missing && (
+          <option value={value} disabled>
+            Catalog item unavailable ({value})
+          </option>
+        )}
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.material_name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+};
 
-export default function FoundationItemCard({ item, index, catalog, onChange, onRemove, onDuplicate }) {
+export default function FoundationItemCard({ item, index, catalog, onChange, onRemove, onDuplicate, pricing }) {
   const set = (patch) => onChange(index, patch);
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
+  const nullSet = (key) => (e) => set({ [key]: e.target.value === "" ? null : parseFloat(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
+  const unavailable = pricing?.available === false;
+  const concreteRow = (catalog.concrete || []).find((c) => c.id === item.selected_concrete_id);
+  const overrideLabel = !concreteRow
+    ? "Concrete cost override (unknown unit)"
+    : concreteRow.material_type === "bagged_concrete"
+      ? "Concrete $/bag override"
+      : "Concrete $/CY override";
 
   return (
     <div className="bg-white rounded-sm border border-gray-200 border-l-4 border-l-amber-500 p-4">
+      {unavailable && (
+        <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
+          <p className="text-[11px] font-semibold text-amber-800">Saved amounts (not current pricing)</p>
+          <p className="text-[10px] text-amber-700">Saved quantities may not reflect current dimensions.</p>
+          {(pricing.issues || []).map((i, k) => (
+            <p key={k} className="text-[10px] text-amber-700">{i.message}</p>
+          ))}
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
@@ -55,9 +84,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           </select>
         </div>
         <div className="text-right">
-          <div className="font-bold text-gray-900">{money(item.item_total_cost)}</div>
+          <div className="font-bold text-gray-900">{amt(item.item_total_cost)}</div>
           <div className="text-[11px] text-gray-400">
-            {Number(item.concrete_volume_cy || 0).toFixed(2)} CY concrete
+            {num2(item.concrete_volume_cy)} CY concrete
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -140,11 +169,20 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           placeholder="None"
         />
         <Field
-          label="Concrete $/CY override"
+          label={overrideLabel}
           type="number"
           value={item.custom_concrete_cost_per_cy ?? ""}
-          onChange={numSet("custom_concrete_cost_per_cy")}
+          onChange={nullSet("custom_concrete_cost_per_cy")}
         />
+        {item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== undefined && (
+          <button
+            type="button"
+            className="text-[10px] text-amber-700 hover:underline self-end"
+            onClick={() => set({ custom_concrete_cost_per_cy: null })}
+          >
+            Clear override
+          </button>
+        )}
       </div>
 
       {/* Options */}
@@ -191,7 +229,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             <>
               <Field
                 label="Rebar size"
-                value={item.rebar_size || "#4"}
+                value={item.rebar_size ?? ""}
                 onChange={(e) => set({ rebar_size: e.target.value })}
               />
               <Field
@@ -210,8 +248,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             </>
           )}
           <div className="col-span-2 sm:col-span-4 text-xs text-gray-500">
-            {Number(item.rebar_feet || 0).toFixed(1)} ft · {Number(item.rebar_weight_lbs || 0).toFixed(0)} lbs ·{" "}
-            {money(item.rebar_cost)}
+            {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft ·{" "}
+            {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs ·{" "}
+            {amt(item.rebar_cost)}
           </div>
         </div>
       )}
@@ -220,7 +259,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
       <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
         <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Excavation</div>
         <div className="text-[11px] text-amber-900">
-          Volume: ~{Number(item.excavation_volume_cy || 0).toFixed(2)} CY · Cost: {money(item.excavation_cost)}
+          Volume: ~{Number.isFinite(item.excavation_volume_cy) ? item.excavation_volume_cy.toFixed(2) : "Not saved"} CY · Cost: {amt(item.excavation_cost)}
         </div>
       </div>
 
@@ -236,7 +275,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           ].map(([label, value]) => (
             <div key={label} className="px-1">
               <div className="text-gray-400">{label}</div>
-              <div className="font-semibold text-gray-800">{money(value)}</div>
+              <div className="font-semibold text-gray-800">{amt(value)}</div>
             </div>
           ))}
         </div>
