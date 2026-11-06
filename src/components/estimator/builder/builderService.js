@@ -565,8 +565,12 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   }
   const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified before synchronizing this Builder save.");
+  // Source-only hints omit the Builder ID; two absent IDs are not an identity.
   const currentLine = (estimate.line_items || []).find(
-    (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
+    (item) => item.module_key === line.module_key && (
+      (line.builder_product_id && item.builder_product_id === line.builder_product_id)
+      || (line.project_id && item.project_id === line.project_id)
+    )
   ) || line;
 
   const existingPending = pendingBuilderMutation(currentLine);
@@ -604,6 +608,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     sourceProjectOverride: sourceProject ?? undefined,
   });
   const builder = ensured.builderProduct;
+  const matchesCurrentLine = (item) => item.module_key === currentLine.module_key && (
+    (builder?.id && item.builder_product_id === builder.id)
+    || (currentLine.project_id && item.project_id === currentLine.project_id)
+  );
   if (builder && !ensured.partSyncInputs) {
     throw new Error("Builder catalogs could not be preverified. Product pricing and Parts were not synchronized.");
   }
@@ -773,9 +781,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       ) {
         throw new Error("This estimate changed in another session while the Builder was being saved. Initial pricing was not frozen; reload the Estimate before retrying.");
       }
-      const preMarkerLine = (preMarkerEstimate.line_items || []).find((item) =>
-        item.builder_product_id === builder.id || (currentLine.project_id && item.project_id === currentLine.project_id)
-      );
+      const preMarkerLine = (preMarkerEstimate.line_items || []).find(matchesCurrentLine);
       if (!preMarkerLine) {
         throw new Error("This Product is no longer part of the estimate. Initial pricing was not frozen.");
       }
@@ -804,7 +810,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         staffEntities.BuilderProduct.get(builder.id),
         loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
       ]);
-      const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
+      const markedLine = (markedEstimate?.line_items || []).find(matchesCurrentLine);
       const canonicalPending = pendingBuilderMutation(markedLine);
       if (!canonicalPending || canonicalPending.key !== operationKey) {
         throw new Error("Another Builder price-acceptance operation won the recovery marker race. Reload before continuing.");
@@ -871,7 +877,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   }
 
   const nextLines = (estimate.line_items || []).map((item) => {
-    if (item.project_id !== currentLine.project_id && item.builder_product_id !== builder?.id) return item;
+    if (!matchesCurrentLine(item)) return item;
     return {
       ...item,
       line_id: item.line_id || ensured.line.line_id,
@@ -900,7 +906,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     label: "Builder save Estimate line synchronization",
   });
   const savedLines = savedEstimate.line_items || nextLines;
-  return savedLines.find((item) => item.project_id === currentLine.project_id) || currentLine;
+  return savedLines.find(matchesCurrentLine) || currentLine;
 }
 
 export async function deleteBuilderProductCascade(builderProductId) {
