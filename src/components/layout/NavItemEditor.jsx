@@ -105,6 +105,7 @@ export default function NavItemEditor({
               <div className="flex items-center gap-1.5">
                 <span className="h-5 w-5 rounded-md border border-white/20" style={{ background: draftColor }} />
                 <input
+                  key={draftColor}
                   defaultValue={draftColor}
                   onChange={(event) => setHex(event.target.value)}
                   onBlur={(event) => { if (!HEX_RE.test(event.target.value)) event.target.value = draftColor; }}
@@ -133,7 +134,8 @@ export default function NavItemEditor({
 
           <div className="mb-3.5">
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Button style</label>
-            <div className="grid grid-cols-4 gap-2">
+            {/* Light backdrop so translucent presets render as they will on the bar */}
+            <div className="grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-gradient-to-b from-indigo-100/90 to-slate-200/90 p-2">
               {NAV_STYLE_PRESETS.map((preset) => {
                 const look = navButtonStyle(preset.id, draftColor);
                 const sel = draftStyle === preset.id;
@@ -144,11 +146,11 @@ export default function NavItemEditor({
                     onClick={() => setDraftStyle(preset.id)}
                     title={preset.name}
                     className={`${look.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex h-10 items-center justify-center gap-1 rounded-lg border text-[10px] font-bold transition-transform hover:scale-[1.03] ${
-                      sel ? "ring-2 ring-white ring-offset-2 ring-offset-slate-900" : ""
+                      sel ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-slate-200" : ""
                     }`}
                     style={{ "--glass-accent-rgb": "139 92 246", ...look.style }}
                   >
-                    <span style={{ color: look.textColor || (preset.id === "glass" ? "#e2e8f0" : undefined), textShadow: look.style?.textShadow }}>{preset.name}</span>
+                    <span style={{ color: look.textColor || (preset.id === "glass" ? "#334155" : undefined), textShadow: look.style?.textShadow }}>{preset.name}</span>
                   </button>
                 );
               })}
