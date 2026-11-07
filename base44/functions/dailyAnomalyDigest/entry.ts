@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Daily anomaly scan — flags unusual admin/security activity and emails admins
 // only when something crosses a threshold. Quiet when nothing is wrong.
@@ -9,8 +11,14 @@ const THRESHOLDS = {
   session_revokes: 5,      // revoke_session audit rows in last 24h
 };
 
-export async function handler() {
+export async function handler(request: Request) {
   try {
+    const body = await request.json().catch(() => ({}));
+    if (!(await hasWorkflowInvocationCapability(body, 'dailyAnomalyDigest'))) {
+      const probe = createClientFromRequest(request);
+      const user = await authenticateSignShopSession(probe, body?.session_token).catch(() => null);
+      if (user?.role !== 'admin') return Response.json({ error: 'Admin access or a verified scheduled workflow is required.' }, { status: 403 });
+    }
     const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request("https://internal/cron")));
     const ent = base44.asServiceRole.entities;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
