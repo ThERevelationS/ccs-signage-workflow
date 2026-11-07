@@ -43,6 +43,9 @@ import {
   ChevronsUp,
   ChevronsDown,
   HardDrive,
+  FolderPlus,
+  PencilLine,
+  Trash2,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -68,6 +71,23 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import NavPageLink from "@/components/layout/NavPageLink";
 import NavFlyoutMenu from "@/components/layout/NavFlyoutMenu";
 import SidebarNavGroup from "@/components/layout/SidebarNavGroup";
+import NavContextMenu from "@/components/layout/NavContextMenu";
+import NavItemEditor, { folderIconFor } from "@/components/layout/NavItemEditor";
+import {
+  createFolder as navCreateFolder,
+  deleteFolder as navDeleteFolder,
+  entriesToOrder,
+  folderToken,
+  isFolderToken,
+  movePageToFolder,
+  movePageToTop,
+  newFolderId,
+  patchFolder as navPatchFolder,
+  resolveTopLevel,
+  sanitizeFolders,
+  sanitizePageStyles,
+  tokenFolderId,
+} from "@/components/layout/navCustomization";
 import {
   applyNavOrder,
   hexToRgbTuple,
@@ -116,6 +136,25 @@ const reportsNavItems = [
   { title: "Statements", url: createPageUrl("CustomerStatements"), icon: FileText, accent: "#F59E0B" },
   { title: "Reconciliation", url: createPageUrl("Reconciliation"), icon: Scale, accent: "#34D399" },
 ];
+
+// Every routable nav page, keyed by url — folder contents resolve through this.
+const ALL_NAV_PAGES = new Map(
+  [...navigationItems, ...meetingsNavItems, ...reportsNavItems].map((item) => [item.url, item])
+);
+
+// Built-in folders are the seed for prefs.navigation.folders — editable like
+// user folders (rename/recolor/restyle/move pages/delete) once customized.
+const BUILTIN_NAV_FOLDERS = [
+  { id: "meetings", name: "Meetings", icon: "Calendar", color: "#FACC15", style: "glass", items: meetingsNavItems.map((i) => i.url) },
+  { id: "reports", name: "Reports", icon: "BarChart3", color: "#8B5CF6", style: "glass", items: reportsNavItems.map((i) => i.url) },
+];
+
+// Extract the page url out of a draggable id. Page draggables end in the url
+// (which always starts with "/"); folder pill draggables are "folder:<id>".
+const pageUrlFromDraggable = (draggableId) => {
+  const slash = String(draggableId || "").indexOf("/");
+  return slash >= 0 ? draggableId.slice(slash) : null;
+};
 
 
 
@@ -278,6 +317,70 @@ function LayoutContent({ children }) {
   // Hidden buttons are a render filter only — order/permissions untouched.
   const visibleNavItems = useMemo(() => orderedNavItems.filter((i) => !navHidden.includes(i.url)), [orderedNavItems, navHidden]);
 
+  // ---- User nav customization: folders + page styles ----
+  // navPrefs.folders: null → built-ins; array → user's own folder set.
+  const effectiveFolders = useMemo(
+    () => sanitizeFolders(navPrefs.folders) ?? BUILTIN_NAV_FOLDERS,
+    [navPrefs.folders]
+  );
+  const pageStyles = useMemo(() => sanitizePageStyles(navPrefs.pageStyles), [navPrefs.pageStyles]);
+  const folderMemberUrls = useMemo(
+    () => new Set(effectiveFolders.flatMap((f) => f.items)),
+    [effectiveFolders]
+  );
+  // Pages eligible for top-level: not inside a folder, not hidden.
+  const barPageUrls = useMemo(
+    () => new Set(navigationItems.map((i) => i.url).filter((u) => !folderMemberUrls.has(u) && !navHidden.includes(u))),
+    [folderMemberUrls, navHidden]
+  );
+  const topEntries = useMemo(
+    () => resolveTopLevel(navOrder, effectiveFolders, barPageUrls),
+    [navOrder, effectiveFolders, barPageUrls]
+  );
+  // Page button with user style overrides applied.
+  const styledPage = useCallback((url) => {
+    const base = ALL_NAV_PAGES.get(url);
+    if (!base) return null;
+    const s = pageStyles[url];
+    if (!s) return base;
+    return { ...base, title: s.name || base.title, accent: s.color || base.accent, stylePreset: s.style || "glass" };
+  }, [pageStyles]);
+  const folderItems = useCallback(
+    (folder) => folder.items.filter((u) => !navHidden.includes(u)).map(styledPage).filter(Boolean),
+    [navHidden, styledPage]
+  );
+  const barItems = useMemo(
+    () => visibleNavItems.map((i) => styledPage(i.url) || i),
+    [visibleNavItems, styledPage]
+  );
+  const barItemByUrl = useMemo(() => new Map(barItems.map((i) => [i.url, i])), [barItems]);
+
+  const [navMenu, setNavMenu] = useState(null);   // {x,y,kind:'bar'|'folder'|'page', folderId?, url?}
+  const [navEditor, setNavEditor] = useState(null); // {mode:'folder'|'page', isNew?, folderId?, url?}
+
+  const persistNavState = useCallback((order, folders) => {
+    setNavOrder(order);
+    saveNavOrder(currentUser?.email, order);
+    reportNavOrder(order);
+    updateWorkspacePrefs("navigation.folders", folders);
+  }, [currentUser?.email, reportNavOrder, updateWorkspacePrefs]);
+
+  const navState = useCallback(
+    () => ({ order: navOrder, folders: effectiveFolders }),
+    [navOrder, effectiveFolders]
+  );
+
+  const handleBarContextMenu = useCallback((event) => {
+    if (event.target.closest("[data-nav-item],[data-nav-folder]")) return;
+    event.preventDefault();
+    setNavMenu({ x: event.clientX, y: event.clientY, kind: "bar" });
+  }, []);
+
+  const openFolderEditor = useCallback((folderId, isNew = false) => {
+    setNavEditor({ mode: "folder", folderId, isNew });
+  }, []);
+  const openPageEditor = useCallback((url) => setNavEditor({ mode: "page", url }), []);
+
   // Server-side order sync (other devices / settings reset) re-reads the
   // bridged localStorage copy and repaints the bars.
   useEffect(() => {
@@ -299,17 +402,109 @@ function LayoutContent({ children }) {
   );
 
   const handleNavReorder = (result) => {
-    if (!result.destination) return;
-    // Drag indexes address the visible list; hidden buttons keep their tail slot.
-    const urls = visibleNavItems.map((item) => item.url);
-    const [moved] = urls.splice(result.source.index, 1);
-    if (!moved) return;
-    urls.splice(result.destination.index, 0, moved);
-    const fullOrder = [...urls, ...orderedNavItems.filter((i) => navHidden.includes(i.url)).map((i) => i.url)];
-    setNavOrder(fullOrder);
-    saveNavOrder(currentUser?.email, fullOrder);
-    reportNavOrder(fullOrder);
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    const destId = destination.droppableId;
+    const srcId = source.droppableId;
+    const state = navState();
+
+    // Folder pill drag — only a top-level reorder is legal (no folder nesting).
+    if (isFolderToken(draggableId) || draggableId.startsWith("sfolder:")) {
+      if (destId !== "page-nav-top" && destId !== "page-nav-side") return;
+      const token = isFolderToken(draggableId) ? draggableId : draggableId.replace(/^sfolder:/, "folder:");
+      const entries = topEntries.slice();
+      const from = entries.findIndex((e) => e.type === "folder" && folderToken(e.id) === token);
+      if (from < 0) return;
+      const [moved] = entries.splice(from, 1);
+      entries.splice(destination.index, 0, moved);
+      const order = entriesToOrder(entries);
+      persistNavState([...order, ...hiddenTail()], effectiveFolders);
+      return;
+    }
+
+    const url = pageUrlFromDraggable(draggableId);
+    if (!url) return;
+
+    // Drop onto a folder pill / group header → append into that folder.
+    const pillDest = destId.startsWith("folder-drop:") || destId.startsWith("side-folder:")
+      ? destId.slice(destId.indexOf(":") + 1) : null;
+    if (pillDest) {
+      if (srcId === destId) return;
+      const next = movePageToFolder(state, url, pillDest);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+      return;
+    }
+
+    // Drop into an open folder list → insert at index (also within-folder reorder).
+    const listDest = destId.startsWith("folder-list:") || destId.startsWith("side-folder-list:")
+      ? destId.slice(destId.indexOf(":") + 1) : null;
+    if (listDest) {
+      const folder = effectiveFolders.find((f) => f.id === listDest);
+      if (!folder) return;
+      if (srcId === destId && source.index === destination.index) return;
+      const next = movePageToFolder(state, url, listDest, destination.index);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+      return;
+    }
+
+    // Drop on the bar (top or side) → reorder, or move a folder page back out.
+    if (destId === "page-nav-top" || destId === "page-nav-side") {
+      if (srcId === destId) {
+        if (source.index === destination.index) return;
+        const entries = topEntries.slice();
+        const [moved] = entries.splice(source.index, 1);
+        if (!moved) return;
+        entries.splice(destination.index, 0, moved);
+        persistNavState(mergeHiddenTail(entriesToOrder(entries)), effectiveFolders);
+      } else {
+        const next = movePageToTop(state, url, null);
+        const entries = topEntries.filter((e) => !(e.type === "page" && e.url === url));
+        entries.splice(destination.index, 0, { type: "page", url });
+        persistNavState(mergeHiddenTail(entriesToOrder(entries)), next.folders);
+      }
+    }
   };
+
+  // Hidden pages keep their tail slot in the saved order.
+  const hiddenTail = () => orderedNavItems.filter((i) => navHidden.includes(i.url)).map((i) => i.url);
+  const mergeHiddenTail = (order) => [...order, ...hiddenTail().filter((u) => !order.includes(u))];
+
+  const handleDeleteFolder = useCallback((folderId) => {
+    const next = navDeleteFolder(navState(), folderId);
+    persistNavState(mergeHiddenTail(next.order), next.folders);
+    setNavEditor(null);
+  }, [navState, persistNavState]);
+
+  const handleSaveFolder = useCallback((folderId, isNew, patch) => {
+    if (isNew) {
+      const folder = { id: newFolderId(), name: patch.name, color: patch.color, style: patch.style, icon: patch.icon, items: [] };
+      const next = navCreateFolder(navState(), folder);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+    } else {
+      const next = navPatchFolder(navState(), folderId, { name: patch.name, color: patch.color, style: patch.style, icon: patch.icon });
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+    }
+    setNavEditor(null);
+  }, [navState, persistNavState]);
+
+  const handleSavePage = useCallback((url, patch) => {
+    const base = ALL_NAV_PAGES.get(url);
+    const next = { ...pageStyles };
+    const value = {};
+    if (patch.name && patch.name !== base?.title) value.name = patch.name;
+    if (patch.color && patch.color !== base?.accent) value.color = patch.color;
+    if (patch.style && patch.style !== "glass") value.style = patch.style;
+    if (Object.keys(value).length) next[url] = value; else delete next[url];
+    updateWorkspacePrefs("navigation.pageStyles", next);
+    setNavEditor(null);
+  }, [pageStyles, updateWorkspacePrefs]);
+
+  const handleResetPage = useCallback((url) => {
+    const next = { ...pageStyles };
+    delete next[url];
+    updateWorkspacePrefs("navigation.pageStyles", next);
+    setNavEditor(null);
+  }, [pageStyles, updateWorkspacePrefs]);
 
   const toggleNavGroup = (key) => {
     const next = { ...collapsedGroups, [key]: !collapsedGroups[key] };
@@ -1212,7 +1407,10 @@ function LayoutContent({ children }) {
             </div>
 
             {/* Navigation Links */}
-            <div className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}>
+            <div
+              className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}
+              onContextMenu={handleBarContextMenu}
+            >
               <DragDropContext onDragEnd={handleNavReorder}>
                 <Droppable droppableId="page-nav-side" direction="vertical">
                   {(provided) => (
@@ -1221,49 +1419,67 @@ function LayoutContent({ children }) {
                       {...provided.droppableProps}
                       className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
-                      {visibleNavItems.map((item, index) => (
-                        <Draggable key={item.url} draggableId={`side-${item.url}`} index={index}>
-                          {(dragProvided) => (
-                            <NavPageLink
-                              item={item}
-                              variant="side"
-                              compactView={compactView}
-                              isActive={location.pathname === item.url}
-                              isInSplit={isInSplitView(item)}
-                              onNavigate={(event) => handleNavClick(event, item)}
-                              dragRef={dragProvided.innerRef}
-                              dragProps={dragProvided.draggableProps}
-                              dragHandleProps={dragProvided.dragHandleProps}
-                            />
-                          )}
-                        </Draggable>
-                      ))}
+                      {topEntries.map((entry, index) => {
+                        if (entry.type === "folder") {
+                          const folder = entry.folder;
+                          return (
+                            <Draggable key={`sfolder:${folder.id}`} draggableId={`sfolder:${folder.id}`} index={index}>
+                              {(dragProvided) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                  style={dragProvided.draggableProps.style}
+                                >
+                                  <SidebarNavGroup
+                                    label={folder.name}
+                                    items={folderItems(folder)}
+                                    collapsed={!!collapsedGroups[folder.id] || isShortShell}
+                                    onToggle={() => toggleNavGroup(folder.id)}
+                                    compactView={compactView}
+                                    activePath={location.pathname}
+                                    isInSplitUrl={isInSplitView}
+                                    onNavigate={handleNavClick}
+                                    folderId={folder.id}
+                                    accent={folder.color}
+                                    stylePreset={folder.style}
+                                    onContextMenuGroup={({ x, y }) =>
+                                      setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                    onContextMenuItem={(item, { x, y }) =>
+                                      setNavMenu({ x, y, kind: "page", url: item.url })}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        }
+                        const item = barItemByUrl.get(entry.url);
+                        if (!item) return null;
+                        return (
+                          <Draggable key={item.url} draggableId={`side-${item.url}`} index={index}>
+                            {(dragProvided) => (
+                              <NavPageLink
+                                item={item}
+                                variant="side"
+                                compactView={compactView}
+                                isActive={location.pathname === item.url}
+                                isInSplit={isInSplitView(item)}
+                                onNavigate={(event) => handleNavClick(event, item)}
+                                onContextMenuItem={(itm, { x, y }) =>
+                                  setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                dragRef={dragProvided.innerRef}
+                                dragProps={dragProvided.draggableProps}
+                                dragHandleProps={dragProvided.dragHandleProps}
+                              />
+                            )}
+                          </Draggable>
+                        );
+                      })}
                       {provided.placeholder}
                     </div>
                   )}
                 </Droppable>
               </DragDropContext>
-
-              <SidebarNavGroup
-                label="Meetings"
-                items={meetingsNavItems}
-                collapsed={!!collapsedGroups.meetings || isShortShell}
-                onToggle={() => toggleNavGroup("meetings")}
-                compactView={compactView}
-                activePath={location.pathname}
-                isInSplitUrl={isInSplitView}
-                onNavigate={handleNavClick}
-              />
-              <SidebarNavGroup
-                label="Reports"
-                items={reportsNavItems}
-                collapsed={!!collapsedGroups.reports || isShortShell}
-                onToggle={() => toggleNavGroup("reports")}
-                compactView={compactView}
-                activePath={location.pathname}
-                isInSplitUrl={isInSplitView}
-                onNavigate={handleNavClick}
-              />
             </div>
           </motion.nav>
         )}
@@ -1386,6 +1602,7 @@ function LayoutContent({ children }) {
                 <div
                   data-top-navigation-links
                   data-manual-compact={compactView}
+                  onContextMenu={handleBarContextMenu}
                   className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
                   <DragDropContext onDragEnd={handleNavReorder}>
@@ -1396,45 +1613,75 @@ function LayoutContent({ children }) {
                           {...provided.droppableProps}
                           className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
-                          {visibleNavItems.map((item, index) => (
-                            <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
-                              {(dragProvided) => (
-                                <NavPageLink
-                                  item={item}
-                                  variant="top"
-                                  compactView={compactView}
-                                  isActive={location.pathname === item.url}
-                                  isInSplit={isInSplitView(item)}
-                                  onNavigate={(event) => handleNavClick(event, item)}
-                                  dragRef={dragProvided.innerRef}
-                                  dragProps={dragProvided.draggableProps}
-                                  dragHandleProps={dragProvided.dragHandleProps}
-                                />
-                              )}
-                            </Draggable>
-                          ))}
+                          {topEntries.map((entry, index) => {
+                            if (entry.type === "folder") {
+                              const folder = entry.folder;
+                              const FolderIcon = folderIconFor(folder.icon);
+                              return (
+                                <Draggable key={folderToken(folder.id)} draggableId={folderToken(folder.id)} index={index}>
+                                  {(dragProvided) => (
+                                    <div
+                                      ref={dragProvided.innerRef}
+                                      {...dragProvided.draggableProps}
+                                      {...dragProvided.dragHandleProps}
+                                      style={dragProvided.draggableProps.style}
+                                    >
+                                      <Droppable droppableId={`folder-drop:${folder.id}`}>
+                                        {(dropProvided, dropSnapshot) => (
+                                          <div
+                                            ref={dropProvided.innerRef}
+                                            {...dropProvided.droppableProps}
+                                            className={`rounded-lg ${dropSnapshot.isDraggingOver ? "ring-2 ring-violet-400" : ""}`}
+                                          >
+                                            <NavFlyoutMenu
+                                              label={folder.name}
+                                              icon={FolderIcon}
+                                              accent={folder.color}
+                                              stylePreset={folder.style}
+                                              folderId={folder.id}
+                                              items={folderItems(folder)}
+                                              compactView={compactView}
+                                              activePath={location.pathname}
+                                              isInSplitUrl={isInSplitView}
+                                              onNavigate={handleNavClick}
+                                              forceOpen={dropSnapshot.isDraggingOver}
+                                              onContextMenuPill={({ x, y }) =>
+                                                setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                              onContextMenuItem={(item, { x, y }) =>
+                                                setNavMenu({ x, y, kind: "page", url: item.url })}
+                                            />
+                                            {dropProvided.placeholder}
+                                          </div>
+                                        )}
+                                      </Droppable>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            }
+                            const item = barItemByUrl.get(entry.url);
+                            if (!item) return null;
+                            return (
+                              <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
+                                {(dragProvided) => (
+                                  <NavPageLink
+                                    item={item}
+                                    variant="top"
+                                    compactView={compactView}
+                                    isActive={location.pathname === item.url}
+                                    isInSplit={isInSplitView(item)}
+                                    onNavigate={(event) => handleNavClick(event, item)}
+                                    onContextMenuItem={(itm, { x, y }) =>
+                                      setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                    dragRef={dragProvided.innerRef}
+                                    dragProps={dragProvided.draggableProps}
+                                    dragHandleProps={dragProvided.dragHandleProps}
+                                  />
+                                )}
+                              </Draggable>
+                            );
+                          })}
                           {provided.placeholder}
-
-                          <NavFlyoutMenu
-                            label="Meetings"
-                            icon={Calendar}
-                            accent="#FACC15"
-                            items={meetingsNavItems}
-                            compactView={compactView}
-                            activePath={location.pathname}
-                            isInSplitUrl={isInSplitView}
-                            onNavigate={handleNavClick}
-                          />
-                          <NavFlyoutMenu
-                            label="Reports"
-                            icon={BarChart3}
-                            accent="#8B5CF6"
-                            items={reportsNavItems}
-                            compactView={compactView}
-                            activePath={location.pathname}
-                            isInSplitUrl={isInSplitView}
-                            onNavigate={handleNavClick}
-                          />
                         </div>
                       )}
                     </Droppable>
@@ -1446,7 +1693,7 @@ function LayoutContent({ children }) {
               {mobileMenuOpen && (
                 <div className="lg:hidden mt-2 border-t border-gray-200 pt-2">
                   <div className="ccs-topbar-menu-grid grid grid-cols-3 gap-1">
-                    {[...visibleNavItems, ...meetingsNavItems, ...reportsNavItems].filter((item) => !navHidden.includes(item.url)).map((item) => {
+                    {[...ALL_NAV_PAGES.keys()].map((u) => styledPage(u)).filter((item) => item && !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                       return (
@@ -1560,10 +1807,66 @@ function LayoutContent({ children }) {
         />
 
         {/* Add Task Dialog */}
-        <AddTaskDialog 
-          isOpen={showAddTaskDialog} 
-          onClose={() => setShowAddTaskDialog(false)} 
+        <AddTaskDialog
+          isOpen={showAddTaskDialog}
+          onClose={() => setShowAddTaskDialog(false)}
         />
+
+        {/* Nav customization: right-click menus + folder/page editors */}
+        {navMenu && (
+          <NavContextMenu
+            x={navMenu.x}
+            y={navMenu.y}
+            onClose={() => setNavMenu(null)}
+            items={
+              navMenu.kind === "bar"
+                ? [{ icon: FolderPlus, label: "New folder", onClick: () => openFolderEditor(null, true) }]
+                : navMenu.kind === "folder"
+                  ? [
+                      { icon: PencilLine, label: "Edit folder", onClick: () => openFolderEditor(navMenu.folderId) },
+                      { icon: Trash2, label: "Delete folder", danger: true, onClick: () => handleDeleteFolder(navMenu.folderId) },
+                    ]
+                  : [
+                      { icon: PencilLine, label: "Edit button", onClick: () => openPageEditor(navMenu.url) },
+                    ]
+            }
+          />
+        )}
+        {navEditor && navEditor.mode === "folder" && (() => {
+          const folder = navEditor.isNew ? null : effectiveFolders.find((f) => f.id === navEditor.folderId);
+          return (
+            <NavItemEditor
+              mode="folder"
+              title={navEditor.isNew ? "New folder" : `Edit folder`}
+              name={folder?.name || "New Folder"}
+              color={folder?.color || "#8B5CF6"}
+              style={folder?.style || "glass"}
+              icon={folder?.icon || "Folder"}
+              allowDelete={!navEditor.isNew}
+              onSave={(patch) => handleSaveFolder(navEditor.folderId, navEditor.isNew, patch)}
+              onDelete={() => handleDeleteFolder(navEditor.folderId)}
+              onClose={() => setNavEditor(null)}
+            />
+          );
+        })()}
+        {navEditor && navEditor.mode === "page" && (() => {
+          const base = ALL_NAV_PAGES.get(navEditor.url);
+          if (!base) return null;
+          const override = pageStyles[navEditor.url] || {};
+          return (
+            <NavItemEditor
+              mode="page"
+              title={`Edit “${base.title}” button`}
+              name={override.name || base.title}
+              color={override.color || base.accent}
+              style={override.style || "glass"}
+              allowReset={Boolean(pageStyles[navEditor.url])}
+              onSave={(patch) => handleSavePage(navEditor.url, patch)}
+              onReset={() => handleResetPage(navEditor.url)}
+              onClose={() => setNavEditor(null)}
+            />
+          );
+        })()}
 
         {/* Announcement Manager - admin only */}
         {isUserAdmin(currentUser) && (
@@ -1755,7 +2058,7 @@ function LayoutContent({ children }) {
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-2">
-                    {[...visibleNavItems, ...meetingsNavItems, ...reportsNavItems].filter((item) => !navHidden.includes(item.url)).map((item) => {
+                    {[...ALL_NAV_PAGES.keys()].map((u) => styledPage(u)).filter((item) => item && !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <Link
