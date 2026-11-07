@@ -5,12 +5,12 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Scheduled digest — reads pending admin queues and emails all admins a
 // compact weekly summary. Runs without a session (service-role reads).
-export async function handler(request: Request) {
+Deno.serve(async (request: Request) => {
   try {
-    const body = await request.json().catch(() => ({}));
-    if (!(await hasWorkflowInvocationCapability(body, 'weeklyAdminDigest'))) {
+    const reqBody = await request.json().catch(() => ({}));
+    if (!(await hasWorkflowInvocationCapability(reqBody, 'weeklyAdminDigest'))) {
       const probe = createClientFromRequest(request);
-      const user = await authenticateSignShopSession(probe, body?.session_token).catch(() => null);
+      const user = await authenticateSignShopSession(probe, reqBody?.session_token).catch(() => null);
       if (user?.role !== 'admin') return Response.json({ error: 'Admin access or a verified scheduled workflow is required.' }, { status: 403 });
     }
     const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request("https://internal/cron")));
