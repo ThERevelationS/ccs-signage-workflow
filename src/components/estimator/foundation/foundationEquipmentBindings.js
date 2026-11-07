@@ -15,8 +15,11 @@ export function resolveFoundationEquipment(entry = {}, inventory = [], index = 0
     attachmentMode = "normalized";
     attachmentRows = source.attachments.map((row, rowIndex) => {
       const id = row.id || row.inventory_id;
+      // `??` keeps a recorded 0 (a zero-count row bills nothing and is ignored)
+      // and surfaces malformed quantities to the pricing check — the ported
+      // `|| 1` silently repriced both to one billed attachment.
       return {
-        id, quantity: row.qty || 1, sourceRecord: row, rowIndex, field: "attachments",
+        id, quantity: row.qty ?? 1, sourceRecord: row, rowIndex, field: "attachments",
         inventory: inventory.find(item => item.id === id),
       };
     });
