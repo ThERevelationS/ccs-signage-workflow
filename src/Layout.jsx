@@ -83,6 +83,7 @@ import {
   movePageToTop,
   newFolderId,
   patchFolder as navPatchFolder,
+  removeUrlEverywhere,
   resolveTopLevel,
   sanitizeFolders,
   sanitizePageStyles,
@@ -417,11 +418,22 @@ function LayoutContent({ children }) {
       const target = String(combine.draggableId || "");
       const folderId = isFolderToken(target) ? tokenFolderId(target)
         : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
-      if (!folderId) return;
       const url = pageUrlFromDraggable(draggableId);
       if (!url) return;
-      const next = movePageToFolder(state, url, folderId);
-      persistNavState(mergeHiddenTail(next.order), next.folders);
+      if (folderId) {
+        const next = movePageToFolder(state, url, folderId);
+        persistNavState(mergeHiddenTail(next.order), next.folders);
+        return;
+      }
+      // Combine onto a page button = "drop at that position" — pull the page
+      // out of any folder and slot it where the target sits on the bar.
+      const targetUrl = pageUrlFromDraggable(target);
+      if (!targetUrl || targetUrl === url) return;
+      const { order, folders } = removeUrlEverywhere(state.order, state.folders, url);
+      const entries = resolveTopLevel(order, folders, barPageUrls);
+      const at = entries.findIndex((e) => e.type === "page" && e.url === targetUrl);
+      entries.splice(at < 0 ? entries.length : at, 0, { type: "page", url });
+      persistNavState(mergeHiddenTail(entriesToOrder(entries)), folders);
       return;
     }
     if (!destination) return;
