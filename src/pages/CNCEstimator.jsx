@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { CNCProject, Settings } from "@/api/gatedEntities";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Router, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, Trash2, Save, Router, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Link, useNavigate } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
@@ -24,6 +24,14 @@ import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar
 import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
 import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { staffEntities } from "@/components/staff/staffEntities";
+import {
+  calcCncPricing,
+  cncDraftValue,
+  cncSettingNumber,
+  cncSettingRecorded,
+  hasCncCostSnapshot,
+  hasIssueFor,
+} from "@/components/estimator/cnc/cncPricingAvailability";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -39,6 +47,15 @@ const MATERIAL_THICKNESS_PRESETS = {
 };
 
 const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Pricing-availability display helpers. A non-finite live value is either the
+// saved acknowledged snapshot (shown plainly) or genuinely unsaved
+// ("Not saved") — never an invented $0. "—" marks a held derived field.
+const moneyCell = (v) => hasCncCostSnapshot(v)
+  ? `$${v.toFixed(2)}`
+  : <span className="text-amber-700 font-medium">Not saved</span>;
+const heldMoney = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
+const heldNum = (v, digits = 1, suffix = "") => (Number.isFinite(v) ? `${v.toFixed(digits)}${suffix}` : "—");
 
 export default function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
@@ -62,6 +79,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
@@ -90,11 +108,18 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       setGlobalSettings(settingsObj);
       setEstimateContext(estimate || null);
 
+      // Strict settings seed: absent rows fall back to the documented module
+      // defaults by design; a recorded-but-unusable value lands as null so the
+      // project-field scan flags it instead of silently resurrecting a default
+      // (remote `parseFloat(x) || dflt` laundered both "abc" and authored 0).
+      const strictSeed = (key, dflt) => cncSettingRecorded(settingsObj, key)
+        ? cncSettingNumber(settingsObj, key)
+        : dflt;
       const sourceDefaults = {
-        machine_rate_per_hour: parseFloat(settingsObj.cnc_machine_rate) || 75,
-        labor_rate: parseFloat(settingsObj.cnc_labor_rate) || 45,
-        setup_time_percentage: parseFloat(settingsObj.cnc_setup_time_percentage) || 20,
-        fixed_setup_hours: parseFloat(settingsObj.min_cnc_setup_hours) || 0,
+        machine_rate_per_hour: strictSeed("cnc_machine_rate", 75),
+        labor_rate: strictSeed("cnc_labor_rate", 45),
+        setup_time_percentage: strictSeed("cnc_setup_time_percentage", 20),
+        fixed_setup_hours: strictSeed("min_cnc_setup_hours", 0),
         notes: settingsObj.default_notes_template || "",
       };
 
@@ -182,10 +207,14 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
         item.quantity = 1;
       }
 
-      // Auto-set cut speed based on thickness for CNC
+      // Auto-set cut speed based on thickness for CNC. Strict: an absent
+      // setting uses the documented 50 ipm default; a recorded-but-unusable
+      // value lands null so the item scan flags it (remote silently wrote 50).
       if (field === 'material_thickness') {
         const speedSettingKey = `cnc_cut_speed_${value.replace('/', '_').replace('-', '_')}`;
-        item.cut_speed_ipm = parseFloat(globalSettings[speedSettingKey]) || 50;
+        item.cut_speed_ipm = cncSettingRecorded(globalSettings, speedSettingKey)
+          ? cncSettingNumber(globalSettings, speedSettingKey)
+          : 50;
       }
       
       // Calculate cut length based on item type
@@ -224,31 +253,26 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     });
   };
 
-  const calculateTotals = () => {
-    const totalMachineCost = project.items.reduce((sum, item) => sum + (item.machine_cost || 0), 0);
-    const dynamicLaborFromItems = project.items.reduce((sum, item) => sum + (item.labor_cost || 0), 0);
-    const totalSetupHours = project.items.reduce((sum, item) => sum + (item.setup_time_hours || 0), 0);
-    const fixedSetupCost = (project.fixed_setup_hours || 0) * project.labor_rate;
-    const minLaborHours = parseFloat(globalSettings.min_cnc_labor_hours) || 0;
+  // Pricing-availability: one strict derived pass shared by the banner, the
+  // totals panel, the per-field diagnostics, the save guard, and the exports.
+  // Totals re-derive from the CURRENT raw inputs every render — the remote
+  // reprice-staleness defect (project-rate edits left stored item snapshots
+  // stale) cannot persist stale totals as current.
+  const priced = useMemo(() => calcCncPricing(project, globalSettings), [project, globalSettings]);
+  const pricedItems = priced.items;
+  const allIssues = priced.issues;
+  // Any settings-side unavailability → stronger save message; any issue at
+  // all blocks the save — unavailable pricing is never written as $0.
+  const catalogBlocked = allIssues.some((i) => i.kind === "cnc_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = priced.held;
+  const itemIssues = (index) => allIssues.filter((i) => i.itemIndex === index);
 
-    // Source behavior: minimum applies only to the dynamic item setup portion,
-    // while fixed setup remains additive.
-    const effectiveDynamicLabor = totalSetupHours > 0 && totalSetupHours < minLaborHours
-      ? minLaborHours * project.labor_rate
-      : dynamicLaborFromItems;
-    const minimumDynamicLaborAdjustment = effectiveDynamicLabor - dynamicLaborFromItems;
-    const totalLaborCost = fixedSetupCost + effectiveDynamicLabor;
-
-    return {
-      totalMachine: totalMachineCost,
-      totalLabor: totalLaborCost,
-      totalSetupHours,
-      dynamicLaborFromItems,
-      fixedSetupCost,
-      minLaborHours,
-      minimumDynamicLaborAdjustment,
-    };
-  };
+  // calculateTotals keeps its remote shape ({ totalMachine, totalLabor,
+  // totalSetupHours, dynamicLaborFromItems, fixedSetupCost, minLaborHours,
+  // minimumDynamicLaborAdjustment }) but returns the derived pass — identical
+  // values on the valid path; null fields when pricing is held (callers guard).
+  const calculateTotals = () => priced.totals;
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -269,17 +293,30 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     return () => window.removeEventListener("beforeunload", warn);
   }, [isSaving]);
   const saveProject = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // (recordBuilderSave included) and point the user at the flagged values.
+    if (pricingBlocked) {
+      setSaveError(catalogBlocked
+        ? "Save paused: a CNC Settings value is missing or unusable — update it in CNC Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
       return;
     }
 
     setIsSaving(true);
+    setSaveError("");
     try {
       const totals = calculateTotals();
       const totalCost = totals.totalMachine + totals.totalLabor;
       const pricingProject = {
         ...project,
+        // Persist the derived-fresh item costs so the acknowledged snapshot is
+        // always current pricing (reprice-on-save; never a stale snapshot).
+        items: pricedItems,
         client_name: estimateContext?.client_name || project.client_name,
         customer_id: estimateContext?.customer_id || project.customer_id,
         estimate_number: estimateContext?.estimate_number || project.estimate_number,
@@ -372,13 +409,19 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 
   // #78 — clone the current save payload into a brand-new CNC project.
   const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      setSaveError("Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
     setIsSaving(true);
+    setSaveError("");
     try {
       const totals = calculateTotals();
       const copy = await saveModuleProjectCopy({
         entity: CNCProject,
         payload: {
           ...project,
+          items: pricedItems,
           client_name: estimateContext?.client_name || project.client_name,
           customer_id: estimateContext?.customer_id || project.customer_id,
           estimate_number: estimateContext?.estimate_number || project.estimate_number,
@@ -413,6 +456,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   });
 
   const downloadEstimate = () => {
+    // Held pricing must not export as $0/junk — same gate as the save path.
+    if (pricingBlocked) {
+      setSaveError("Fix the flagged pricing values before downloading — unavailable pricing is never exported as $0.");
+      return;
+    }
     const { totalMachine, totalLabor } = calculateTotals();
     const totalCost = totalMachine + totalLabor;
     
@@ -733,7 +781,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     <div class="content">
       <div class="section-title">Items Breakdown</div>
       
-      ${project.items.map((item, i) => `
+      ${pricedItems.map((item, i) => `
         <div class="item">
           <div class="item-header">
             Item ${i + 1}: ${escHtml(item.description || "CNC item")}
@@ -826,6 +874,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const printEstimate = () => {
+    // Held pricing must not export as $0/junk — same gate as the save path.
+    if (pricingBlocked) {
+      setSaveError("Fix the flagged pricing values before printing — unavailable pricing is never exported as $0.");
+      return;
+    }
     const { totalMachine, totalLabor } = calculateTotals();
     const totalCost = totalMachine + totalLabor;
     
@@ -1144,7 +1197,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
             <div class="content">
               <div class="section-title">Items Breakdown</div>
               
-              ${project.items.map((item, i) => `
+              ${pricedItems.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
                     Item ${i + 1}: ${escHtml(item.description || "CNC item")}
@@ -1233,6 +1286,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 
 
   const { totalMachine, totalLabor } = calculateTotals();
+  // Under held pricing the derived totals are null; the acknowledged saved
+  // snapshot (or "Not saved") is shown instead — never an invented $0.
+  const totalCost = Number.isFinite(totalMachine) && Number.isFinite(totalLabor)
+    ? totalMachine + totalLabor
+    : null;
 
   if (isLoading) return <div className="p-8">Loading...</div>;
   if (loadError) return (
@@ -1263,14 +1321,34 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
             <p className="text-slate-600">Estimate costs for CNC routing and carving jobs</p>
           </div>
         </div>
+        {/* Pricing-availability banner — visible on every state so a blocked
+            save always shows why. */}
+        {allIssues.length > 0 && (
+          <div
+            role="status"
+            id="cnc-pricing-issues"
+            className="mb-4 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-3 py-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this estimate can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
                 <TabsList className="grid grid-cols-4 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabBadgeTrigger value="project" icon={FileText} label="Project" color="green" />
-                  <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={totalMachine + totalLabor} count={project.items.length} color="green" />
-                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={totalMachine + totalLabor} color="green" />
+                  <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={totalCost} count={project.items.length} color="green" />
+                  <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={totalCost} color="green" />
                   <TabBadgeTrigger value="pricing" icon={TrendingUp} label="Customer Pricing" accent color="green" />
                 </TabsList>
               </div>
@@ -1294,11 +1372,15 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label>Fixed Setup Time (hours)</Label>
-                    <Input type="number" min="0" value={project.fixed_setup_hours} onFocus={(e) => e.target.select()} onChange={(e) => setProject(p => ({...p, fixed_setup_hours: parseFloat(e.target.value) || 0}))} />
+                    <Input type="number" min="0" value={project.fixed_setup_hours ?? ""} onFocus={(e) => e.target.select()} onChange={(e) => setProject(p => ({...p, fixed_setup_hours: cncDraftValue(e.target.value)}))}
+                      aria-invalid={hasIssueFor(allIssues, "fixed_setup_hours") || undefined}
+                      aria-describedby={hasIssueFor(allIssues, "fixed_setup_hours") ? "cnc-pricing-issues" : undefined} />
                   </div>
                   <div>
                     <Label>Setup Time Percentage (%)</Label>
-                    <Input type="number" min="0" max="100" value={project.setup_time_percentage} onFocus={(e) => e.target.select()} onChange={(e) => setProject(p => ({...p, setup_time_percentage: parseFloat(e.target.value) || 0}))} />
+                    <Input type="number" min="0" max="100" value={project.setup_time_percentage ?? ""} onFocus={(e) => e.target.select()} onChange={(e) => setProject(p => ({...p, setup_time_percentage: cncDraftValue(e.target.value)}))}
+                      aria-invalid={hasIssueFor(allIssues, "setup_time_percentage") || undefined}
+                      aria-describedby={hasIssueFor(allIssues, "setup_time_percentage") ? "cnc-pricing-issues" : undefined} />
                     <p className="text-xs text-slate-500 mt-1">Percentage of machine time added as labor setup time per item.</p>
                   </div>
                 </div>
@@ -1321,29 +1403,36 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                     <p>No items added yet. Click "Add Item" to get started.</p>
                   </div>
                 )}
-                {project.items.map((item, index) => (
+                {project.items.map((item, index) => {
+                  // pricedItem = raw row + derived-fresh pricing (nulls when held).
+                  const pricedItem = pricedItems[index] || item;
+                  const rowIssues = itemIssues(index);
+                  const rowIssuesId = `cnc-item-${index}-issues`;
+                  const fieldFlag = (field) => hasIssueFor(allIssues, field, index) || undefined;
+                  const fieldDesc = (field) => hasIssueFor(allIssues, field, index) ? rowIssuesId : undefined;
+                  return (
                   <div key={index} className="p-6 border rounded-xl bg-slate-25">
                     <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="md:col-span-3"><Label>Description</Label><Input data-item-desc={index} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
-                      <div><Label>Job Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="panel">Panel Cut</SelectItem><SelectItem value="lettering">Lettering Cut</SelectItem><SelectItem value="3d_carving">3D Carving</SelectItem></SelectContent></Select></div>
-                      <div><Label>Material Type</Label><Select value={item.material_type} onValueChange={(v) => updateItem(index, 'material_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{materials.map(mat => <SelectItem key={mat} value={mat}>{mat}</SelectItem>)}</SelectContent></Select></div>
+                      <div><Label>Job Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger aria-invalid={fieldFlag("item_type")} aria-describedby={fieldDesc("item_type")}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="panel">Panel Cut</SelectItem><SelectItem value="lettering">Lettering Cut</SelectItem><SelectItem value="3d_carving">3D Carving</SelectItem></SelectContent></Select></div>
+                      <div><Label>Material Type</Label><Select value={item.material_type} onValueChange={(v) => updateItem(index, 'material_type', v)}><SelectTrigger aria-invalid={fieldFlag("material_type")} aria-describedby={fieldDesc("material_type")}><SelectValue /></SelectTrigger><SelectContent>{materials.map(mat => <SelectItem key={mat} value={mat}>{mat}</SelectItem>)}</SelectContent></Select></div>
                       <div><Label>Material Thickness</Label><Select value={item.material_thickness} onValueChange={(v) => updateItem(index, 'material_thickness', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{imperialSizes.map(size => <SelectItem key={size} value={size}>{size}"</SelectItem>)}</SelectContent></Select><div className="flex flex-wrap gap-1 mt-1">{(MATERIAL_THICKNESS_PRESETS[item.material_type] || ["1/4", "1/2", "3/4"]).map((t) => <button key={t} type="button" onClick={() => updateItem(index, 'material_thickness', t)} className={`px-1.5 h-[20px] rounded border text-[10px] ${item.material_thickness === t ? "border-red-400 bg-red-50 text-red-700" : "border-gray-300 text-gray-600 hover:bg-gray-50"}`}>{t}"</button>)}</div></div>
                       {/* Quantity field â€” only shown for panels & carvings. For lettering, "Number of Letters" IS the quantity. */}
                       {item.item_type !== 'lettering' && (
-                        <div><Label>Quantity</Label><Input type="number" min="1" value={item.quantity || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} /></div>
+                        <div><Label>Quantity</Label><Input type="number" min="1" value={item.quantity ?? ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'quantity', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("quantity")} aria-describedby={fieldDesc("quantity")} /></div>
                       )}
                       
-                      {item.item_type === 'panel' && (<><div><Label>Length (in)</Label><Input type="number" min="0" value={item.length || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} /></div><div><Label>Height (in)</Label><Input type="number" min="0" value={item.width || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} /></div></>)}
+                      {item.item_type === 'panel' && (<><div><Label>Length (in)</Label><Input type="number" min="0" value={item.length ?? ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'length', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("length")} aria-describedby={fieldDesc("length")} /></div><div><Label>Height (in)</Label><Input type="number" min="0" value={item.width ?? ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'width', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("width")} aria-describedby={fieldDesc("width")} /></div></>)}
                       
-                      {item.item_type === 'lettering' && (<><div><Label>Letter Height (in)</Label><Input type="number" min="0" value={item.letter_height || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'letter_height', parseFloat(e.target.value) || 0)} /></div><div><Label>Number of Letters</Label><Input type="number" min="0" value={item.num_letters || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'num_letters', parseInt(e.target.value) || 0)} /></div></>)}
+                      {item.item_type === 'lettering' && (<><div><Label>Letter Height (in)</Label><Input type="number" min="0" value={item.letter_height ?? ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'letter_height', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("letter_height")} aria-describedby={fieldDesc("letter_height")} /></div><div><Label>Number of Letters</Label><Input type="number" min="0" value={item.num_letters ?? ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'num_letters', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("num_letters")} aria-describedby={fieldDesc("num_letters")} /></div></>)}
                       
-                      {item.item_type === '3d_carving' && (<><div><Label>Carve Area (inÂ²)</Label><Input type="number" min="0" value={item.carve_area_sqin || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_area_sqin', parseFloat(e.target.value) || 0)} /></div><div><Label>Carve Depth (in)</Label><Input type="number" min="0" step="0.125" value={item.carve_depth || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_depth', parseFloat(e.target.value) || 0)} /></div></>)}
+                      {item.item_type === '3d_carving' && (<><div><Label>Carve Area (inÂ²)</Label><Input type="number" min="0" value={item.carve_area_sqin ?? ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_area_sqin', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("carve_area_sqin")} aria-describedby={fieldDesc("carve_area_sqin")} /></div><div><Label>Carve Depth (in)</Label><Input type="number" min="0" step="0.125" value={item.carve_depth || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_depth', parseFloat(e.target.value) || 0)} /></div></>)}
                     </div>
                     
                     <div className="mt-4 pt-4 border-t grid md:grid-cols-2 gap-4">
-                      {item.item_type !== '3d_carving' && (<div><Label>Cut Speed (in/min)</Label><Input type="number" min="0" value={item.cut_speed_ipm || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'cut_speed_ipm', parseFloat(e.target.value) || 0)} placeholder="Auto-calculated" /><p className="text-xs text-slate-500 mt-1">Auto-set by thickness, can be overridden.</p></div>)}
-                      {item.item_type === '3d_carving' && (<div><Label>Carve Speed (inÂ²/min)</Label><Input type="number" min="0" value={item.carve_speed_sqipm || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'carve_speed_sqipm', parseFloat(e.target.value) || 0)} /></div>)}
+                      {item.item_type !== '3d_carving' && (<div><Label>Cut Speed (in/min)</Label><Input type="number" min="0" value={item.cut_speed_ipm ?? ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'cut_speed_ipm', cncDraftValue(e.target.value))} placeholder="Auto-calculated" aria-invalid={fieldFlag("cut_speed_ipm")} aria-describedby={fieldDesc("cut_speed_ipm")} /><p className="text-xs text-slate-500 mt-1">Auto-set by thickness, can be overridden.</p></div>)}
+                      {item.item_type === '3d_carving' && (<div><Label>Carve Speed (inÂ²/min)</Label><Input type="number" min="0" value={item.carve_speed_sqipm ?? ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'carve_speed_sqipm', cncDraftValue(e.target.value))} aria-invalid={fieldFlag("carve_speed_sqipm")} aria-describedby={fieldDesc("carve_speed_sqipm")} /></div>)}
                     </div>
                     
                     <HoldDownAdvisor
@@ -1352,16 +1441,29 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                       letterPerimFactor={parseFloat(globalSettings.cnc_letter_perimeter_factor) || 3.5}
                     />
 
+                    {/* Per-item diagnostics — a malformed value stays on the
+                        row and is explained here, never dropped. */}
+                    {rowIssues.length > 0 && (
+                      <div role="status" id={rowIssuesId}
+                        className="mt-3 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                        <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                        <div className="space-y-0.5">
+                          {rowIssues.map((it, i) => <div key={i}>{it.message}</div>)}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mt-4 p-4 bg-white rounded-lg border">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div><span className="text-slate-500">Machine Time:</span><p className="font-medium">{(item.machine_time_hours || 0).toFixed(1)} hrs</p></div>
-                        <div><span className="text-slate-500">Machine Cost:</span><p className="font-medium">${(item.machine_cost || 0).toFixed(2)}</p></div>
-                        <div><span className="text-slate-500">Setup Time:</span><p className="font-medium">{(item.setup_time_hours || 0).toFixed(1)} hrs</p></div>
-                        <div><span className="text-slate-500">Labor Cost:</span><p className="font-semibold">${(item.labor_cost || 0).toFixed(2)}</p></div>
+                        <div><span className="text-slate-500">Machine Time:</span><p className="font-medium">{heldNum(pricedItem.machine_time_hours, 1, " hrs")}</p></div>
+                        <div><span className="text-slate-500">Machine Cost:</span><p className="font-medium">{heldMoney(pricedItem.machine_cost)}</p></div>
+                        <div><span className="text-slate-500">Setup Time:</span><p className="font-medium">{heldNum(pricedItem.setup_time_hours, 1, " hrs")}</p></div>
+                        <div><span className="text-slate-500">Labor Cost:</span><p className="font-semibold">{heldMoney(pricedItem.labor_cost)}</p></div>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
               </TabsContent>
@@ -1382,23 +1484,28 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                         </tr>
                       </thead>
                       <tbody>
-                        {project.items.map((it, i) => (
+                        {pricedItems.map((it, i) => (
                           <tr key={i} className="border-t border-slate-100">
                             <td className="px-4 py-2 text-slate-500">{i + 1}</td>
                             <td className="px-4 py-2 font-medium">{it.description || `Item ${i + 1}`}</td>
                             <td className="px-4 py-2 text-xs text-slate-600">{it.material_type}</td>
-                            <td className="px-4 py-2 text-right tabular-nums">${(it.machine_cost || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-right tabular-nums">${(it.labor_cost || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-right tabular-nums font-semibold">${((it.machine_cost || 0) + (it.labor_cost || 0)).toFixed(2)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{heldMoney(it.machine_cost)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{heldMoney(it.labor_cost)}</td>
+                            <td className="px-4 py-2 text-right tabular-nums font-semibold">{Number.isFinite(it.machine_cost) && Number.isFinite(it.labor_cost) ? `$${(it.machine_cost + it.labor_cost).toFixed(2)}` : "—"}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot className="bg-slate-50 border-t-2 border-slate-200 text-sm">
+                        {pricingUnavailable && (
+                          <tr>
+                            <td colSpan="6" className="px-4 py-1.5 text-[11px] text-amber-800">Saved amounts (not current pricing) — fix the flagged values to reprice.</td>
+                          </tr>
+                        )}
                         <tr>
                           <td colSpan="3" className="px-4 py-2 text-right font-medium">Totals</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${totalMachine.toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${totalLabor.toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-bold">${(totalMachine + totalLabor).toFixed(2)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{moneyCell(Number.isFinite(totalMachine) ? totalMachine : project.total_machine_cost)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{moneyCell(Number.isFinite(totalLabor) ? totalLabor : project.total_labor_cost)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-bold">{moneyCell(totalCost ?? project.total_cost)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -1408,7 +1515,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 
               <TabsContent value="pricing" className="mt-4 space-y-6">
                 <CustomerPricingTab
-                  project={{ ...project, total_machine_cost: totalMachine, total_labor_cost: totalLabor }}
+                  project={{ ...project, items: pricedItems, total_machine_cost: Number.isFinite(totalMachine) ? totalMachine : (project.total_machine_cost ?? null), total_labor_cost: Number.isFinite(totalLabor) ? totalLabor : (project.total_labor_cost ?? null) }}
                   categorize={categorizeCNCProject}
                   accentColor="green"
                   onTierChange={(tier) => setProject((prev) => ({
@@ -1423,16 +1530,19 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
             <Card className="bg-white border-0 shadow-sm sticky top-8">
               <CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                {pricingUnavailable && (
+                  <p className="text-[11px] text-amber-800">Saved amounts (not current pricing) — fix the flagged values to reprice.</p>
+                )}
                 <div className="p-4 bg-green-50 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-green-800">Total Machine Cost:</span>
-                    <span className="font-bold text-lg text-green-900">${totalMachine.toFixed(2)}</span>
+                    <span className="font-bold text-lg text-green-900">{moneyCell(Number.isFinite(totalMachine) ? totalMachine : project.total_machine_cost)}</span>
                   </div>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-blue-800">Total Labor Cost:</span>
-                    <span className="font-bold text-lg text-blue-900">${totalLabor.toFixed(2)}</span>
+                    <span className="font-bold text-lg text-blue-900">{moneyCell(Number.isFinite(totalLabor) ? totalLabor : project.total_labor_cost)}</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">
@@ -1441,6 +1551,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               </CardContent>
             </Card>
             {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+            {saveError && <div role="alert" className="px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded">{saveError}</div>}
             <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
             <div className="flex flex-wrap gap-2">
               <ModuleActionBar
