@@ -1440,7 +1440,7 @@ export default function QuickClockSection({
     }
   };
 
-  const handlePunchResolution = async ({ response, claimedClockOut = "" }) => {
+  const handlePunchResolution = async ({ response, claimedClockOut = "", skipClockIn = false }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Punch-resolution identity is no longer verified. Identify again before continuing.");
     }
@@ -1481,6 +1481,11 @@ export default function QuickClockSection({
       if (result?.punch_resolution_pending === true && result?.status === "clocked_out") {
         setPunchResolution(null);
         setActiveEntry(null);
+        if (skipClockIn) {
+          setRecognitionStatus("Missed Clock Out recorded and sent to manager review. You're clocked out — clock in whenever you're ready.");
+          scheduleDisplayReset(3000);
+          return result;
+        }
         setRecognitionStatus("Previous shift sent to manager review. Clocking you in now...");
         await performClockIn(result.user || user, credential);
         return result;
@@ -1502,8 +1507,8 @@ export default function QuickClockSection({
     }
   };
 
-  const handleMissedClockOutResolution = (claimedClockOut) =>
-    handlePunchResolution({ response: "missed_clock_out", claimedClockOut });
+  const handleMissedClockOutResolution = (claimedClockOut, { skipClockIn = false } = {}) =>
+    handlePunchResolution({ response: "missed_clock_out", claimedClockOut, skipClockIn });
 
   const handleWorkedThroughResolution = () =>
     handlePunchResolution({ response: "worked_through" });
