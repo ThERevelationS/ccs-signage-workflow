@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
       // about the jurisdiction record stays admin-locked.
       const pd = body?.data;
       const pkeys = pd && typeof pd === 'object' && !Array.isArray(pd) ? Object.keys(pd) : [];
-      const PENDING_APPLY_KEYS = new Set(['work_order_id', 'requested_by', 'requested_at', 'exclude_electrical']);
+      const PENDING_APPLY_KEYS = new Set(['work_order_id', 'requested_by', 'requested_at', 'exclude_electrical', 'skip_office_keys']);
       const pendingAppliesOnly = op === 'update'
         && pkeys.length === 1 && pkeys[0] === 'pending_applies'
         && Array.isArray((pd as any)?.pending_applies)
@@ -158,7 +158,8 @@ Deno.serve(async (req) => {
           && typeof p.work_order_id === 'string' && p.work_order_id.trim().length > 0 && p.work_order_id.length <= 64
           && (p.requested_by === undefined || (typeof p.requested_by === 'string' && p.requested_by.length <= 200))
           && (p.requested_at === undefined || (typeof p.requested_at === 'string' && p.requested_at.length <= 40))
-          && (p.exclude_electrical === undefined || typeof p.exclude_electrical === 'boolean'));
+          && (p.exclude_electrical === undefined || typeof p.exclude_electrical === 'boolean')
+          && (p.skip_office_keys === undefined || (Array.isArray(p.skip_office_keys) && p.skip_office_keys.length <= 50 && p.skip_office_keys.every((k: any) => typeof k === 'string' && k.length <= 120))));
       if (!pendingAppliesOnly) {
         return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
       }
