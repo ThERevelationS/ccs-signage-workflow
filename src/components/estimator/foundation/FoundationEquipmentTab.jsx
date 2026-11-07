@@ -12,13 +12,17 @@ import { setFoundationEquipmentCount } from './foundationEquipmentBindings';
 
 const fin = (v) => Number.isFinite(v);
 const intQty = (v) => fin(v) && Number.isInteger(v) && v >= 0;
+// Blank-preserving draft coercion (same rule as the wall/pole panels): a blank
+// draft stays blank, a numeric draft becomes a number, and a malformed draft
+// is stored verbatim so the pricing diagnostics can flag it — never coerced.
+const equipmentInputValue = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
 
-function OverrideChip({ label, value, onClear, moneyVal = false }) {
+function OverrideChip({ label, value, onClear, moneyVal = false, invalid = false }) {
   if (value === undefined || value === null) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+    <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${invalid ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-amber-100 text-amber-800'}`}>
       {label}: {moneyVal && typeof value === 'number' ? money(value) : String(value)}
-      <button type="button" aria-label={`Clear ${label}`} onClick={onClear} className="text-amber-900 hover:underline">Clear</button>
+      <button type="button" aria-label={`Clear ${label}`} onClick={onClear} className={invalid ? 'text-red-900 hover:underline' : 'text-amber-900 hover:underline'}>Clear</button>
     </span>
   );
 }
@@ -29,6 +33,8 @@ function EquipmentCard({ entry, detail, index, inventory, onUpdate, onRemove, sh
   const eq = detail.equipment; // may be undefined when missing
   const issues = detail.issues || [];
   const broken = issues.length > 0;
+  const fieldIssue = (field) => issues.some((i) => i.field === field);
+  const describedBy = (field) => (fieldIssue(field) ? `equipment-${index}-pricing` : undefined);
   const update = (next) => onUpdate(index, next);
   const setQty = (kind, id, quantity) => {
     try {
@@ -82,7 +88,7 @@ function EquipmentCard({ entry, detail, index, inventory, onUpdate, onRemove, sh
 
   const cardTotal = !broken
     ? money(detail.totalCost)
-    : hasFoundationCostSnapshot(entry.equipment_cost) ? money(entry.equipment_cost) : 'Not saved';
+    : hasFoundationCostSnapshot(detail.totalCost) ? money(detail.totalCost) : 'Not saved';
   const lineAmt = (v) => (broken ? 'Unavailable' : money(v));
 
   const attRow = (a, key) => {
@@ -166,7 +172,7 @@ function EquipmentCard({ entry, detail, index, inventory, onUpdate, onRemove, sh
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-4">
         {broken && (
-          <ul className="list-disc pl-5 text-[11px] text-amber-800">
+          <ul role="status" id={`equipment-${index}-pricing`} className="list-disc pl-5 text-[11px] text-amber-800">
             {issues.map((i, k) => <li key={k}>{i.message}</li>)}
           </ul>
         )}
@@ -207,10 +213,13 @@ function EquipmentCard({ entry, detail, index, inventory, onUpdate, onRemove, sh
           <div>
             <Label className="text-xs">Duration {customQtyActive && <span className="text-amber-700">(custom qty override active — editing duration does not clear it)</span>}</Label>
             <input
-              type="number" aria-label="Rental duration" min={1}
+              type="number" aria-label="Rental duration" min={1} step="any"
               className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-              value={entry.rental_duration ?? 1}
-              onChange={(e) => update({ ...entry, rental_duration: Number(e.target.value) || 1 })}
+              value={entry.rental_duration ?? ""}
+              placeholder="1"
+              aria-invalid={fieldIssue("rental_duration") || undefined}
+              aria-describedby={describedBy("rental_duration")}
+              onChange={(e) => update({ ...entry, rental_duration: equipmentInputValue(e.target.value) })}
             />
           </div>
           <div className="flex items-end pb-1">
@@ -227,9 +236,9 @@ function EquipmentCard({ entry, detail, index, inventory, onUpdate, onRemove, sh
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <OverrideChip label="Custom rate" value={entry.custom_rate} moneyVal onClear={() => update({ ...entry, custom_rate: null })} />
-          <OverrideChip label="Custom qty" value={entry.custom_qty} onClear={() => update({ ...entry, custom_qty: null })} />
-          <OverrideChip label={`Custom delivery${entry.include_delivery ? '' : ' (inactive — delivery excluded)'}`} value={entry.custom_delivery_charge} moneyVal onClear={() => update({ ...entry, custom_delivery_charge: null })} />
+          <OverrideChip label="Custom rate" value={entry.custom_rate} moneyVal invalid={fieldIssue('custom_rate')} onClear={() => update({ ...entry, custom_rate: null })} />
+          <OverrideChip label="Custom qty" value={entry.custom_qty} invalid={fieldIssue('custom_qty')} onClear={() => update({ ...entry, custom_qty: null })} />
+          <OverrideChip label={`Custom delivery${entry.include_delivery ? '' : ' (inactive — delivery excluded)'}`} value={entry.custom_delivery_charge} moneyVal invalid={fieldIssue('custom_delivery_charge')} onClear={() => update({ ...entry, custom_delivery_charge: null })} />
         </div>
         {err && <p role="alert" className="text-[11px] text-red-700">{err}</p>}
         <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
