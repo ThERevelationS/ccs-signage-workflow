@@ -8,6 +8,7 @@ import { foundationWallPricingIssues } from "./wallCalculator";
 import WallShapeEditor from "./WallShapeEditor";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const heightInput = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
 
 function WallRow({ wall, index, options, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
@@ -39,8 +40,12 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
           Height (in)
           <Input
             type="number"
-            value={wall.heightInches ?? 24}
-            onChange={(e) => set({ heightInches: num(e.target.value) })}
+            step="any"
+            value={wall.heightInches ?? ""}
+            onChange={(e) => set({ heightInches: heightInput(e.target.value) })}
+            aria-label="Wall height (in)"
+            aria-invalid={pricingIssues.some(i => i.field === "heightInches") || undefined}
+            aria-describedby={pricingIssues.some(i => i.field === "heightInches") ? `wall-${index}-pricing` : undefined}
           />
         </label>
         <label className="text-xs text-gray-500">
@@ -117,8 +122,12 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
               Fill height (in)
               <Input
                 type="number"
-                value={wall.internalWallHeightInches ?? wall.heightInches ?? 24}
-                onChange={(e) => set({ internalWallHeightInches: num(e.target.value) })}
+                step="any"
+                value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
+                onChange={(e) => set({ internalWallHeightInches: heightInput(e.target.value) })}
+                aria-label="Internal wall height (in)"
+                aria-invalid={pricingIssues.some(i => i.field === "internalWallHeightInches") || undefined}
+                aria-describedby={pricingIssues.some(i => i.field === "internalWallHeightInches") ? `wall-${index}-pricing` : undefined}
               />
             </label>
           </div>
