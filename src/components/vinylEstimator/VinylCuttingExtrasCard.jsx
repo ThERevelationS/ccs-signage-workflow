@@ -2,7 +2,7 @@
 // Has: Transfer Tape picker, Weeding Difficulty (drives min/part labor),
 // and Application/Install minutes per part.
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { Scissors } from "lucide-react";
 import {
   WEEDING_DIFFICULTY, WEEDING_DIFFICULTY_LABELS, WEEDING_LABOR_MINUTES_PER_PART,
 } from "@/components/vinylInventory/vinylConstants";
+import { hasIssueFor } from "./vinylPricingAvailability";
 
 export default function VinylCuttingExtrasCard({
   vinyls,
@@ -22,6 +23,8 @@ export default function VinylCuttingExtrasCard({
   installMinutesPerPart,
   partsPlaced = 0,
   onChange,
+  issues = [],
+  issuesId,
 }) {
   const ttOptions = useMemo(
     () => vinyls.filter(
@@ -62,7 +65,11 @@ export default function VinylCuttingExtrasCard({
             onValueChange={(id) => onChange({ transferTapeId: id === "__none__" ? "" : id })}
             disabled={!applyTransferTape}
           >
-            <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Choose transfer tape…" /></SelectTrigger>
+            <SelectTrigger
+              className="h-9 mt-1"
+              aria-invalid={hasIssueFor(issues, "transfer_tape_id") || undefined}
+              aria-describedby={hasIssueFor(issues, "transfer_tape_id") ? issuesId : undefined}
+            ><SelectValue placeholder="Choose transfer tape…" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">None</SelectItem>
               {ttOptions.map(v => (
@@ -83,7 +90,11 @@ export default function VinylCuttingExtrasCard({
           <Label className="text-xs">Weeding Difficulty</Label>
           <Select value={wd}
             onValueChange={(v) => onChange({ weedingDifficulty: v, weedingMinutesPerPartOverride: "" })}>
-            <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+            <SelectTrigger
+              className="h-9 mt-1"
+              aria-invalid={hasIssueFor(issues, "weeding_difficulty") || undefined}
+              aria-describedby={hasIssueFor(issues, "weeding_difficulty") ? issuesId : undefined}
+            ><SelectValue /></SelectTrigger>
             <SelectContent>
               {WEEDING_DIFFICULTY.map(w => (
                 <SelectItem key={w} value={w}>
@@ -100,6 +111,8 @@ export default function VinylCuttingExtrasCard({
                 placeholder={String(weedMinDefault)}
                 value={weedingMinutesPerPartOverride ?? ""}
                 onChange={(e) => onChange({ weedingMinutesPerPartOverride: e.target.value })}
+                aria-invalid={hasIssueFor(issues, "weeding_minutes_per_part_override") || undefined}
+                aria-describedby={hasIssueFor(issues, "weeding_minutes_per_part_override") ? issuesId : undefined}
                 className="h-8 text-xs tabular-nums"
               />
             </div>
@@ -121,6 +134,8 @@ export default function VinylCuttingExtrasCard({
                 value={installMinutesPerPart ?? ""}
                 placeholder="0"
                 onChange={(e) => onChange({ installMinutesPerPart: e.target.value })}
+                aria-invalid={hasIssueFor(issues, "install_minutes_per_part") || undefined}
+                aria-describedby={hasIssueFor(issues, "install_minutes_per_part") ? issuesId : undefined}
                 className="h-8 text-xs tabular-nums w-24"
               />
               <span className="text-xs text-slate-500">min / part on-site</span>
