@@ -49,7 +49,12 @@ const Picker = ({ label, value, onChange, options, placeholder }) => {
 export default function FoundationItemCard({ item, index, catalog, onChange, onRemove, onDuplicate, pricing }) {
   const set = (patch) => onChange(index, patch);
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
-  const nullSet = (key) => (e) => set({ [key]: e.target.value === "" ? null : parseFloat(e.target.value) });
+  // Blank clears the override (null); a malformed draft is preserved verbatim so
+  // the item validation reports it instead of a NaN leaking into saved costs.
+  const nullSet = (key) => (e) => set({
+    [key]: e.target.value === "" ? null
+      : Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : e.target.value,
+  });
   const isPillar = item.foundation_type === "pillar";
   const unavailable = pricing?.available === false;
   const concreteRow = (catalog.concrete || []).find((c) => c.id === item.selected_concrete_id);
@@ -62,7 +67,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   return (
     <div className="bg-white rounded-sm border border-gray-200 border-l-4 border-l-amber-500 p-4">
       {unavailable && (
-        <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
+        <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1" id={`foundation-${index}-pricing`}>
           <p className="text-[11px] font-semibold text-amber-800">Saved amounts (not current pricing)</p>
           <p className="text-[10px] text-amber-700">Saved quantities may not reflect the current design.</p>
           {(pricing.issues || []).map((i, k) => (
@@ -176,8 +181,13 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         <Field
           label={overrideLabel}
           type="number"
+          step="any"
+          min="0"
           value={item.custom_concrete_cost_per_cy ?? ""}
           onChange={nullSet("custom_concrete_cost_per_cy")}
+          aria-label={overrideLabel}
+          aria-invalid={pricing?.issues?.some((i) => i.field === "custom_concrete_cost_per_cy") || undefined}
+          aria-describedby={pricing?.issues?.some((i) => i.field === "custom_concrete_cost_per_cy") ? `foundation-${index}-pricing` : undefined}
         />
         {item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== undefined && (
           <button
