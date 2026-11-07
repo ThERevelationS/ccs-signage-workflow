@@ -40,9 +40,13 @@ import VinylMoveToWorkflowMenu from "@/components/vinylEstimator/VinylMoveToWork
 import {
   blankVinylProject, blankWorkflow, migrateProject, rollupVinylProject,
 } from "@/components/vinylEstimator/vinylProjectHelpers";
+import {
+  calcVinylWorkflow, vinylProjectInputIssues, hasVinylCostSnapshot,
+} from "@/components/vinylEstimator/vinylPricingAvailability";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+const sumOrNull = (...xs) => xs.every(v => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
 
 export default function VinylEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [search] = useSearchParams();
@@ -198,10 +202,44 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     });
   };
 
-  // Project-wide rollup (re-derives when any workflow's _calc changes)
+  // Pricing-availability: one strict calc pass per workflow, shared with the
+  // cards so the page banner, the tab badges, and the save guard all read the
+  // same diagnostics the card displays.
+  const workflowPricing = useMemo(
+    () => (project.workflows || []).map((wf, idx) => calcVinylWorkflow({ workflow: wf, vinyls, machines, index: idx })),
+    [project.workflows, vinyls, machines]
+  );
+  const projectIssues = useMemo(
+    () => vinylProjectInputIssues(project, { settings, equipmentInventory }),
+    [project, settings, equipmentInventory]
+  );
+  const allIssues = useMemo(
+    () => [...workflowPricing.flatMap(p => p.issues), ...projectIssues],
+    [workflowPricing, projectIssues]
+  );
+  // Any catalog-side unavailability → stronger save message; any issue at all
+  // blocks the save — unavailable pricing is never written as $0.
+  const catalogBlocked = allIssues.some(i => i.kind === "vinyl_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = pricingBlocked
+    || (project.workflows || []).some(wf => wf?._calc?.pricingUnavailable);
+  // Tab-surface split so the warn dots point at the right tab.
+  const travelIssue = projectIssues.some(i =>
+    ["total_travel_cost", "travel_miles_round_trip", "mpg"].includes(i.field)
+    || String(i.code).startsWith("vinyl_travel") || String(i.code).startsWith("vinyl_vehicle"));
+  const installIssue = projectIssues.some(i =>
+    ["selected_equipment", "personnel", "total_cost"].includes(i.field)
+    || String(i.code).startsWith("vinyl_equipment") || String(i.code).startsWith("vinyl_personnel_cost")
+    || String(i.code).startsWith("vinyl_install_rate"));
+  const summaryIssue = projectIssues.some(i =>
+    ["supplies_percent_of_materials", "extra_supplies_cost", "markup_percent"].includes(i.field));
+
+  // Project-wide rollup (re-derives when any workflow's _calc changes).
+  // Current values win; a held workflow falls back to the saved acknowledged
+  // snapshot and only reports "not saved" when no real snapshot exists.
   const rollup = useMemo(() => rollupVinylProject(project), [project]);
   // Max install height for travel/equipment suggestion compatibility
-  const totalLaborHours = rollup.laborHours;
+  const totalLaborHours = rollup.laborHours ?? 0;
 
   // Feature #33 — does any workflow have validation issues?
   const workflowsHaveIssues = useMemo(
@@ -255,6 +293,23 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     return () => window.removeEventListener("beforeunload", warn);
   }, [saving]);
   const save = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // and point the user at the first tab that owns the issue.
+    if (pricingBlocked) {
+      const first = allIssues[0];
+      const field = first?.field || "";
+      const code = String(first?.code || "");
+      const tab = first?.index != null ? "workflows"
+        : ["supplies_percent_of_materials", "extra_supplies_cost", "markup_percent"].includes(field) ? "summary"
+        : (["total_travel_cost", "travel_miles_round_trip", "mpg"].includes(field) || code.startsWith("vinyl_travel") || code.startsWith("vinyl_vehicle")) ? "travel"
+        : "install";
+      setActiveTab(tab);
+      alert(catalogBlocked
+        ? "Save paused: a selected vinyl, machine, or equipment record is unavailable or missing required pricing — update it in Vinyl Inventory / Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
       setActiveTab("project");
@@ -386,6 +441,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
   // #78 — clone the current save payload into a brand-new Vinyl project.
   const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      alert("Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
     setSaving(true);
     try {
       const cleanWorkflows = (project.workflows || []).map(({ _calc, ...rest }) => rest);
@@ -468,8 +527,11 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   const TabBtn = ({ value, icon: Icon, label, amount, warn }) => (
     <TabsTrigger value={value} className="flex items-center gap-1.5 text-xs md:text-sm py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white relative">
       <Icon className="w-4 h-4" /> <span className="truncate">{label}</span>
-      {amount != null && (
+      {Number.isFinite(amount) && (
         <span className="ml-1 text-[10px] tabular-nums opacity-80">{fmt(amount)}</span>
+      )}
+      {amount === null && (
+        <span className="ml-1 text-[10px] text-amber-500" title="Pricing unavailable">—</span>
       )}
       {warn && (
         <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" title="Workflow has issues" />
@@ -513,13 +575,34 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
                 <TabsList className="grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
                   <TabBtn value="project"   icon={FileText}   label="Project" />
-                  <TabBtn value="workflows" icon={Layers}     label="Vinyl Workflows" amount={rollup.materialCost + rollup.machineCost + rollup.laborCost} warn={workflowsHaveIssues} />
-                  <TabBtn value="install"   icon={HardHat}    label="Installation"    amount={rollup.equipmentCost + rollup.personnelCost} />
-                  <TabBtn value="travel"    icon={MapPin}     label="Travel"          amount={rollup.travelCost} />
-                  <TabBtn value="summary"   icon={Calculator} label="Summary"         amount={rollup.totalCost} />
+                  <TabBtn value="workflows" icon={Layers}     label="Vinyl Workflows" amount={sumOrNull(rollup.materialCost, rollup.machineCost, rollup.laborCost)} warn={workflowsHaveIssues || workflowPricing.some(p => p.issues.length > 0)} />
+                  <TabBtn value="install"   icon={HardHat}    label="Installation"    amount={sumOrNull(rollup.equipmentCost, rollup.personnelCost)} warn={installIssue} />
+                  <TabBtn value="travel"    icon={MapPin}     label="Travel"          amount={rollup.travelCost} warn={travelIssue} />
+                  <TabBtn value="summary"   icon={Calculator} label="Summary"         amount={rollup.totalCost} warn={summaryIssue} />
                   <TabBtn value="pricing"   icon={TrendingUp} label="Customer Pricing" />
                 </TabsList>
               </div>
+
+              {/* Pricing-availability banner — visible on every tab so a
+                  blocked save always shows why. */}
+              {allIssues.length > 0 && (
+                <div
+                  role="status"
+                  id="vinyl-pricing-issues"
+                  className="mt-3 flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-300 rounded px-3 py-2"
+                >
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need attention before this estimate can be priced or saved.
+                    </div>
+                    <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                      {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                      {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               {/* PROJECT TAB */}
               <TabsContent value="project" className="mt-4 space-y-4">
@@ -667,6 +750,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                     index={idx}
                     vinyls={vinyls}
                     machines={machines}
+                    pricing={workflowPricing[idx]}
                     installEnvironment={project.install_environment}
                     onChange={(next) => updateWorkflow(idx, next)}
                     onRemove={() => removeWorkflow(idx)}
@@ -746,7 +830,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                     <CardTitle className="text-lg">Cost Breakdown</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm space-y-3">
-                    <BreakdownTable rollup={rollup} project={project} />
+                    <BreakdownTable rollup={rollup} project={project} pricingUnavailable={pricingUnavailable} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -756,17 +840,19 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                 <CustomerPricingTab
                   project={{
                     ...project,
-                    // Feed live rollup totals so categorizer sees current numbers
-                    total_vinyl_cost:    rollup.vinylCost,
-                    total_laminate_cost: rollup.laminateCost,
-                    total_ink_cost:      rollup.inkCost,
-                    total_blade_cost:    rollup.bladeCost,
-                    total_machine_cost:  rollup.machineCost,
-                    total_supplies_cost: rollup.supplies,
-                    labor_cost:          rollup.laborCost,
-                    total_personnel_cost: rollup.personnelCost,
-                    total_equipment_cost: rollup.equipmentCost,
-                    total_travel_cost:    rollup.travelCost,
+                    // Feed live rollup totals so categorizer sees current numbers.
+                    // Held values surface as 0 here — this tab is advisory only;
+                    // the blocked save keeps them from reaching the record.
+                    total_vinyl_cost:    rollup.vinylCost ?? 0,
+                    total_laminate_cost: rollup.laminateCost ?? 0,
+                    total_ink_cost:      rollup.inkCost ?? 0,
+                    total_blade_cost:    rollup.bladeCost ?? 0,
+                    total_machine_cost:  rollup.machineCost ?? 0,
+                    total_supplies_cost: rollup.supplies ?? 0,
+                    labor_cost:          rollup.laborCost ?? 0,
+                    total_personnel_cost: rollup.personnelCost ?? 0,
+                    total_equipment_cost: rollup.equipmentCost ?? 0,
+                    total_travel_cost:    rollup.travelCost ?? 0,
                   }}
                   categorize={categorizeVinylProject}
                   accentColor="blue"
@@ -787,6 +873,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               onUpdateProject={updateProject}
               onSave={save}
               isSaving={saving}
+              pricingUnavailable={pricingUnavailable}
+              pricingBlocked={pricingBlocked}
+              issues={allIssues}
+              issuesId="vinyl-pricing-issues"
             />
             <div className="flex flex-wrap gap-2">
               <ModuleActionBar
@@ -842,7 +932,13 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   );
 }
 
-function BreakdownTable({ rollup, project }) {
+// Saved-fallback display: a non-finite rollup value is either the saved
+// acknowledged snapshot (shown plainly) or genuinely unsaved ("Not saved").
+const moneyCell = (v) => hasVinylCostSnapshot(v)
+  ? fmt(v)
+  : <span className="text-amber-700 font-medium">Not saved</span>;
+
+export function BreakdownTable({ rollup, project, pricingUnavailable = false }) {
   const rows = [
     ["Vinyl", rollup.vinylCost],
     ["Laminate", rollup.laminateCost],
@@ -856,27 +952,32 @@ function BreakdownTable({ rollup, project }) {
     ["Supplies", rollup.supplies],
   ];
   return (
+    <div>
+      {pricingUnavailable && (
+        <p className="text-[11px] text-amber-800 mb-2">Saved amounts (not current pricing) — fix the flagged values to reprice.</p>
+      )}
     <table className="w-full">
       <tbody>
         {rows.map(([label, value]) => (
           <tr key={label} className="border-t border-slate-100">
             <td className="py-1.5 text-slate-600">{label}</td>
-            <td className="py-1.5 text-right tabular-nums">{fmt(value)}</td>
+            <td className="py-1.5 text-right tabular-nums">{moneyCell(value)}</td>
           </tr>
         ))}
         <tr className="border-t border-slate-200">
           <td className="py-1.5 font-semibold">Subtotal</td>
-          <td className="py-1.5 text-right tabular-nums font-semibold">{fmt(rollup.subtotal)}</td>
+          <td className="py-1.5 text-right tabular-nums font-semibold">{moneyCell(rollup.subtotal)}</td>
         </tr>
         <tr>
           <td className="py-1.5 text-slate-600">Markup ({project.markup_percent || 0}%)</td>
-          <td className="py-1.5 text-right tabular-nums">{fmt(rollup.markupAmount)}</td>
+          <td className="py-1.5 text-right tabular-nums">{moneyCell(rollup.markupAmount)}</td>
         </tr>
         <tr className="border-t-2 border-slate-300">
           <td className="py-2 font-bold text-base">Total</td>
-          <td className="py-2 text-right tabular-nums font-bold text-base">{fmt(rollup.totalCost)}</td>
+          <td className="py-2 text-right tabular-nums font-bold text-base">{moneyCell(rollup.totalCost)}</td>
         </tr>
       </tbody>
     </table>
+    </div>
   );
 }
