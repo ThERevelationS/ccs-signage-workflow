@@ -18,6 +18,13 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
+// Blank clears a numeric catalog field to null ("not cataloged" — never a
+// silent free price); a numeric draft coerces to Number; anything else stays
+// verbatim so availability validation reports it instead of a NaN or a minted
+// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
+const catalogNumberInput = (value) => (String(value).trim() === "" ? null
+  : Number.isFinite(Number(value)) ? Number(value) : value);
+
 // ─── Wall Material constants ───────────────────────────────────────────────
 const WALL_SUBTYPES = [
   { value: 'brick', label: 'Brick' },
@@ -140,8 +147,8 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
                 </SelectContent>
               </Select>
             ) : field.type === 'number' ? (
-              <Input type="number" className="h-8" value={form[field.key] ?? 0} step="0.01" min="0"
-                onChange={e => set(field.key, parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form[field.key] ?? ""} step="0.01" min="0"
+                onChange={e => set(field.key, catalogNumberInput(e.target.value))} />
             ) : (
               <Input className="h-8" value={form[field.key] ?? ''} onChange={e => set(field.key, e.target.value)} />
             )}
@@ -153,36 +160,36 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
          <div className="col-span-2 space-y-4 border-t border-slate-200 mt-4 pt-4">
             <h4 className="text-sm font-semibold text-slate-800">Mix Pricing ($/CY)</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">3500 AE</Label><Input type="number" className="h-8" value={form.mix_3500_price ?? 195.40} onChange={e => set('mix_3500_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4000 AE (Standard)</Label><Input type="number" className="h-8" value={form.mix_4000_price ?? 201.00} onChange={e => set('mix_4000_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4500 AE</Label><Input type="number" className="h-8" value={form.mix_4500_price ?? 208.70} onChange={e => set('mix_4500_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">5000 AE</Label><Input type="number" className="h-8" value={form.mix_5000_price ?? 214.60} onChange={e => set('mix_5000_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Fast Set</Label><Input type="number" className="h-8" value={form.mix_fast_set_price ?? 248.00} onChange={e => set('mix_fast_set_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">3500 AE</Label><Input type="number" className="h-8" value={form.mix_3500_price ?? ""} onChange={e => set('mix_3500_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="195.40" /></div>
+               <div><Label className="text-xs">4000 AE (Standard)</Label><Input type="number" className="h-8" value={form.mix_4000_price ?? ""} onChange={e => set('mix_4000_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="201.00" /></div>
+               <div><Label className="text-xs">4500 AE</Label><Input type="number" className="h-8" value={form.mix_4500_price ?? ""} onChange={e => set('mix_4500_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="208.70" /></div>
+               <div><Label className="text-xs">5000 AE</Label><Input type="number" className="h-8" value={form.mix_5000_price ?? ""} onChange={e => set('mix_5000_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="214.60" /></div>
+               <div><Label className="text-xs">Fast Set</Label><Input type="number" className="h-8" value={form.mix_fast_set_price ?? ""} onChange={e => set('mix_fast_set_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="248.00" /></div>
             </div>
             
             <h4 className="text-sm font-semibold text-slate-800">Admixture Pricing ($/CY)</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">Calcium Chloride</Label><Input type="number" className="h-8" value={form.admix_calcium_chloride_price ?? 8.50} onChange={e => set('admix_calcium_chloride_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Set-Retarding</Label><Input type="number" className="h-8" value={form.admix_set_retarding_price ?? 4.50} onChange={e => set('admix_set_retarding_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Water-Reducing</Label><Input type="number" className="h-8" value={form.admix_water_reducing_price ?? 4.25} onChange={e => set('admix_water_reducing_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Fibers</Label><Input type="number" className="h-8" value={form.admix_fibers_price ?? 12.50} onChange={e => set('admix_fibers_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">Winter Service</Label><Input type="number" className="h-8" value={form.admix_winter_service_price ?? 5.50} onChange={e => set('admix_winter_service_price', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">Calcium Chloride</Label><Input type="number" className="h-8" value={form.admix_calcium_chloride_price ?? ""} onChange={e => set('admix_calcium_chloride_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="8.50" /></div>
+               <div><Label className="text-xs">Set-Retarding</Label><Input type="number" className="h-8" value={form.admix_set_retarding_price ?? ""} onChange={e => set('admix_set_retarding_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="4.50" /></div>
+               <div><Label className="text-xs">Water-Reducing</Label><Input type="number" className="h-8" value={form.admix_water_reducing_price ?? ""} onChange={e => set('admix_water_reducing_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="4.25" /></div>
+               <div><Label className="text-xs">Fibers</Label><Input type="number" className="h-8" value={form.admix_fibers_price ?? ""} onChange={e => set('admix_fibers_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="12.50" /></div>
+               <div><Label className="text-xs">Winter Service</Label><Input type="number" className="h-8" value={form.admix_winter_service_price ?? ""} onChange={e => set('admix_winter_service_price', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="5.50" /></div>
             </div>
 
             <h4 className="text-sm font-semibold text-slate-800">Small Load Fees ($)</h4>
             <p className="text-xs text-slate-500 -mt-2">Fee charged by the supplier when ordering less than a full truck. Enter $0 for no fee.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">1 – 1.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_1_1_75 ?? 150} onChange={e => set('small_load_fee_1_1_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">2 – 2.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_2_2_75 ?? 120} onChange={e => set('small_load_fee_2_2_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">3 – 3.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_3_3_75 ?? 105} onChange={e => set('small_load_fee_3_3_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4 – 4.25 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_4_25 ?? 80} onChange={e => set('small_load_fee_4_4_25', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
-               <div><Label className="text-xs">4.5 – 4.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_5_4_75 ?? 40} onChange={e => set('small_load_fee_4_5_4_75', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">1 – 1.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_1_1_75 ?? ""} onChange={e => set('small_load_fee_1_1_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="150" /></div>
+               <div><Label className="text-xs">2 – 2.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_2_2_75 ?? ""} onChange={e => set('small_load_fee_2_2_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="120" /></div>
+               <div><Label className="text-xs">3 – 3.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_3_3_75 ?? ""} onChange={e => set('small_load_fee_3_3_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="105" /></div>
+               <div><Label className="text-xs">4 – 4.25 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_4_25 ?? ""} onChange={e => set('small_load_fee_4_4_25', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="80" /></div>
+               <div><Label className="text-xs">4.5 – 4.75 YD</Label><Input type="number" className="h-8" value={form.small_load_fee_4_5_4_75 ?? ""} onChange={e => set('small_load_fee_4_5_4_75', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="40" /></div>
             </div>
 
             <h4 className="text-sm font-semibold text-slate-800">Fuel / Delivery Surcharge ($)</h4>
             <p className="text-xs text-slate-500 -mt-2">Flat fee added per truck load for fuel and delivery.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-               <div><Label className="text-xs">Per Load Surcharge</Label><Input type="number" className="h-8" value={form.fuel_surcharge ?? 30} onChange={e => set('fuel_surcharge', parseFloat(e.target.value) || 0)} step="0.01" min="0" /></div>
+               <div><Label className="text-xs">Per Load Surcharge</Label><Input type="number" className="h-8" value={form.fuel_surcharge ?? ""} onChange={e => set('fuel_surcharge', catalogNumberInput(e.target.value))} step="0.01" min="0" placeholder="30" /></div>
             </div>
          </div>
       )}
@@ -230,22 +237,22 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
         </div>
         <div>
           <Label className="text-xs">Cost Per Unit ($)</Label>
-          <Input type="number" className="h-8" value={form.cost_per_unit} onChange={e => set('cost_per_unit', parseFloat(e.target.value) || 0)} step="0.01" min="0" />
+          <Input type="number" className="h-8" value={form.cost_per_unit ?? ""} onChange={e => set('cost_per_unit', catalogNumberInput(e.target.value))} step="0.01" min="0" />
         </div>
       </div>
       {!isConcrete && (
         <>
           <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Unit Dimensions</div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label className="text-xs">Length (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_length_inches} onChange={e => set('wall_unit_length_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
-            <div><Label className="text-xs">Width / Depth (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches} onChange={e => set('wall_unit_width_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
-            <div><Label className="text-xs">Height (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_height_inches} onChange={e => set('wall_unit_height_inches', parseFloat(e.target.value) || 0)} step="0.125" /></div>
+            <div><Label className="text-xs">Length (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_length_inches ?? ""} onChange={e => set('wall_unit_length_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
+            <div><Label className="text-xs">Width / Depth (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches ?? ""} onChange={e => set('wall_unit_width_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
+            <div><Label className="text-xs">Height (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_height_inches ?? ""} onChange={e => set('wall_unit_height_inches', catalogNumberInput(e.target.value))} step="0.125" /></div>
           </div>
         </>
       )}
       {isConcrete && (
         <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-xs">Wall Depth / Width (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches} onChange={e => set('wall_unit_width_inches', parseFloat(e.target.value) || 0)} step="0.5" /></div>
+          <div><Label className="text-xs">Wall Depth / Width (inches)</Label><Input type="number" className="h-8" value={form.wall_unit_width_inches ?? ""} onChange={e => set('wall_unit_width_inches', catalogNumberInput(e.target.value))} step="0.5" /></div>
         </div>
       )}
       <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Visual / 3D Appearance</div>
@@ -316,7 +323,7 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                       const val = item[f.key];
                       if (!val && val !== 0) return null;
                       const label = f.label.replace(' ($)', '').replace(' *', '');
-                      const display = f.type === 'number' && f.label.includes('$') ? `$${parseFloat(val).toFixed(2)}` : val;
+                      const display = f.type === 'number' && f.label.includes('$') && Number.isFinite(parseFloat(val)) ? `$${parseFloat(val).toFixed(2)}` : val;
                       return <span key={f.key} className="text-xs text-slate-500">{label}: <span className="text-slate-700 font-medium">{display}</span></span>;
                     })}
                     {item.cost_per_unit > 0 && !displayFields.find(f => f.key === 'cost_per_unit') && (
@@ -571,7 +578,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
                       {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
                       {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: ${parseFloat(m.cost_per_unit || 0).toFixed(2)} / unit</div>
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / unit` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
@@ -623,7 +630,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
                       {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
                       {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: ${parseFloat(m.cost_per_unit || 0).toFixed(2)} / unit</div>
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / unit` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
