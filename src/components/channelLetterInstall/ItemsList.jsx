@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical } from "lucide-react";
 import InstallLineItem from "./InstallLineItem";
 
-export default function ItemsList({ items, inventory, settings, compact, onUpdate, onRemove, onDuplicate, onReorder }) {
+export default function ItemsList({ items, inventory, settings, compact, onUpdate, onRemove, onDuplicate, onReorder, issues = [] }) {
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
@@ -40,6 +40,7 @@ export default function ItemsList({ items, inventory, settings, compact, onUpdat
                         onUpdate={(updated) => onUpdate(idx, updated)}
                         onRemove={() => onRemove(idx)}
                         onDuplicate={() => onDuplicate(idx)}
+                        issues={issues}
                       />
                     </div>
                   </div>
