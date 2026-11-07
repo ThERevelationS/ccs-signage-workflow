@@ -11,6 +11,19 @@ const positiveWholeNumber = value => {
   return whole && Number.isSafeInteger(number) && number > 0;
 };
 
+const ITEM_CUSTOM_OVERRIDE_FIELDS = [
+  ["custom_concrete_cost_per_cy", "concrete cost-per-unit override"],
+  ["custom_concrete_qty", "concrete quantity override"],
+  ["custom_rebar_cost_per_ft", "rebar cost-per-foot override"],
+  ["custom_rebar_qty", "rebar quantity override"],
+  ["custom_forming_rate", "forming rate override"],
+  ["custom_forming_qty", "forming quantity override"],
+  ["custom_finishing_rate", "finishing rate override"],
+  ["custom_finishing_hours", "finishing hours override"],
+  ["custom_excavation_hours", "excavation hours override"],
+  ["custom_excavation_rate", "excavation rate override"],
+];
+
 export function foundationItemInputIssues(item, index = 0) {
   const record = item ?? {};
   const issues = [];
@@ -74,6 +87,18 @@ export function foundationItemInputIssues(item, index = 0) {
         value => positive(value) && (dimensions.diameter === null || dimensions.diameter <= 0 || inputNumber(value) <= dimensions.diameter));
     }
   }
+  // Recorded overrides feed the ported cost math verbatim — a malformed or
+  // negative override is not a free material. Absent/null means "no override"
+  // and skips the check; explicit 0 is a legitimate override value.
+  for (const [field, label] of ITEM_CUSTOM_OVERRIDE_FIELDS) {
+    const raw = record[field];
+    if (raw === undefined || raw === null) continue;
+    const number = inputNumber(raw);
+    if (number === null || number < 0) {
+      add(field, "foundation_override_invalid",
+        `${label} must be a finite, nonnegative number — clear it or record a valid value.`);
+    }
+  }
   return issues;
 }
 
@@ -82,4 +107,3 @@ export function foundationProjectInputIssues(project) {
   if (!Array.isArray(items)) throw new Error("Foundation items must be an array.");
   return items.flatMap((item, index) => foundationItemInputIssues(item, index));
 }
-
