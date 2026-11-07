@@ -29,6 +29,7 @@ export default function NavFlyoutMenu({
   folderId = null,
   stylePreset = "glass",
   forceOpen = false,
+  suppressOutsideClose = false,
   onContextMenuPill,
   onContextMenuItem,
 }) {
@@ -52,6 +53,7 @@ export default function NavFlyoutMenu({
   useEffect(() => {
     if (!open) return undefined;
     const onPointerDown = (event) => {
+      if (suppressOutsideClose) return; // keep the menu open as a drop target during drags
       if (triggerRef.current?.contains(event.target)) return;
       if (menuRef.current?.contains(event.target)) return;
       setOpen(false);
@@ -70,7 +72,7 @@ export default function NavFlyoutMenu({
       document.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
-  }, [open]);
+  }, [open, suppressOutsideClose]);
 
   const hasActive = items.some((item) => item.url === activePath);
   const look = navButtonStyle(stylePreset, accent);
