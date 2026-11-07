@@ -46,4 +46,4 @@ Deno.serve(async (request: Request) => {
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'Digest failed' }, { status: 500 });
   }
-}
+});
