@@ -17,7 +17,8 @@ import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
 import { foundationAssemblyCatalogIssues, foundationItemCatalogIssues, hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
-import { foundationItemInputIssues, foundationProjectInputIssues } from "./foundationInputValidation";
+import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from "./foundationInputValidation";
+import { landscapeSummary } from "./landscapeMaterials";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -301,6 +302,37 @@ export function equipmentCostTotal(pricedEntries = []) {
   return total;
 }
 
+// Signage cabinets — availability-hardened rollup of the ported page math
+// (`unit_cost * quantity` per row). Only values the ported formula consumes are
+// validated by signageCabinetInputIssues: an absent quantity keeps the ported
+// single-cabinet default, an explicit 0 unit cost is a legitimate free cabinet,
+// and a recorded 0 quantity — which billed nothing while `|| 1` silently
+// repriced it to one — is unavailable, not guessed.
+export function calcSignageCabinetPricing(cabinets = []) {
+  return (Array.isArray(cabinets) ? cabinets : []).map((cabinet, index) => {
+    const issues = signageCabinetInputIssues(cabinet, index);
+    const entry = { ...(cabinet ?? {}) };
+    if (issues.length) return { available: false, issues, cost: null, pricedEntry: entry };
+    const quantity = entry.quantity === undefined || entry.quantity === null || entry.quantity === ""
+      ? 1
+      : Number(entry.quantity);
+    const cost = Number(entry.unit_cost) * quantity;
+    return { available: true, issues, cost, pricedEntry: entry };
+  });
+}
+
+// A held row is not a $0 line: any row without a finite cost withholds the
+// cabinet subtotal instead of laundering it to $0.
+export function signageCabinetCostTotal(pricedRows = []) {
+  let total = 0;
+  for (const row of pricedRows || []) {
+    if (!hasFoundationCostSnapshot(row?.cost)) return null;
+    total += row.cost;
+    if (!Number.isFinite(total)) return null;
+  }
+  return total;
+}
+
 export function captureConcreteDeliverySnapshot(delivery) {
   return {
     version: 1, concrete_total: delivery.concreteTotal, rounded_yards: delivery.roundedYards,
@@ -357,10 +389,15 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
       .filter((issue) => !["pole", "wall", "internal_wall", "equipment", "attachment", "sub_attachment"].includes(issue.kind)),
   ];
   const inputIssues = foundationProjectInputIssues(project);
+  const cabinetCalc = calcSignageCabinetPricing(project.signage_cabinets);
+  const signageCabinetPricing = cabinetCalc.map((row) => ({ available: row.available, issues: row.issues }));
+  const landscapeCalc = landscapeSummary(project.landscape);
+  const landscapeIssues = inputIssues.filter((issue) => issue.kind === "landscape");
+  const landscapePricing = { available: landscapeIssues.length === 0, issues: landscapeIssues };
   const itemPricing = sourceItems.map((item, index) => {
     const issues = [
       ...catalogIssues.filter(issue => issue.kind === "foundation" && issue.index === index),
-      ...inputIssues.filter(issue => issue.index === index),
+      ...inputIssues.filter(issue => issue.kind === "foundation" && issue.index === index),
     ];
     return { available: issues.length === 0, issues };
   });
@@ -445,12 +482,16 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_concrete_volume_cy: sum("concrete_volume_cy"),
     total_excavation_volume_cy: sum("excavation_volume_cy"),
     total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
+    // Page-level extras: held at the acknowledged project totals when the
+    // recorded rows cannot be repriced — a null here is "unavailable", never $0.
+    total_signage_cabinet_cost: category("total_signage_cabinet_cost", signageCabinetCostTotal(cabinetCalc)),
+    total_landscape_cost: category("total_landscape_cost", landscapeIssues.length ? null : landscapeCalc.total),
   };
 
   totals.grand_total = itemsTotal === null || wallTotal === null || polesTotal === null || equipmentTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, catalogIssues, inputIssues,
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues,
   };
 }
 
