@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Columns } from "lucide-react";
 import { hexToRgbTuple } from "@/components/layout/navPreferences";
+import { navButtonStyle } from "@/components/layout/navCustomization";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 
 const abbreviate = (title) => (title.length > 12 ? `${title.slice(0, 11)}…` : title);
@@ -15,6 +16,7 @@ export default function NavPageLink({
   isActive = false,
   isInSplit = false,
   onNavigate,
+  onContextMenuItem,
   dragRef,
   dragProps,
   dragHandleProps,
@@ -30,6 +32,8 @@ export default function NavPageLink({
   // Icon-only applies to the horizontal taskbar; the sidebar always keeps labels.
   const iconOnly = isTop && labelMode === "icons";
   const displayTitle = labelMode === "abbreviated" ? abbreviate(item.title) : item.title;
+  // Per-user button styling (color/style preset) layered over the glass look.
+  const itemStyleLook = navButtonStyle(item.stylePreset || "glass", item.accent);
 
   // Drop the library's role="button" override so these stay real links.
   const { role: _dragRole, ...handleProps } = dragHandleProps || {};
@@ -55,19 +59,30 @@ export default function NavPageLink({
       ref={dragRef}
       {...dragProps}
       {...handleProps}
+      data-nav-item={item.url}
       to={item.url}
       onClick={onNavigate}
+      onContextMenu={(event) => {
+        if (!onContextMenuItem) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onContextMenuItem(item, { x: event.clientX, y: event.clientY });
+      }}
       className={`ccs-glass-nav-item flex items-center border ${
         isTop
           ? `flex-shrink-0 whitespace-nowrap ${sizing}`
           : `w-full ${sizing}`
       } ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
-      style={{ ...(dragProps?.style || {}), "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
+      style={{
+        ...(dragProps?.style || {}),
+        "--glass-accent-rgb": hexToRgbTuple(item.accent),
+        ...(itemStyleLook.style || {}),
+      }}
       title={tooltip}
     >
       <Icon
         className={`${isTop ? (compactView || sizeMode === "compact" ? "h-3 w-3" : "h-3.5 w-3.5") : (compactView ? "h-3 w-3" : "h-4 w-4")} flex-shrink-0`}
-        style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }}
+        style={{ color: itemStyleLook.textColor || item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }}
       />
       {!iconOnly && (
         <span
@@ -75,7 +90,8 @@ export default function NavPageLink({
             isTop
               ? `${compactView ? "text-[10px]" : "text-xs"} whitespace-nowrap`
               : `${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate`
-          } font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}
+          } font-medium ${isActive ? "font-bold" : ""}`}
+          style={{ color: itemStyleLook.textColor || (isActive ? "#fff" : "#f1f5f9") }}
         >
           {displayTitle}
         </span>
