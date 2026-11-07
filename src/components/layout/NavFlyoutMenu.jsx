@@ -86,6 +86,7 @@ export default function NavFlyoutMenu({
     const isActive = activePath === item.url;
     const isInSplit = isInSplitUrl(item);
     const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+    const itemText = itemLook.textColor || (isActive ? "#fff" : "#f1f5f9");
     return (
       <Link
         ref={dragProvided?.innerRef}
@@ -104,7 +105,7 @@ export default function NavFlyoutMenu({
           event.stopPropagation();
           onContextMenuItem(item, { x: event.clientX, y: event.clientY });
         }}
-        className={`ccs-glass-nav-item flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
+        className={`${itemLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
         style={{
           ...(dragProvided?.draggableProps?.style || {}),
           "--glass-accent-rgb": hexToRgbTuple(item.accent),
@@ -118,7 +119,7 @@ export default function NavFlyoutMenu({
         />
         <span
           className={`text-sm font-medium ${isActive ? "font-bold" : ""}`}
-          style={{ color: itemLook.textColor || (isActive ? "#fff" : "#f1f5f9") }}
+          style={{ color: itemText, textShadow: itemLook.style?.textShadow }}
         >
           {item.title}
         </span>
@@ -142,7 +143,7 @@ export default function NavFlyoutMenu({
         }}
         aria-expanded={open}
         aria-haspopup="menu"
-        className={`ccs-glass-nav-item flex flex-shrink-0 items-center whitespace-nowrap border ${
+        className={`${look.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex flex-shrink-0 items-center whitespace-nowrap border ${
           compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"
         }`}
         style={{ "--glass-accent-rgb": hexToRgbTuple(accent), ...look.style }}
@@ -154,7 +155,7 @@ export default function NavFlyoutMenu({
         />
         <span
           className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${hasActive ? "font-bold" : ""}`}
-          style={{ color: look.textColor || (hasActive ? "#fff" : "#f1f5f9") }}
+          style={{ color: look.textColor || (hasActive ? "#fff" : "#f1f5f9"), textShadow: look.style?.textShadow }}
         >
           {label}
         </span>
