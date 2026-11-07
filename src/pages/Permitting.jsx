@@ -523,9 +523,10 @@ export default function Permitting() {
 
     const isElectrical = (types) => types.some(t => /electrical/i.test(t));
 
+    const skipKeys = new Set(Array.isArray(opts.skip_office_keys) ? opts.skip_office_keys : []);
     let officesToCreate = [];
     if (locality.offices && locality.offices.length > 0) {
-      officesToCreate = locality.offices.map(o => {
+      officesToCreate = locality.offices.filter((o, i) => !skipKeys.has(o.id || `office-${i}`)).map(o => {
         const types = normalizeTypes(o);
         return {
           name: o.name || types[0] || "Office",
@@ -541,7 +542,7 @@ export default function Permitting() {
     } else if (locality.workflow_steps?.length > 0) {
       // Legacy data — cats are display labels, so office_types stays empty
       const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
-      officesToCreate = cats.map(cat => ({
+      officesToCreate = cats.filter((cat, i) => !skipKeys.has(`cat-${i}`)).map(cat => ({
         name: cat,
         office_types: [],
         office_type: cat,
@@ -805,6 +806,8 @@ export default function Permitting() {
       requested_by: currentUser?.full_name || currentUser?.email || "staff",
       requested_at: new Date().toISOString(),
       exclude_electrical: !!opts.excludeElectrical,
+      ...(Array.isArray(opts.skip_office_keys) && opts.skip_office_keys.length
+        ? { skip_office_keys: opts.skip_office_keys.slice(0, 50) } : {}),
     };
     try {
       const live = await PermitLocality.get(localityId).catch(() => null);
