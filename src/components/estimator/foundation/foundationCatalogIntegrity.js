@@ -30,6 +30,7 @@ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   return issues;
 }
 
+// Check catalog availability and the explicit wall-cap full-stock price basis.
 export function foundationAssemblyCatalogIssues(project, inventory = []) {
   const available = new Set(inventory.map((row) => row.id));
   const issues = [];
