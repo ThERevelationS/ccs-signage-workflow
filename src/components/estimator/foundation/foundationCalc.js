@@ -192,7 +192,8 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     })),
     inventory
   );
-  const walls = calcWalls(project, inventory, settings);
+  const walls = calcWalls(project, inventory, settings,
+    explicitSnapshot ? { savedWalls: savedProject?.walls ?? [] } : {});
   const poles = calcPoles(project.poles, inventory, settings);
   const wallCaps = calcWallCaps(project.wall_caps, inventory,
     explicitSnapshot ? { savedCaps: savedProject?.wall_caps ?? [] } : {});
@@ -204,7 +205,17 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     : hasFoundationCostSnapshot(savedProject?.[key]) ? savedProject[key] : null;
 
   const itemsTotal = addKnown(sum("item_total_cost"), delivery.concreteTotal);
-  const wallTotal = walls.reduce((s, w) => s + num(w.calculatedCosts?.totalCost), 0);
+  const sumWall = key => {
+    let total = 0;
+    for (const wall of walls) {
+      const value = wall.calculatedCosts?.[key];
+      if (!hasFoundationCostSnapshot(value)) return null;
+      total += value;
+      if (!Number.isFinite(total)) return null;
+    }
+    return total;
+  };
+  const wallTotal = sumWall("totalCost");
   const polesTotal = poles.reduce((s, p) => s + num(p.total_cost), 0);
   const equipmentTotal = equipmentCostTotal(equipment);
 
@@ -222,8 +233,8 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_labor_cost: category("total_labor_cost", addKnown(sum("pouring_cost"), sum("finishing_cost"))),
     total_pole_cost: poles.reduce((s, p) => s + num(p.pole_cost), 0),
     total_pole_painting_cost: poles.reduce((s, p) => s + num(p.pole_painting_cost), 0),
-    total_brick_cost: walls.reduce((s, w) => s + num(w.calculatedCosts?.materialCost), 0),
-    total_fill_cost: walls.reduce((s, w) => s + num(w.calculatedCosts?.internalMaterialCost), 0),
+    total_brick_cost: sumWall("materialCost"),
+    total_fill_cost: sumWall("internalMaterialCost"),
     total_equipment_cost: equipmentTotal,
     total_wall_cost: wallTotal,
     total_wall_cap_cost: wallCaps.total,
@@ -233,7 +244,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
   };
 
-  totals.grand_total = itemsTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
+  totals.grand_total = itemsTotal === null || wallTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
     items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,
