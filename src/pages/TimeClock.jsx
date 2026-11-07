@@ -363,7 +363,7 @@ export default function TimeClock() {
 
     setIsLoading(true);
     try {
-      const [entries, requests] = await Promise.all([
+      const [entries, requests, correctionData] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { user_email: loggedInUser.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -375,35 +375,32 @@ export default function TimeClock() {
           query: { user_email: loggedInUser.email, archived_test_data: { $ne: true } },
           sort: null,
           label: `Time off requests for ${loggedInUser.email}`,
-        })
+        }),
+        requestToken
+          ? base44.functions.invoke("timeClockAction", {
+              action: "list_correction_requests",
+              session_token: requestToken,
+              target_email: loggedInUser.email,
+              request_id: newRequestId(),
+            }).then((res) => res?.data || res).catch((correctionError) => {
+              console.error("Error loading correction requests:", correctionError);
+              return null;
+            })
+          : Promise.resolve(null),
       ]);
 
       if (!current()) return;
 
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
       requests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      
+
       setTimeEntries(entries);
       setTimeOffRequests(requests);
-
-      if (requestToken) {
-        try {
-          const correctionResponse = await base44.functions.invoke("timeClockAction", {
-            action: "list_correction_requests",
-            session_token: requestToken,
-            target_email: loggedInUser.email,
-            request_id: newRequestId(),
-          });
-          if (!current()) return;
-          const correctionData = correctionResponse?.data || correctionResponse;
-          setCorrectionRequests(correctionData?.success && Array.isArray(correctionData.requests) ? correctionData.requests : []);
-        } catch (correctionError) {
-          console.error("Error loading correction requests:", correctionError);
-          if (current()) setCorrectionRequests([]);
-        }
-      } else {
-        setCorrectionRequests([]);
-      }
+      setCorrectionRequests(
+        requestToken && correctionData?.success && Array.isArray(correctionData.requests)
+          ? correctionData.requests
+          : [],
+      );
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
       if (current() && activeEntries.length > 1) {
