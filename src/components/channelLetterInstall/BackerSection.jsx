@@ -8,8 +8,9 @@ import { Layers, X, AlertCircle } from "lucide-react";
 import { ChannelLetterInstallInventory } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import BackerFabPanel from "./BackerFabPanel";
+import { channelDraftValue } from "./channelLetterPricingAvailability";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 /**
  * BackerSection — renders inside a Dimensional Letters purchase row
@@ -79,7 +80,7 @@ export default function BackerSection({ purchase, onUpdate, onDisable }) {
           <Input
             type="number" min="0" step="1"
             value={purchase.backer_standoff_qty ?? 0}
-            onChange={(e) => onUpdate({ backer_standoff_qty: parseFloat(e.target.value) || 0 })}
+            onChange={(e) => onUpdate({ backer_standoff_qty: channelDraftValue(e.target.value) })}
             className="h-9 mt-1 bg-white"
           />
         </div>
