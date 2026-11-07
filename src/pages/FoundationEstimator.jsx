@@ -1146,6 +1146,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <FoundationWallsPanel
                   walls={calc.walls}
                   options={catalog.walls}
+                  wallPricing={calc.wallPricing}
                   onChange={(walls) => patch({ walls })}
                 />
                 <FoundationPolesPanel
@@ -1238,6 +1239,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   inventory={inventory}
                   itemPricing={calc.itemPricing}
                   polePricing={calc.polePricing}
+                  wallPricing={calc.wallPricing}
                   pricingUnavailable={pricingBlocked}
                 />
               </TabsContent>
