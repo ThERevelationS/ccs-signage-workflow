@@ -370,8 +370,11 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     return { ...item, ...calcItem(item, project, inventory, settings, savedItem) };
   });
   const equipment = equipmentCalc.map(row => row.pricedEntry);
-  // An incomplete item has saved quantities, so its coupled order must not be repriced.
-  const delivery = itemPricing.some(item => !item.available) ? savedConcreteDelivery(savedProject) : calcConcreteDelivery(
+  // An incomplete item has saved quantities, so its coupled order must not be
+  // repriced. The same acknowledged-snapshot hold applies when the concrete
+  // supplier's catalog prices are unavailable — the ported `??` defaults
+  // guessed retail numbers instead of refusing to price.
+  const deliveryCheck = itemPricing.some(item => !item.available) ? null : calcConcreteDelivery(
     { ...project, settings },
     (project.items || []).map((i) => ({
       ...i,
@@ -379,6 +382,10 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     })),
     inventory
   );
+  const delivery = deliveryCheck === null || deliveryCheck.pricingUnavailable === true
+    ? savedConcreteDelivery(savedProject)
+    : deliveryCheck;
+  if (deliveryCheck?.issues?.length) catalogIssues.push(...deliveryCheck.issues);
   const walls = wallCalc.walls;
   const poles = poleCalc.poles;
   const wallCaps = calcWallCaps(project.wall_caps, inventory,
