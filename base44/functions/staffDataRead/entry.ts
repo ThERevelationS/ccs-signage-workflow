@@ -111,6 +111,7 @@ const STAFF_READABLE = new Set([
   'EstimateQuoteDelivery',
   'EstimateRevision',
   'EstimateSectionAcceptance',
+  'InventoryCostHistory',
   'InventoryMovement',
   'PTOPolicy',
   'ProjectTemplate',
