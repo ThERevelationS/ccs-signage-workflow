@@ -28,6 +28,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   GeneralTask: new Set(['create', 'update', 'updateMany', 'delete', 'deleteMany']),
   GlobalSettings: new Set(['updateMany']),
   ImportJob: new Set(['create', 'update']),
+  InventoryCostHistory: new Set(['create']),
   JurisdictionProfile: new Set(['create', 'update']),
   LaborLevel: new Set(['create', 'updateMany', 'delete']),
   MachineRate: new Set(['create', 'updateMany', 'delete']),
