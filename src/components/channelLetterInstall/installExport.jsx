@@ -1,7 +1,9 @@
 // Export helpers for Channel Letter Installation estimates
 import { TYPE_LABELS, SIZE_LABELS } from "./installCalculator";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/unavailable values export as "—" instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
+const fixed = (v, digits = 2) => (Number.isFinite(v) ? v.toFixed(digits) : "—");
 
 export const buildSummaryText = (project) => {
   const lines = [];
@@ -28,14 +30,14 @@ export const buildSummaryText = (project) => {
     if (it.parapet) conds.push("Parapet");
     if (it.poor_electrical_access) conds.push("Poor Electrical");
     if (conds.length) lines.push(`   Conditions: ${conds.join(", ")}`);
-    lines.push(`   Labor: ${(it.labor_hours || 0).toFixed(2)} hrs (${fmt(it.labor_cost)})`);
+    lines.push(`   Labor: ${fixed(it.labor_hours)} hrs (${fmt(it.labor_cost)})${it.__held ? " — saved values (not repriced)" : ""}`);
     lines.push(`   Materials: ${fmt(it.materials_cost)}`);
     lines.push(`   Item Total: ${fmt(it.item_total_cost)}`);
     lines.push("");
   });
-  lines.push(`TOTALS`);
+  lines.push(`TOTALS${project.__held ? " (saved amounts — not current pricing)" : ""}`);
   lines.push(`------`);
-  lines.push(`Labor:        ${fmt(project.labor_cost)} (${(project.labor_hours || 0).toFixed(2)} hrs)`);
+  lines.push(`Labor:        ${fmt(project.labor_cost)} (${fixed(project.labor_hours)} hrs)`);
   lines.push(`Materials:    ${fmt(project.total_materials_cost)}`);
   lines.push(`Supplies:     ${fmt(project.total_supplies_cost)}`);
   lines.push(`Subtotal:     ${fmt(project.subtotal)}`);
@@ -61,19 +63,19 @@ export const downloadCSV = (project) => {
       SIZE_LABELS[it.letter_size] || it.letter_size || "",
       it.raceway_length_feet || 0,
       it.installation_height_feet || 0,
-      (it.labor_hours || 0).toFixed(2),
-      (it.labor_cost || 0).toFixed(2),
-      (it.materials_cost || 0).toFixed(2),
-      (it.item_total_cost || 0).toFixed(2),
+      fixed(it.labor_hours),
+      fixed(it.labor_cost),
+      fixed(it.materials_cost),
+      fixed(it.item_total_cost),
     ]);
   });
   rows.push([]);
-  rows.push(["", "", "", "", "", "", "", "Labor Total", (project.labor_cost || 0).toFixed(2), "Materials", (project.total_materials_cost || 0).toFixed(2)]);
-  rows.push(["", "", "", "", "", "", "", "Supplies", (project.total_supplies_cost || 0).toFixed(2), "Subtotal", (project.subtotal || 0).toFixed(2)]);
+  rows.push(["", "", "", "", "", "", "", "Labor Total", fixed(project.labor_cost), "Materials", fixed(project.total_materials_cost)]);
+  rows.push(["", "", "", "", "", "", "", "Supplies", fixed(project.total_supplies_cost), "Subtotal", fixed(project.subtotal)]);
   if ((project.markup_percent || 0) > 0) {
-    rows.push(["", "", "", "", "", "", "", `Markup ${project.markup_percent}%`, (project.markup_amount || 0).toFixed(2), "", ""]);
+    rows.push(["", "", "", "", "", "", "", `Markup ${project.markup_percent}%`, fixed(project.markup_amount), "", ""]);
   }
-  rows.push(["", "", "", "", "", "", "", "TOTAL", (project.total_cost || 0).toFixed(2), "", ""]);
+  rows.push(["", "", "", "", "", "", "", "TOTAL", fixed(project.total_cost), "", ""]);
 
   const csv = rows.map(r => r.map(cell => {
     const s = String(cell ?? "");
