@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { verifyOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
             `, { headers: { 'Content-Type': 'text/html' } });
         }
 
-        const identity = await verifyOAuthState(state, 'gmail_oauth');
+        const base44 = createClientFromRequest(req);
+        const identity = await verifyOAuthState(base44, state, 'gmail_oauth');
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
         const redirectUri = `https://clay-flow-signage-suite-387da97c.base44.app/api/functions/gmailAuthCallback`;
@@ -63,9 +64,6 @@ Deno.serve(async (req) => {
             `, { status: 502, headers: { 'Content-Type': 'text/html' } });
         }
 
-        // Store the refresh token for the user
-        const base44 = createClientFromRequest(req);
-        
         // Bind the OAuth result only to the exact user who initiated the flow.
         const users = await base44.asServiceRole.entities.User.filter({ email: identity.email });
         if (!Array.isArray(users) || users.length !== 1 || String(users[0]?.id || '') !== identity.userId) {

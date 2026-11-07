@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!code || !state) {
       return new Response('Missing code or state', { status: 400 });
     }
-    const identity = await verifyOAuthState(state, 'google_drive_custom');
+    const identity = await verifyOAuthState(base44, state, 'google_drive_custom');
 
     const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
