@@ -1,15 +1,21 @@
 // Picks printer + cutter + laminator. Exposes per-workflow Print Quality
 // (Draft / Production / High Quality) — High Quality is the default.
 
-import React from "react";
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Printer, Scissors, Layers } from "lucide-react";
 import { PRINT_QUALITY_TIERS, inkCostPerSqIn } from "@/components/vinylInventory/vinylConstants";
+import { hasIssueFor } from "./vinylPricingAvailability";
 
-const MachineRow = ({ icon: RowIcon, label, machines, value, onValueChange, apply, onApplyChange, disabled, accent, children }) => (
+const MachineRow = ({ icon: RowIcon, label, machines, value, onValueChange, apply, onApplyChange, disabled, accent, children, issues = [], issuesId, field }) => {
+  // Flag the select when the machine slot is unassigned/unavailable OR when
+  // the selected machine's catalog record carries pricing-availability issues.
+  const flagged = hasIssueFor(issues, field)
+    || (value && issues.some(i => i.inventoryId === value));
+  return (
   <div className={`p-3 rounded-lg border ${apply ? accent : "bg-slate-50 border-slate-200 opacity-70"}`}>
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
@@ -18,7 +24,11 @@ const MachineRow = ({ icon: RowIcon, label, machines, value, onValueChange, appl
       <Switch checked={apply} onCheckedChange={onApplyChange} disabled={disabled} />
     </div>
     <Select value={value || ""} onValueChange={onValueChange} disabled={!apply}>
-      <SelectTrigger className="h-9"><SelectValue placeholder="Choose machine…" /></SelectTrigger>
+      <SelectTrigger
+        className="h-9"
+        aria-invalid={flagged || undefined}
+        aria-describedby={flagged ? issuesId : undefined}
+      ><SelectValue placeholder="Choose machine…" /></SelectTrigger>
       <SelectContent>
         {machines.map(m => (
           <SelectItem key={m.id} value={m.id}>{m.machine_name}</SelectItem>
@@ -30,9 +40,10 @@ const MachineRow = ({ icon: RowIcon, label, machines, value, onValueChange, appl
     )}
     {children}
   </div>
-);
+  );
+};
 
-export default function VinylMachinePicker({ machines, value, onChange }) {
+export default function VinylMachinePicker({ machines, value, onChange, issues = [], issuesId }) {
   const printers   = machines.filter(m => m.is_active !== false && (m.machine_type === "printer" || m.machine_type === "print_and_cut"));
   const cutters    = machines.filter(m => m.is_active !== false && (m.machine_type === "cutter"  || m.machine_type === "print_and_cut"));
   const laminators = machines.filter(m => m.is_active !== false && m.machine_type === "laminator");
@@ -52,12 +63,17 @@ export default function VinylMachinePicker({ machines, value, onChange }) {
           apply={value.applyPrint}
           onApplyChange={(v) => onChange({ applyPrint: v })}
           accent="bg-emerald-50 border-emerald-200"
+          issues={issues} issuesId={issuesId} field="printer_id"
         >
           {value.applyPrint && (
             <div className="mt-2">
               <Label className="text-[10px] uppercase tracking-wider text-emerald-800">Print Quality</Label>
               <Select value={quality} onValueChange={(q) => onChange({ printQuality: q })}>
-                <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger
+                  className="h-8 text-xs mt-1"
+                  aria-invalid={hasIssueFor(issues, "print_quality") || undefined}
+                  aria-describedby={hasIssueFor(issues, "print_quality") ? issuesId : undefined}
+                ><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PRINT_QUALITY_TIERS.map(t => (
                     <SelectItem key={t.id} value={t.id}>
@@ -77,6 +93,7 @@ export default function VinylMachinePicker({ machines, value, onChange }) {
           apply={value.applyCut}
           onApplyChange={(v) => onChange({ applyCut: v })}
           accent="bg-rose-50 border-rose-200"
+          issues={issues} issuesId={issuesId} field="cutter_id"
         />
         <MachineRow
           icon={Layers} label="Laminator"
@@ -86,6 +103,7 @@ export default function VinylMachinePicker({ machines, value, onChange }) {
           apply={value.applyLaminate}
           onApplyChange={(v) => onChange({ applyLaminate: v })}
           accent="bg-purple-50 border-purple-200"
+          issues={issues} issuesId={issuesId} field="laminator_id"
         />
       </CardContent>
     </Card>
