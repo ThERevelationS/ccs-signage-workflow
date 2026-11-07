@@ -1,5 +1,6 @@
 import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
 import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
+import { foundationWallCatalogIssues } from "./wallCalculator";
 
 export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   const issues = [];
@@ -52,14 +53,9 @@ export function foundationAssemblyCatalogIssues(project, inventory = []) {
   for (const [index, pole] of (project?.poles || []).entries()) {
     check(pole, index, "pole", "pole_id", "Pole");
   }
-  for (const [index, wall] of (project?.walls || []).entries()) {
-    check(wall, index, "wall", "materialId", "Wall");
-    if (wall.includeInternalWall) {
-      check(wall, index, "internal_wall", "internalMaterialId", "Internal wall");
-    }
-  }
   return [
     ...issues,
+    ...foundationWallCatalogIssues(project?.walls || [], inventory),
     ...foundationWallCapCatalogIssues(project?.wall_caps || [], inventory),
     ...(project?.items || []).flatMap((item, index) => foundationItemCatalogIssues(item, inventory, index)),
     ...foundationEquipmentCatalogIssues(project?.selected_equipment || [], inventory),
@@ -70,4 +66,3 @@ export function foundationAssemblyCatalogIssues(project, inventory = []) {
 export function hasFoundationCostSnapshot(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
-
