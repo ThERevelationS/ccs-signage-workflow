@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Type, Palette, Scissors } from "lucide-react";
 import { computeDimLetterPaint } from "./dimLetterPaintCalculator";
+import { hasIssueFor, maintenanceDraftValue } from "./maintenancePricingAvailability";
 
 const DEFAULT_DL = {
   enabled: false,
@@ -22,9 +23,16 @@ const DEFAULT_DL = {
   second_color_mask: "none",
 };
 
-export default function DimLetterPaintSubPanel({ cfg, settings, onChange }) {
+export default function DimLetterPaintSubPanel({ cfg, settings, onChange, issues = [], issueBoxId }) {
   const dl = { ...DEFAULT_DL, ...(cfg.dim_letter_paint || {}) };
   const setDL = (patch) => onChange({ dim_letter_paint: { ...dl, ...patch } });
+  const invalid = (field) => hasIssueFor(issues, `dim_letter_paint.${field}`)
+    ? { "aria-invalid": "true", "aria-describedby": issueBoxId }
+    : {};
+  // Held while any dim-letter input/setting is unavailable — never show a
+  // sub-calc derived from unavailable pricing.
+  const dimHeld = (issues || []).some(i =>
+    typeof i.field === "string" && (i.field === "dim_letter_paint" || i.field.startsWith("dim_letter_paint.")));
 
   const calc = dl.enabled ? computeDimLetterPaint({ ...cfg, dim_letter_paint: dl }, settings) : null;
 
@@ -49,27 +57,30 @@ export default function DimLetterPaintSubPanel({ cfg, settings, onChange }) {
               <Label className="text-[11px] uppercase tracking-wide text-slate-500"># of Letters</Label>
               <Input
                 type="number" min="0" step="1"
-                value={dl.qty}
-                onChange={(e) => setDL({ qty: parseFloat(e.target.value) || 0 })}
+                value={dl.qty ?? ""}
+                onChange={(e) => setDL({ qty: maintenanceDraftValue(e.target.value) })}
                 className="h-8 mt-1 text-sm tabular-nums"
+                {...invalid("qty")}
               />
             </div>
             <div>
               <Label className="text-[11px] uppercase tracking-wide text-slate-500">Avg Height (in)</Label>
               <Input
                 type="number" min="1" step="0.5"
-                value={dl.avg_height_in}
-                onChange={(e) => setDL({ avg_height_in: parseFloat(e.target.value) || 0 })}
+                value={dl.avg_height_in ?? ""}
+                onChange={(e) => setDL({ avg_height_in: maintenanceDraftValue(e.target.value) })}
                 className="h-8 mt-1 text-sm tabular-nums"
+                {...invalid("avg_height_in")}
               />
             </div>
             <div>
               <Label className="text-[11px] uppercase tracking-wide text-slate-500">Thickness (in)</Label>
               <Input
                 type="number" min="0" step="0.25"
-                value={dl.thickness_in}
-                onChange={(e) => setDL({ thickness_in: parseFloat(e.target.value) || 0 })}
+                value={dl.thickness_in ?? ""}
+                onChange={(e) => setDL({ thickness_in: maintenanceDraftValue(e.target.value) })}
                 className="h-8 mt-1 text-sm tabular-nums"
+                {...invalid("thickness_in")}
               />
             </div>
           </div>
@@ -82,7 +93,7 @@ export default function DimLetterPaintSubPanel({ cfg, settings, onChange }) {
               value={dl.second_color_mask || "none"}
               onValueChange={(v) => setDL({ second_color_mask: v })}
             >
-              <SelectTrigger className="h-9 mt-1 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1 text-sm" {...invalid("second_color_mask")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Single Color — No Mask Needed</SelectItem>
                 <SelectItem value="paint_mask">Second Color — Requires Paint Mask</SelectItem>
@@ -95,16 +106,16 @@ export default function DimLetterPaintSubPanel({ cfg, settings, onChange }) {
 
           {calc && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-blue-100">
-              <Stat label="Letter Face SqFt"  value={calc.letters_face_sqft.toFixed(2)} />
-              <Stat label="Letter Return SqFt" value={calc.letters_returns_sqft.toFixed(2)} />
-              <Stat label="Letter Paint Cost"  value={`$${calc.letters_paint_cost.toFixed(2)}`} accent />
-              <Stat label="Letter Labor"       value={`${calc.letters_labor_hours.toFixed(2)} hr`} />
+              <Stat label="Letter Face SqFt"  value={dimHeld ? "—" : calc.letters_face_sqft.toFixed(2)} />
+              <Stat label="Letter Return SqFt" value={dimHeld ? "—" : calc.letters_returns_sqft.toFixed(2)} />
+              <Stat label="Letter Paint Cost"  value={dimHeld ? "—" : `$${calc.letters_paint_cost.toFixed(2)}`} accent />
+              <Stat label="Letter Labor"       value={dimHeld ? "—" : `${calc.letters_labor_hours.toFixed(2)} hr`} />
               {dl.second_color_mask === "paint_mask" && (
                 <>
-                  <Stat label="Mask SqFt"      value={calc.mask_sqft.toFixed(2)} icon={<Scissors className="w-3 h-3" />} />
-                  <Stat label="Mask Material"  value={`$${calc.mask_material_cost.toFixed(2)}`} />
-                  <Stat label="Mask Labor"     value={`$${(calc.mask_weed_labor_cost + calc.mask_apply_labor_cost).toFixed(2)}`} />
-                  <Stat label="Mask Total"     value={`$${calc.mask_total_cost.toFixed(2)}`} accent />
+                  <Stat label="Mask SqFt"      value={dimHeld ? "—" : calc.mask_sqft.toFixed(2)} icon={<Scissors className="w-3 h-3" />} />
+                  <Stat label="Mask Material"  value={dimHeld ? "—" : `$${calc.mask_material_cost.toFixed(2)}`} />
+                  <Stat label="Mask Labor"     value={dimHeld ? "—" : `$${(calc.mask_weed_labor_cost + calc.mask_apply_labor_cost).toFixed(2)}`} />
+                  <Stat label="Mask Total"     value={dimHeld ? "—" : `$${calc.mask_total_cost.toFixed(2)}`} accent />
                 </>
               )}
             </div>
