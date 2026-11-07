@@ -20,6 +20,7 @@ export default function FoundationBOM({
   inventory = EMPTY_INVENTORY,
   itemPricing = EMPTY_ITEMS,
   polePricing = EMPTY_ITEMS,
+  wallPricing = EMPTY_ITEMS,
   pricingUnavailable = false,
 }) {
   const rows = useMemo(() => {
@@ -129,12 +130,12 @@ export default function FoundationBOM({
       }
     });
 
-    out.push(...foundationWallBomRows(walls, inventory));
+    out.push(...foundationWallBomRows(walls, inventory, wallPricing));
 
     (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
 
     return out;
-  }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing]);
+  }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing, wallPricing]);
 
   const materialTotal = rows.every(r => hasFoundationCostSnapshot(r.cost)) ? rows.reduce((sum, row) => sum + row.cost, 0) : null;
 
