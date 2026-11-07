@@ -24,6 +24,11 @@ const READ_ONLY_ACTIONS = new Set([
 ]);
 
 const readCache = new Map();
+// Server-side `status_lite` memo (`invokeMemo.ts`, 5s TTL) is busted on write
+// dispatch, but a mid-mutation read could re-cache pre-write state — reads for
+// this long after a write carry `bypass: true` so they always refetch.
+const POST_WRITE_BYPASS_MS = 10000;
+let lastWriteAt = 0;
 
 export function clearTimeClockReadCache() {
   readCache.clear();
@@ -50,7 +55,14 @@ export async function invokeTimeClockAction({ action, sessionToken, payload = {}
 
   if (!READ_ONLY_ACTIONS.has(action)) {
     clearTimeClockReadCache();
+    lastWriteAt = Date.now();
     return call();
+  }
+
+  if (Date.now() - lastWriteAt < POST_WRITE_BYPASS_MS) {
+    return base44.functions
+      .invoke("timeClockAction", { action, session_token: sessionToken, ...payload, bypass: true })
+      .then((response) => response?.data ?? response);
   }
 
   const key = `${action}|${JSON.stringify(payload)}`;
