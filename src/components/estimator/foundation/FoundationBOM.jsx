@@ -19,6 +19,7 @@ export default function FoundationBOM({
   totals = EMPTY_TOTALS,
   inventory = EMPTY_INVENTORY,
   itemPricing = EMPTY_ITEMS,
+  polePricing = EMPTY_ITEMS,
   pricingUnavailable = false,
 }) {
   const rows = useMemo(() => {
@@ -88,24 +89,52 @@ export default function FoundationBOM({
     });
 
     const poleGroups = {};
-    poles.forEach((p) => {
-      if (!p.pole_id || num(p.pole_cost) <= 0) return;
+    poles.forEach((p, index) => {
+      // Held poles list their acknowledged amounts separately, never dropped.
+      if (polePricing[index]?.available === false) return;
+      if (!p.pole_id) return;
       poleGroups[p.pole_id] = poleGroups[p.pole_id] || { ft: 0, cost: 0 };
       poleGroups[p.pole_id].ft += (num(p.height_inches) + num(p.y_offset_inches)) / 12;
       poleGroups[p.pole_id].cost += num(p.pole_cost);
     });
-    Object.entries(poleGroups).forEach(([id, g]) => add(nameOf(id), qty(g.ft, "LF"), g.cost));
+    Object.entries(poleGroups).forEach(([id, g]) => add(nameOf(id), qty(g.ft, "LF"), g.cost, g.ft));
 
-    if (num(totals.total_pole_painting_cost) > 0) {
-      add("Pole painting", "—", totals.total_pole_painting_cost);
+    const polePainting = poles.reduce((s, p, index) =>
+      polePricing[index]?.available === false ? s : s + num(p.pole_painting_cost), 0);
+    if (polePainting > 0) {
+      add("Pole painting", "—", polePainting);
     }
+
+    const savedPoleFt = (p) => {
+      const h = Number(p.height_inches), d = Number(p.y_offset_inches);
+      return Number.isFinite(h) && h > 0 && Number.isFinite(d) && d >= 0 ? (h + d) / 12 : null;
+    };
+    poles.forEach((p, index) => {
+      if (polePricing[index]?.available !== false) return;
+      const label = `Pole ${index + 1} (saved)`;
+      const ft = savedPoleFt(p);
+      out.push({
+        material: `${label} — pole`,
+        quantity: Number.isFinite(ft) ? qty(ft, "LF") : "Not saved",
+        cost: hasFoundationCostSnapshot(p.pole_cost) ? p.pole_cost : "Not saved",
+        saved: true,
+      });
+      if (p.include_pole_painting || hasFoundationCostSnapshot(p.pole_painting_cost)) {
+        out.push({
+          material: `${label} — painting`,
+          quantity: "—",
+          cost: hasFoundationCostSnapshot(p.pole_painting_cost) ? p.pole_painting_cost : "Not saved",
+          saved: true,
+        });
+      }
+    });
 
     out.push(...foundationWallBomRows(walls, inventory));
 
     (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
 
     return out;
-  }, [items, poles, walls, delivery, totals, inventory, itemPricing]);
+  }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing]);
 
   const materialTotal = rows.every(r => hasFoundationCostSnapshot(r.cost)) ? rows.reduce((sum, row) => sum + row.cost, 0) : null;
 
@@ -115,7 +144,9 @@ export default function FoundationBOM({
       {pricingUnavailable && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
           <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable — saved quantities may be outdated.</p>
-          {itemPricing.filter(p => p && p.available === false).flatMap((p, k) =>
+          {itemPricing.filter(p => p && p.available === false)
+            .concat(polePricing.filter(p => p && p.available === false))
+            .flatMap((p, k) =>
             (p.issues || []).map((i, j) => <p key={`${k}-${j}`} className="text-[10px] text-amber-700">{i.message}</p>)
           )}
         </div>
