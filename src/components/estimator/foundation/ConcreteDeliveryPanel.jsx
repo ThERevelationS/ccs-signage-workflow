@@ -48,7 +48,7 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
           {mixMissing && <option value={savedMixId} disabled>Catalog mix unavailable ({savedMixId})</option>}
           {mixes.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} — {money(m.price)}/CY
+              {m.name} — {hasFoundationCostSnapshot(m.price) ? `${money(m.price)}/CY` : "price unavailable"}
             </option>
           ))}
         </select>
@@ -77,7 +77,7 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
                 onChange={() => toggleAdmix(a.id)}
               />
               <span>
-                <span className="font-medium text-gray-800">{a.name}</span> — {money(a.price)}/CY
+                <span className="font-medium text-gray-800">{a.name}</span> — {hasFoundationCostSnapshot(a.price) ? `${money(a.price)}/CY` : "price unavailable"}
                 <span className="block text-[11px] text-gray-400">{a.desc}</span>
               </span>
             </label>
