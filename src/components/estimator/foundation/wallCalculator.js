@@ -2,6 +2,8 @@
 // Do not re-derive this math — outer wall + optional internal (fill) wall
 // brick counts, mortar bags, labor and totals.
 
+const wallSettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
+
 export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includeInternalWall, wallHeightInches, internalWallHeightInches, mortarGapInches, internalMortarGapInches, settings }) {
   if (!wallShape || !wallMaterial || !wallShape.segments) return null;
 
@@ -34,13 +36,13 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     const surfaceAreaSqFtMortar = surfaceAreaSqFtSingleSide * 2;
     mortarBags = Math.ceil(surfaceAreaSqFtMortar / 30);
     const finalMortarBags = wallMaterial.custom_outer_mortar_qty !== undefined && wallMaterial.custom_outer_mortar_qty !== null ? wallMaterial.custom_outer_mortar_qty : mortarBags;
-    const mortarCostPerBag = parseFloat(settings?.wall_mortar_cost_per_bag || 10);
+    const mortarCostPerBag = parseFloat(wallSettingValue(settings?.wall_mortar_cost_per_bag, 10));
     const finalMortarRate = wallMaterial.custom_outer_mortar_rate !== undefined && wallMaterial.custom_outer_mortar_rate !== null ? wallMaterial.custom_outer_mortar_rate : mortarCostPerBag;
     mortarCost = finalMortarBags * finalMortarRate;
   }
 
-  const laborRatePerSqFt = wallMaterial.custom_outer_labor_rate !== undefined && wallMaterial.custom_outer_labor_rate !== null ? wallMaterial.custom_outer_labor_rate : parseFloat(settings?.wall_labor_rate || 45);
-  const minCharge = parseFloat(settings?.wall_minimum_charge || 150);
+  const laborRatePerSqFt = wallMaterial.custom_outer_labor_rate !== undefined && wallMaterial.custom_outer_labor_rate !== null ? wallMaterial.custom_outer_labor_rate : parseFloat(wallSettingValue(settings?.wall_labor_rate, 45));
+  const minCharge = parseFloat(wallSettingValue(settings?.wall_minimum_charge, 150));
 
   let laborCost = surfaceAreaSqFtSingleSide * laborRatePerSqFt;
   if (laborCost < minCharge) {
@@ -88,12 +90,12 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
       const intSurfaceAreaSqFtMortar = intSurfaceAreaSqFtSingleSide * 2;
       internalMortarBags = Math.ceil(intSurfaceAreaSqFtMortar / 30);
       const finalInternalMortarBags = wall.custom_internal_mortar_qty !== undefined && wall.custom_internal_mortar_qty !== null ? wall.custom_internal_mortar_qty : internalMortarBags;
-      const internalMortarCostPerBag = parseFloat(settings?.wall_mortar_cost_per_bag || 10);
+      const internalMortarCostPerBag = parseFloat(wallSettingValue(settings?.wall_mortar_cost_per_bag, 10));
       const finalInternalMortarRate = wall.custom_internal_mortar_rate !== undefined && wall.custom_internal_mortar_rate !== null ? wall.custom_internal_mortar_rate : internalMortarCostPerBag;
       internalMortarCost = finalInternalMortarBags * finalInternalMortarRate;
     }
 
-    const internalLaborRatePerSqFt = wall.custom_internal_labor_rate !== undefined && wall.custom_internal_labor_rate !== null ? wall.custom_internal_labor_rate : parseFloat(settings?.wall_labor_rate || 45);
+    const internalLaborRatePerSqFt = wall.custom_internal_labor_rate !== undefined && wall.custom_internal_labor_rate !== null ? wall.custom_internal_labor_rate : parseFloat(wallSettingValue(settings?.wall_labor_rate, 45));
     internalLaborCost = intSurfaceAreaSqFtSingleSide * internalLaborRatePerSqFt;
     internalLaborHours = finalInternalBricks / (parseFloat(settings?.wall_labor_bricks_per_hour || 50));
   }
