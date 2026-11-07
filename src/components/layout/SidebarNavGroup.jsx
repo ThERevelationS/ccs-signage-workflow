@@ -55,6 +55,7 @@ export default function SidebarNavGroup({
             const isActive = activePath === item.url;
             const isInSplit = isInSplitUrl(item);
             const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+            const itemText = itemLook.textColor || (isActive ? "#fff" : "#f1f5f9");
             return (
               <Link
                 key={item.title}
@@ -66,7 +67,7 @@ export default function SidebarNavGroup({
                   event.stopPropagation();
                   onContextMenuItem(item, { x: event.clientX, y: event.clientY });
                 }}
-                className={`ccs-glass-nav-item flex w-full items-center border ${
+                className={`${itemLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex w-full items-center border ${
                   compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"
                 } ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
                 style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent), ...itemLook.style }}
@@ -78,7 +79,7 @@ export default function SidebarNavGroup({
                 />
                 <span
                   className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium ${isActive ? "font-bold" : ""}`}
-                  style={{ color: itemLook.textColor || (isActive ? "#fff" : "#f1f5f9") }}
+                  style={{ color: itemText, textShadow: itemLook.style?.textShadow }}
                 >
                   {item.title}
                 </span>
