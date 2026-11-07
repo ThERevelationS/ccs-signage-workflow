@@ -2,13 +2,21 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ChevronDown, Columns } from "lucide-react";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { hexToRgbTuple } from "@/components/layout/navPreferences";
+import { navButtonStyle } from "@/components/layout/navCustomization";
 
 const MENU_WIDTH = 200;
 
 // Dropdown pill for the horizontal bar. The menu is portaled to <body> and
 // positioned fixed, so it floats above the page instead of being clipped by
 // the navigation container.
+//
+// Folder-model additions: the pill can carry a user style preset + custom
+// text color; `forceOpen` lets a drag-hover on the pill droppable open the
+// menu so its list becomes a live drop target; menu items are Draggables
+// inside a `folder-list:` droppable so pages can be reordered inside the
+// folder or dragged out to the bar / another folder.
 export default function NavFlyoutMenu({
   label,
   icon: Icon,
@@ -18,11 +26,20 @@ export default function NavFlyoutMenu({
   activePath,
   isInSplitUrl,
   onNavigate,
+  folderId = null,
+  stylePreset = "glass",
+  forceOpen = false,
+  onContextMenuPill,
+  onContextMenuItem,
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -56,70 +73,123 @@ export default function NavFlyoutMenu({
   }, [open]);
 
   const hasActive = items.some((item) => item.url === activePath);
+  const look = navButtonStyle(stylePreset, accent);
+
+  const renderItem = (item, dragProvided) => {
+    const ItemIcon = item.icon;
+    const isActive = activePath === item.url;
+    const isInSplit = isInSplitUrl(item);
+    const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+    return (
+      <Link
+        ref={dragProvided?.innerRef}
+        {...(dragProvided?.draggableProps || {})}
+        {...(dragProvided?.dragHandleProps || {})}
+        key={item.title}
+        to={item.url}
+        role="menuitem"
+        onClick={(event) => {
+          onNavigate(event, item);
+          setOpen(false);
+        }}
+        onContextMenu={(event) => {
+          if (!onContextMenuItem) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onContextMenuItem(item, { x: event.clientX, y: event.clientY });
+        }}
+        className={`ccs-glass-nav-item flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
+        style={{
+          ...(dragProvided?.draggableProps?.style || {}),
+          "--glass-accent-rgb": hexToRgbTuple(item.accent),
+          ...itemLook.style,
+        }}
+        title="Drag to move · Right-click to edit · Ctrl+Click for split view"
+      >
+        <ItemIcon
+          className="h-4 w-4 flex-shrink-0"
+          style={{ color: itemLook.textColor || item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }}
+        />
+        <span
+          className={`text-sm font-medium ${isActive ? "font-bold" : ""}`}
+          style={{ color: itemLook.textColor || (isActive ? "#fff" : "#f1f5f9") }}
+        >
+          {item.title}
+        </span>
+        {isInSplit && <Columns className="h-3 w-3 text-purple-500" />}
+      </Link>
+    );
+  };
 
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
+        data-nav-folder="true"
         onClick={() => setOpen((value) => !value)}
+        onContextMenu={(event) => {
+          if (!onContextMenuPill) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onContextMenuPill({ x: event.clientX, y: event.clientY });
+        }}
         aria-expanded={open}
         aria-haspopup="menu"
         className={`ccs-glass-nav-item flex flex-shrink-0 items-center whitespace-nowrap border ${
           compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"
         }`}
-        style={{ "--glass-accent-rgb": hexToRgbTuple(accent) }}
+        style={{ "--glass-accent-rgb": hexToRgbTuple(accent), ...look.style }}
+        title="Click to open · Drag pages onto me · Right-click to edit"
       >
         <Icon
           className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`}
-          style={{ color: accent, filter: hasActive ? `drop-shadow(0 0 6px ${accent})` : undefined }}
+          style={{ color: look.textColor || accent, filter: hasActive ? `drop-shadow(0 0 6px ${accent})` : undefined }}
         />
-        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100 ${hasActive ? "font-bold text-white" : ""}`}>
+        <span
+          className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${hasActive ? "font-bold" : ""}`}
+          style={{ color: look.textColor || (hasActive ? "#fff" : "#f1f5f9") }}
+        >
           {label}
         </span>
         <ChevronDown
           className={`h-3 w-3 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-          style={{ color: hasActive ? "#6B46C1" : "#9CA3AF" }}
+          style={{ color: look.textColor || (hasActive ? "#6B46C1" : "#9CA3AF") }}
         />
       </button>
 
       {open &&
         createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
-            className="ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl"
-            style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
-          >
-            {items.map((item) => {
-              const ItemIcon = item.icon;
-              const isActive = activePath === item.url;
-              const isInSplit = isInSplitUrl(item);
-              return (
-                <Link
-                  key={item.title}
-                  to={item.url}
-                  role="menuitem"
-                  onClick={(event) => {
-                    onNavigate(event, item);
-                    setOpen(false);
-                  }}
-                  className={`ccs-glass-nav-item flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
-                  style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                  title="Ctrl+Click to open in split view"
+          folderId ? (
+            <Droppable droppableId={`folder-list:${folderId}`} direction="vertical">
+              {(dropProvided, dropSnapshot) => (
+                <div
+                  ref={(node) => { menuRef.current = node; dropProvided.innerRef(node); }}
+                  {...dropProvided.droppableProps}
+                  role="menu"
+                  className={`ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl ${dropSnapshot.isDraggingOver ? "ring-2 ring-violet-400" : ""}`}
+                  style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
                 >
-                  <ItemIcon
-                    className="h-4 w-4 flex-shrink-0"
-                    style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }}
-                  />
-                  <span className={`text-sm font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                    {item.title}
-                  </span>
-                  {isInSplit && <Columns className="h-3 w-3 text-purple-500" />}
-                </Link>
-              );
-            })}
-          </div>,
+                  {items.map((item, index) => (
+                    <Draggable key={item.url} draggableId={`fld-${folderId}-${item.url}`} index={index}>
+                      {(dragProvided) => renderItem(item, dragProvided)}
+                    </Draggable>
+                  ))}
+                  {dropProvided.placeholder}
+                  {!items.length && <div className="px-3 py-2 text-xs text-slate-400">Empty — drag pages here</div>}
+                </div>
+              )}
+            </Droppable>
+          ) : (
+            <div
+              ref={menuRef}
+              role="menu"
+              className="ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl"
+              style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
+            >
+              {items.map((item) => renderItem(item))}
+            </div>
+          ),
           document.body
         )}
     </>
