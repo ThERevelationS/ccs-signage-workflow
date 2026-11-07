@@ -75,6 +75,8 @@ const STAFF_READABLE = new Set([
   'Order',
   'PermitLineItem',
   'PermitLocality',
+  'PermitLookupIndex',
+  'PermittingAddressArchive',
   'PermitResolutionRule',
   'PortalMessage',
   'PricingTierMatrix',
