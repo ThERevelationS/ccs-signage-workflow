@@ -1,10 +1,32 @@
-import * as faceapi from 'face-api.js';
+// face-api.js (TFJS + detector runtime, ~1MB) is lazy — it must never sit in
+// the page chunk. The first real face scan pulls the library chunk and the
+// model weights together inside loadFaceModelsOnce; badge/PIN/QR flows and
+// page load never download it. Descriptor math below runs on a local
+// euclidean helper so matching also needs no library import.
+let faceapiPromise;
+function faceApi() {
+  if (!faceapiPromise) faceapiPromise = import('face-api.js');
+  return faceapiPromise;
+}
+
+// Matches face-api's euclideanDistance exactly (L2 distance on equal-length
+// vectors) — kept local so matcher construction and distance checks work
+// before (and without) the recognition library.
+function euclideanDistance(a, b) {
+  if (!a || !b || a.length !== b.length) return Infinity;
+  let sum = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    const d = Number(a[i]) - Number(b[i]);
+    sum += d * d;
+  }
+  return Math.sqrt(sum);
+}
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
 let modelPromise;
 export function loadFaceModelsOnce() {
   if (!modelPromise) {
-    modelPromise = Promise.all([
+    modelPromise = faceApi().then((faceapi) => Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
@@ -17,7 +39,7 @@ export function loadFaceModelsOnce() {
         await faceapi.detectSingleFace(warm, new faceapi.TinyFaceDetectorOptions({ inputSize: 64, scoreThreshold: 0.1 }))
           .withFaceLandmarks().withFaceDescriptor();
       } catch { /* warmup is best-effort */ }
-    }).catch(error => { modelPromise = null; throw error; });
+    })).catch(error => { modelPromise = null; throw error; });
   }
   return modelPromise;
 }
@@ -34,7 +56,7 @@ export function createFaceMatcher(users = []) {
     const ds = item.descriptors;
     if (ds.length < 2) return [item.user, 0.44];
     let sum = 0, n = 0;
-    for (let i = 0; i < ds.length; i += 1) for (let j = i + 1; j < ds.length; j += 1) { sum += faceapi.euclideanDistance(ds[i], ds[j]); n += 1; }
+    for (let i = 0; i < ds.length; i += 1) for (let j = i + 1; j < ds.length; j += 1) { sum += euclideanDistance(ds[i], ds[j]); n += 1; }
     const mean = n ? sum / n : 0;
     return [item.user, Math.max(0.28, Math.min(0.45, mean + 0.14))];
   }));
@@ -43,7 +65,7 @@ export function createFaceMatcher(users = []) {
     let best = null, bestDistance = Infinity, secondDistance = Infinity;
     for (const item of templates) {
       let distance = Infinity;
-      for (const stored of item.descriptors) distance = Math.min(distance, faceapi.euclideanDistance(descriptor, stored));
+      for (const stored of item.descriptors) distance = Math.min(distance, euclideanDistance(descriptor, stored));
       if (distance < bestDistance) { secondDistance = bestDistance; bestDistance = distance; best = item.user; }
       else secondDistance = Math.min(secondDistance, distance);
     }
@@ -163,7 +185,8 @@ export function createMatchVoter({ required = 3, window = 5 } = {}) {
 // Landmark + descriptor passes are optional: while liveness is still unproved
 // the matcher never runs, so paying for the recognition net on those frames
 // just slows the cadence that liveness sampling depends on.
-function detectAt(video, inputSize, scoreThreshold, withDescriptor = true) {
+async function detectAt(video, inputSize, scoreThreshold, withDescriptor = true) {
+  const faceapi = await faceApi();
   const task = faceapi
     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
     .withFaceLandmarks();
@@ -282,8 +305,7 @@ export function createFaceScanSession({
 // reject near-duplicate captures so the stored template set actually covers
 // different angles and distances instead of ten copies of one pose.
 export function descriptorDistance(a, b) {
-  if (!a || !b || a.length !== b.length) return Infinity;
-  return faceapi.euclideanDistance(a, b);
+  return euclideanDistance(a, b);
 }
 
 // Cached one-shot capability probe - some browsers expose BarcodeDetector
