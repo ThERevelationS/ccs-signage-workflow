@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
