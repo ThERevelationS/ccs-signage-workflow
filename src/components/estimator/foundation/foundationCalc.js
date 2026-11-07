@@ -11,7 +11,7 @@
 //   grand = itemsTotal(+concrete delivery) + wallTotal + polesTotal + equipmentTotal + wallCapTotal
 // Poles, walls, caps and fill are PROJECT-level — they are never charged on a foundation item.
 
-import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery } from "./legacyFoundationCalc";
+import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery, foundationItemSettingIssues } from "./legacyFoundationCalc";
 import { calcWalls } from "./wallCalculator";
 import { calcPoles } from "./poleCalculator";
 import { calcWallCaps } from "./wallCapCalculator";
@@ -31,8 +31,16 @@ const ITEM_SNAPSHOT_FIELDS = [
 ];
 
 export function calcItem(item, project, inventory, settings = {}, savedItem = item) {
-  const inputIssues = foundationItemInputIssues(item);
-  if (inputIssues.length || foundationItemCatalogIssues(item, inventory).length) {
+  // Items without their own excavation method fall back to the project
+  // default — the effective record is what the ported math prices, so its
+  // method (not just the authored one) must pass the enum check.
+  const effectiveItem = { ...item, excavation_method: item.excavation_method || project?.excavation_method };
+  const inputIssues = foundationItemInputIssues(effectiveItem);
+  // A malformed consumed Settings value is not a guessed rate — the item is
+  // held with its acknowledged amounts, the same contract as the wall/pole
+  // setting checks (see legacyFoundationCalc.foundationItemSettingIssues).
+  const settingIssues = foundationItemSettingIssues(effectiveItem, settings);
+  if (inputIssues.length || settingIssues.length || foundationItemCatalogIssues(item, inventory).length) {
     return {
       quantity: inputIssues.length ? item.quantity : Math.max(1, num(item.quantity, 1)),
       ...Object.fromEntries(ITEM_SNAPSHOT_FIELDS.map(key => [
@@ -40,12 +48,7 @@ export function calcItem(item, project, inventory, settings = {}, savedItem = it
       ])),
     };
   }
-  // Items without their own excavation method fall back to the project default.
-  const legacy = legacyCalcItemCost(
-    { ...item, excavation_method: item.excavation_method || project?.excavation_method },
-    inventory,
-    settings
-  );
+  const legacy = legacyCalcItemCost(effectiveItem, inventory, settings);
   const isPillar = item.foundation_type === "pillar";
   const rebarSize = (isPillar ? item.pillar_rebar_size : item.rebar_size) || "#4";
 
@@ -387,6 +390,10 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     ...equipmentPricing.flatMap((entry) => entry.issues),
     ...foundationAssemblyCatalogIssues(project, inventory)
       .filter((issue) => !["pole", "wall", "internal_wall", "equipment", "attachment", "sub_attachment"].includes(issue.kind)),
+    // Item-consumed Settings availability — kind "foundation" + item index so
+    // each issue marks the card it belongs to (and gates the delivery scan).
+    ...sourceItems.flatMap((item, index) => foundationItemSettingIssues(
+      { ...item, excavation_method: item.excavation_method || project.excavation_method }, settings, index)),
   ];
   const inputIssues = foundationProjectInputIssues(project);
   const cabinetCalc = calcSignageCabinetPricing(project.signage_cabinets);
