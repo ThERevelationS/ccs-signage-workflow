@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { MetalProject, Settings, Inventory as InventoryEntity } from "@/api/gatedEntities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Wrench, Edit, Download, Printer, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, Trash2, Save, Wrench, Edit, Download, Printer, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
@@ -22,12 +22,29 @@ import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar
 import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
 import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { staffEntities } from "@/components/staff/staffEntities";
+import {
+  calcMetalProject,
+  deriveMetalItemCosts,
+  hasIssueFor,
+  hasMetalCostSnapshot,
+  metalDraftValue,
+  metalQuantityDraft,
+} from "@/components/estimator/metal/metalPricingAvailability";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
 // const materialTypes = ["Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel"];
 
 const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Held-pricing display: a live value is either finite ($) or held ("—"); a
+// non-finite live value falls back to the saved acknowledged snapshot shown
+// plainly, or "Not saved" when no snapshot exists — never a fabricated $0.
+const fmtCost = (v) => Number.isFinite(v) ? `$${v.toFixed(2)}` : "—";
+const sumOrNull = (...xs) => xs.every((v) => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
+const moneyCell = (v) => hasMetalCostSnapshot(v)
+  ? `$${v.toFixed(2)}`
+  : <span className="text-amber-700 font-medium">Not saved</span>;
 
 export default function MetalEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
@@ -51,6 +68,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
@@ -152,100 +170,40 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const updateItem = (index, field, value) => {
     setProject(prev => {
       const newItems = [...prev.items];
-      let item = { ...newItems[index], [field]: value };
-
-      // --- Recalculate ---
-      // Material cost for one unit of the item (based on material_length_ft and inventory item cost)
-      const inventoryItem = inventory.find(i => i.id === item.inventory_item_id);
-      if (inventoryItem) {
-          item.material_cost = (item.material_length_ft || 0) * (inventoryItem.cost_per_unit || 0);
-      }
-
-      // Labor costs for one unit of the item
-      item.fabrication_cost = (item.fabrication_hours || 0) * prev.fabrication_rate;
-      item.welding_cost = (item.welding_hours || 0) * prev.welding_rate;
-      item.finishing_cost = (item.finishing_hours || 0) * prev.finishing_rate;
-      
-      newItems[index] = { ...item };
+      // Derive the per-unit costs with the same formulas as before — the
+      // strict availability layer flags malformed values; the derive itself
+      // stays verbatim (rate/hours/length objects are read, never mutated).
+      newItems[index] = deriveMetalItemCosts({ ...newItems[index], [field]: value }, prev, inventory);
       return { ...prev, items: newItems };
     });
   };
 
-  const calculateTotals = useCallback(() => {
-    const totals = {
-      material: 0, // Total for all items including quantity
-      supplies: 0, // Total for all items including quantity
-      fabrication: 0, // Total for all items including quantity
-      welding: 0, // Total for all items including quantity
-      finishing: 0 // Total for all items including quantity
-    };
-    project.items.forEach(item => {
-      totals.material += (item.material_cost || 0) * (item.quantity || 1);
-      totals.supplies += (item.supplies_cost || 0) * (item.quantity || 1);
-      totals.fabrication += (item.fabrication_cost || 0) * (item.quantity || 1);
-      totals.welding += (item.welding_cost || 0) * (item.quantity || 1);
-      totals.finishing += (item.finishing_cost || 0) * (item.quantity || 1);
-    });
-    return totals;
-  }, [project.items]);
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panels, the per-field diagnostics, and the save guard. On a NEW
+  // project the Metal Settings rows seeded the rates, so catalog scan runs
+  // while the seeded values are in play (seeded = !isEditing).
+  const priced = useMemo(
+    () => calcMetalProject(project, { inventory, settings: _globalSettings, seeded: !isEditing }),
+    [project, inventory, _globalSettings, isEditing],
+  );
+  const calculated = priced.calc;
+  const allIssues = priced.issues;
+  // Any catalog-side unavailability → stronger save message; any issue at all
+  // blocks the save — unavailable pricing is never written as $0.
+  const catalogBlocked = allIssues.some((i) => i.kind === "metal_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = !!calculated.pricingUnavailable;
+  const itemIssues = (index) => allIssues.filter((i) => i.itemIndex === index);
 
-  const getProjectCalculations = useCallback(() => {
-    const currentTotals = calculateTotals(); // This returns material, supplies, fabrication, welding, finishing
-
-    const totalMaterialsCost = currentTotals.material;
-    const totalSuppliesCost = currentTotals.supplies;
-    const totalFabricationCost = currentTotals.fabrication;
-    const totalWeldingCost = currentTotals.welding;
-    const totalFinishingCost = currentTotals.finishing;
-    const totalLaborCost = totalFabricationCost + totalWeldingCost + totalFinishingCost;
-
-    const enrichedItems = project.items.map(item => {
-        const inventoryItem = inventory.find(i => i.id === item.inventory_item_id);
-        const materialType = inventoryItem ? inventoryItem.material_type : 'N/A';
-        const itemTypeDisplay = item.item_type ? item.item_type.replace(/_/g, ' ') : 'N/A';
-
-        let length = 'N/A', width = 'N/A', thickness = 'N/A';
-        let dimensionsDisplay = 'N/A';
-        if (inventoryItem && inventoryItem.size) {
-            dimensionsDisplay = inventoryItem.size;
-            const sizeString = inventoryItem.size.toLowerCase().replace(/['"inchesftt]/g, '').trim();
-            const parts = sizeString.split(/[xÃ—]/).map(p => p.trim());
-            if (parts.length >= 1) length = parts[0];
-            if (parts.length >= 2) width = parts[1];
-            if (parts.length >= 3) thickness = parts[2];
-        }
-
-        const laborHoursPerUnit = (item.fabrication_hours || 0) + (item.welding_hours || 0) + (item.finishing_hours || 0);
-        const materialsCostTotal = (item.material_cost || 0) * (item.quantity || 1); // Total material cost for all quantities of this item
-        const suppliesCostTotal = (item.supplies_cost || 0) * (item.quantity || 1); // Total supplies cost for all quantities of this item
-        const laborCostTotal = ((item.fabrication_cost || 0) + (item.welding_cost || 0) + (item.finishing_cost || 0)) * (item.quantity || 1); // Total labor cost for all quantities of this item
-
-        return {
-            ...item,
-            item_type_display: itemTypeDisplay,
-            material_type: materialType,
-            dimensions_display: dimensionsDisplay,
-            length: length,
-            width: width,
-            thickness: thickness,
-            labor_hours: laborHoursPerUnit, // Labor hours per *unit*
-            materials_cost: materialsCostTotal,
-            supplies_cost: suppliesCostTotal,
-            labor_cost: laborCostTotal,
-        };
-    });
-
-    return {
-        totalMaterialsCost,
-        totalSuppliesCost,
-        totalFabricationCost,
-        totalWeldingCost,
-        totalFinishingCost,
-        totalLaborCost,
-        grandTotal: totalMaterialsCost + totalSuppliesCost + totalLaborCost,
-        enrichedItems,
-    };
-  }, [project.items, inventory, calculateTotals]);
+  const {
+    totalMaterialsCost,
+    totalSuppliesCost,
+    totalFabricationCost,
+    totalWeldingCost,
+    totalFinishingCost,
+    totalLaborCost,
+    grandTotal,
+  } = calculated;
 
 
   // Block accidental navigation while a save is in flight.
@@ -256,21 +214,23 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     return () => window.removeEventListener("beforeunload", warn);
   }, [isSaving]);
   const saveProject = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0, an inferred default, or a NaN total.
+    // Block the write and point the user at the flagged values.
+    if (pricingBlocked) {
+      setSaveError(catalogBlocked
+        ? "Save paused: a Metal Settings or Master Inventory value is missing or unusable — update it, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
       return;
     }
 
     setIsSaving(true);
+    setSaveError("");
     try {
-      const {
-        totalMaterialsCost,
-        totalSuppliesCost,
-        totalFabricationCost,
-        totalWeldingCost,
-        totalFinishingCost,
-        totalLaborCost,
-      } = getProjectCalculations();
       const totalCost = totalMaterialsCost + totalSuppliesCost + totalLaborCost;
 
       const pricingProject = {
@@ -375,16 +335,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
 
   // #78 — clone the current save payload into a brand-new Metal project.
   const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      setSaveError(catalogBlocked
+        ? "Save paused: a Metal Settings or Master Inventory value is missing or unusable — update it, then save."
+        : "Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
     setIsSaving(true);
+    setSaveError("");
     try {
-      const {
-        totalMaterialsCost,
-        totalSuppliesCost,
-        totalFabricationCost,
-        totalWeldingCost,
-        totalFinishingCost,
-        totalLaborCost,
-      } = getProjectCalculations();
       const copy = await saveModuleProjectCopy({
         entity: MetalProject,
         payload: {
@@ -428,9 +387,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   });
 
   const downloadEstimate = () => {
-    const { 
-      totalMaterialsCost, totalSuppliesCost, totalLaborCost, grandTotal, enrichedItems 
-    } = getProjectCalculations();
+    if (pricingUnavailable) {
+      setSaveError("Export paused: fix the flagged pricing values before exporting — unavailable pricing is never printed as $0.");
+      return;
+    }
+    const {
+      totalMaterialsCost, totalSuppliesCost, totalLaborCost, grandTotal, enrichedItems
+    } = calculated;
     
     const htmlContent = `
 <!DOCTYPE html>
@@ -852,9 +815,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const printEstimate = () => {
-    const { 
-      totalMaterialsCost, totalSuppliesCost, totalLaborCost, grandTotal, enrichedItems 
-    } = getProjectCalculations();
+    if (pricingUnavailable) {
+      setSaveError("Export paused: fix the flagged pricing values before printing — unavailable pricing is never printed as $0.");
+      return;
+    }
+    const {
+      totalMaterialsCost, totalSuppliesCost, totalLaborCost, grandTotal, enrichedItems
+    } = calculated;
     
     const printContent = `
       <html>
@@ -1268,7 +1235,6 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     printWindow.print();
   };
 
-  const { totalMaterialsCost, totalSuppliesCost, totalFabricationCost, totalWeldingCost, totalFinishingCost, grandTotal } = getProjectCalculations();
   const stockFt = Math.max(1, Number(project.stock_length_ft) || 20);
   const cutPlan = (() => {
     const pieces = [];
@@ -1312,6 +1278,31 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             <p className="text-slate-600">Estimate costs for fabricated metal signs and components</p>
           </div>
         </div>
+
+        {pricingUnavailable && (
+          <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4" role="alert" aria-live="polite">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-amber-900">Pricing unavailable — totals are on hold</h2>
+                <p className="mt-1 text-xs text-amber-800">
+                  {catalogBlocked
+                    ? "A Metal Settings or Master Inventory value is missing or unusable, so totals are shown from the saved amounts — never $0 — until the flagged record is updated."
+                    : "A pricing input on this estimate is missing or unusable, so totals are held — never $0 — until the flagged value is fixed."}
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-amber-800">
+                  {allIssues.map((iss, i) => (
+                    <li key={`${iss.code}-${iss.field}-${iss.index ?? i}`}>{iss.message}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        {saveError && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">{saveError}</div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -1343,22 +1334,27 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="md:col-span-3"><Label>Description</Label><Input data-item-desc={index} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
                           <div><Label>Item Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{itemTypes.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ')}</SelectItem>)}</SelectContent></Select></div>
-                          <div className="md:col-span-2"><Label>Material</Label><Select value={item.inventory_item_id} onValueChange={(v) => updateItem(index, 'inventory_item_id', v)}><SelectTrigger><SelectValue placeholder="Select from inventory" /></SelectTrigger><SelectContent>{inventory.map(i => <SelectItem key={i.id} value={i.id}>{i.material_type} {i.product_type} {i.size} - ${i.cost_per_unit}/{i.unit_type}</SelectItem>)}</SelectContent></Select></div>
-                          <div><Label>Material Length (ft)</Label><Input type="number" min="0" value={item.material_length_ft || ""} onChange={e => updateItem(index, 'material_length_ft', parseFloat(e.target.value) || 0)} /></div>
-                          <div><Label>Supplies Cost (per unit)</Label><Input type="number" min="0" value={item.supplies_cost || ""} onChange={e => updateItem(index, 'supplies_cost', parseFloat(e.target.value) || 0)} /></div>
-                          <div><Label>Quantity</Label><Input type="number" min="1" value={item.quantity || ""} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} /></div>
-                          
+                          <div className="md:col-span-2"><Label>Material</Label><Select value={item.inventory_item_id} onValueChange={(v) => updateItem(index, 'inventory_item_id', v)}><SelectTrigger aria-invalid={hasIssueFor(allIssues, 'inventory_item_id', index)} aria-describedby={`metal-item-${index}-issues`}><SelectValue placeholder="Select from inventory" /></SelectTrigger><SelectContent>{inventory.map(i => <SelectItem key={i.id} value={i.id}>{i.material_type} {i.product_type} {i.size} - ${i.cost_per_unit}/{i.unit_type}</SelectItem>)}</SelectContent></Select></div>
+                          <div><Label>Material Length (ft)</Label><Input type="number" min="0" value={item.material_length_ft ?? ""} aria-invalid={hasIssueFor(allIssues, 'material_length_ft', index)} aria-describedby={`metal-item-${index}-issues`} onChange={e => updateItem(index, 'material_length_ft', metalDraftValue(e.target.value))} /></div>
+                          <div><Label>Supplies Cost (per unit)</Label><Input type="number" min="0" value={item.supplies_cost ?? ""} aria-invalid={hasIssueFor(allIssues, 'supplies_cost', index)} aria-describedby={`metal-item-${index}-issues`} onChange={e => updateItem(index, 'supplies_cost', metalDraftValue(e.target.value))} /></div>
+                          <div><Label>Quantity</Label><Input type="number" min="1" value={item.quantity ?? ""} aria-invalid={hasIssueFor(allIssues, 'quantity', index)} aria-describedby={`metal-item-${index}-issues`} onChange={(e) => updateItem(index, 'quantity', metalQuantityDraft(e.target.value))} /></div>
+
                           <div className="md:col-span-3 pt-4 border-t"><h5 className="font-medium text-sm text-slate-700">Labor Hours (per unit)</h5></div>
-                          <div><Label>Fabrication</Label><Input type="number" min="0" value={item.fabrication_hours || ""} onChange={e => updateItem(index, 'fabrication_hours', parseFloat(e.target.value) || 0)} /></div>
-                          <div><Label>Welding</Label><Input type="number" min="0" value={item.welding_hours || ""} onChange={e => updateItem(index, 'welding_hours', parseFloat(e.target.value) || 0)} /></div>
-                          <div><Label>Finishing</Label><Input type="number" min="0" value={item.finishing_hours || ""} onChange={e => updateItem(index, 'finishing_hours', parseFloat(e.target.value) || 0)} /></div>
+                          <div><Label>Fabrication</Label><Input type="number" min="0" value={item.fabrication_hours ?? ""} aria-invalid={hasIssueFor(allIssues, 'fabrication_hours', index)} aria-describedby={`metal-item-${index}-issues`} onChange={e => updateItem(index, 'fabrication_hours', metalDraftValue(e.target.value))} /></div>
+                          <div><Label>Welding</Label><Input type="number" min="0" value={item.welding_hours ?? ""} aria-invalid={hasIssueFor(allIssues, 'welding_hours', index)} aria-describedby={`metal-item-${index}-issues`} onChange={e => updateItem(index, 'welding_hours', metalDraftValue(e.target.value))} /></div>
+                          <div><Label>Finishing</Label><Input type="number" min="0" value={item.finishing_hours ?? ""} aria-invalid={hasIssueFor(allIssues, 'finishing_hours', index)} aria-describedby={`metal-item-${index}-issues`} onChange={e => updateItem(index, 'finishing_hours', metalDraftValue(e.target.value))} /></div>
                         </div>
                         <div className="mt-4 p-4 bg-white rounded-lg border text-xs">
-                          <div className="flex justify-between"><span className="text-slate-500">Material Cost (per unit):</span><p className="font-medium">${(item.material_cost || 0).toFixed(2)}</p></div>
-                          <div className="flex justify-between"><span className="text-slate-500">Fabrication Cost (per unit):</span><p className="font-medium">${(item.fabrication_cost || 0).toFixed(2)}</p></div>
-                          <div className="flex justify-between"><span className="text-slate-500">Welding Cost (per unit):</span><p className="font-medium">${(item.welding_cost || 0).toFixed(2)}</p></div>
-                          <div className="flex justify-between"><span className="text-slate-500">Finishing Cost (per unit):</span><p className="font-medium">${(item.finishing_cost || 0).toFixed(2)}</p></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Material Cost (per unit):</span><p className="font-medium">{fmtCost(calculated.enrichedItems[index]?.material_cost)}</p></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Fabrication Cost (per unit):</span><p className="font-medium">{fmtCost(calculated.enrichedItems[index]?.fabrication_cost)}</p></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Welding Cost (per unit):</span><p className="font-medium">{fmtCost(calculated.enrichedItems[index]?.welding_cost)}</p></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Finishing Cost (per unit):</span><p className="font-medium">{fmtCost(calculated.enrichedItems[index]?.finishing_cost)}</p></div>
                         </div>
+                        {itemIssues(index).length > 0 && (
+                          <ul id={`metal-item-${index}-issues`} className="mt-2 space-y-1 text-xs text-red-700" role="status">
+                            {itemIssues(index).map((iss, i) => <li key={`${iss.field}-${i}`}>{iss.message}</li>)}
+                          </ul>
+                        )}
                       </div>
                     ))}
                 </CardContent>
@@ -1369,6 +1365,9 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader><CardTitle>Estimate Breakdown</CardTitle></CardHeader>
                   <CardContent className="p-0">
+                    {pricingUnavailable && (
+                      <p className="px-4 pt-3 text-[11px] font-medium text-amber-700">Saved amounts (not current pricing) — fix the flagged values to reprice.</p>
+                    )}
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 text-slate-600 text-xs">
                         <tr>
@@ -1381,19 +1380,17 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                         </tr>
                       </thead>
                       <tbody>
-                        {project.items.map((it, i) => {
-                          const qty = it.quantity || 1;
-                          const matCost = (it.material_cost || 0) * qty;
-                          const suppliesCost = (it.supplies_cost || 0) * qty;
-                          const laborCost = ((it.fabrication_cost || 0) + (it.welding_cost || 0) + (it.finishing_cost || 0)) * qty;
+                        {calculated.enrichedItems.map((it, i) => {
+                          const matSupplies = sumOrNull(it.materials_cost, it.supplies_cost);
+                          const total = sumOrNull(it.materials_cost, it.supplies_cost, it.labor_cost);
                           return (
                             <tr key={i} className="border-t border-slate-100">
                               <td className="px-4 py-2 text-slate-500">{i + 1}</td>
                               <td className="px-4 py-2 font-medium">{it.description || `Item ${i + 1}`}</td>
                               <td className="px-4 py-2 capitalize text-xs text-slate-600">{(it.item_type || '').replace(/_/g, ' ')}</td>
-                              <td className="px-4 py-2 text-right tabular-nums">${(matCost + suppliesCost).toFixed(2)}</td>
-                              <td className="px-4 py-2 text-right tabular-nums">${laborCost.toFixed(2)}</td>
-                              <td className="px-4 py-2 text-right tabular-nums font-semibold">${(matCost + suppliesCost + laborCost).toFixed(2)}</td>
+                              <td className="px-4 py-2 text-right tabular-nums">{fmtCost(matSupplies)}</td>
+                              <td className="px-4 py-2 text-right tabular-nums">{fmtCost(it.labor_cost)}</td>
+                              <td className="px-4 py-2 text-right tabular-nums font-semibold">{fmtCost(total)}</td>
                             </tr>
                           );
                         })}
@@ -1401,9 +1398,9 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                       <tfoot className="bg-slate-50 border-t-2 border-slate-200 text-sm">
                         <tr>
                           <td colSpan="3" className="px-4 py-2 text-right font-medium">Totals</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${(totalMaterialsCost + totalSuppliesCost).toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-medium">${(totalFabricationCost + totalWeldingCost + totalFinishingCost).toFixed(2)}</td>
-                          <td className="px-4 py-2 text-right tabular-nums font-bold">${grandTotal.toFixed(2)}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{Number.isFinite(sumOrNull(totalMaterialsCost, totalSuppliesCost)) ? fmtCost(totalMaterialsCost + totalSuppliesCost) : moneyCell(sumOrNull(project.total_material_cost, project.total_supplies_cost))}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-medium">{Number.isFinite(totalLaborCost) ? fmtCost(totalLaborCost) : moneyCell(sumOrNull(project.total_fabrication_cost, project.total_welding_cost, project.total_finishing_cost))}</td>
+                          <td className="px-4 py-2 text-right tabular-nums font-bold">{Number.isFinite(grandTotal) ? fmtCost(grandTotal) : moneyCell(project.total_cost)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -1415,11 +1412,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                 <CustomerPricingTab
                   project={{
                     ...project,
-                    total_material_cost: totalMaterialsCost,
-                    total_supplies_cost: totalSuppliesCost,
-                    total_fabrication_cost: totalFabricationCost,
-                    total_welding_cost: totalWeldingCost,
-                    total_finishing_cost: totalFinishingCost,
+                    // Held totals feed the categorizer as 0 (it only emits
+                    // lines for amounts > 0) — the whole calc is flagged
+                    // unavailable in this state and saves are blocked, so a
+                    // 0 categorization can never be persisted silently.
+                    total_material_cost: totalMaterialsCost ?? 0,
+                    total_supplies_cost: totalSuppliesCost ?? 0,
+                    total_fabrication_cost: totalFabricationCost ?? 0,
+                    total_welding_cost: totalWeldingCost ?? 0,
+                    total_finishing_cost: totalFinishingCost ?? 0,
                   }}
                   categorize={categorizeMetalProject}
                   accentColor="orange"
@@ -1432,7 +1433,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             </Tabs>
           </div>
           <div className="space-y-6">
-            <Card className="bg-white border-0 shadow-sm sticky top-8"><CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><div className="flex justify-between"><span className="text-slate-600">Total Material Cost:</span><span className="font-medium text-slate-900">${totalMaterialsCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Supplies Cost:</span><span className="font-medium text-slate-900">${totalSuppliesCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Fabrication Cost:</span><span className="font-medium text-slate-900">${totalFabricationCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Welding Cost:</span><span className="font-medium text-slate-900">${totalWeldingCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Finishing Cost:</span><span className="font-medium text-slate-900">${totalFinishingCost.toFixed(2)}</span></div><div className="mt-4 pt-4 border-t"><div className="flex justify-between items-center"><span className="font-bold text-lg text-slate-900">Grand Total:</span><span className="font-bold text-2xl text-blue-600">${grandTotal.toFixed(2)}</span></div></div></CardContent></Card>
+            <Card className="bg-white border-0 shadow-sm sticky top-8"><CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{pricingUnavailable && (<p className="text-[11px] font-medium text-amber-700">Saved amounts (not current pricing)</p>)}<div className="flex justify-between"><span className="text-slate-600">Total Material Cost:</span><span className="font-medium text-slate-900">{Number.isFinite(totalMaterialsCost) ? fmtCost(totalMaterialsCost) : moneyCell(project.total_material_cost)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Supplies Cost:</span><span className="font-medium text-slate-900">{Number.isFinite(totalSuppliesCost) ? fmtCost(totalSuppliesCost) : moneyCell(project.total_supplies_cost)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Fabrication Cost:</span><span className="font-medium text-slate-900">{Number.isFinite(totalFabricationCost) ? fmtCost(totalFabricationCost) : moneyCell(project.total_fabrication_cost)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Welding Cost:</span><span className="font-medium text-slate-900">{Number.isFinite(totalWeldingCost) ? fmtCost(totalWeldingCost) : moneyCell(project.total_welding_cost)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Finishing Cost:</span><span className="font-medium text-slate-900">{Number.isFinite(totalFinishingCost) ? fmtCost(totalFinishingCost) : moneyCell(project.total_finishing_cost)}</span></div><div className="mt-4 pt-4 border-t"><div className="flex justify-between items-center"><span className="font-bold text-lg text-slate-900">Grand Total:</span><span className="font-bold text-2xl text-blue-600">{Number.isFinite(grandTotal) ? fmtCost(grandTotal) : moneyCell(project.total_cost)}</span></div></div></CardContent></Card>
             <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Stock Cut Plan</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
               <div className="flex items-center gap-2"><Label>Stock length (ft)</Label><Input type="number" min="1" step="any" value={project.stock_length_ft ?? 20} onChange={(e) => setProject((p) => ({ ...p, stock_length_ft: Math.max(1, Number(e.target.value) || 20) }))} className="w-20 h-8" /></div>
               {cutPlan ? (
@@ -1440,7 +1441,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               ) : (<div className="text-xs text-slate-400">Add items with material lengths to see a suggested cut plan.</div>)}
             </CardContent></Card>
             {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
-            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
+            <Button onClick={saveProject} disabled={isSaving || pricingBlocked || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
             <div className="flex flex-wrap gap-2">
               <ModuleActionBar
                 onTemplates={() => setTemplateMode("load")}
@@ -1451,8 +1452,8 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Button onClick={downloadEstimate} variant="outline" className="w-full"><Download className="w-4 h-4 mr-2" /> Download</Button>
-              <Button onClick={printEstimate} variant="outline" className="w-full"><Printer className="w-4 h-4 mr-2" /> Print</Button>
+              <Button onClick={downloadEstimate} variant="outline" disabled={isSaving || pricingUnavailable} className="w-full"><Download className="w-4 h-4 mr-2" /> Download</Button>
+              <Button onClick={printEstimate} variant="outline" disabled={isSaving || pricingUnavailable} className="w-full"><Printer className="w-4 h-4 mr-2" /> Print</Button>
             </div>
           </div>
         </div>
