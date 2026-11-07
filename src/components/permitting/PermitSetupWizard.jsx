@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Loader2, MapPin, Search, Sparkles,
-  AlertTriangle, Pencil, ListChecks,
+  AlertTriangle, Pencil, ListChecks, FileText,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -39,6 +39,46 @@ const defaultPlanForm = (wo, address) => ({
   zoningContext: "", exemptionStatus: "",
 });
 
+const normalizeAddress = (raw) => {
+  let a = String(raw || "").replace(/\s+/g, " ").trim();
+  a = a.replace(/\b(unit|suite|ste|apt|apartment|#)\s*[A-Za-z0-9-]+\b/ig, "");
+  a = a.replace(/,\s*(USA|United States|US)\.?$/i, "");
+  a = a.replace(/\b([0-9]{5})-[0-9]{4}\b/g, "$1");
+  a = a.replace(/[ \t]+,/g, ",").replace(/,(?=\S)/g, ", ").replace(/,\s*,+/g, ",");
+  return a.replace(/\s+/g, " ").trim().replace(/^,+|,+$/g, "") || String(raw || "").trim();
+};
+
+const RECENT_KEY = "permitting_recent_addresses";
+const loadRecent = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } };
+const rememberRecent = (addr) => {
+  const a = String(addr || "").trim(); if (!a) return;
+  try {
+    const list = loadRecent().filter(x => x !== a);
+    list.unshift(a);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 5)));
+  } catch {}
+};
+
+const PlanSteps = ({ steps }) => (
+  <div className="rounded-lg border border-purple-200 bg-purple-50/50 divide-y divide-purple-100 max-h-56 overflow-y-auto">
+    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+      {steps?.length || 0} steps
+    </div>
+    {(steps || []).map((s, i) => (
+      <div key={i} className="px-3 py-1.5 text-xs flex items-center gap-2">
+        <span className="text-purple-400 font-mono w-4 flex-shrink-0">{i + 1}</span>
+        <span className="font-medium text-gray-800 truncate">{s.title || s.action || `Step ${i + 1}`}</span>
+        <span className={`ml-auto flex-shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${
+          s.basis === "approved_rule" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : s.basis === "pending_review" ? "border-amber-200 bg-amber-50 text-amber-700"
+          : "border-gray-200 bg-gray-50 text-gray-500"}`}>
+          {s.basis === "approved_rule" ? "verified" : s.basis === "pending_review" ? "pending" : "confirm"}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
 export default function PermitSetupWizard({
   isOpen, onClose, workOrder, existingLines = [], localities = [],
   onApply, onPendingApply, onRemoveLocality,
@@ -56,35 +96,55 @@ export default function PermitSetupWizard({
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [resolution, setResolution] = useState(null);
+  const [pickedCandidate, setPickedCandidate] = useState(null);
   const [localityId, setLocalityId] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
-  const [selectedOffices, setSelectedOffices] = useState(null); // null = all
+  const [suggestions, setSuggestions] = useState([]);
+  const [recent, setRecent] = useState(() => loadRecent());
   const [planForm, setPlanForm] = useState(() => defaultPlanForm(wo, siteAddress));
   const [planning, setPlanning] = useState(false);
   const [plan, setPlan] = useState(null);
   const [planError, setPlanError] = useState("");
+  const [planSaved, setPlanSaved] = useState(false);
   const [drafts, setDrafts] = useState([]);
   const [creating, setCreating] = useState(false);
   const [done, setDone] = useState(false);
   const searchSeq = useRef(0);
+  const suggestionReq = useRef(0);
 
   const locality = useMemo(
     () => localities.find(l => l.id === localityId) || null,
     [localities, localityId],
   );
 
-  // Edit mode seed: applied locality + existing drafts.
   useEffect(() => {
     if (!isOpen) return;
-    const existingLocalityId = existingLines.find(li => li.locality_id)?.locality_id;
+    const existingLocalityId = appliedLocalityId;
     if (existingLocalityId && !localityId) setLocalityId(existingLocalityId);
-  }, [isOpen, existingLines]);
+  }, [isOpen, appliedLocalityId]);
+
   useEffect(() => {
     if (!isOpen || !locality) return;
     loadWorkflowDrafts(locality.jurisdiction_profile_id, locality.name)
       .then(rows => setDrafts(Array.isArray(rows) ? rows : []))
       .catch(() => {});
   }, [isOpen, locality?.id]);
+
+  // Address autocomplete — same places_autocomplete the picker uses.
+  useEffect(() => {
+    const q = address.trim();
+    if (!sessionToken || q.length < 4 || resolving) { setSuggestions([]); return; }
+    const reqId = ++suggestionReq.current;
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await base44.functions.invoke("findLocalityByAddress", {
+          action: "places_autocomplete", input: q, session_token: sessionToken,
+        });
+        if (reqId === suggestionReq.current) setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions.slice(0, 5) : []);
+      } catch {}
+    }, 350);
+    return () => clearTimeout(t);
+  }, [address, resolving, sessionToken]);
 
   const officePreview = useMemo(() => {
     if (!locality) return [];
@@ -104,11 +164,16 @@ export default function PermitSetupWizard({
   }, [locality]);
 
   const visibleOffices = officePreview.filter(o => !o.electrical || !excludeElectrical);
-  const chosenOffices = selectedOffices === null ? visibleOffices : visibleOffices.filter(o => selectedOffices.has(o.key));
 
   const authority = useMemo(() => (locality ? summarizeMatchedLocalityAuthority(locality) : null), [locality]);
   const verifiedCount = authority?.verified_office_count || 0;
   const applyReady = verifiedCount > 0;
+
+  const candidates = useMemo(() => {
+    if (resolution?.suggested_locality) return [];
+    const list = resolution?.location_resolution?.candidates;
+    return Array.isArray(list) ? list : [];
+  }, [resolution]);
 
   const goTo = (n) => { setStep(n); setMaxStep(prev => Math.max(prev, n)); };
 
@@ -116,12 +181,12 @@ export default function PermitSetupWizard({
     const q = String(address || "").trim();
     if (!q || resolving) return;
     const seq = ++searchSeq.current;
-    setResolving(true); setResolveError(""); setResolution(null);
+    setResolving(true); setResolveError(""); setResolution(null); setPickedCandidate(null); setSuggestions([]);
     try {
       let data;
       for (let attempt = 0; ; attempt++) {
         try {
-          ({ data } = await base44.functions.invoke("resolvePermittingAddress", { address: q, session_token: sessionToken }));
+          ({ data } = await base44.functions.invoke("resolvePermittingAddress", { address: normalizeAddress(q), session_token: sessionToken }));
           break;
         } catch (e) {
           if (!/status code (429|5\d\d)/.test(String(e?.message || "")) || attempt >= 2) throw e;
@@ -135,6 +200,7 @@ export default function PermitSetupWizard({
         setResolution(data);
         const suggested = data?.suggested_locality?.id;
         if (suggested && localities.some(l => l.id === suggested)) setLocalityId(suggested);
+        if (data?.suggested_locality || data?.geocode) { rememberRecent(q); setRecent(loadRecent()); }
         setPlanForm(prev => ({ ...prev, address: q }));
         goTo(1);
       }
@@ -145,9 +211,17 @@ export default function PermitSetupWizard({
     }
   };
 
+  // A boundary pick behaves like a detected target — match its name to a locality row.
+  useEffect(() => {
+    if (!pickedCandidate?.name) return;
+    const want = pickedCandidate.name.trim().toLowerCase();
+    const hit = localities.find(l => String(l.name || "").trim().toLowerCase() === want);
+    if (hit) setLocalityId(hit.id);
+  }, [pickedCandidate, localities]);
+
   const buildPlan = async () => {
     if (planning) return;
-    setPlanning(true); setPlanError(""); setPlan(null);
+    setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false);
     try {
       const jurisdiction = locality ? {
         jurisdiction_id: locality.jurisdiction_profile_id || "",
@@ -164,13 +238,24 @@ export default function PermitSetupWizard({
     }
   };
 
+  const savePlan = async () => {
+    if (!plan || planSaved) return;
+    try {
+      await saveWorkflowDraft(plan, planForm,
+        `${locality?.name || "Permit"} — ${wo.client_name || "job"}`, "");
+      setPlanSaved(true);
+    } catch (e) {
+      setPlanError(e?.message || "Plan generated but couldn't be saved.");
+    }
+  };
+
   const localityChanged = isEdit && localityId && localityId !== appliedLocalityId;
 
   const finish = async () => {
     if (!locality || creating) return;
     setCreating(true);
     try {
-      if (plan && !plan.jurisdiction_unresolved) {
+      if (plan && !plan.jurisdiction_unresolved && !planSaved) {
         await saveWorkflowDraft(plan, planForm,
           `${locality.name || "Permit"} — ${wo.client_name || "job"}`, "").catch(() => {});
       }
@@ -223,13 +308,34 @@ export default function PermitSetupWizard({
         {/* ── Step 0: Site ── */}
         {step === 0 && (
           <div className="space-y-3">
-            <div>
+            <div className="relative">
               <Label className="text-sm">Job site address</Label>
               <Input value={address} onChange={e => setAddress(e.target.value)}
                 placeholder="123 Main St, Cincinnati, OH" className="h-9 text-sm mt-1"
                 onKeyDown={e => { if (e.key === "Enter" && canNext) runResolve(); }} />
+              {suggestions.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg divide-y text-sm">
+                  {suggestions.map((s, i) => (
+                    <button key={i} type="button"
+                      className="w-full text-left px-3 py-1.5 hover:bg-purple-50 text-xs"
+                      onClick={() => { setAddress(typeof s === "string" ? s : s.description || s.label || ""); setSuggestions([]); }}>
+                      {typeof s === "string" ? s : s.description || s.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <p className="text-[11px] text-gray-500 mt-1">Prefilled from the work order — fix it here if the install address differs.</p>
             </div>
+            {recent.length > 0 && !suggestions.length && (
+              <div className="flex flex-wrap gap-1.5">
+                {recent.map(r => (
+                  <button key={r} type="button" onClick={() => setAddress(r)}
+                    className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[10px] text-gray-600 hover:border-purple-300 hover:bg-purple-50 truncate max-w-[220px]">
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
             {resolveError && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-start gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" /> {resolveError}
@@ -249,13 +355,42 @@ export default function PermitSetupWizard({
         {/* ── Step 1: Offices ── */}
         {step === 1 && (
           <div className="space-y-3">
-            {resolution && (
+            {resolution && candidates.length === 0 && (
               <div className={`rounded-lg border px-3 py-2 text-xs ${applyReady ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
                 {applyReady
                   ? <>Resolved: <strong>{resolution?.suggested_locality?.name || locality?.name}</strong> — {verifiedCount} verified office{verifiedCount === 1 ? "" : "s"} on file.</>
-                  : <>Resolved to <strong>{locality?.name || "a jurisdiction"}</strong>, but its offices aren't verified yet — the setup will auto-apply when verification finishes.</>}
+                  : locality
+                    ? <>Resolved to <strong>{locality.name}</strong>, but its offices aren't verified yet — the setup will auto-apply when verification finishes.</>
+                    : <>Nothing matched automatically — pick the office below.</>}
               </div>
             )}
+
+            {/* Boundary conflict — official maps disagree; never auto-pick */}
+            {candidates.length > 0 && (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 space-y-2">
+                <div>
+                  <h4 className="font-semibold text-sm text-sky-950">Pick the right place</h4>
+                  <p className="text-[11px] text-sky-800 mt-0.5">The map services disagree about this location — select the correct place.</p>
+                </div>
+                {candidates.map((c, i) => (
+                  <div key={i} className="rounded-md border border-sky-200 bg-white p-2.5 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{c.name}{c.state ? `, ${c.state}` : ""}</p>
+                      <p className="text-[11px] text-gray-500 capitalize">{c.type}{c.type !== "county" && c.county ? ` • in ${c.county}` : ""}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {c.inside_sources?.length ? `Inside: ${c.inside_sources.join(" + ")}` : "Not inside the pin"}
+                      </p>
+                    </div>
+                    <Button type="button" size="sm" variant={pickedCandidate === c ? "default" : "outline"}
+                      onClick={() => setPickedCandidate(prev => (prev === c ? null : c))}
+                      className="h-7 text-xs border-sky-300 flex-shrink-0">
+                      {pickedCandidate === c ? "Picked" : "Use this one"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div>
               <Label className="text-sm">Permitting office</Label>
               <Select value={localityId} onValueChange={setLocalityId}>
@@ -338,35 +473,36 @@ export default function PermitSetupWizard({
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{planError}</div>
             )}
             {plan && (
-              <div className="rounded-lg border border-purple-200 bg-purple-50/50 divide-y divide-purple-100 max-h-56 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700 flex justify-between">
-                  <span>AI permit plan — {plan.steps?.length || 0} steps</span>
-                  {plan.summary && <span className="normal-case font-medium text-purple-500 truncate ml-3">{plan.summary}</span>}
+              <>
+                <PlanSteps steps={plan.steps} />
+                {plan.summary && <p className="text-[11px] text-purple-600">{plan.summary}</p>}
+                {planSaved && <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Saved to workflow drafts</p>}
+              </>
+            )}
+            {!plan && drafts.length > 0 && (
+              <div className="rounded-lg border border-gray-200 divide-y">
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+                  Saved plans for {locality?.name} — reuse instead of regenerating
                 </div>
-                {(plan.steps || []).map((s, i) => (
-                  <div key={i} className="px-3 py-1.5 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="text-purple-400 font-mono w-4 flex-shrink-0">{i + 1}</span>
-                      <span className="font-medium text-gray-800 truncate">{s.title || s.action || `Step ${i + 1}`}</span>
-                      <span className={`ml-auto flex-shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${
-                        s.basis === "approved_rule" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : s.basis === "pending_review" ? "border-amber-200 bg-amber-50 text-amber-700"
-                        : "border-gray-200 bg-gray-50 text-gray-500"}`}>
-                        {s.basis === "approved_rule" ? "verified" : s.basis === "pending_review" ? "pending" : "confirm"}
-                      </span>
-                    </div>
-                  </div>
+                {drafts.slice(0, 4).map(d => (
+                  <button key={d.id} type="button"
+                    onClick={() => { setPlan(d.snapshot); setPlanForm(prev => ({ ...prev, ...(d.project_inputs || {}) })); }}
+                    className="w-full text-left px-3 py-2 hover:bg-purple-50 text-xs flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                    <span className="font-medium text-gray-800 truncate">{d.title}</span>
+                    <span className="text-[10px] text-gray-400 ml-auto flex-shrink-0">{d.snapshot?.steps?.length || 0} steps</span>
+                  </button>
                 ))}
               </div>
-            )}
-            {drafts.length > 0 && !plan && (
-              <p className="text-[11px] text-gray-500">{drafts.length} saved plan{drafts.length === 1 ? "" : "s"} already on file for {locality?.name} — check Workflow drafts.</p>
             )}
 
             <div className="flex justify-between items-center">
               <Button variant="ghost" size="sm" onClick={() => goTo(1)} className="gap-1"><ArrowLeft className="w-3.5 h-3.5" /> Back</Button>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => goTo(3)}>Skip</Button>
+                {plan && !planSaved && (
+                  <Button variant="outline" size="sm" onClick={savePlan} className="gap-1">Save plan</Button>
+                )}
                 <Button size="sm" onClick={buildPlan} disabled={planning}
                   className="bg-purple-600 hover:bg-purple-700 gap-1.5">
                   {planning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -395,6 +531,11 @@ export default function PermitSetupWizard({
                     <span className="ml-auto text-[10px] text-gray-400">{li.status}</span>
                   </div>
                 ))}
+                {localityChanged && (
+                  <div className="px-3 py-2 text-xs text-amber-800 bg-amber-50">
+                    Switching to <strong>{locality?.name}</strong> will remove the lines above and create {visibleOffices.length || 1} new one{visibleOffices.length === 1 ? "" : "s"}.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="rounded-lg border border-gray-200 divide-y text-xs">
@@ -408,11 +549,11 @@ export default function PermitSetupWizard({
                 </div>
                 <div className="px-3 py-2 flex justify-between">
                   <span className="text-gray-500">Permit lines</span>
-                  <span className="font-medium text-gray-800">{chosenOffices.length || 1}</span>
+                  <span className="font-medium text-gray-800">{visibleOffices.length || 1}</span>
                 </div>
                 <div className="px-3 py-2 flex justify-between">
                   <span className="text-gray-500">AI plan</span>
-                  <span className="font-medium text-gray-800">{plan ? `${plan.steps?.length || 0} steps` : "Skipped"}</span>
+                  <span className="font-medium text-gray-800">{plan ? `${plan.steps?.length || 0} steps${planSaved ? " · saved" : ""}` : "Skipped"}</span>
                 </div>
               </div>
             )}
@@ -443,7 +584,7 @@ export default function PermitSetupWizard({
                   <Button size="sm" onClick={finish} disabled={!locality || creating}
                     className={`gap-1.5 ${applyReady ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-500 hover:bg-amber-600"}`}>
                     {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    {done ? "Created!" : applyReady ? `Create ${chosenOffices.length || 1} permit line${(chosenOffices.length || 1) === 1 ? "" : "s"}` : "Queue setup"}
+                    {done ? "Created!" : applyReady ? `Create ${visibleOffices.length || 1} permit line${(visibleOffices.length || 1) === 1 ? "" : "s"}` : "Queue setup"}
                   </Button>
                 )}
               </div>
