@@ -15,7 +15,11 @@ import LadderSelector from "@/components/channelLetterInstall/LadderSelector";
 import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
 import TravelCostCard from "@/components/channelLetterInstall/TravelCostCard";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
-import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
+import { defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
+import {
+  calcMaintenanceProject, hasMaintenanceCostSnapshot, maintenanceDraftValue,
+  hasIssueFor, maintenanceItemIssueList,
+} from "@/components/signMaintenance/maintenancePricingAvailability";
 import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -30,6 +34,15 @@ import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomer
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held money display: a real finite number formats, anything else shows
+// "Not saved" — a live-unavailable total is never rendered as $0.00.
+const moneyCell = (v) => hasMaintenanceCostSnapshot(v)
+  ? <span className="tabular-nums">{fmt(v)}</span>
+  : <span className="text-amber-700 font-medium">Not saved</span>;
+// Current pricing wins; when it is held, fall back to the acknowledged
+// saved snapshot (never fabricated).
+const liveOrSaved = (live, saved) => hasMaintenanceCostSnapshot(live) ? live : saved;
+const hoursCell = (v) => hasMaintenanceCostSnapshot(v) ? v.toFixed(1) : "—";
 
 const blankProject = () => ({
   project_name: "",
@@ -64,6 +77,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
@@ -130,13 +144,23 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // Recalc everything on change
+  // Priced recalc: scans every consumed input first, then runs the real
+  // calculators. Held items/totals come back null — never $0.
+  const priced = useMemo(() => {
+    if (!settings || Object.keys(settings).length === 0) return null;
+    return calcMaintenanceProject(project, { settings, rates, inventory, equipmentInventory });
+  }, [project, settings, rates, inventory, equipmentInventory]);
+
   const recalculated = useMemo(() => {
-    if (!settings || Object.keys(settings).length === 0) return project;
-    const items = (project.items || []).map(it => calcServiceItem(it, settings, rates, inventory));
-    const totals = calcProjectTotals({ ...project, items });
-    return { ...project, items, ...totals };
-  }, [project, settings, rates, inventory]);
+    if (!priced) return project;
+    return { ...project, items: priced.calc.items, ...priced.calc.totals };
+  }, [project, priced]);
+
+  const allIssues = priced?.issues || [];
+  const catalogIssues = priced?.catalogIssues || [];
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = !!priced?.calc?.pricingUnavailable;
+  const itemIssues = (index) => maintenanceItemIssueList(allIssues, index);
 
   const updateProject = (patch) => setProject(prev => ({ ...prev, ...patch }));
 
@@ -196,6 +220,15 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       setActiveTab("project");
       return;
     }
+    // Pricing-availability gate: an estimate with unavailable pricing is never
+    // persisted — missing rates/settings are not $0.
+    if (pricingBlocked) {
+      setSaveError(catalogIssues.length
+        ? "Save paused: a Maintenance Settings or catalog value is missing or unusable — update it in Sign Maintenance Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
+    setSaveError("");
     setSaving(true);
     try {
       const pricingProject = {
@@ -256,7 +289,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
           estimateId,
           line: { project_id: savedId, module_key: "maintenance" },
           sourceProject: refreshed,
-          liveTotal: recalculated.total_cost || 0,
+          liveTotal: recalculated.total_cost,
         });
       }
 
@@ -278,6 +311,11 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
 
   // #78 — clone the current save payload into a brand-new Maintenance project.
   const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      setSaveError("Save-as-copy paused: fix the flagged pricing values first — a copy is never written with unavailable pricing.");
+      return;
+    }
+    setSaveError("");
     setSaving(true);
     try {
       const copy = await saveModuleProjectCopy({
@@ -322,7 +360,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   if (loading) {
     return (
       <div className="p-6 md:p-8 bg-slate-50 min-h-screen flex items-center justify-center">
-        <p className="text-slate-600">Loadingâ€¦</p>
+        <p className="text-slate-600">Loading…</p>
       </div>
     );
   }
@@ -360,6 +398,27 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
           </div>
         </div>
 
+        {pricingBlocked && (
+          <div id="maintenance-pricing-issues" role="status" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <div className="font-semibold">Pricing unavailable — save is paused</div>
+            <div className="mt-1 text-xs">
+              This estimate has {allIssues.length} unavailable {allIssues.length === 1 ? "value" : "values"}.{" "}
+              {allIssues.slice(0, 3).map((issue, i) => <div key={i} className="mt-0.5">• {issue.message}</div>)}
+              {allIssues.length > 3 && <div className="mt-0.5">• …and {allIssues.length - 3} more</div>}
+            </div>
+            {catalogIssues.length > 0 && (
+              <div className="mt-1 text-xs">
+                Fix catalog or rate-matrix values in <Link to="/MaintenanceSettings" className="underline font-medium">Sign Maintenance Settings</Link>, then save.
+              </div>
+            )}
+          </div>
+        )}
+        {saveError && (
+          <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {saveError}
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -395,7 +454,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                           </div>
                           <div>
                             <Label>Project Name *</Label>
-                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder="e.g. Main St Sign â€” Annual Service" className="mt-1" />
+                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder="e.g. Main St Sign — Annual Service" className="mt-1" />
                           </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -405,7 +464,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                           </div>
                           <div>
                             <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                            <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://â€¦" className="mt-1" />
+                            <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://…" className="mt-1" />
                           </div>
                           <div>
                             <Label>Service interval</Label>
@@ -426,7 +485,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
 
                     <div>
                       <Label className="text-sm font-semibold text-slate-900">Service Environment</Label>
-                      <p className="text-xs text-slate-500 mt-1 mb-2">Interior or exterior service call â€” drives some labor multipliers.</p>
+                      <p className="text-xs text-slate-500 mt-1 mb-2">Interior or exterior service call — drives some labor multipliers.</p>
                       <div className="grid grid-cols-2 gap-2 max-w-md">
                         {[
                           { value: "exterior", label: "Exterior", desc: "Outdoor signs, monuments, pylons", color: "blue" },
@@ -462,13 +521,13 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
                   <CardContent>
-                    <Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerationsâ€¦" className="h-32" />
+                    <Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerations…" className="h-32" />
                   </CardContent>
                 </Card>
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={() => setActiveTab("items")} className="bg-cyan-600 hover:bg-cyan-700 text-white">Continue to Service Items â†’</Button>
+                  <Button onClick={() => setActiveTab("items")} className="bg-cyan-600 hover:bg-cyan-700 text-white">Continue to Service Items →</Button>
                 </div>
               </TabsContent>
 
@@ -504,6 +563,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                         onUpdate={updateItem}
                         onRemove={removeItem}
                         onDuplicate={duplicateItem}
+                        issues={itemIssues(idx)}
                       />
                     ))}
                   </div>
@@ -577,19 +637,24 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3"><CardTitle className="text-lg">Cost Breakdown</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <Row label="Labor"             value={recalculated.labor_cost} />
-                      <Row label="Materials"         value={recalculated.total_materials_cost} />
-                      <Row label="Supplies"          value={recalculated.total_supplies_cost} />
-                      <Row label="Equipment"         value={recalculated.total_equipment_cost} />
-                      <Row label="Personnel"         value={recalculated.total_personnel_cost} />
-                      <Row label="Travel"            value={recalculated.total_travel_cost} />
-                      <div className="border-t border-slate-200 pt-2 mt-2 flex justify-between font-semibold">
-                        <span>Subtotal</span><span className="tabular-nums">{fmt(recalculated.subtotal)}</span>
+                    {pricingUnavailable && (
+                      <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
+                        Saved amounts shown — current pricing unavailable (not $0).
                       </div>
-                      <Row label={`Markup (${recalculated.markup_percent || 0}%)`} value={recalculated.markup_amount} />
+                    )}
+                    <div className="space-y-2 text-sm">
+                      <Row label="Labor"             value={liveOrSaved(recalculated.labor_cost, project.labor_cost)} />
+                      <Row label="Materials"         value={liveOrSaved(recalculated.total_materials_cost, project.total_materials_cost)} />
+                      <Row label="Supplies"          value={liveOrSaved(recalculated.total_supplies_cost, project.total_supplies_cost)} />
+                      <Row label="Equipment"         value={liveOrSaved(recalculated.total_equipment_cost, project.total_equipment_cost)} />
+                      <Row label="Personnel"         value={liveOrSaved(recalculated.total_personnel_cost, project.total_personnel_cost)} />
+                      <Row label="Travel"            value={liveOrSaved(recalculated.total_travel_cost, project.total_travel_cost)} />
+                      <div className="border-t border-slate-200 pt-2 mt-2 flex justify-between font-semibold">
+                        <span>Subtotal</span><span className="tabular-nums">{moneyCell(liveOrSaved(recalculated.subtotal, project.subtotal))}</span>
+                      </div>
+                      <Row label={`Markup (${project.markup_percent || 0}%)`} value={liveOrSaved(recalculated.markup_amount, project.markup_amount)} />
                       <div className="border-t-2 border-slate-300 pt-2 mt-2 flex justify-between text-base font-bold text-cyan-700">
-                        <span>Total</span><span className="tabular-nums">{fmt(recalculated.total_cost)}</span>
+                        <span>Total</span><span className="tabular-nums">{moneyCell(liveOrSaved(recalculated.total_cost, project.total_cost))}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -615,31 +680,38 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
             <Card className="bg-white border-0 shadow-md sticky top-24">
               <CardHeader className="pb-3"><CardTitle className="text-base">Estimate Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
+                {pricingUnavailable && (
+                  <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] text-amber-800">
+                    Saved amounts (not current pricing)
+                  </div>
+                )}
                 <Row label="Items" value={recalculated.items?.length || 0} isMoney={false} />
-                <Row label="Labor hours" value={(recalculated.labor_hours || 0).toFixed(1)} isMoney={false} />
-                <Row label="Labor" value={recalculated.labor_cost} />
-                <Row label="Materials" value={recalculated.total_materials_cost} />
-                <Row label="Equipment" value={recalculated.total_equipment_cost} />
-                <Row label="Travel" value={recalculated.total_travel_cost} />
+                <Row label="Labor hours" value={hoursCell(liveOrSaved(recalculated.labor_hours, project.labor_hours))} isMoney={false} />
+                <Row label="Labor" value={liveOrSaved(recalculated.labor_cost, project.labor_cost)} />
+                <Row label="Materials" value={liveOrSaved(recalculated.total_materials_cost, project.total_materials_cost)} />
+                <Row label="Equipment" value={liveOrSaved(recalculated.total_equipment_cost, project.total_equipment_cost)} />
+                <Row label="Travel" value={liveOrSaved(recalculated.total_travel_cost, project.total_travel_cost)} />
                 <div className="border-t pt-2 mt-2">
                   <Label className="text-xs">Markup %</Label>
                   <Input
                     type="number"
                     step="1"
-                    value={project.markup_percent || 0}
+                    value={project.markup_percent ?? ""}
                     onChange={(e) => updateProject({
-                      markup_percent: parseFloat(e.target.value) || 0,
+                      markup_percent: maintenanceDraftValue(e.target.value),
                       customer_pricing: { ...(project.customer_pricing || {}), applied: false },
                     })}
                     className="h-8 text-sm tabular-nums"
+                    aria-describedby={hasIssueFor(allIssues, "markup_percent") ? "maintenance-pricing-issues" : undefined}
+                    aria-invalid={hasIssueFor(allIssues, "markup_percent") || undefined}
                   />
                 </div>
                 <div className="border-t-2 border-cyan-200 pt-2 mt-2 flex justify-between text-lg font-bold text-cyan-700">
-                  <span>Total</span><span className="tabular-nums">{fmt(recalculated.total_cost)}</span>
+                  <span>Total</span><span className="tabular-nums">{moneyCell(liveOrSaved(recalculated.total_cost, project.total_cost))}</span>
                 </div>
                 {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
                 <Button onClick={saveProject} disabled={saving} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white mt-2">
-                  {saving ? "Savingâ€¦" : (isEditing ? "Save Changes" : "Save Estimate")}
+                  {saving ? "Saving…" : (isEditing ? "Save Changes" : "Save Estimate")}
                 </Button>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <ModuleActionBar
@@ -672,7 +744,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
 }
 
 function Row({ label, value, isMoney = true }) {
-  const display = isMoney ? `$${(parseFloat(value) || 0).toFixed(2)}` : String(value ?? 0);
+  const display = isMoney ? moneyCell(value) : String(value ?? 0);
   return (
     <div className="flex justify-between">
       <span className="text-slate-600">{label}</span>
