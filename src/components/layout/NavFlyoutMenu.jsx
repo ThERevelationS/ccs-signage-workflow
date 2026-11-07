@@ -56,6 +56,10 @@ export default function NavFlyoutMenu({
       if (suppressOutsideClose) return; // keep the menu open as a drop target during drags
       if (triggerRef.current?.contains(event.target)) return;
       if (menuRef.current?.contains(event.target)) return;
+      // Presses inside the nav surface keep the flyout open — a page drag
+      // starts as a pointerdown on a nav button before the drag threshold
+      // lifts, and closing here would unmount the folder-list drop target.
+      if (event.target.closest?.(".top-nav, [role='menu'], [data-nav-item], [data-nav-folder]")) return;
       setOpen(false);
     };
     const onKeyDown = (event) => {
