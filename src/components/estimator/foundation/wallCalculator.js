@@ -132,8 +132,27 @@ function wallPriceNumber(value) {
   return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
+function wallHeightNumber(value) {
+  if (typeof value !== "number" && (typeof value !== "string"
+    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
 function wallPricing(wall, inventory = [], index = 0) {
   const issues = [];
+  const heightInches = wallHeightNumber(wall?.heightInches);
+  const internalWallHeightInches = wall?.includeInternalWall
+    ? wallHeightNumber(wall.internalWallHeightInches ?? wall.heightInches) : null;
+  const heightIssue = (field, kind, label, code) => issues.push({
+    kind, index, componentId: wall?.component_id ?? wall?.id ?? null,
+    field, inventoryId: wall?.[kind === "wall" ? "materialId" : "internalMaterialId"] ?? null, code,
+    message: `${label} ${index + 1}: record a positive, finite wall height in inches before repricing.`,
+  });
+  if (heightInches === null) heightIssue("heightInches", "wall", "Wall", "wall_height_unavailable");
+  if (wall?.includeInternalWall && internalWallHeightInches === null) {
+    heightIssue("internalWallHeightInches", "internal_wall", "Internal wall", "internal_wall_height_unavailable");
+  }
   const check = (field, kind, label) => {
     const id = wall?.[field];
     const add = (code, message) => issues.push({
@@ -172,7 +191,7 @@ function wallPricing(wall, inventory = [], index = 0) {
   const internalMaterial = wall?.includeInternalWall
     ? check("internalMaterialId", "internal_wall", "Internal wall")
     : null;
-  return { issues, wallMaterial, internalMaterial };
+  return { issues, wallMaterial, internalMaterial, heightInches, internalWallHeightInches };
 }
 
 export function foundationWallPricingIssues(wall, inventory = [], index = 0) {
@@ -244,7 +263,7 @@ export function calcWalls(project, inventory, settings = {}, options = {}) {
     };
   };
   return walls.map((wall, index) => {
-    const { wallMaterial, internalMaterial, issues } = wallPricing(wall, inventory, index);
+    const { wallMaterial, internalMaterial, heightInches, internalWallHeightInches, issues } = wallPricing(wall, inventory, index);
     if (issues.length) return held(wall);
     const costs =
       calcWallCosts({
@@ -253,8 +272,8 @@ export function calcWalls(project, inventory, settings = {}, options = {}) {
         wallMaterial,
         internalMaterial,
         includeInternalWall: wall.includeInternalWall,
-        wallHeightInches: wall.heightInches || 24,
-        internalWallHeightInches: wall.internalWallHeightInches || wall.heightInches || 24,
+        wallHeightInches: heightInches,
+        internalWallHeightInches,
         mortarGapInches: wall.mortarGapInches ?? 0.375,
         internalMortarGapInches: wall.internalMortarGapInches ?? 0.375,
         settings,
