@@ -71,4 +71,11 @@
     "product_id",
     "work_order_id"
   ]
+  ,
+  "rls": {
+    "create": { "user_condition": { "role": "__proofsharelink_backend_only__" } },
+    "read": { "user_condition": { "role": "__proofsharelink_backend_only__" } },
+    "update": { "user_condition": { "role": "__proofsharelink_backend_only__" } },
+    "delete": { "user_condition": { "role": "__proofsharelink_backend_only__" } }
+  }
 }

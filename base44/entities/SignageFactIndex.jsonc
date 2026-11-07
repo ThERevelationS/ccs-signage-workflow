@@ -24,4 +24,11 @@
       "description": "Relevance weight \u2014 fact-key terms rank higher than quote words."
     }
   }
+  ,
+  "rls": {
+    "create": { "user_condition": { "role": "__signagefactindex_backend_only__" } },
+    "read": { "user_condition": { "role": "__signagefactindex_backend_only__" } },
+    "update": { "user_condition": { "role": "__signagefactindex_backend_only__" } },
+    "delete": { "user_condition": { "role": "__signagefactindex_backend_only__" } }
+  }
 }

@@ -75,4 +75,11 @@
       "description": "Set false to retire a rule without deleting it."
     }
   }
+  ,
+  "rls": {
+    "create": { "user_condition": { "role": "__permitresolutionrule_backend_only__" } },
+    "read": { "user_condition": { "role": "__permitresolutionrule_backend_only__" } },
+    "update": { "user_condition": { "role": "__permitresolutionrule_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permitresolutionrule_backend_only__" } }
+  }
 }

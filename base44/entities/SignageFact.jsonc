@@ -74,4 +74,11 @@
       "description": "SignageFact id that replaced this row."
     }
   }
+  ,
+  "rls": {
+    "create": { "user_condition": { "role": "__signagefact_backend_only__" } },
+    "read": { "user_condition": { "role": "__signagefact_backend_only__" } },
+    "update": { "user_condition": { "role": "__signagefact_backend_only__" } },
+    "delete": { "user_condition": { "role": "__signagefact_backend_only__" } }
+  }
 }
