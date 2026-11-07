@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
-import { money } from "./foundationCalc";
+import { money, calcSignageCabinetPricing } from "./foundationCalc";
 
 const blankCabinet = (mount, index, canonId) => ({
   id: `cab_${Date.now()}`,
@@ -18,6 +18,13 @@ const blankCabinet = (mount, index, canonId) => ({
   unit_cost: 0,
 });
 
+// Blank-preserving draft coercion (same rule as the wall/pole/equipment
+// panels): a blank draft stays blank, a numeric draft becomes a number, and a
+// malformed draft is stored verbatim so the pricing diagnostics can flag it —
+// never coerced to 0 by parseFloat || 0.
+const cabinetInputValue = (value) =>
+  value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
+
 const Field = ({ label, ...props }) => (
   <label className="text-[10px] text-gray-500">
     {label}
@@ -25,10 +32,15 @@ const Field = ({ label, ...props }) => (
   </label>
 );
 
-function CabinetRow({ cabinet, onChange, onRemove }) {
-  const num = (key) => (e) => onChange({ [key]: parseFloat(e.target.value) || 0 });
+function CabinetRow({ cabinet, detail, diagId, onChange, onRemove }) {
+  const issues = detail?.issues || [];
+  const broken = issues.length > 0;
+  const fieldIssue = (field) => issues.some((i) => i.field === field);
+  const describedBy = (field) => (fieldIssue(field) ? diagId : undefined);
+  const num = (key) => (e) => onChange({ [key]: cabinetInputValue(e.target.value) });
+  const lineTotal = broken || !Number.isFinite(detail?.cost) ? "Not saved" : money(detail.cost);
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-2">
+    <div className={`rounded-sm border bg-white p-2 ${broken ? "border-amber-300" : "border-gray-200"}`}>
       <div className="flex items-center gap-2 mb-2">
         <Input
           value={cabinet.description || ""}
@@ -36,13 +48,18 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
           placeholder="Cabinet description"
           className="h-8 text-[12px]"
         />
-        <span className="text-[12px] font-bold text-gray-800 whitespace-nowrap">
-          {money((cabinet.unit_cost || 0) * (cabinet.quantity || 1))}
+        <span className={`text-[12px] font-bold whitespace-nowrap ${broken ? "text-amber-700" : "text-gray-800"}`}>
+          {lineTotal}
         </span>
         <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
           <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
+      {broken && (
+        <ul role="status" id={diagId} className="list-disc pl-5 mb-2 text-[10px] text-amber-800">
+          {issues.map((i, k) => <li key={k}>{i.message}</li>)}
+        </ul>
+      )}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         <Field label="Width (in)" type="number" value={cabinet.width_inches ?? 0} onChange={num("width_inches")} />
         <Field label="Height (in)" type="number" value={cabinet.height_inches ?? 0} onChange={num("height_inches")} />
@@ -53,14 +70,38 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
           value={cabinet.mount_height_inches ?? 0}
           onChange={num("mount_height_inches")}
         />
-        <Field label="Qty" type="number" value={cabinet.quantity ?? 1} onChange={num("quantity")} />
-        <Field label="Unit cost" type="number" value={cabinet.unit_cost ?? 0} onChange={num("unit_cost")} />
+        <Field
+          label="Qty"
+          type="number"
+          min={0}
+          step="any"
+          placeholder="1"
+          data-cabinet-field="quantity"
+          value={cabinet.quantity ?? ""}
+          aria-invalid={fieldIssue("quantity") || undefined}
+          aria-describedby={describedBy("quantity")}
+          onChange={num("quantity")}
+        />
+        <Field
+          label="Unit cost"
+          type="number"
+          min={0}
+          step="any"
+          placeholder="0"
+          data-cabinet-field="unit_cost"
+          value={cabinet.unit_cost ?? ""}
+          aria-invalid={fieldIssue("unit_cost") || undefined}
+          aria-describedby={describedBy("unit_cost")}
+          onChange={num("unit_cost")}
+        />
       </div>
     </div>
   );
 }
 
 export default function SignageCabinetsPanel({ cabinets = [], items = [], poles = [], onChange }) {
+  const pricingRows = calcSignageCabinetPricing(cabinets);
+  const hasIssues = pricingRows.some((row) => row.issues.length > 0);
   const update = (idx, changes) =>
     onChange(cabinets.map((c, i) => (i === idx ? { ...c, ...changes } : c)));
   const remove = (idx) => {
@@ -110,6 +151,11 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
 
   return (
     <div className="space-y-4">
+      {hasIssues && (
+        <p className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
+          Cabinet pricing unavailable — fix highlighted inputs. Saved amounts only; the current total is not repriced.
+        </p>
+      )}
       <div className="bg-white rounded-sm border border-gray-200 p-3">
         <h3 className="text-[13px] font-bold text-gray-900">Signage Cabinets</h3>
         <p className="text-[11px] text-gray-400 mb-2">
@@ -143,6 +189,8 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                       <CabinetRow
                         key={c.component_id || c.id || i}
                         cabinet={c}
+                        detail={pricingRows[i]}
+                        diagId={`signage-cabinet-${i}-pricing`}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
                       />
@@ -187,6 +235,8 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                       <CabinetRow
                         key={c.component_id || c.id || i}
                         cabinet={c}
+                        detail={pricingRows[i]}
+                        diagId={`signage-cabinet-${i}-pricing`}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
                       />
@@ -206,6 +256,8 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                 <div key={c.component_id || c.id || i}>
                   <CabinetRow
                     cabinet={c}
+                    detail={pricingRows[i]}
+                    diagId={`signage-cabinet-${i}-pricing`}
                     onChange={(changes) => update(i, changes)}
                     onRemove={() => remove(i)}
                   />
