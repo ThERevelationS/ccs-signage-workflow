@@ -35,6 +35,8 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
     ]);
   };
 
+  const unavailableCaps = new Set(foundationWallCapCatalogIssues(caps, options).filter(issue => issue.code !== "wall_cap_cost_total_invalid").map(issue => issue.index));
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
