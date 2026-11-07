@@ -4,7 +4,7 @@
 //   Row 2: status badges (parts, vinyl, yield, unplaced) + actions (template / duplicate / delete)
 // Color tag picker lives in a popover so it doesn't clutter the body.
 
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -144,10 +144,15 @@ export default function VinylWorkflowCardHeader({
           />
         </div>
 
-        {/* Total cost — prominent */}
+        {/* Total cost — prominent. Held pricing shows "Not saved" instead of
+            a laundered $0 so an unavailable price can never masquerade as real. */}
         <div className="flex-shrink-0 text-right">
           <div className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">Total</div>
-          <div className="text-base font-bold tabular-nums text-slate-900 leading-tight">{fmt(calc.totalCost)}</div>
+          {calc.__held ? (
+            <div className="text-sm font-semibold text-amber-700 leading-tight" title="Pricing unavailable — fix the flagged inputs">Not saved</div>
+          ) : (
+            <div className="text-base font-bold tabular-nums text-slate-900 leading-tight">{fmt(calc.totalCost)}</div>
+          )}
         </div>
 
         {/* Actions */}
@@ -196,6 +201,11 @@ export default function VinylWorkflowCardHeader({
         {calc.partsUnplaced > 0 && (
           <Badge className="text-[10px] font-normal h-5 bg-red-100 text-red-800 border-red-200">
             <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> {calc.partsUnplaced} unplaced
+          </Badge>
+        )}
+        {calc.__held && (calc.issues || []).length > 0 && (
+          <Badge className="text-[10px] font-normal h-5 bg-amber-50 text-amber-800 border-amber-200">
+            <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> {calc.issues.length} pricing {calc.issues.length === 1 ? "issue" : "issues"}
           </Badge>
         )}
         <VinylWorkflowMetricsBadge metrics={metrics} />
