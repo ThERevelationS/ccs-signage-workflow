@@ -9,11 +9,12 @@
 //   #31 launches saved parts library
 //   #33 inline validation badge when part is too wide for usable roll
 
-import React, { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Copy, AlertTriangle, MoveRight, ArrowLeftRight } from "lucide-react";
+import { Plus, Trash2, Copy, AlertTriangle, MoveRight } from "lucide-react";
+import { hasIssueFor, vinylDraftValue } from "./vinylPricingAvailability";
 
 const blankItem = () => ({
   id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -33,6 +34,8 @@ export default function VinylPartsTable({
   usableWidth = Infinity, // for validation
   defaultBleed = 0.125,   // when "Auto Bleed" pressed
   onMoveToWorkflow,       // (idx) => void   — open the move menu
+  issues = [],            // pricing-availability issues for this workflow
+  issuesId,               // aria-describedby target listing the issues
 }) {
   const tableEndRef = useRef(null);
 
@@ -93,15 +96,34 @@ export default function VinylPartsTable({
           setTimeout(() => update(idx, { allow_rotation: false }), 0);
         }
 
+        const rowIssues = issues.filter(i => i.itemIndex === idx);
+        const rowIssuesId = `${issuesId || `vinyl-wf-issues`}-part-${idx}`;
+
         return (
           <div key={it.id || idx} className="space-y-1">
             <div className="grid grid-cols-[1fr_70px_70px_60px_70px_70px_90px_90px] gap-2 items-center">
               <Input value={it.description || ""} onChange={(e) => update(idx, { description: e.target.value })}
                      placeholder={`Item ${idx + 1}`} className="h-9 text-sm" />
-              <Input type="number" step="0.125" value={it.width_inches} onChange={(e) => update(idx, { width_inches: parseFloat(e.target.value) || 0 })} className="h-9 text-sm tabular-nums" />
-              <Input type="number" step="0.125" value={it.height_inches} onChange={(e) => update(idx, { height_inches: parseFloat(e.target.value) || 0 })} className="h-9 text-sm tabular-nums" />
-              <Input type="number" step="1" min="1" value={it.quantity} onChange={(e) => update(idx, { quantity: Math.max(1, parseInt(e.target.value) || 1) })} className="h-9 text-sm tabular-nums" />
-              <Input type="number" step="0.0625" value={it.bleed_inches || 0} onChange={(e) => update(idx, { bleed_inches: parseFloat(e.target.value) || 0 })} className="h-9 text-sm tabular-nums"
+              <Input type="number" step="0.125" value={it.width_inches ?? ""}
+                onChange={(e) => update(idx, { width_inches: vinylDraftValue(e.target.value) })}
+                aria-invalid={hasIssueFor(issues, "width_inches", idx) || undefined}
+                aria-describedby={hasIssueFor(issues, "width_inches", idx) ? rowIssuesId : undefined}
+                className="h-9 text-sm tabular-nums" />
+              <Input type="number" step="0.125" value={it.height_inches ?? ""}
+                onChange={(e) => update(idx, { height_inches: vinylDraftValue(e.target.value) })}
+                aria-invalid={hasIssueFor(issues, "height_inches", idx) || undefined}
+                aria-describedby={hasIssueFor(issues, "height_inches", idx) ? rowIssuesId : undefined}
+                className="h-9 text-sm tabular-nums" />
+              <Input type="number" step="1" min="1" value={it.quantity ?? ""}
+                onChange={(e) => update(idx, { quantity: vinylDraftValue(e.target.value) })}
+                aria-invalid={hasIssueFor(issues, "quantity", idx) || undefined}
+                aria-describedby={hasIssueFor(issues, "quantity", idx) ? rowIssuesId : undefined}
+                className="h-9 text-sm tabular-nums" />
+              <Input type="number" step="0.0625" value={it.bleed_inches ?? ""}
+                onChange={(e) => update(idx, { bleed_inches: vinylDraftValue(e.target.value) })}
+                aria-invalid={hasIssueFor(issues, "bleed_inches", idx) || undefined}
+                aria-describedby={hasIssueFor(issues, "bleed_inches", idx) ? rowIssuesId : undefined}
+                className="h-9 text-sm tabular-nums"
                 onKeyDown={(e) => handleKeyDown(e, idx, isLast)} />
               <div
                 className="flex items-center justify-center gap-1"
@@ -156,6 +178,18 @@ export default function VinylPartsTable({
                   : it.allow_rotation
                     ? `Rotated, height (${partH.toFixed(2)}″) exceeds roll width (${usableWidth.toFixed(2)}″). Uncheck Rotate.`
                     : `Too wide for roll (${partW.toFixed(2)}″ > ${usableWidth.toFixed(2)}″). Enable Rotate or split the part.`}
+              </div>
+            )}
+
+            {/* Pricing-availability row diagnostics — a malformed dimension or
+                quantity stays on the row and is explained here, never dropped. */}
+            {rowIssues.length > 0 && (
+              <div role="status" id={rowIssuesId}
+                className="flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1 ml-1">
+                <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5">
+                  {rowIssues.map((it2, i2) => <div key={i2}>{it2.message}</div>)}
+                </div>
               </div>
             )}
 
