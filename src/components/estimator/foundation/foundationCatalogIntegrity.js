@@ -60,6 +60,7 @@ export function foundationAssemblyCatalogIssues(project, inventory = []) {
   }
   return [
     ...issues,
+    ...foundationWallCapCatalogIssues(project?.wall_caps || [], inventory),
     ...(project?.items || []).flatMap((item, index) => foundationItemCatalogIssues(item, inventory, index)),
     ...foundationEquipmentCatalogIssues(project?.selected_equipment || [], inventory),
   ];
