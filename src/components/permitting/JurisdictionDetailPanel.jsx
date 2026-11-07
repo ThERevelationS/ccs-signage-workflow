@@ -763,7 +763,7 @@ Answer only from the provided excerpts and cite the document title and official 
                   const suggestion = window.prompt("What office is missing here? (e.g. 'Electrical inspector is the county building dept')");
                   if (!suggestion || !suggestion.trim()) return;
                   const notes = `${jurisdiction.notes || ""}\n[Staff suggestion ${new Date().toISOString().slice(0, 10)}]: ${suggestion.trim()}`.trim();
-                  const saved = await base44.entities.JurisdictionProfile.update(jurisdiction.id, { notes });
+                  const saved = await staffEntities.JurisdictionProfile.update(jurisdiction.id, { notes });
                   if (saved?.id) onUpdate(saved);
                 }}
                 className="min-h-11 gap-1 text-xs"
