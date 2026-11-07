@@ -140,29 +140,156 @@ export const readableText = (hex) => (luminance(hex) > 0.55 ? "#0f172a" : "#f8fa
 
 const a = (hex, alpha) => `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
 
-// Inline style overrides keyed on the accent color. "glass" = the stock shell
-// look (no override); the rest give each button a distinct personality.
+// Self-contained inline styles keyed on the accent color. "glass" defers to
+// the shell's stock look; every other preset carries its own background,
+// border, radius, shadow and text color so the bar renders exactly what the
+// picker preview shows (no theme-class interference).
 export const NAV_STYLE_PRESETS = [
   { id: "glass", name: "Glass", make: (c) => ({ style: {}, textColor: null }) },
-  { id: "solid", name: "Solid", make: (c) => ({ style: { background: c, borderColor: shade(c, -30), boxShadow: `0 2px 10px ${a(c, 0.45)}` }, textColor: readableText(c) }) },
-  { id: "soft", name: "Soft", make: (c) => ({ style: { background: a(c, 0.16), borderColor: a(c, 0.45) }, textColor: c }) },
-  { id: "outline", name: "Outline", make: (c) => ({ style: { background: "transparent", borderColor: c, borderWidth: 1.5 } , textColor: c }) },
-  { id: "glow", name: "Glow", make: (c) => ({ style: { background: a(c, 0.12), borderColor: a(c, 0.7), boxShadow: `0 0 12px ${a(c, 0.55)}, inset 0 0 8px ${a(c, 0.25)}` }, textColor: c }) },
-  { id: "gradient", name: "Gradient", make: (c) => ({ style: { background: `linear-gradient(135deg, ${shade(c, 30)}, ${shade(c, -35)})`, borderColor: shade(c, -50), boxShadow: `0 2px 10px ${a(c, 0.4)}` }, textColor: readableText(shade(c, -20)) }) },
-  { id: "flat", name: "Flat", make: (c) => ({ style: { background: a(c, 0.22), borderColor: "transparent" }, textColor: c }) },
-  { id: "neon", name: "Neon", make: (c) => ({ style: { background: "#0b0e1a", borderColor: c, boxShadow: `0 0 14px ${a(c, 0.6)}, inset 0 0 6px ${a(c, 0.3)}` }, textColor: c }) },
-  { id: "pill", name: "Pill", make: (c) => ({ style: { background: a(c, 0.18), borderColor: a(c, 0.5), borderRadius: 999 }, textColor: c }) },
-  { id: "carbon", name: "Carbon", make: (c) => ({ style: { background: "linear-gradient(180deg,#334155,#0f172a)", borderColor: a(c, 0.6), boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px ${a(c, 0.3)}` }, textColor: c }) },
-  { id: "underline", name: "Underline", make: (c) => ({ style: { background: "transparent", borderColor: "transparent", borderBottomColor: c, borderBottomWidth: 2, borderRadius: 4 }, textColor: c }) },
-  { id: "frost", name: "Frost", make: (c) => ({ style: { background: `linear-gradient(135deg, ${a(c, 0.3)}, rgba(255,255,255,0.06))`, borderColor: a(c, 0.35), backdropFilter: "blur(6px)" }, textColor: c }) },
+  {
+    id: "solid", name: "Solid",
+    make: (c) => ({
+      style: {
+        background: `linear-gradient(180deg, ${shade(c, 12)}, ${shade(c, -18)})`,
+        border: `1px solid ${shade(c, -42)}`,
+        color: readableText(c),
+        boxShadow: `0 2px 8px ${a(c, 0.45)}, inset 0 1px 0 ${a("#ffffff", 0.22)}`,
+        textShadow: readableText(c) === "#f8fafc" ? `0 1px 2px ${a("#000000", 0.35)}` : "none",
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "soft", name: "Soft",
+    make: (c) => ({
+      style: {
+        background: `linear-gradient(180deg, ${a(c, 0.22)}, ${a(c, 0.12)})`,
+        border: `1px solid ${a(c, 0.5)}`,
+        color: shade(c, -35),
+        boxShadow: `inset 0 1px 0 ${a("#ffffff", 0.5)}`,
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "outline", name: "Outline",
+    make: (c) => ({
+      style: {
+        background: "rgba(255,255,255,0.55)",
+        border: `1.5px solid ${c}`,
+        color: shade(c, -40),
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "glow", name: "Glow",
+    make: (c) => ({
+      style: {
+        background: a(c, 0.14),
+        border: `1px solid ${a(c, 0.75)}`,
+        color: shade(c, -30),
+        boxShadow: `0 0 12px ${a(c, 0.5)}, inset 0 0 10px ${a(c, 0.18)}`,
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "gradient", name: "Gradient",
+    make: (c) => ({
+      style: {
+        background: `linear-gradient(135deg, ${shade(c, 40)}, ${c} 55%, ${shade(c, -40)})`,
+        border: `1px solid ${shade(c, -55)}`,
+        color: readableText(shade(c, -15)),
+        boxShadow: `0 3px 10px ${a(c, 0.4)}, inset 0 1px 0 ${a("#ffffff", 0.3)}`,
+        textShadow: readableText(shade(c, -15)) === "#f8fafc" ? `0 1px 2px ${a("#000000", 0.35)}` : "none",
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "flat", name: "Flat",
+    make: (c) => ({
+      style: { background: a(c, 0.24), border: "1px solid transparent", color: shade(c, -45) },
+      textColor: null,
+    }),
+  },
+  {
+    id: "neon", name: "Neon",
+    make: (c) => ({
+      style: {
+        background: "linear-gradient(180deg,#111528,#0a0d18)",
+        border: `1px solid ${c}`,
+        color: shade(c, 30),
+        boxShadow: `0 0 14px ${a(c, 0.55)}, inset 0 0 8px ${a(c, 0.28)}`,
+        textShadow: `0 0 8px ${a(c, 0.8)}`,
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "pill", name: "Pill",
+    make: (c) => ({
+      style: {
+        background: `linear-gradient(180deg, ${a(c, 0.26)}, ${a(c, 0.14)})`,
+        border: `1px solid ${a(c, 0.55)}`,
+        borderRadius: 999,
+        color: shade(c, -40),
+        boxShadow: `inset 0 1px 0 ${a("#ffffff", 0.5)}`,
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "carbon", name: "Carbon",
+    make: (c) => ({
+      style: {
+        background: "linear-gradient(180deg,#3b475c,#1c2434)",
+        border: `1px solid ${a(c, 0.65)}`,
+        color: shade(c, 45),
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35), inset 0 -2px 0 ${a(c, 0.7)}`,
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "underline", name: "Underline",
+    make: (c) => ({
+      style: {
+        background: "transparent",
+        border: "1px solid transparent",
+        borderBottom: `2px solid ${c}`,
+        borderRadius: 6,
+        color: shade(c, -35),
+      },
+      textColor: null,
+    }),
+  },
+  {
+    id: "frost", name: "Frost",
+    make: (c) => ({
+      style: {
+        background: `linear-gradient(135deg, ${a(c, 0.32)}, rgba(255,255,255,0.4))`,
+        border: `1px solid ${a(c, 0.45)}`,
+        color: shade(c, -45),
+        backdropFilter: "blur(6px)",
+        boxShadow: `inset 0 1px 0 ${a("#ffffff", 0.55)}, 0 2px 6px ${a(c, 0.25)}`,
+      },
+      textColor: null,
+    }),
+  },
 ];
 
 export const NAV_STYLE_IDS = NAV_STYLE_PRESETS.map((p) => p.id);
 export const presetFor = (id) => NAV_STYLE_PRESETS.find((p) => p.id === id) || NAV_STYLE_PRESETS[0];
 
-// Returns { style, textColor } to merge onto the nav button.
+// Returns { glass, style, textColor } — textColor resolves to the preset's
+// text color for non-glass looks (glass leaves it null → theme defaults).
 export function navButtonStyle(styleId, color) {
-  return presetFor(styleId).make(color || "#94A3B8");
+  const made = presetFor(styleId).make(color || "#94A3B8");
+  const style = made.style || {};
+  return { glass: styleId === "glass" || !styleId, style, textColor: made.textColor || style.color || null };
 }
 
 export const NAV_COLOR_PALETTE = [
