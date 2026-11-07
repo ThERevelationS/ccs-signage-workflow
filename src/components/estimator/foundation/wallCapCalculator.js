@@ -56,20 +56,26 @@ export function calcWallCaps(wallCaps = [], inventory = []) {
     };
   });
 
-  const byInventory = Object.values(
-    caps.reduce((acc, c) => {
-      if (!c.cap_inventory_id) return acc;
-      acc[c.cap_inventory_id] = acc[c.cap_inventory_id] || {
-        id: c.cap_inventory_id,
-        name: c.cap_name,
-        qty: 0,
-        cost: 0,
-      };
-      acc[c.cap_inventory_id].qty += 1;
-      acc[c.cap_inventory_id].cost += num(c.cost);
-      return acc;
-    }, {})
-  );
+  const groups = new Map();
+  for (const cap of caps) {
+    if (!assigned(cap.cap_inventory_id)) continue;
+    if (!groups.has(cap.cap_inventory_id)) groups.set(cap.cap_inventory_id, []);
+    groups.get(cap.cap_inventory_id).push(cap);
+  }
+  const byInventory = [...groups].map(([id, rows]) => ({
+    id, name: rows[0].cap_name, qty: rows.length, cost: sumKnown(rows),
+  }));
+  const total = sumKnown(caps);
+  if (total === null && caps.every(cap => known(cap.cost))) {
+    issues.push({
+      kind: "wall_cap", index: 0, componentId: caps[0]?.component_id ?? caps[0]?.id ?? null,
+      field: "cost", inventoryId: null, code: "wall_cap_cost_total_invalid",
+      message: "Wall cap total is outside the supported numeric range; current pricing is unavailable.",
+    });
+  }
+  return { caps, byInventory, total, issues };
+}
 
-  return { caps, byInventory, total: caps.reduce((s, c) => s + num(c.cost), 0) };
+export function foundationWallCapCatalogIssues(wallCaps = [], inventory = []) {
+  return calcWallCaps(wallCaps, inventory).issues;
 }
