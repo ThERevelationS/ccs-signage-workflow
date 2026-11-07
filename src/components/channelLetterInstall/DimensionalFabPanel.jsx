@@ -28,8 +28,9 @@ import CuttingMethodSlider from "./CuttingMethodSlider";
 import PaintCoverageHelper from "./PaintCoverageHelper";
 import { estimateAverageLetterWidth } from "./letterWidthCalculator";
 import DimensionalMaterialPickerDialog from "./DimensionalMaterialPickerDialog";
+import { channelDraftValue } from "./channelLetterPricingAvailability";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 /**
  * Inline replacement for DimensionalFabModal.
@@ -265,7 +266,7 @@ export default function DimensionalFabPanel({ purchase, onUpdate, onReset }) {
                   type="number" min="0" step="0.5"
                   value={fab.letter_height_inches}
                   onFocus={(e) => e.target.select()}
-                  onChange={(e) => update({ letter_height_inches: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => update({ letter_height_inches: channelDraftValue(e.target.value) })}
                   className="h-9 mt-1 bg-white tabular-nums"
                 />
               </div>
@@ -286,7 +287,7 @@ export default function DimensionalFabPanel({ purchase, onUpdate, onReset }) {
                   value={fab.letter_width_inches}
                   onFocus={(e) => e.target.select()}
                   disabled={!oversize}
-                  onChange={(e) => update({ letter_width_inches: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => update({ letter_width_inches: channelDraftValue(e.target.value) })}
                   className={`h-9 mt-1 tabular-nums ${oversize ? "bg-white" : "bg-slate-50 text-slate-600"}`}
                 />
               </div>
@@ -468,6 +469,6 @@ const PreviewRow = ({ label, value, subtitle }) => (
       <span className="text-slate-300">{label}</span>
       {subtitle && <span className="ml-2 text-[10px] text-slate-500">{subtitle}</span>}
     </div>
-    <span className="tabular-nums font-medium">{`$${(parseFloat(value) || 0).toFixed(2)}`}</span>
+    <span className="tabular-nums font-medium">{fmt(value)}</span>
   </div>
 );
