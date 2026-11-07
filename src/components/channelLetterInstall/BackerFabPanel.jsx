@@ -18,10 +18,11 @@ import {
   materialCostPerSqin, PAINT_SIDES_LABELS, CUTTING_METHOD_LABELS,
 } from "./dimensionalFabCalculator";
 import { emptyBackerFabConfig, calcBackerUnitCost } from "./BackerFabModal";
+import { channelDraftValue } from "./channelLetterPricingAvailability";
 import CuttingMethodSlider from "./CuttingMethodSlider";
 import PaintCoverageHelper from "./PaintCoverageHelper";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 /**
  * Inline replacement for BackerFabModal — same logic, no popup.
@@ -216,13 +217,13 @@ export default function BackerFabPanel({ purchase, onUpdate }) {
           <div>
             <Label className="text-xs">Width (in)</Label>
             <Input type="number" min="0" step="0.5" value={fab.width_inches}
-              onChange={(e) => update({ width_inches: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => update({ width_inches: channelDraftValue(e.target.value) })}
               className="h-9 mt-1 bg-white tabular-nums" />
           </div>
           <div>
             <Label className="text-xs">Height (in)</Label>
             <Input type="number" min="0" step="0.5" value={fab.height_inches}
-              onChange={(e) => update({ height_inches: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => update({ height_inches: channelDraftValue(e.target.value) })}
               className="h-9 mt-1 bg-white tabular-nums" />
           </div>
         </div>
@@ -355,6 +356,6 @@ const PreviewRow = ({ label, value, subtitle }) => (
       <span className="text-orange-100">{label}</span>
       {subtitle && <span className="ml-2 text-[10px] text-orange-300/80">{subtitle}</span>}
     </div>
-    <span className="tabular-nums font-medium">{`$${(parseFloat(value) || 0).toFixed(2)}`}</span>
+    <span className="tabular-nums font-medium">{fmt(value)}</span>
   </div>
 );
