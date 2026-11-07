@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
-import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { withEntityRateLimitRetry, entityCallIsolateStats } from '../../shared/entityRateLimitRetry.ts';
 
 // Session-authenticated read gateway for non-Fleet role-gated entities.
 // Staff sessions are EmailGate sessions — not Base44 app users — so direct
@@ -111,7 +111,7 @@ const STAFF_READABLE = new Set([
   'EstimateQuoteDelivery',
   'EstimateRevision',
   'EstimateSectionAcceptance',
-  'InventoryCostHistory', 'InventoryMovement',
+  'InventoryMovement',
   'PTOPolicy',
   'ProjectTemplate',
   'QuickProductCategory',
@@ -547,6 +547,8 @@ Deno.serve(async (req) => {
     // One quick server-side retry at most: longer backoff belongs to the
     // browser, which honors Retry-After and coordinates every open request.
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
+    const entityStatsStart = entityCallIsolateStats();
+    const entityCalls = () => entityCallIsolateStats().calls - entityStatsStart.calls;
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
@@ -615,6 +617,7 @@ Deno.serve(async (req) => {
       const batchPayload = entityMode
         ? {
             success: true,
+            entity_calls: entityCalls(),
             entities,
             ...(denied.length ? { denied } : {}),
             ...(Object.keys(errors).length ? { errors } : {}),
@@ -625,6 +628,9 @@ Deno.serve(async (req) => {
     }
 
     const result = await readOneCached(base44, user, body, deniedFieldScope);
+    if (result.status === 200 && result.body && typeof result.body === 'object') {
+      result.body.entity_calls = entityCalls();
+    }
     return toResponse(result);
   } catch (error: any) {
     if (isRateLimited(error)) {
