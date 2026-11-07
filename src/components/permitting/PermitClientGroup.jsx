@@ -17,6 +17,7 @@ import PermitLineNotesSection from "./PermitLineNotesSection";
 import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
+import PermitSetupWizard from "./PermitSetupWizard";
 import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
 import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
@@ -64,6 +65,7 @@ export default function PermitClientGroup({
     try { const saved = localStorage.getItem(expandKey); return saved == null ? true : saved === "1"; } catch { return true; }
   });
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
@@ -488,7 +490,7 @@ export default function PermitClientGroup({
               </span>
             </div>
           )}
-          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office(s)…</Button>
+          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowSetupWizard(true)}>Edit permit setup…</Button>
             {appliedLocality && onRemoveLocality && (
 
               <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
@@ -530,16 +532,19 @@ export default function PermitClientGroup({
           </div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> find which town or township issues this job's permits.</span>
+              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
               <Button
-                onClick={() => setShowLocalityPicker(true)}
+                onClick={() => setShowSetupWizard(true)}
                 disabled={!isRegistered}
                 size="sm"
-                variant="outline"
-                className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
               >
-                <MapPin className="w-3.5 h-3.5" /> Find the right office(s)…
+                <MapPin className="w-3.5 h-3.5" /> New permit setup…
               </Button>
+              <button type="button" onClick={() => setShowLocalityPicker(true)} disabled={!isRegistered}
+                className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600 disabled:opacity-40">
+                advanced lookup
+              </button>
             </div>
           ) : (
             <>
@@ -638,6 +643,23 @@ export default function PermitClientGroup({
           onPendingApply={(localityId, opts) => {
             onQueueLocalityApply?.(group.work_order_id, localityId, opts);
           }}
+        />
+      )}
+
+      {showSetupWizard && (
+        <PermitSetupWizard
+          isOpen={showSetupWizard}
+          onClose={() => setShowSetupWizard(false)}
+          workOrder={wo}
+          existingLines={group.lines}
+          localities={localities}
+          onApply={(localityId, opts) => {
+            onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
+          }}
+          onPendingApply={(localityId, opts) => {
+            onQueueLocalityApply?.(group.work_order_id, localityId, opts);
+          }}
+          onRemoveLocality={onRemoveLocality ? (localityId) => onRemoveLocality(group.work_order_id, localityId) : null}
         />
       )}
 
