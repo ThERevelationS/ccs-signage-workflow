@@ -161,7 +161,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
               </span>
               <div className="flex items-center gap-3">
                 <span className="font-bold text-gray-900">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : "Not saved"}</span>
-                {(!options.some((o) => o.id === cap.cap_inventory_id)) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
+                {unavailableCaps.has(index) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
                 <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
                   <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
