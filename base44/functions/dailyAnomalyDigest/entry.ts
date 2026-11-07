@@ -49,4 +49,4 @@ Deno.serve(async (request: Request) => {
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'Anomaly scan failed' }, { status: 500 });
   }
-}
+});
