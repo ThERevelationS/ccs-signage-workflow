@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { toOwnProfileView } from '../../shared/ownProfileView.mjs';
 
 function normalizeEmail(value: unknown) {
   return String(value || '').trim().toLowerCase();
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
         guardFields: { email: user.email },
         label: `Username for ${actorEmail}`,
       });
-      return Response.json({ success: true, record: saved });
+      return Response.json({ success: true, record: toOwnProfileView(saved) });
     }
 
     if (action === 'update_order_form_filter') {
@@ -118,7 +119,7 @@ Deno.serve(async (req) => {
         guardFields: { email: user.email },
         label: `HR profile for ${actorEmail}`,
       });
-      return Response.json({ success: true, record: saved });
+      return Response.json({ success: true, record: toOwnProfileView(saved) });
     }
 
     return Response.json({ error: 'Invalid profile action.' }, { status: 400 });
