@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import { usePolling } from "@/lib/usePolling";
+import { claimPollLeadership, releasePollLeadership, broadcastPollResult, onPollResult } from "@/lib/pollLeader";
 
 const TimeClockStatusContext = createContext(null);
 
@@ -108,12 +109,49 @@ export function TimeClockStatusProvider({ children }) {
     return launch();
   }, []);
 
-  usePolling(() => refresh({ force: true }), 180000, {
+  // Cross-tab leader election: only one tab fires the ambient status poll;
+  // siblings consume the leader's broadcast result. Leadership is a
+  // localStorage lease, so a closed/crashed leader hands off within ~1 tick.
+  const leaderKey = `tc-status|${email}`;
+
+  usePolling(async () => {
+    if (!claimPollLeadership(leaderKey, 180000)) return;
+    const data = await refresh({ force: true });
+    if (data?.success) broadcastPollResult(leaderKey, data);
+  }, 180000, {
     enabled: Boolean(email && token),
     // Fire after the mount burst's 60s rolling budget window rolls off;
     // anything earlier reliably 429s while feeds/prefs/roster spend the pool.
     initialDelayMs: 65000,
   });
+
+  useEffect(() => {
+    if (!email || !token) return undefined;
+    const unsubscribe = onPollResult(leaderKey, (data) => {
+      const { scope: requestScope } = scopeRef.current;
+      cacheRef.current = { scope: requestScope, at: Date.now(), promise: Promise.resolve(data) };
+      setState(prev => ({
+        scope: requestScope,
+        data,
+        error: null,
+        loadedAt: Date.now(),
+        version: prev.version + 1,
+      }));
+    });
+    return () => {
+      unsubscribe();
+      releasePollLeadership(leaderKey);
+    };
+  }, [leaderKey, email, token]);
+
+  // A hidden leader stops polling (usePolling pauseWhenHidden) but would hold
+  // its lease for up to 1.5 intervals — release on hide so a visible sibling
+  // claims immediately instead of waiting out the lease.
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") releasePollLeadership(leaderKey); };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [leaderKey]);
 
   useEffect(() => {
     const onPauseChanged = () => { void refresh({ force: true }).catch(() => {}); };
