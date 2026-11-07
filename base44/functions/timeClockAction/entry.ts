@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
 import { withEntityRateLimitRetry, entityCallIsolateStats } from '../../shared/entityRateLimitRetry.ts';
+import { memo, bust } from '../../shared/invokeMemo.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
@@ -3442,6 +3443,26 @@ Deno.serve(async (req) => {
     target.email = asEmail(target.email);
     const actorEmail = asEmail(actor.email);
 
+    // Actions not on this read list can change punch state — drop the user's
+    // status_lite memo slot before dispatch so the next read refetches.
+    const TIME_CLOCK_READS = new Set([
+      'status', 'status_lite', 'list_correction_requests', 'who_is_in',
+      'my_labor_history', 'my_history', 'list_shift_templates',
+      'list_time_off_requests', 'admin_load_all', 'admin_load_data',
+      'time_tracker_snapshot', 'time_tracker_prefs_get', 'pay_period_status',
+      'labor_allocation_preview', 'break_compliance_report', 'labor_split',
+      'labor_vs_estimate', 'pay_period_history_verify',
+      'admin_correction_gate_diagnostics', 'list_pending_requests',
+      'list_face_enrollment', 'list_timeclock_audit', 'list_devices',
+      'pto_liability_report', 'admin_period_compare',
+    ]);
+    if (!TIME_CLOCK_READS.has(action)) {
+      bust('tclite', String(target.id || target.email || 'unknown'));
+      bust('tccorr', String(target.email || 'unknown'));
+      bust('tccorr', 'admin');
+      bust('tcadmin');
+    }
+
     // Read-only operational diagnostics must run before ensureState and all
     // clock-state recovery hooks: viewing coordinator health may never mutate
     // payroll, attendance, audit, or employee state.
@@ -3534,14 +3555,22 @@ Deno.serve(async (req) => {
     // diagnostics block above. Anything the full status action would recover or
     // reject comes back as requires_full_status and the caller retries 'status'.
     if (action === 'status_lite') {
-      const liteResult = await buildStatusLite({
-        stateEntity, entryEntity, breakEntity, workPauseEntity, target,
-        helpers: {
-          publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
-          breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
-          MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
-        },
-      });
+      // Short-TTL memo absorbs concurrent poll bursts for the same user.
+      // Writes bust the 'tclite' scope; bypass flag forces a fresh read.
+      const liteResult = await memo(
+        'tclite',
+        String(target.id || target.email || 'unknown'),
+        5000,
+        () => buildStatusLite({
+          stateEntity, entryEntity, breakEntity, workPauseEntity, target,
+          helpers: {
+            publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
+            breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
+            MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
+          },
+        }),
+        { bypass: body?.bypass === true },
+      );
       return Response.json({ ...liteResult, entity_calls: entityCalls() });
     }
 
@@ -7871,20 +7900,33 @@ Deno.serve(async (req) => {
       const query = adminScope
         ? { status: { $in: ['pending', 'reviewing'] } }
         : { user_email: target.email };
-      const requests = await correctionRequestEntity.filter(query);
-      if (!Array.isArray(requests)) throw new Error('Correction request list did not return records.');
-      requests.sort((a: any, b: any) => new Date(b.requested_at || b.created_date || 0).getTime() - new Date(a.requested_at || a.created_date || 0).getTime());
+      const requests = await memo(
+        'tccorr', String(adminScope ? 'admin' : target.email), 10000,
+        async () => {
+          const rows = await correctionRequestEntity.filter(query);
+          if (!Array.isArray(rows)) throw new Error('Correction request list did not return records.');
+          rows.sort((a: any, b: any) => new Date(b.requested_at || b.created_date || 0).getTime() - new Date(a.requested_at || a.created_date || 0).getTime());
+          return rows;
+        },
+        { bypass: body?.bypass === true },
+      );
       return Response.json({ success: true, requests });
     }
 
     if (action === 'who_is_in') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await entryEntity.filter({ status: 'clocked_in' });
-      if (!Array.isArray(rows)) throw new Error('TimeEntry list did not return records.');
-      const staff = rows
-        .filter((r: any) => r?.id && !r.archived_test_data && !r.archived_admin)
-        .map((r: any) => ({ id: r.id, user_email: r.user_email, user_name: r.user_name || r.user_email, clock_in: r.clock_in }))
-        .sort((a: any, b: any) => new Date(a.clock_in || 0).getTime() - new Date(b.clock_in || 0).getTime());
+      const staff = await memo(
+        'tcadmin', 'who_is_in', 8000,
+        async () => {
+          const rows = await entryEntity.filter({ status: 'clocked_in' });
+          if (!Array.isArray(rows)) throw new Error('TimeEntry list did not return records.');
+          return rows
+            .filter((r: any) => r?.id && !r.archived_test_data && !r.archived_admin)
+            .map((r: any) => ({ id: r.id, user_email: r.user_email, user_name: r.user_name || r.user_email, clock_in: r.clock_in }))
+            .sort((a: any, b: any) => new Date(a.clock_in || 0).getTime() - new Date(b.clock_in || 0).getTime());
+        },
+        { bypass: body?.bypass === true },
+      );
       return Response.json({ success: true, staff });
     }
 
