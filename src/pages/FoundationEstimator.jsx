@@ -34,7 +34,7 @@ import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPric
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeFoundationProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
-import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
+import { hasFoundationCostSnapshot } from "@/components/estimator/foundation/foundationCatalogIntegrity";
 import { calcProject, money, captureConcreteDeliverySnapshot } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
@@ -517,12 +517,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
   };
 
-  const cabinetCost = (project.signage_cabinets || []).reduce(
-    (s, c) => s + (c.unit_cost || 0) * (c.quantity || 1),
-    0
-  );
-  const landscapeCost = landscapeSummary(project.landscape).total;
-  const sectionTotal = calc.totals.grand_total + cabinetCost + landscapeCost;
+  // Held extras: when a recorded cabinet row or the landscape grid cannot be
+  // repriced the calc keeps the acknowledged project totals (or null), never a
+  // silently guessed amount. Null propagation keeps the section total honest —
+  // "Estimate handoff paused" is already gated on pricingBlocked.
+  const cabinetCost = calc.totals.total_signage_cabinet_cost;
+  const landscapeCost = calc.totals.total_landscape_cost;
+  const sectionTotal = calc.totals.grand_total === null || cabinetCost === null || landscapeCost === null
+    ? null
+    : calc.totals.grand_total + cabinetCost + landscapeCost;
 
   const undo = () => {
     const live = currentEditorRef.current;
@@ -1210,11 +1213,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <div className="flex justify-between">
                       <span>Signage cabinets</span>
-                      <span>{money(cabinetCost)}</span>
+                      <span>{hasFoundationCostSnapshot(cabinetCost) ? money(cabinetCost) : "Not saved"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Site landscaping</span>
-                      <span>{money(landscapeCost)}</span>
+                      <span>{hasFoundationCostSnapshot(landscapeCost) ? money(landscapeCost) : "Not saved"}</span>
                     </div>
                   </div>
                   <div className="mt-2 text-right text-[12px] text-gray-500">
