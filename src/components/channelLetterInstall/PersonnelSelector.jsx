@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Users, Wand2 } from "lucide-react";
 import { recalcPersonnelRow, suggestPersonnelForProject } from "./equipmentSuggester";
+import { channelDraftValue, channelNumber, issuesForField } from "./channelLetterPricingAvailability";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 const ROLE_OPTIONS = ["Crew Lead", "Installer", "Helper"];
 
@@ -24,6 +26,7 @@ export default function PersonnelSelector({
   projectLaborHours = 0,
   roleRates = {},
   items = [],
+  issues = [],
 }) {
   // Resolve the rate for a given role (fallback to Installer rate, then 0)
   const rateForRole = (role) => {
@@ -65,12 +68,36 @@ export default function PersonnelSelector({
     onChange(newCrew);
   };
 
+  // Pricing diagnostics — per-field aria-invalid + inline message.
+  const rowIssues = (idx, field) => issuesForField(issues, field, null, idx);
+  const rowInvalid = (idx, field) => rowIssues(idx, field).length > 0;
+  const rowAria = (idx, field) => (rowInvalid(idx, field)
+    ? { "aria-invalid": true, "aria-describedby": `clp-crew-${idx}-${field}-issue` }
+    : {});
+  const RowIssue = ({ idx, field }) => {
+    const fi = rowIssues(idx, field);
+    if (!fi.length) return null;
+    return (
+      <p id={`clp-crew-${idx}-${field}-issue`} className="text-[10px] text-red-600 mt-0.5" role="alert">
+        {fi[0].message}
+      </p>
+    );
+  };
+
   const totalCost = personnel.reduce(
-    (s, p) => s + (parseFloat(p.total_cost) || 0),
+    (s, p) => {
+      if (s === null) return null;
+      const v = channelNumber(p.total_cost);
+      return v === null ? null : s + v;
+    },
     0
   );
   const totalHours = personnel.reduce(
-    (s, p) => s + (parseFloat(p.hours) || 0),
+    (s, p) => {
+      if (s === null) return null;
+      const v = channelNumber(p.hours);
+      return v === null ? null : s + v;
+    },
     0
   );
 
@@ -151,10 +178,12 @@ export default function PersonnelSelector({
                       value={row.hourly_rate}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) =>
-                        handleUpdate(idx, { hourly_rate: parseFloat(e.target.value) || 0 })
+                        handleUpdate(idx, { hourly_rate: channelDraftValue(e.target.value) })
                       }
-                      className="h-8 mt-0.5"
+                      className={`h-8 mt-0.5 ${rowInvalid(idx, "hourly_rate") ? "border-red-500" : ""}`}
+                      {...rowAria(idx, "hourly_rate")}
                     />
+                    <RowIssue idx={idx} field="hourly_rate" />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-xs">Hours</Label>
@@ -164,10 +193,12 @@ export default function PersonnelSelector({
                       value={row.hours}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) =>
-                        handleUpdate(idx, { hours: parseFloat(e.target.value) || 0 })
+                        handleUpdate(idx, { hours: channelDraftValue(e.target.value) })
                       }
-                      className="h-8 mt-0.5"
+                      className={`h-8 mt-0.5 ${rowInvalid(idx, "hours") ? "border-red-500" : ""}`}
+                      {...rowAria(idx, "hours")}
                     />
+                    <RowIssue idx={idx} field="hours" />
                   </div>
                   <div className="md:col-span-1">
                     <Label className="text-xs">Total</Label>
@@ -191,7 +222,7 @@ export default function PersonnelSelector({
             <div className="flex justify-between pt-2 border-t border-slate-200 text-sm">
               <div>
                 <span className="text-slate-500">Total Hours:</span>{" "}
-                <span className="font-semibold tabular-nums">{totalHours.toFixed(2)}</span>
+                <span className="font-semibold tabular-nums">{Number.isFinite(totalHours) ? totalHours.toFixed(2) : "—"}</span>
                 {projectLaborHours > 0 && (
                   <span className="text-xs text-slate-400 ml-2">
                     (calculated: {projectLaborHours.toFixed(2)} hrs)
