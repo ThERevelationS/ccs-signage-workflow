@@ -1152,6 +1152,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   poles={calc.poles}
                   options={catalog.poles}
                   items={calc.items}
+                  polePricing={calc.polePricing}
                   onChange={(poles) => patch({ poles })}
                 />
                 <FoundationLayoutCanvas
@@ -1236,6 +1237,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   totals={calc.totals}
                   inventory={inventory}
                   itemPricing={calc.itemPricing}
+                  polePricing={calc.polePricing}
                   pricingUnavailable={pricingBlocked}
                 />
               </TabsContent>
