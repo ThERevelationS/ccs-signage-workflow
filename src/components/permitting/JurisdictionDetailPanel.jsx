@@ -1199,7 +1199,7 @@ Answer only from the provided excerpts and cite the document title and official 
             <p id={`document-header-navigation-${jurisdiction.id}`} className="sr-only">
               Use Up and Down arrows to move between document headings, Home and End for the first and last heading, and Enter or Space to expand a document.
             </p>
-             {(jurisdiction.documents || []).map(doc => (
+             {(docSearchTerm.trim() ? (jurisdiction.documents || []) : (jurisdiction.documents || []).slice(0, docVisibleCount)).map(doc => (
                <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
                  <button
                    type="button"
