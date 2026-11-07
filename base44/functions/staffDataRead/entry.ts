@@ -87,6 +87,8 @@ const STAFF_READABLE = new Set([
   'SavedQueueView',
   'Settings',
   'SignHardwareInventory',
+  'SignageFact',
+  'SignageFactIndex',
   'SignLightingInventory',
   'SignPartsSuppliesInventory',
   'SipChecklistTemplate',
