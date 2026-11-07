@@ -1,4 +1,5 @@
 import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
+import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
 
 export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   const issues = [];
