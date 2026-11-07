@@ -7,6 +7,13 @@ import { MATERIAL_TYPES, fieldsFor } from "./foundationFieldSchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 
+// Blank clears a numeric catalog field to null ("not cataloged" — never a
+// silent free price); a numeric draft coerces to Number; anything else stays
+// verbatim so availability validation reports it instead of a NaN or a minted
+// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
+const catalogNumberInput = (value) => (String(value).trim() === "" ? null
+  : Number.isFinite(Number(value)) ? Number(value) : value);
+
 export default function FoundationMaterialDialog({ open, record, defaultType, onClose, onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -101,7 +108,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
                   type={f.type}
                   value={form[f.key] ?? ""}
                   onChange={(e) =>
-                    set({ [f.key]: f.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value })
+                    set({ [f.key]: f.type === "number" ? catalogNumberInput(e.target.value) : e.target.value })
                   }
                 />
               </label>
