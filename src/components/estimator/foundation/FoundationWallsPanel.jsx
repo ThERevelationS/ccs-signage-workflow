@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus, PenLine } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { foundationWallPricingIssues } from "./wallCalculator";
 import WallShapeEditor from "./WallShapeEditor";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -11,9 +12,8 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 function WallRow({ wall, index, options, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
   const set = (changes) => onChange(index, changes);
-  const outerMissing = !options.some((o) => o.id === wall.materialId);
-  const innerMissing = !!wall.includeInternalWall && !options.some((o) => o.id === wall.internalMaterialId);
-  const catalogMissing = outerMissing || innerMissing;
+  const pricingIssues = foundationWallPricingIssues(wall, options, index);
+  const pricingUnavailable = pricingIssues.length > 0;
   const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
   const [showEditor, setShowEditor] = React.useState(false);
 
@@ -21,13 +21,13 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
     <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <Input
-          className="max-w-[220px]"
+          className="min-w-0 max-w-[220px]"
           value={wall.name || ""}
           placeholder={`Wall ${index + 1}`}
           onChange={(e) => set({ name: e.target.value })}
         />
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-gray-900">{amt(c.totalCost)}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="whitespace-nowrap font-bold text-gray-900">{amt(c.totalCost)}</span>
           <Button variant="ghost" size="icon" onClick={() => onRemove(index)}>
             <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
           </Button>
@@ -58,6 +58,8 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
             className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
             value={wall.materialId || ""}
             aria-label="Wall material"
+            aria-invalid={pricingIssues.some(i => i.field === "materialId") || undefined}
+            aria-describedby={pricingIssues.some(i => i.field === "materialId") ? `wall-${index}-pricing` : undefined}
             onChange={(e) => set({ materialId: e.target.value })}
           >
             <option value="">Select material…</option>
@@ -93,6 +95,8 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
                 className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
                 value={wall.internalMaterialId || ""}
                 aria-label="Internal wall material"
+                aria-invalid={pricingIssues.some(i => i.field === "internalMaterialId") || undefined}
+                aria-describedby={pricingIssues.some(i => i.field === "internalMaterialId") ? `wall-${index}-pricing` : undefined}
                 onChange={(e) => set({ internalMaterialId: e.target.value })}
               >
                 <option value="">Select material…</option>
@@ -122,14 +126,19 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
-        <div>Units: <span className="font-semibold text-gray-900">{Math.round(num(c.totalBricks))}</span></div>
-        <div>Courses: <span className="font-semibold text-gray-900">{Math.ceil(num(c.numCourses))}</span></div>
+        <div>Units: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.totalBricks) ? Math.round(c.totalBricks) : "Not saved"}</span></div>
+        <div>Courses: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.numCourses) ? Math.ceil(c.numCourses) : "Not saved"}</span></div>
         <div>Material: <span className="font-semibold text-gray-900">{amt(c.materialCost)}</span></div>
         <div>Mortar: <span className="font-semibold text-gray-900">{amt(c.mortarCost)}</span></div>
         <div>Labor: <span className="font-semibold text-gray-900">{amt(c.laborCost)}</span></div>
-        <div>Labor hrs: <span className="font-semibold text-gray-900">{num(c.laborHours).toFixed(1)}</span></div>
-        <div>Linear in: <span className="font-semibold text-gray-900">{Math.round(num(c.totalLinearInches))}</span></div>
-        {catalogMissing && <div className="col-span-full text-[10px] font-semibold text-amber-700">Saved amounts (not current pricing)</div>}
+        <div>Labor hrs: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.laborHours) ? c.laborHours.toFixed(1) : "Not saved"}</span></div>
+        <div>Linear in: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.totalLinearInches) ? Math.round(c.totalLinearInches) : "Not saved"}</span></div>
+        {pricingUnavailable && <div className="col-span-full text-[10px] font-semibold text-amber-700">Saved amounts (not current pricing)</div>}
+        {pricingIssues.length > 0 && (
+          <div role="status" className="col-span-full text-[10px] text-amber-700 space-y-0.5" id={`wall-${index}-pricing`}>
+            {pricingIssues.map((issue) => <p key={`${issue.field}-${issue.code}`}>{issue.message}</p>)}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -138,7 +147,7 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
         </Button>
         {!wall.shape?.segments?.length && (
           <span className="text-xs text-amber-600">
-            No outline yet — this wall stays at $0 until its footprint is drawn.
+            No outline yet - draw the wall footprint before estimating quantities.
           </span>
         )}
       </div>
