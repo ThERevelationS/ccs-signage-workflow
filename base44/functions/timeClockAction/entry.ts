@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
-import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { withEntityRateLimitRetry, entityCallIsolateStats } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
@@ -3370,6 +3370,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
+    const entityStatsStart = entityCallIsolateStats();
+    const entityCalls = () => entityCallIsolateStats().calls - entityStatsStart.calls;
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const sessionToken = String(body?.session_token || '').trim();
@@ -3540,7 +3542,7 @@ Deno.serve(async (req) => {
           MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
         },
       });
-      return Response.json(liteResult);
+      return Response.json({ ...liteResult, entity_calls: entityCalls() });
     }
 
     const adminCollections: Record<string, { entity: any; query: any; sort: string | null; label: string }> = {
@@ -4005,6 +4007,7 @@ Deno.serve(async (req) => {
         }
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+          entity_calls: entityCalls(),
           ...reviewNoticeFields,
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
           work_pause_allowed: target.can_work_pause === true,
@@ -4022,6 +4025,7 @@ Deno.serve(async (req) => {
         const lateClockAction = body?.clock_action_intent === true && Number.isInteger(companyMinutes) && companyMinutes >= 15 * 60;
         return Response.json({
           success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
+          entity_calls: entityCalls(),
           ...reviewNoticeFields,
           ...(lateClockAction ? {
             requires_late_clock_in_review: true,
