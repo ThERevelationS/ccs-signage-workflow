@@ -3,13 +3,14 @@
 //   #25 Use-case filter (auto-recommend cast for wraps, etc.)
 //   #27 Lifetime / indoor-only warning (bundled with #25 since it's cheap)
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Layers, AlertTriangle, ChevronDown } from "lucide-react";
 import { computeLifetimeWarning } from "./vinylCostHelpers";
+import { hasIssueFor } from "./vinylPricingAvailability";
 import VinylSearchPickerDialog from "./VinylSearchPickerDialog";
 
 // Map preset key → preferred vinyl categories (used to filter the base vinyl dropdown).
@@ -26,6 +27,8 @@ export default function VinylMaterialPicker({
   presetKey,          // current workflow preset, used for #25 recommendations
   installEnvironment, // "interior" | "exterior" → drives lifetime warning
   recommendOnly = false,
+  issues = [],        // pricing-availability issues for this workflow
+  issuesId,           // aria-describedby target listing the issues
 }) {
   const recommendedCategories = presetKey ? PRESET_CATEGORY_HINT[presetKey] : null;
 
@@ -74,6 +77,8 @@ export default function VinylMaterialPicker({
           <button
             type="button"
             onClick={() => setVinylPickerOpen(true)}
+            aria-invalid={(hasIssueFor(issues, "vinyl_id") || (vinylId && issues.some(i => i.inventoryId === vinylId))) || undefined}
+            aria-describedby={(hasIssueFor(issues, "vinyl_id") || (vinylId && issues.some(i => i.inventoryId === vinylId))) ? issuesId : undefined}
             className="h-9 mt-1 w-full flex items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm hover:bg-slate-50 transition-colors"
           >
             <span className={`truncate ${selectedVinyl ? "text-slate-900" : "text-muted-foreground"}`}>
@@ -122,6 +127,8 @@ export default function VinylMaterialPicker({
             type="button"
             disabled={!applyLaminate}
             onClick={() => setLamPickerOpen(true)}
+            aria-invalid={(hasIssueFor(issues, "laminate_id") || (laminateId && issues.some(i => i.inventoryId === laminateId))) || undefined}
+            aria-describedby={(hasIssueFor(issues, "laminate_id") || (laminateId && issues.some(i => i.inventoryId === laminateId))) ? issuesId : undefined}
             className="h-9 mt-1 w-full flex items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <span className={`truncate ${selectedLaminate ? "text-slate-900" : "text-muted-foreground"}`}>
