@@ -404,6 +404,7 @@ function LayoutContent({ children }) {
 
   const handleNavReorder = (result) => {
     const { source, destination, draggableId, combine } = result;
+    if (typeof window !== "undefined") window.__lastNavDrag = result;
     setDragHoverFolder(null);
     const state = navState();
 
@@ -474,6 +475,7 @@ function LayoutContent({ children }) {
 
   // Live drag-hover over a folder pill → ring highlight + auto-open flyout.
   const handleNavDragUpdate = (update) => {
+    if (typeof window !== "undefined") window.__lastNavDragUpdate = update;
     const target = update?.combine?.draggableId ? String(update.combine.draggableId) : "";
     const id = isFolderToken(target) ? tokenFolderId(target)
       : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
