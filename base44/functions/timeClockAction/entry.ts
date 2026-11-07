@@ -3877,17 +3877,21 @@ Deno.serve(async (req) => {
 
     if (action === 'status') {
       const isManagerSession = actor.role === 'admin';
-      const unresolvedPunchReview = isManagerSession ? await unresolvedPunchReviewSummary({
-        entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
-      }) : null;
-      const correctedShiftReview = isManagerSession ? await correctedShiftReviewSummary({
-        entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
-      }) : null;
-      let promptActiveEntry: any = null;
-      if (state.status === 'clocked_in' && state.active_entry_id) {
-        promptActiveEntry = await entryEntity.get(state.active_entry_id).catch(() => null);
-        if (promptActiveEntry?.status !== 'clocked_in' || asEmail(promptActiveEntry?.user_email) !== target.email) promptActiveEntry = null;
-      }
+      // Independent reads run together — this is the hottest action in the app
+      // and each sequential entity call costs a full service round trip.
+      const [unresolvedPunchReview, correctedShiftReview, promptActiveEntryRow] = await Promise.all([
+        isManagerSession ? unresolvedPunchReviewSummary({
+          entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
+        }) : Promise.resolve(null),
+        isManagerSession ? correctedShiftReviewSummary({
+          entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
+        }) : Promise.resolve(null),
+        state.status === 'clocked_in' && state.active_entry_id
+          ? entryEntity.get(state.active_entry_id).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      let promptActiveEntry: any = promptActiveEntryRow;
+      if (promptActiveEntry?.status !== 'clocked_in' || asEmail(promptActiveEntry?.user_email) !== target.email) promptActiveEntry = null;
       const workDayPrompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now(), activeEntry: promptActiveEntry });
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
@@ -3895,20 +3899,23 @@ Deno.serve(async (req) => {
         ...(workDayPrompt ? { work_day_prompt: workDayPrompt } : {}),
       };
       if (state.status === 'clocked_in' && state.active_entry_id) {
-        const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+        // The active entry was already fetched for the prompt check above.
+        const entry = promptActiveEntryRow;
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
         const currentBreakStatus = breakStatusOf(state);
         const currentWorkPauseStatus = workPauseStatusOf(state);
         const currentLaborStatus = laborStatusOf(state);
-        const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
-        const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        const [activeBreak, activeWorkPause, breakSummary, workPauseSummary, laborSummary] = await Promise.all([
+          state.active_break_id ? breakEntity.get(state.active_break_id).catch(() => null) : Promise.resolve(null),
+          state.active_work_pause_id ? workPauseEntity.get(state.active_work_pause_id).catch(() => null) : Promise.resolve(null),
+          breakSummaryForEntry(breakEntity, entry.id, target.email),
+          workPauseSummaryForEntry(workPauseEntity, entry.id, target.email),
+          laborSummaryForEntry(laborEntity, entry.id, target.email),
+        ]);
         const safeActiveBreak = activeBreak?.id && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
         const safeActiveWorkPause = activeWorkPause?.id && asEmail(activeWorkPause.user_email) === target.email && activeWorkPause.time_entry_id === entry.id ? activeWorkPause : null;
-        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
-        const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
-        const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
 
         const shiftSubtransition = ['starting_break', 'ending_break'].includes(currentBreakStatus)
           ? {
@@ -8453,6 +8460,19 @@ Deno.serve(async (req) => {
       );
       if (!upd || upd.updated !== 1) {
         return Response.json({ success: false, retry_same_request: true, error: 'The work-day group changed while saving. Retry this request.' }, { status: 409 });
+      }
+      // The split pair is still a valid prompt cluster (one group + one loose
+      // member), so without this stamp the dialog would re-ask immediately.
+      // Best-effort: if it loses the race the employee just sees one prompt.
+      const refreshed = await entryEntity.get(entry.id).catch(() => null);
+      if (refreshed?.id) {
+        const reprompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now() }).catch(() => null);
+        if (reprompt?.signature && Array.isArray(reprompt.entries) && reprompt.entries.some((row: any) => String(row?.id) === refreshed.id)) {
+          await entryEntity.updateMany(
+            { id: refreshed.id, updated_date: refreshed.updated_date, user_email: target.email },
+            { $set: { work_day_declined_signature: reprompt.signature } },
+          ).catch(() => null);
+        }
       }
       await ensureUserActionAudit(auditEntity, {
         action: 'work_day_decision', outcome: 'declined',
