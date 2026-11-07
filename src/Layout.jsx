@@ -357,6 +357,7 @@ function LayoutContent({ children }) {
 
   const [navMenu, setNavMenu] = useState(null);   // {x,y,kind:'bar'|'folder'|'page', folderId?, url?}
   const [navEditor, setNavEditor] = useState(null); // {mode:'folder'|'page', isNew?, folderId?, url?}
+  const [dragHoverFolder, setDragHoverFolder] = useState(null);
 
   const persistNavState = useCallback((order, folders) => {
     setNavOrder(order);
@@ -402,11 +403,27 @@ function LayoutContent({ children }) {
   );
 
   const handleNavReorder = (result) => {
-    const { source, destination, draggableId } = result;
+    const { source, destination, draggableId, combine } = result;
+    setDragHoverFolder(null);
+    const state = navState();
+
+    // Combine drop: a page released on a folder pill/group header joins that
+    // folder (bar droppables run isCombineEnabled). Non-folder combines are
+    // page-on-page — ignored so reorder-by-position stays the only page op.
+    if (combine) {
+      const target = String(combine.draggableId || "");
+      const folderId = isFolderToken(target) ? tokenFolderId(target)
+        : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
+      if (!folderId) return;
+      const url = pageUrlFromDraggable(draggableId);
+      if (!url) return;
+      const next = movePageToFolder(state, url, folderId);
+      persistNavState(mergeHiddenTail(next.order), next.folders);
+      return;
+    }
     if (!destination) return;
     const destId = destination.droppableId;
     const srcId = source.droppableId;
-    const state = navState();
 
     // Folder pill drag — only a top-level reorder is legal (no folder nesting).
     if (isFolderToken(draggableId) || draggableId.startsWith("sfolder:")) {
@@ -418,25 +435,15 @@ function LayoutContent({ children }) {
       const [moved] = entries.splice(from, 1);
       entries.splice(destination.index, 0, moved);
       const order = entriesToOrder(entries);
-      persistNavState([...order, ...hiddenTail()], effectiveFolders);
+      persistNavState(mergeHiddenTail(order), effectiveFolders);
       return;
     }
 
     const url = pageUrlFromDraggable(draggableId);
     if (!url) return;
 
-    // Drop onto a folder pill / group header → append into that folder.
-    const pillDest = destId.startsWith("folder-drop:") || destId.startsWith("side-folder:")
-      ? destId.slice(destId.indexOf(":") + 1) : null;
-    if (pillDest) {
-      if (srcId === destId) return;
-      const next = movePageToFolder(state, url, pillDest);
-      persistNavState(mergeHiddenTail(next.order), next.folders);
-      return;
-    }
-
     // Drop into an open folder list → insert at index (also within-folder reorder).
-    const listDest = destId.startsWith("folder-list:") || destId.startsWith("side-folder-list:")
+    const listDest = destId.startsWith("folder-list:")
       ? destId.slice(destId.indexOf(":") + 1) : null;
     if (listDest) {
       const folder = effectiveFolders.find((f) => f.id === listDest);
@@ -463,6 +470,14 @@ function LayoutContent({ children }) {
         persistNavState(mergeHiddenTail(entriesToOrder(entries)), next.folders);
       }
     }
+  };
+
+  // Live drag-hover over a folder pill → ring highlight + auto-open flyout.
+  const handleNavDragUpdate = (update) => {
+    const target = update?.combine?.draggableId ? String(update.combine.draggableId) : "";
+    const id = isFolderToken(target) ? tokenFolderId(target)
+      : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
+    setDragHoverFolder(id);
   };
 
   // Hidden pages keep their tail slot in the saved order.
@@ -1411,8 +1426,8 @@ function LayoutContent({ children }) {
               className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}
               onContextMenu={handleBarContextMenu}
             >
-              <DragDropContext onDragEnd={handleNavReorder}>
-                <Droppable droppableId="page-nav-side" direction="vertical">
+              <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate}>
+                <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
                   {(provided) => (
                     <div
                       ref={provided.innerRef}
@@ -1440,7 +1455,6 @@ function LayoutContent({ children }) {
                                     activePath={location.pathname}
                                     isInSplitUrl={isInSplitView}
                                     onNavigate={handleNavClick}
-                                    folderId={folder.id}
                                     accent={folder.color}
                                     stylePreset={folder.style}
                                     onContextMenuGroup={({ x, y }) =>
@@ -1605,8 +1619,8 @@ function LayoutContent({ children }) {
                   onContextMenu={handleBarContextMenu}
                   className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
-                  <DragDropContext onDragEnd={handleNavReorder}>
-                    <Droppable droppableId="page-nav-top" direction="horizontal">
+                  <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate}>
+                    <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
                       {(provided) => (
                         <div
                           ref={provided.innerRef}
@@ -1625,35 +1639,25 @@ function LayoutContent({ children }) {
                                       {...dragProvided.draggableProps}
                                       {...dragProvided.dragHandleProps}
                                       style={dragProvided.draggableProps.style}
+                                      className={`rounded-lg ${dragHoverFolder === folder.id ? "ring-2 ring-violet-400" : ""}`}
                                     >
-                                      <Droppable droppableId={`folder-drop:${folder.id}`}>
-                                        {(dropProvided, dropSnapshot) => (
-                                          <div
-                                            ref={dropProvided.innerRef}
-                                            {...dropProvided.droppableProps}
-                                            className={`rounded-lg ${dropSnapshot.isDraggingOver ? "ring-2 ring-violet-400" : ""}`}
-                                          >
-                                            <NavFlyoutMenu
-                                              label={folder.name}
-                                              icon={FolderIcon}
-                                              accent={folder.color}
-                                              stylePreset={folder.style}
-                                              folderId={folder.id}
-                                              items={folderItems(folder)}
-                                              compactView={compactView}
-                                              activePath={location.pathname}
-                                              isInSplitUrl={isInSplitView}
-                                              onNavigate={handleNavClick}
-                                              forceOpen={dropSnapshot.isDraggingOver}
-                                              onContextMenuPill={({ x, y }) =>
-                                                setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
-                                              onContextMenuItem={(item, { x, y }) =>
-                                                setNavMenu({ x, y, kind: "page", url: item.url })}
-                                            />
-                                            {dropProvided.placeholder}
-                                          </div>
-                                        )}
-                                      </Droppable>
+                                      <NavFlyoutMenu
+                                        label={folder.name}
+                                        icon={FolderIcon}
+                                        accent={folder.color}
+                                        stylePreset={folder.style}
+                                        folderId={folder.id}
+                                        items={folderItems(folder)}
+                                        compactView={compactView}
+                                        activePath={location.pathname}
+                                        isInSplitUrl={isInSplitView}
+                                        onNavigate={handleNavClick}
+                                        forceOpen={dragHoverFolder === folder.id}
+                                        onContextMenuPill={({ x, y }) =>
+                                          setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                        onContextMenuItem={(item, { x, y }) =>
+                                          setNavMenu({ x, y, kind: "page", url: item.url })}
+                                      />
                                     </div>
                                   )}
                                 </Draggable>
