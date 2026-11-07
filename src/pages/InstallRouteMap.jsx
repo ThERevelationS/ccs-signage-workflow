@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { createPageUrl } from "@/utils";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
@@ -68,7 +69,7 @@ export default function InstallRouteMap() {
       next.forEach((s, i) => {
         const want = i + 1;
         if (Number(s.wo.install_route_order) !== want) {
-          writes.push(base44.entities.WorkOrder.update(s.wo.id, { install_route_order: want }));
+          writes.push(staffEntities.WorkOrder.updateMany({ id: s.wo.id, updated_date: s.wo.updated_date }, { $set: { install_route_order: want } }));
         }
       });
       if (writes.length) await Promise.all(writes);
