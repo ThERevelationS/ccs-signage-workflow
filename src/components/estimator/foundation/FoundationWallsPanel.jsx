@@ -151,14 +151,21 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}>
+        <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}
+          aria-expanded={showEditor}
+          aria-invalid={pricingIssues.some(i => i.field === "shape") || undefined}
+          aria-describedby={pricingIssues.some(i => i.field === "shape") ? `wall-${index}-pricing` : undefined}>
           <PenLine className="w-4 h-4" aria-hidden="true" /> {showEditor ? "Hide outline" : "Wall outline"}
         </Button>
-        {!wall.shape?.segments?.length && (
+        {pricingIssues.some(i => i.field === "shape") ? (
+          <span className="text-xs text-amber-600">
+            Outline geometry needs repair before repricing - see diagnostics above.
+          </span>
+        ) : !wall.shape?.segments?.length ? (
           <span className="text-xs text-amber-600">
             No outline yet - draw the wall footprint before estimating quantities.
           </span>
-        )}
+        ) : null}
       </div>
 
       {showEditor && (
