@@ -1,5 +1,17 @@
 import { traceDelay } from './smartsheetTraceContext.ts';
 
+// Per-isolate entity-call counters. Every asServiceRole entity call wrapped by
+// this module increments these; module state persists across warm invocations
+// on the same isolate, so functions can read the delta across one invocation
+// (calls-per-action) and the load harness can sample the aggregate spend.
+const isolateEntityStats = {
+  calls: 0,        // total entity API attempts (incl. retries)
+  retries: 0,      // attempts that were 429 retries (not new logical calls)
+  paced_waits: 0,  // times a caller waited on the paceMs queue
+  since: new Date().toISOString(),
+};
+export function entityCallIsolateStats() { return { ...isolateEntityStats }; }
+
 // Base44's own database API also rate-limits ("Rate limit exceeded"). Retry those
 // calls with backoff so one burst does not skip a whole sync stage.
 // maxRetries defaults to the historical 5 so background callers are unchanged;
@@ -26,7 +38,9 @@ export function withEntityRateLimitRetry(client: any, { paceMs = 0, maxRetries =
       if (typeof value !== 'function') return value;
       return async (...args: any[]) => {
         for (let attempt = 0; ; attempt++) {
-          if (paceMs) await reserveRequest();
+          if (paceMs) { isolateEntityStats.paced_waits++; await reserveRequest(); }
+          isolateEntityStats.calls++;
+          if (attempt > 0) isolateEntityStats.retries++;
           try { return await value.apply(target, args); }
           catch (e) {
             if (!isLimited(e)) throw e;
