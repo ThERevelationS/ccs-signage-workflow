@@ -37,6 +37,13 @@ export function foundationItemInputIssues(item, index = 0) {
   if (type !== "spread_foot" && type !== "pillar") {
     add("foundation_type", "foundation_type_invalid", "select Spread Footing or Pillar / Caisson.");
   }
+  // A recorded excavation method must name a real method — anything else the
+  // ported math silently prices on the equipment branch.
+  if (record.excavation_method !== undefined && record.excavation_method !== null && record.excavation_method !== ""
+    && record.excavation_method !== "hand_dig" && record.excavation_method !== "equipment_excavation") {
+    add("excavation_method", "foundation_excavation_method_invalid",
+      "select a supported excavation method (Hand dig or Equipment).");
+  }
   const count = record.quantity ?? 1;
   const quantity = inputNumber(count);
   if (!positiveWholeNumber(count)) {
@@ -160,9 +167,51 @@ export function signageCabinetsInputIssues(cabinets = []) {
 export function foundationProjectInputIssues(project) {
   const items = project?.items ?? [];
   if (!Array.isArray(items)) throw new Error("Foundation items must be an array.");
+  // The project default excavation method merges into every item without its
+  // own — a recorded value outside the enum silently priced as equipment. The
+  // project-level issue names the broken default, and every item inheriting
+  // it is held like a recorded-invalid method (its effective method cannot
+  // price a real branch).
+  const projectIssues = [];
+  const method = project?.excavation_method;
+  const projectMethodInvalid = method !== undefined && method !== null && method !== ""
+    && method !== "hand_dig" && method !== "equipment_excavation";
+  if (projectMethodInvalid) {
+    projectIssues.push({
+      kind: "foundation", index: null, componentId: null,
+      field: "excavation_method", code: "foundation_excavation_method_invalid",
+      message: "Project: select a supported default excavation method (Hand dig or Equipment).",
+    });
+  }
+  // A recorded landscape design that is not a record (string/number/array)
+  // slid past the materials scan as a silent $0 and persisted verbatim — it
+  // is unavailable, not free.
+  const landscape = project?.landscape;
+  const landscapeIssues = landscape !== undefined && landscape !== null
+    && (typeof landscape !== "object" || Array.isArray(landscape))
+    ? [{
+        kind: "landscape", index: null, componentId: null, field: "landscape",
+        code: "landscape_unavailable",
+        message: "Landscape: the recorded site design is malformed — repair or clear it before repricing.",
+      }]
+    : landscapeInputIssues(landscape);
   return [
-    ...items.flatMap((item, index) => foundationItemInputIssues(item, index)),
+    ...items.flatMap((item, index) => {
+      const itemIssues = foundationItemInputIssues(item, index);
+      // An item that inherits an invalid project default cannot price a real
+      // branch — hold it like a recorded-invalid method.
+      if (projectMethodInvalid
+        && (item?.excavation_method === undefined || item?.excavation_method === null || item?.excavation_method === "")) {
+        itemIssues.push({
+          kind: "foundation", index, componentId: item?.component_id ?? null,
+          field: "excavation_method", code: "foundation_excavation_method_invalid",
+          message: `Foundation ${index + 1}: inherits the invalid project default excavation method — fix the project default or pick a method on this item.`,
+        });
+      }
+      return itemIssues;
+    }),
+    ...projectIssues,
     ...signageCabinetsInputIssues(project?.signage_cabinets || []),
-    ...landscapeInputIssues(project?.landscape),
+    ...landscapeIssues,
   ];
 }
