@@ -6,40 +6,68 @@
  * Do not "improve" these formulas — they must stay identical to SignEstimate Pro.
  * `settings` is the Settings entity key/value map; `inventory` is FoundationInventory
  * rows plus concrete suppliers normalized out of LaborServiceInventory.
+ *
+ * Supplier-catalog availability hardening: every catalog price the ready-mix
+ * truck math consumes — the selected mix, the selected admixtures, the
+ * small-load brackets the trucks fall into, and the per-truck fuel surcharge —
+ * must be a recorded finite, nonnegative number. The ported `??` fallbacks
+ * guessed retail prices for unpriced suppliers and `settings[key] || def`
+ * overrode an explicit 0 rate, so unpriced/invalid catalog values now hold the
+ * acknowledged delivery snapshot and are reported instead of laundered into
+ * plausible-looking wrong amounts that persist into totals. Only values the
+ * ported math actually consumes are checked — an unselected mix, an unneeded
+ * small-load bracket, or a zero-yard delivery never triggers a hold.
  */
 
+// Supplier catalog price basis: a recorded finite, nonnegative price — an
+// explicit 0 is a legitimate free price. Missing, malformed, negative, or
+// non-finite catalog values are unavailable, never guessed.
+const supplierPriceNumber = (value) => {
+  if (typeof value !== "number" && (typeof value !== "string"
+    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+};
+
+// Catalog price reads normalize on this calculation copy only — authored
+// inventory rows are never mutated. A null price means "not cataloged"; the
+// `field` key names the supplier column a diagnostic points at.
 export const getConcreteMixes = (invItem) => [
-  { id: '3500_ae', name: '3500 AIR ENTRAINED (AE)', price: invItem?.mix_3500_price ?? 195.40, desc: 'Often used for driveways, slabs, and moderate-load footings.' },
-  { id: '4000_ae', name: '4000 AIR ENTRAINED (AE)', price: invItem?.mix_4000_price ?? 201.00, desc: 'STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability.' },
-  { id: '4500_ae', name: '4500 AIR ENTRAINED (AE)', price: invItem?.mix_4500_price ?? 208.70, desc: 'Used for heavy-duty commercial slabs and heavy traffic areas.' },
-  { id: '5000_ae', name: '5000 AIR ENTRAINED (AE)', price: invItem?.mix_5000_price ?? 214.60, desc: 'High-strength mix for heavy structural columns, pillars, and extreme load conditions.' },
-  { id: 'fast_set', name: 'FAST SET', price: invItem?.mix_fast_set_price ?? 248.00, desc: 'Quick-curing concrete used when rapid strength gain is needed to minimize downtime.' },
+  { id: '3500_ae', name: '3500 AIR ENTRAINED (AE)', price: supplierPriceNumber(invItem?.mix_3500_price), field: 'mix_3500_price', desc: 'Often used for driveways, slabs, and moderate-load footings.' },
+  { id: '4000_ae', name: '4000 AIR ENTRAINED (AE)', price: supplierPriceNumber(invItem?.mix_4000_price), field: 'mix_4000_price', desc: 'STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability.' },
+  { id: '4500_ae', name: '4500 AIR ENTRAINED (AE)', price: supplierPriceNumber(invItem?.mix_4500_price), field: 'mix_4500_price', desc: 'Used for heavy-duty commercial slabs and heavy traffic areas.' },
+  { id: '5000_ae', name: '5000 AIR ENTRAINED (AE)', price: supplierPriceNumber(invItem?.mix_5000_price), field: 'mix_5000_price', desc: 'High-strength mix for heavy structural columns, pillars, and extreme load conditions.' },
+  { id: 'fast_set', name: 'FAST SET', price: supplierPriceNumber(invItem?.mix_fast_set_price), field: 'mix_fast_set_price', desc: 'Quick-curing concrete used when rapid strength gain is needed to minimize downtime.' },
 ];
 
 export const getConcreteAdmixtures = (invItem) => [
-  { id: 'calcium_chloride', name: 'Calcium Chloride', price: invItem?.admix_calcium_chloride_price ?? 8.50, desc: 'Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn\'t freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!' },
-  { id: 'set_retarding', name: 'Set-Retarding Admix (Type D)', price: invItem?.admix_set_retarding_price ?? 4.50, desc: 'Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site.' },
-  { id: 'water_reducing', name: 'Water-Reducing Admix (Type A)', price: invItem?.admix_water_reducing_price ?? 4.25, desc: 'Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar.' },
-  { id: 'fibers', name: 'Fibers', price: invItem?.admix_fibers_price ?? 12.50, desc: 'Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse.' },
-  { id: 'winter_service', name: 'Winter Service', price: invItem?.admix_winter_service_price ?? 5.50, desc: 'A fee the plant charges to use hot water so the mix doesn\'t freeze. SELECT THIS always during winter months when temperatures are freezing.' },
+  { id: 'calcium_chloride', name: 'Calcium Chloride', price: supplierPriceNumber(invItem?.admix_calcium_chloride_price), field: 'admix_calcium_chloride_price', desc: 'Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn\'t freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!' },
+  { id: 'set_retarding', name: 'Set-Retarding Admix (Type D)', price: supplierPriceNumber(invItem?.admix_set_retarding_price), field: 'admix_set_retarding_price', desc: 'Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site.' },
+  { id: 'water_reducing', name: 'Water-Reducing Admix (Type A)', price: supplierPriceNumber(invItem?.admix_water_reducing_price), field: 'admix_water_reducing_price', desc: 'Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar.' },
+  { id: 'fibers', name: 'Fibers', price: supplierPriceNumber(invItem?.admix_fibers_price), field: 'admix_fibers_price', desc: 'Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse.' },
+  { id: 'winter_service', name: 'Winter Service', price: supplierPriceNumber(invItem?.admix_winter_service_price), field: 'admix_winter_service_price', desc: 'A fee the plant charges to use hot water so the mix doesn\'t freeze. SELECT THIS always during winter months when temperatures are freezing.' },
 ];
 
-// Get the small load fee for a given number of yards based on supplier bracket pricing
+// Get the small load fee for a given number of yards based on supplier bracket pricing.
+// >= 5 yards has no fee by formula; smaller brackets return null when the
+// supplier has not cataloged a fee for the consumed bracket.
 export const getSmallLoadFee = (yards, invItem) => {
   if (yards >= 5) return 0;
-  if (yards >= 4.5) return invItem?.small_load_fee_4_5_4_75 ?? 40;
-  if (yards >= 4) return invItem?.small_load_fee_4_4_25 ?? 80;
-  if (yards >= 3) return invItem?.small_load_fee_3_3_75 ?? 105;
-  if (yards >= 2) return invItem?.small_load_fee_2_2_75 ?? 120;
-  if (yards >= 1) return invItem?.small_load_fee_1_1_75 ?? 150;
-  return invItem?.small_load_fee_1_1_75 ?? 150; // under 1 yd still gets the smallest bracket fee
+  if (yards >= 4.5) return supplierPriceNumber(invItem?.small_load_fee_4_5_4_75);
+  if (yards >= 4) return supplierPriceNumber(invItem?.small_load_fee_4_4_25);
+  if (yards >= 3) return supplierPriceNumber(invItem?.small_load_fee_3_3_75);
+  if (yards >= 2) return supplierPriceNumber(invItem?.small_load_fee_2_2_75);
+  if (yards >= 1) return supplierPriceNumber(invItem?.small_load_fee_1_1_75);
+  return supplierPriceNumber(invItem?.small_load_fee_1_1_75); // under 1 yd still gets the smallest bracket fee
 };
 
 export const getFuelSurcharge = (invItem) => {
-  return invItem?.fuel_surcharge ?? 30;
+  return supplierPriceNumber(invItem?.fuel_surcharge);
 };
 
-/** Normalize a LaborServiceInventory concrete supplier into the shape this math expects. */
+/** Normalize a LaborServiceInventory concrete supplier into the shape this math expects.
+ *  Supplier-catalog price fields keep null for "not authored" — the ported
+ *  `|| 0` laundered a missing catalog price into a fabricated free price. */
 export const normalizeConcreteSupplier = (row) => ({
   id: row.id,
   material_name: row.service_name,
@@ -51,28 +79,30 @@ export const normalizeConcreteSupplier = (row) => ({
   minimum_order_yards: row.minimum_order_yards || 0,
   below_minimum_cost_per_cy: row.below_minimum_cost_per_cy || 0,
   minimum_cost: row.minimum_charge || 0,
-  mix_3500_price: row.mix_3500_price || 0,
-  mix_4000_price: row.mix_4000_price || 0,
-  mix_4500_price: row.mix_4500_price || 0,
-  mix_5000_price: row.mix_5000_price || 0,
-  mix_fast_set_price: row.mix_fast_set_price || 0,
-  admix_calcium_chloride_price: row.admix_calcium_chloride_price || 0,
-  admix_set_retarding_price: row.admix_set_retarding_price || 0,
-  admix_water_reducing_price: row.admix_water_reducing_price || 0,
-  admix_fibers_price: row.admix_fibers_price || 0,
-  admix_winter_service_price: row.admix_winter_service_price || 0,
-  small_load_fee_1_1_75: row.small_load_fee_1_1_75 || 0,
-  small_load_fee_2_2_75: row.small_load_fee_2_2_75 || 0,
-  small_load_fee_3_3_75: row.small_load_fee_3_3_75 || 0,
-  small_load_fee_4_4_25: row.small_load_fee_4_4_25 || 0,
-  small_load_fee_4_5_4_75: row.small_load_fee_4_5_4_75 || 0,
-  fuel_surcharge: row.fuel_surcharge || 0,
+  mix_3500_price: row.mix_3500_price ?? null,
+  mix_4000_price: row.mix_4000_price ?? null,
+  mix_4500_price: row.mix_4500_price ?? null,
+  mix_5000_price: row.mix_5000_price ?? null,
+  mix_fast_set_price: row.mix_fast_set_price ?? null,
+  admix_calcium_chloride_price: row.admix_calcium_chloride_price ?? null,
+  admix_set_retarding_price: row.admix_set_retarding_price ?? null,
+  admix_water_reducing_price: row.admix_water_reducing_price ?? null,
+  admix_fibers_price: row.admix_fibers_price ?? null,
+  admix_winter_service_price: row.admix_winter_service_price ?? null,
+  small_load_fee_1_1_75: row.small_load_fee_1_1_75 ?? null,
+  small_load_fee_2_2_75: row.small_load_fee_2_2_75 ?? null,
+  small_load_fee_3_3_75: row.small_load_fee_3_3_75 ?? null,
+  small_load_fee_4_4_25: row.small_load_fee_4_4_25 ?? null,
+  small_load_fee_4_5_4_75: row.small_load_fee_4_5_4_75 ?? null,
+  fuel_surcharge: row.fuel_surcharge ?? null,
   show_in_foundation: row.show_in_foundation !== false,
   _source: "labor_services",
 });
 
 export const calcItemCost = (item, inventory = [], settings = {}) => {
-  const getSetting = (key, def) => parseFloat(settings[key] || def);
+  // Explicit-0-respecting setting pick (same semantics as pole/wallSettingValue):
+  // a recorded 0 rate is legitimate; absent/blank keeps the ported default.
+  const getSetting = (key, def) => parseFloat(settings[key] === 0 ? 0 : settings[key] || def);
 
   const selectedConcrete = inventory.find(c => c.id === item.selected_concrete_id);
   const conc_cost = item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== undefined
@@ -257,6 +287,15 @@ export const calcItemCost = (item, inventory = [], settings = {}) => {
 /**
  * Project-level concrete delivery math: 9-yard trucks, quarter-yard rounding,
  * small-load fee bracket + fuel surcharge per truck, plus $100 per new sign location stop.
+ * (The $100 per-location stop charge is an authored constant of the ported
+ * formula — it has no catalog/settings source and always resolves.)
+ *
+ * When yards actually ship, every consumed supplier-catalog price must be a
+ * recorded finite, nonnegative number — an explicit 0 is a legitimate free
+ * price, but the ported `??` guesses laundered unpriced suppliers into
+ * plausible-looking retail amounts. Consumption mirrors the ported math
+ * exactly: a mix/admixture the project did not select and a small-load bracket
+ * no truck falls into are never checked.
  */
 export const calcConcreteDelivery = (project, items = [], inventory = []) => {
   const concreteServiceItems = items.filter((item) => {
@@ -272,7 +311,64 @@ export const calcConcreteDelivery = (project, items = [], inventory = []) => {
   const availableMixes = getConcreteMixes(firstConcreteInv);
   const availableAdmixes = getConcreteAdmixtures(firstConcreteInv);
 
+  const issues = [];
+  const add = (field, code, message) => issues.push({
+    kind: "concrete_delivery", index: null, componentId: null, field,
+    inventoryId: firstConcreteInv?.id ?? null, code,
+    message: `Concrete delivery: ${message}.`,
+  });
+
   const mix = availableMixes.find(m => m.id === project.project_concrete_type) || availableMixes.find(m => m.id === '4000_ae');
+
+  if (roundedYards > 0) {
+    if (firstConcreteInv === null) {
+      add("selected_concrete_id", "supplier_unavailable",
+        "no ready-mix concrete supplier is assigned — select a supplier with catalog prices before repricing");
+    } else {
+      if (project.project_concrete_type && !availableMixes.some(m => m.id === project.project_concrete_type)) {
+        add("project_concrete_type", "supplier_price_unavailable",
+          "the saved mix selection is not in the supplier catalog — pick a listed mix before repricing");
+      }
+      if (!mix || supplierPriceNumber(mix.price) === null) {
+        add(mix?.field || "mix_price", "supplier_price_unavailable",
+          `record a finite, nonnegative ${mix?.name || "selected mix"} price on the concrete supplier before repricing`);
+      }
+      for (const admixId of project.project_concrete_admixtures || []) {
+        const admix = availableAdmixes.find(x => x.id === admixId);
+        if (!admix) {
+          add("project_concrete_admixtures", "supplier_price_unavailable",
+            "the saved admixture selection is not in the supplier catalog — pick a listed admixture before repricing");
+        } else if (supplierPriceNumber(admix.price) === null) {
+          add(admix.field || "admix_price", "supplier_price_unavailable",
+            `record a finite, nonnegative ${admix.name} price on the concrete supplier before repricing`);
+        }
+      }
+      if (supplierPriceNumber(firstConcreteInv.fuel_surcharge) === null) {
+        add("fuel_surcharge", "supplier_price_unavailable",
+          "record a finite, nonnegative fuel surcharge on the concrete supplier before repricing");
+      }
+      let scanYards = roundedYards;
+      while (scanYards > 0) {
+        const truckYards = Math.min(scanYards, 9);
+        scanYards -= truckYards;
+        const roundedTruckYards = Math.ceil(truckYards * 4) / 4;
+        if (getSmallLoadFee(roundedTruckYards, firstConcreteInv) === null) {
+          add("small_load_fee", "supplier_price_unavailable",
+            `record a finite, nonnegative small-load fee for the ${roundedTruckYards} CY truck bracket on the concrete supplier before repricing`);
+          break; // one issue covers every unpriced bracket this delivery consumes
+        }
+      }
+    }
+  }
+
+  if (issues.length) {
+    return {
+      pricingUnavailable: true, issues, concreteTotal: null, roundedYards,
+      ratePerYard: null, trucksList: [], additionalStopsCost: null,
+      availableMixes, availableAdmixes,
+    };
+  }
+
   const mixPrice = mix ? mix.price : 201;
 
   const admixPrice = (project.project_concrete_admixtures || []).reduce((sum, admixId) => {
@@ -306,5 +402,5 @@ export const calcConcreteDelivery = (project, items = [], inventory = []) => {
   const additionalStopsCost = newSignLocationsCount * 100;
   concreteTotal += additionalStopsCost;
 
-  return { concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
+  return { issues, concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
 };
