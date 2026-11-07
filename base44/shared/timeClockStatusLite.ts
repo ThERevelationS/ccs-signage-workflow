@@ -51,8 +51,10 @@ export async function buildStatusLite({ stateEntity, entryEntity, breakEntity, w
   if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== asEmail(target.email) ||
       entry.archived_test_data || entry.archived_admin) return FULL;
 
-  const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
-  const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+  const [activeBreak, activeWorkPause] = await Promise.all([
+    state.active_break_id ? breakEntity.get(state.active_break_id).catch(() => null) : Promise.resolve(null),
+    state.active_work_pause_id ? workPauseEntity.get(state.active_work_pause_id).catch(() => null) : Promise.resolve(null),
+  ]);
 
   if (currentBreakStatus === 'on_break') {
     if (!activeBreak?.id || activeBreak.status !== 'active' || asEmail(activeBreak.user_email) !== asEmail(target.email) ||
@@ -74,8 +76,10 @@ export async function buildStatusLite({ stateEntity, entryEntity, breakEntity, w
     (serverNow.getTime() - clockInMs) >= MISSED_PUNCH_PROMPT_MS && !acknowledgementFresh;
   if (requiresPunchResolution) return FULL;
 
-  const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
-  const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+  const [breakSummary, workPauseSummary] = await Promise.all([
+    breakSummaryForEntry(breakEntity, entry.id, target.email),
+    workPauseSummaryForEntry(workPauseEntity, entry.id, target.email),
+  ]);
 
   return {
     success: true, lite: true, status: 'clocked_in', entry, user: publicEmployee(target),
