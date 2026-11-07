@@ -1,6 +1,11 @@
 // Ported verbatim from SignEstimate Pro (src/utils/wallCalculator.js).
 // Do not re-derive this math — outer wall + optional internal (fill) wall
 // brick counts, mortar bags, labor and totals.
+//
+// Residual-input hardening: a malformed mortar gap, override quantity/rate, or
+// wall labor setting is not a free or negative wall — the row is held with its
+// acknowledged snapshot amounts and reported instead of silently repricing to
+// $0 or producing negative/NaN quantities.
 
 const wallSettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
 
@@ -49,7 +54,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     laborCost = minCharge;
   }
 
-  const laborHours = finalBricks / (parseFloat(settings?.wall_labor_bricks_per_hour || 50));
+  const laborHours = finalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
 
   // --- Internal Wall Calculation ---
   let internalTotalBricks = 0;
@@ -64,7 +69,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     const intUnitL = internalMaterial.wall_unit_length_inches || 8;
     const intUnitW = internalMaterial.wall_unit_width_inches || 4;
     const intUnitH = internalMaterial.wall_unit_height_inches || 2.25;
-    const intMortar = intIsConcrete ? 0 : (internalMortarGapInches || 0.375);
+    const intMortar = intIsConcrete ? 0 : (internalMortarGapInches ?? 0.375);
     const intCourseH = intUnitH + intMortar;
     const intNumCourses = Math.ceil(internalWallHeightInches / intCourseH);
     const intBrickPitch = intUnitL + intMortar;
@@ -97,7 +102,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
 
     const internalLaborRatePerSqFt = wall.custom_internal_labor_rate !== undefined && wall.custom_internal_labor_rate !== null ? wall.custom_internal_labor_rate : parseFloat(wallSettingValue(settings?.wall_labor_rate, 45));
     internalLaborCost = intSurfaceAreaSqFtSingleSide * internalLaborRatePerSqFt;
-    internalLaborHours = finalInternalBricks / (parseFloat(settings?.wall_labor_bricks_per_hour || 50));
+    internalLaborHours = finalInternalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
   }
 
   return {
@@ -138,6 +143,18 @@ function wallDimensionNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : null;
 }
+
+// Missing/blank settings fall back to the module default; present values must be
+// finite nonnegative numbers (explicit 0 honored — a genuinely free rate).
+const wallSettingNumber = (value, fallback) => wallPriceNumber(wallSettingValue(value, fallback));
+// Rates that are meaningless at zero (production speed) must be finite positive.
+const wallPositiveSettingNumber = (value, fallback) => wallDimensionNumber(wallSettingValue(value, fallback));
+
+// Blank/absent mortar gaps keep the ported 3/8" default; a recorded gap must be
+// finite nonnegative — explicit 0 is a legitimate stack-bond joint.
+const WALL_MORTAR_GAP_DEFAULT = 0.375;
+const wallMortarGapNumber = (value) => value === undefined || value === null || value === ""
+  ? WALL_MORTAR_GAP_DEFAULT : wallPriceNumber(value);
 
 const wallRecord = value => !!value && typeof value === "object" && !Array.isArray(value);
 const wallPoint = point => wallRecord(point)
@@ -210,7 +227,30 @@ export function foundationWallRectangle(length, width) {
   return foundationWallOutlineBasis({ points, closed: true, segments: foundationWallSegments(points, true) }).shape;
 }
 
-function wallPricing(wall, inventory = [], index = 0) {
+const WALL_SETTING_DEFAULTS = {
+  wall_mortar_cost_per_bag: 10,
+  wall_labor_rate: 45,
+  wall_minimum_charge: 150,
+  wall_labor_bricks_per_hour: 50,
+};
+const WALL_OUTER_OVERRIDE_FIELDS = [
+  ["custom_outer_material_qty", "material quantity"],
+  ["custom_outer_labor_rate", "labor rate"],
+];
+const WALL_OUTER_MORTAR_OVERRIDE_FIELDS = [
+  ["custom_outer_mortar_qty", "mortar quantity"],
+  ["custom_outer_mortar_rate", "mortar rate"],
+];
+const WALL_INTERNAL_OVERRIDE_FIELDS = [
+  ["custom_internal_material_qty", "material quantity"],
+  ["custom_internal_labor_rate", "labor rate"],
+];
+const WALL_INTERNAL_MORTAR_OVERRIDE_FIELDS = [
+  ["custom_internal_mortar_qty", "mortar quantity"],
+  ["custom_internal_mortar_rate", "mortar rate"],
+];
+
+function wallPricing(wall, inventory = [], index = 0, settings = {}) {
   const issues = [];
   const heightInches = wallDimensionNumber(wall?.heightInches);
   const internalWallHeightInches = wall?.includeInternalWall
@@ -281,18 +321,88 @@ function wallPricing(wall, inventory = [], index = 0) {
   const internalMaterial = wall?.includeInternalWall
     ? check("internalMaterialId", "internal_wall", "Internal wall")
     : null;
-  return { issues, wallMaterial, internalMaterial, heightInches, internalWallHeightInches, wallShape: outline.shape };
+
+  // Residual-input checks mirror the pole unit: only values the ported math
+  // actually consumes are validated, each on a normalized calculation copy —
+  // authored rows and settings are never mutated. An explicit 0 override or
+  // mortar gap is legitimate; negatives/malformed values hold the wall.
+  const add = (kind, field, inventoryId, code, message) => issues.push({
+    kind, index, componentId: wall?.component_id ?? wall?.id ?? null,
+    field, inventoryId: inventoryId ?? null, code,
+    message: `${kind === "internal_wall" ? "Internal wall" : "Wall"} ${index + 1}: ${message}.`,
+  });
+  const overrideCheck = (source, fields, kind, inventoryId) => {
+    for (const [field, label] of fields) {
+      const raw = source?.[field];
+      if (raw === undefined || raw === null) continue;
+      const value = wallPriceNumber(raw);
+      if (value === null) {
+        add(kind, field, inventoryId, field + "_unavailable",
+          `record a finite, nonnegative ${label} override or clear it before repricing`);
+      } else {
+        source[field] = value;
+      }
+    }
+  };
+  const settingCheck = (key, label, positive) => {
+    const value = positive
+      ? wallPositiveSettingNumber(settings?.[key], WALL_SETTING_DEFAULTS[key])
+      : wallSettingNumber(settings?.[key], WALL_SETTING_DEFAULTS[key]);
+    if (value === null) {
+      add("wall", key, wall?.materialId, "wall_setting_unavailable",
+        `record a finite, ${positive ? "positive" : "nonnegative"} ${label} in Estimator Settings before repricing`);
+    }
+    return value;
+  };
+  const outerConcrete = wallMaterial?.wall_material_subtype === "concrete";
+  const intConcrete = internalMaterial?.wall_material_subtype === "concrete";
+  const calcWall = wall?.includeInternalWall && internalMaterial ? { ...wall } : wall;
+  let mortarGapInches = WALL_MORTAR_GAP_DEFAULT;
+  let internalMortarGapInches = WALL_MORTAR_GAP_DEFAULT;
+  if (wallMaterial) {
+    overrideCheck(wallMaterial, WALL_OUTER_OVERRIDE_FIELDS, "wall", wall?.materialId);
+    settingCheck("wall_labor_rate", "wall labor rate");
+    settingCheck("wall_minimum_charge", "wall minimum labor charge");
+    settingCheck("wall_labor_bricks_per_hour", "wall production rate", true);
+    if (!outerConcrete) {
+      mortarGapInches = wallMortarGapNumber(wall?.mortarGapInches);
+      if (mortarGapInches === null) {
+        add("wall", "mortarGapInches", wall?.materialId, "wall_mortar_gap_unavailable",
+          "record a finite, nonnegative mortar gap in inches before repricing");
+      }
+      overrideCheck(wallMaterial, WALL_OUTER_MORTAR_OVERRIDE_FIELDS, "wall", wall?.materialId);
+    }
+  }
+  if (wall?.includeInternalWall && internalMaterial) {
+    overrideCheck(calcWall, WALL_INTERNAL_OVERRIDE_FIELDS, "internal_wall", wall?.internalMaterialId);
+    if (!intConcrete) {
+      internalMortarGapInches = wallMortarGapNumber(wall?.internalMortarGapInches);
+      if (internalMortarGapInches === null) {
+        add("internal_wall", "internalMortarGapInches", wall?.internalMaterialId, "internal_wall_mortar_gap_unavailable",
+          "record a finite, nonnegative mortar gap in inches before repricing");
+      }
+      overrideCheck(calcWall, WALL_INTERNAL_MORTAR_OVERRIDE_FIELDS, "internal_wall", wall?.internalMaterialId);
+    }
+  }
+  if ((wallMaterial && !outerConcrete) || (internalMaterial && !intConcrete)) {
+    settingCheck("wall_mortar_cost_per_bag", "mortar cost per bag");
+  }
+
+  return {
+    issues, wallMaterial, internalMaterial, heightInches, internalWallHeightInches,
+    wallShape: outline.shape, calcWall, mortarGapInches, internalMortarGapInches,
+  };
 }
 
-export function foundationWallPricingIssues(wall, inventory = [], index = 0) {
-  return wallPricing(wall, inventory, index).issues;
+export function foundationWallPricingIssues(wall, inventory = [], index = 0, settings = {}) {
+  return wallPricing(wall, inventory, index, settings).issues;
 }
 
-export function foundationWallCatalogIssues(walls = [], inventory = []) {
-  return walls.flatMap((wall, index) => foundationWallPricingIssues(wall, inventory, index));
+export function foundationWallCatalogIssues(walls = [], inventory = [], settings = {}) {
+  return walls.flatMap((wall, index) => foundationWallPricingIssues(wall, inventory, index, settings));
 }
 
-export function foundationWallBomRows(walls = [], inventory = []) {
+export function foundationWallBomRows(walls = [], inventory = [], wallPricing) {
   const out = [];
   const known = value => typeof value === "number" && Number.isFinite(value);
   const quantity = value => known(value)
@@ -302,7 +412,9 @@ export function foundationWallBomRows(walls = [], inventory = []) {
   walls.forEach((wall, index) => {
     const costs = wall.calculatedCosts || {};
     const label = wall.name || `Wall ${index + 1}`;
-    const saved = foundationWallPricingIssues(wall, inventory, index).length > 0;
+    const saved = Array.isArray(wallPricing) && wallPricing[index]
+      ? wallPricing[index].available === false
+      : foundationWallPricingIssues(wall, inventory, index).length > 0;
     const nameOf = id => inventory.find(row => row.id === id)?.material_name || "Material";
     const add = (material, qty, cost) => out.push({ material, quantity: qty, cost: amount(cost), saved });
     if (saved || used(costs.totalBricks, costs.materialCost)) {
@@ -352,39 +464,46 @@ export function calcWalls(project, inventory, settings = {}, options = {}) {
       calculatedCosts: costs && typeof costs === "object" && !Array.isArray(costs) ? { ...costs } : {},
     };
   };
-  return walls.map((wall, index) => {
-    const { wallMaterial, internalMaterial, heightInches, internalWallHeightInches, wallShape, issues } = wallPricing(wall, inventory, index);
-    if (issues.length) return held(wall);
-    const costs =
-      calcWallCosts({
-        wall,
-        wallShape,
-        wallMaterial,
-        internalMaterial,
-        includeInternalWall: wall.includeInternalWall,
-        wallHeightInches: heightInches,
-        internalWallHeightInches,
-        mortarGapInches: wall.mortarGapInches ?? 0.375,
-        internalMortarGapInches: wall.internalMortarGapInches ?? 0.375,
-        settings,
-      }) || {};
-    return {
-      ...wall,
-      calculatedCosts: {
-        totalBricks: costs.finalBricks || 0,
-        materialCost: costs.materialCost || 0,
-        mortarCost: costs.mortarCost || 0,
-        laborHours: costs.laborHours || 0,
-        laborCost: costs.laborCost || 0,
-        totalCost: costs.totalCost || 0,
-        totalLinearInches: costs.totalLinearInches || 0,
-        numCourses: costs.numCourses || 0,
-        internalTotalBricks: costs.internalTotalBricks || 0,
-        internalMaterialCost: costs.internalMaterialCost || 0,
-        internalMortarCost: costs.internalMortarCost || 0,
-        internalLaborCost: costs.internalLaborCost || 0,
-        internalLaborHours: costs.internalLaborHours || 0,
-      },
-    };
-  });
+  const results = walls.map((wall, index) => wallPricing(wall, inventory, index, settings));
+  return {
+    walls: results.map((check, index) => {
+      const wall = walls[index];
+      if (check.issues.length) return held(wall);
+      const { wallMaterial, internalMaterial, heightInches, internalWallHeightInches, wallShape,
+        calcWall, mortarGapInches, internalMortarGapInches } = check;
+      const costs =
+        calcWallCosts({
+          wall: calcWall ?? wall,
+          wallShape,
+          wallMaterial,
+          internalMaterial,
+          includeInternalWall: wall.includeInternalWall,
+          wallHeightInches: heightInches,
+          internalWallHeightInches,
+          mortarGapInches,
+          internalMortarGapInches,
+          settings,
+        }) || {};
+      return {
+        ...wall,
+        calculatedCosts: {
+          // ?? keeps an accidental NaN visible instead of laundering it to $0.
+          totalBricks: costs.finalBricks ?? 0,
+          materialCost: costs.materialCost ?? 0,
+          mortarCost: costs.mortarCost ?? 0,
+          laborHours: costs.laborHours ?? 0,
+          laborCost: costs.laborCost ?? 0,
+          totalCost: costs.totalCost ?? 0,
+          totalLinearInches: costs.totalLinearInches ?? 0,
+          numCourses: costs.numCourses ?? 0,
+          internalTotalBricks: costs.internalTotalBricks ?? 0,
+          internalMaterialCost: costs.internalMaterialCost ?? 0,
+          internalMortarCost: costs.internalMortarCost ?? 0,
+          internalLaborCost: costs.internalLaborCost ?? 0,
+          internalLaborHours: costs.internalLaborHours ?? 0,
+        },
+      };
+    }),
+    wallPricing: results.map((check) => ({ available: check.issues.length === 0, issues: check.issues })),
+  };
 }
