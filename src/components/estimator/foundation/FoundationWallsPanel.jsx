@@ -7,16 +7,19 @@ import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { foundationWallPricingIssues } from "./wallCalculator";
 import WallShapeEditor from "./WallShapeEditor";
 
-const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const heightInput = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
 
-function WallRow({ wall, index, options, onChange, onRemove }) {
+function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
   const set = (changes) => onChange(index, changes);
-  const pricingIssues = foundationWallPricingIssues(wall, options, index);
-  const pricingUnavailable = pricingIssues.length > 0;
+  // Settings-aware issues arrive from calcProject; the local re-derive covers
+  // consumers that cannot supply them (no settings visibility).
+  const pricingIssues = pricing?.issues ?? foundationWallPricingIssues(wall, options, index);
+  const pricingUnavailable = pricing?.available === false || pricingIssues.length > 0;
   const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
   const [showEditor, setShowEditor] = React.useState(false);
+  const fieldIssue = (field) => pricingIssues.some((i) => i.field === field);
+  const describedBy = (field) => (fieldIssue(field) ? `wall-${index}-pricing` : undefined);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
@@ -44,8 +47,8 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
             value={wall.heightInches ?? ""}
             onChange={(e) => set({ heightInches: heightInput(e.target.value) })}
             aria-label="Wall height (in)"
-            aria-invalid={pricingIssues.some(i => i.field === "heightInches") || undefined}
-            aria-describedby={pricingIssues.some(i => i.field === "heightInches") ? `wall-${index}-pricing` : undefined}
+            aria-invalid={fieldIssue("heightInches") || undefined}
+            aria-describedby={describedBy("heightInches")}
           />
         </label>
         <label className="text-xs text-gray-500">
@@ -53,8 +56,13 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
           <Input
             type="number"
             step="0.125"
+            min="0"
             value={wall.mortarGapInches ?? 0.375}
-            onChange={(e) => set({ mortarGapInches: num(e.target.value) })}
+            placeholder="0.375"
+            onChange={(e) => set({ mortarGapInches: heightInput(e.target.value) })}
+            aria-label="Wall mortar gap (in)"
+            aria-invalid={fieldIssue("mortarGapInches") || undefined}
+            aria-describedby={describedBy("mortarGapInches")}
           />
         </label>
         <label className="text-xs text-gray-500 md:col-span-2">
@@ -63,8 +71,8 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
             className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
             value={wall.materialId || ""}
             aria-label="Wall material"
-            aria-invalid={pricingIssues.some(i => i.field === "materialId") || undefined}
-            aria-describedby={pricingIssues.some(i => i.field === "materialId") ? `wall-${index}-pricing` : undefined}
+            aria-invalid={fieldIssue("materialId") || undefined}
+            aria-describedby={describedBy("materialId")}
             onChange={(e) => set({ materialId: e.target.value })}
           >
             <option value="">Select material…</option>
@@ -100,8 +108,8 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
                 className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
                 value={wall.internalMaterialId || ""}
                 aria-label="Internal wall material"
-                aria-invalid={pricingIssues.some(i => i.field === "internalMaterialId") || undefined}
-                aria-describedby={pricingIssues.some(i => i.field === "internalMaterialId") ? `wall-${index}-pricing` : undefined}
+                aria-invalid={fieldIssue("internalMaterialId") || undefined}
+                aria-describedby={describedBy("internalMaterialId")}
                 onChange={(e) => set({ internalMaterialId: e.target.value })}
               >
                 <option value="">Select material…</option>
@@ -126,8 +134,22 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
                 value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
                 onChange={(e) => set({ internalWallHeightInches: heightInput(e.target.value) })}
                 aria-label="Internal wall height (in)"
-                aria-invalid={pricingIssues.some(i => i.field === "internalWallHeightInches") || undefined}
-                aria-describedby={pricingIssues.some(i => i.field === "internalWallHeightInches") ? `wall-${index}-pricing` : undefined}
+                aria-invalid={fieldIssue("internalWallHeightInches") || undefined}
+                aria-describedby={describedBy("internalWallHeightInches")}
+              />
+            </label>
+            <label className="text-xs text-gray-500">
+              Fill mortar gap (in)
+              <Input
+                type="number"
+                step="0.125"
+                min="0"
+                value={wall.internalMortarGapInches ?? 0.375}
+                placeholder="0.375"
+                onChange={(e) => set({ internalMortarGapInches: heightInput(e.target.value) })}
+                aria-label="Internal wall mortar gap (in)"
+                aria-invalid={fieldIssue("internalMortarGapInches") || undefined}
+                aria-describedby={describedBy("internalMortarGapInches")}
               />
             </label>
           </div>
@@ -153,11 +175,11 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}
           aria-expanded={showEditor}
-          aria-invalid={pricingIssues.some(i => i.field === "shape") || undefined}
-          aria-describedby={pricingIssues.some(i => i.field === "shape") ? `wall-${index}-pricing` : undefined}>
+          aria-invalid={fieldIssue("shape") || undefined}
+          aria-describedby={describedBy("shape")}>
           <PenLine className="w-4 h-4" aria-hidden="true" /> {showEditor ? "Hide outline" : "Wall outline"}
         </Button>
-        {pricingIssues.some(i => i.field === "shape") ? (
+        {fieldIssue("shape") ? (
           <span className="text-xs text-amber-600">
             Outline geometry needs repair before repricing - see diagnostics above.
           </span>
@@ -175,7 +197,7 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
   );
 }
 
-export default function FoundationWallsPanel({ walls = [], options = [], onChange }) {
+export default function FoundationWallsPanel({ walls = [], options = [], onChange, wallPricing = [] }) {
   const patchWall = (index, changes) =>
     onChange(walls.map((w, i) => (i === index ? { ...w, ...changes } : w)));
 
@@ -211,6 +233,7 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
             wall={wall}
             index={index}
             options={options}
+            pricing={wallPricing[index]}
             onChange={patchWall}
             onRemove={removeWall}
           />
