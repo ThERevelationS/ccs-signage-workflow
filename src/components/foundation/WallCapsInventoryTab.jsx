@@ -24,6 +24,13 @@ const PRESET_COLORS = [
   '#f5e6c8', '#795548', '#f5f5f5', '#b5451b', '#1f2937',
 ];
 
+// Blank clears a numeric catalog field to null ("not cataloged" — never a
+// silent free price); a numeric draft coerces to Number; anything else stays
+// verbatim so availability validation reports it instead of a NaN or a minted
+// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
+const catalogNumberInput = (value) => (String(value).trim() === "" ? null
+  : Number.isFinite(Number(value)) ? Number(value) : value);
+
 function CapForm({ item, onSave, onCancel }) {
   const [form, setForm] = useState({
     material_name: '',
@@ -52,18 +59,18 @@ function CapForm({ item, onSave, onCancel }) {
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label className="text-xs">Stock Length (in)</Label>
-          <Input type="number" className="h-8" value={form.cap_stock_length_inches} step="0.25" min="1"
-            onChange={e => set('cap_stock_length_inches', parseFloat(e.target.value) || 0)} />
+          <Input type="number" className="h-8" value={form.cap_stock_length_inches ?? ""} step="0.25" min="1"
+            onChange={e => set('cap_stock_length_inches', catalogNumberInput(e.target.value))} />
         </div>
         <div>
           <Label className="text-xs">Width (in)</Label>
-          <Input type="number" className="h-8" value={form.cap_width_inches} step="0.25" min="1"
-            onChange={e => set('cap_width_inches', parseFloat(e.target.value) || 0)} />
+          <Input type="number" className="h-8" value={form.cap_width_inches ?? ""} step="0.25" min="1"
+            onChange={e => set('cap_width_inches', catalogNumberInput(e.target.value))} />
         </div>
         <div>
           <Label className="text-xs">Height (in)</Label>
-          <Input type="number" className="h-8" value={form.cap_height_inches} step="0.25" min="0.25"
-            onChange={e => set('cap_height_inches', parseFloat(e.target.value) || 0)} />
+          <Input type="number" className="h-8" value={form.cap_height_inches ?? ""} step="0.25" min="0.25"
+            onChange={e => set('cap_height_inches', catalogNumberInput(e.target.value))} />
         </div>
       </div>
 
@@ -77,8 +84,8 @@ function CapForm({ item, onSave, onCancel }) {
         </div>
         <div>
           <Label className="text-xs">Stock Price ($)</Label>
-          <Input type="number" className="h-8" value={form.cap_stock_price} step="0.01" min="0"
-            onChange={e => set('cap_stock_price', parseFloat(e.target.value) || 0)} />
+          <Input type="number" className="h-8" value={form.cap_stock_price ?? ""} step="0.01" min="0"
+            onChange={e => set('cap_stock_price', catalogNumberInput(e.target.value))} />
           <p className="text-[10px] text-slate-500 mt-0.5">Charged in full per cut piece.</p>
         </div>
       </div>
@@ -232,7 +239,7 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
               </CardHeader>
               <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
                 <div>Size: {cap.cap_stock_length_inches}"L × {cap.cap_width_inches}"W × {cap.cap_height_inches}"H</div>
-                <div>Price: <span className="font-semibold text-slate-800">${parseFloat(cap.cap_stock_price || 0).toFixed(2)}</span> / stock piece</div>
+                <div>Price: <span className="font-semibold text-slate-800">{Number.isFinite(parseFloat(cap.cap_stock_price)) ? `$${parseFloat(cap.cap_stock_price).toFixed(2)}` : (cap.cap_stock_price ?? 'Not priced')}</span> / stock piece</div>
                 {cap.supplier && <div>Supplier: {cap.supplier}</div>}
               </CardContent>
             </Card>
