@@ -132,7 +132,7 @@ function wallPriceNumber(value) {
   return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
-function wallHeightNumber(value) {
+function wallDimensionNumber(value) {
   if (typeof value !== "number" && (typeof value !== "string"
     || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
   const number = Number(value);
@@ -141,9 +141,9 @@ function wallHeightNumber(value) {
 
 function wallPricing(wall, inventory = [], index = 0) {
   const issues = [];
-  const heightInches = wallHeightNumber(wall?.heightInches);
+  const heightInches = wallDimensionNumber(wall?.heightInches);
   const internalWallHeightInches = wall?.includeInternalWall
-    ? wallHeightNumber(wall.internalWallHeightInches ?? wall.heightInches) : null;
+    ? wallDimensionNumber(wall.internalWallHeightInches ?? wall.heightInches) : null;
   const heightIssue = (field, kind, label, code) => issues.push({
     kind, index, componentId: wall?.component_id ?? wall?.id ?? null,
     field, inventoryId: wall?.[kind === "wall" ? "materialId" : "internalMaterialId"] ?? null, code,
@@ -185,7 +185,20 @@ function wallPricing(wall, inventory = [], index = 0) {
     if (wallPriceNumber(price) === null) {
       add("wall_material_price_unavailable", "record a finite, nonnegative material unit price before repricing");
     }
-    return material;
+    const normalizedMaterial = { ...material };
+    for (const [key, label] of [
+      ["wall_unit_length_inches", "unit length"],
+      ["wall_unit_width_inches", "unit width"],
+      ["wall_unit_height_inches", "unit height"],
+    ]) {
+      const dimension = wallDimensionNumber(material[key]);
+      if (dimension === null) {
+        add(key + "_unavailable", `record a positive, finite ${label} in inches before repricing`);
+      } else {
+        normalizedMaterial[key] = dimension;
+      }
+    }
+    return normalizedMaterial;
   };
   const wallMaterial = check("materialId", "wall", "Wall");
   const internalMaterial = wall?.includeInternalWall
