@@ -10,11 +10,11 @@
 //   #22 Vinyl comparison panel
 //   #33 Tab-level "issue" dot via _hasIssues
 
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Sliders } from "lucide-react";
+import { Sliders, AlertTriangle } from "lucide-react";
 
 import VinylMaterialPicker from "./VinylMaterialPicker";
 import VinylMachinePicker from "./VinylMachinePicker";
@@ -28,7 +28,7 @@ import VinylWorkflowCardHeader, { COLOR_SWATCHES } from "./VinylWorkflowCardHead
 import VinylCuttingExtrasCard from "./VinylCuttingExtrasCard";
 import VinylWorkflowPersonnel from "./VinylWorkflowPersonnel";
 import VinylRollWidthRecommender from "./VinylRollWidthRecommender";
-import { calculateVinylProject } from "./vinylNestingCalculator";
+import { calcVinylWorkflow, hasIssueFor } from "./vinylPricingAvailability";
 import { applyPresetToWorkflow } from "./vinylWorkflowPresets";
 import {
   computePerPartCosts, computeWorkflowMetrics, computeStockUsage,
@@ -45,6 +45,7 @@ export default function VinylWorkflowCard({
   onChange, onRemove, onDuplicate, onMovePartToWorkflow,
   installEnvironment = "exterior",
   defaultOpen = true,
+  pricing: pricingProp, // optional shared { calc, issues, held, resolved }
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -61,42 +62,22 @@ export default function VinylWorkflowCard({
 
   const set = (patch) => onChange({ ...workflow, ...patch });
 
-  const printer   = useMemo(() => machines.find(m => m.id === workflow.printer_id)   || null, [machines, workflow.printer_id]);
-  const cutter    = useMemo(() => machines.find(m => m.id === workflow.cutter_id)    || null, [machines, workflow.cutter_id]);
-  const laminator = useMemo(() => machines.find(m => m.id === workflow.laminator_id) || null, [machines, workflow.laminator_id]);
-  const vinyl        = useMemo(() => vinyls.find(v => v.id === workflow.vinyl_id)         || null, [vinyls, workflow.vinyl_id]);
-  const laminate     = useMemo(() => vinyls.find(v => v.id === workflow.laminate_id)      || null, [vinyls, workflow.laminate_id]);
-  const transferTape = useMemo(() => vinyls.find(v => v.id === workflow.transfer_tape_id) || null, [vinyls, workflow.transfer_tape_id]);
+  // Pricing-availability wrap: the same calculation the card has always run,
+  // now with strict input validation. `pricing.calc` is the held/poisoned
+  // result when any consumed input is unavailable; `pricing.issues` carries
+  // the structured diagnostics. The page may share one computation across
+  // every workflow via the `pricing` prop — otherwise the card computes its
+  // own so it stays self-contained.
+  const pricing = useMemo(
+    () => pricingProp ?? calcVinylWorkflow({ workflow, vinyls, machines, index }),
+    [pricingProp, workflow, vinyls, machines, index],
+  );
+  const calc = pricing.calc;
+  const pricingIssues = pricing.issues || [];
+  const held = !!pricing.held;
 
+  const { printer, cutter, laminator, vinyl, laminate, transferTape } = pricing.resolved;
   const operatorRate = printer?.operator_hourly_rate ?? cutter?.operator_hourly_rate ?? laminator?.operator_hourly_rate ?? 45;
-
-  const calc = useMemo(() => calculateVinylProject({
-    items: workflow.items || [],
-    printer, cutter, laminator,
-    vinyl, laminate, transferTape,
-    operatorHourlyRate: operatorRate,
-    applyPrint: !!workflow.apply_print,
-    applyCut: !!workflow.apply_cut,
-    applyLaminate: !!workflow.apply_laminate,
-    applyTransferTape: !!workflow.apply_transfer_tape,
-    overrideGutterH: workflow.gutter_h_override === "" || workflow.gutter_h_override == null ? undefined : num(workflow.gutter_h_override),
-    overrideGutterV: workflow.gutter_v_override === "" || workflow.gutter_v_override == null ? undefined : num(workflow.gutter_v_override),
-    printQuality: workflow.print_quality || printer?.default_print_quality || "high_quality",
-    weedingDifficulty: workflow.weeding_difficulty || "moderate",
-    weedingMinutesPerPartOverride: workflow.weeding_minutes_per_part_override,
-    installMinutesPerPart: workflow.install_minutes_per_part,
-    personnel: workflow.personnel || [],
-    spoilageBufferPercent: num(workflow.spoilage_buffer_percent),
-    setupFeeFloor: num(workflow.setup_fee_floor),
-  }), [
-    workflow.items, workflow.apply_print, workflow.apply_cut, workflow.apply_laminate,
-    workflow.apply_transfer_tape, workflow.transfer_tape_id,
-    workflow.gutter_h_override, workflow.gutter_v_override,
-    workflow.print_quality, workflow.weeding_difficulty,
-    workflow.weeding_minutes_per_part_override, workflow.install_minutes_per_part,
-    workflow.personnel, workflow.spoilage_buffer_percent, workflow.setup_fee_floor,
-    printer, cutter, laminator, vinyl, laminate, transferTape, operatorRate,
-  ]);
 
   // Drag-and-drop: a per-item manual x override that the calculator doesn't know about
   // but we apply on the placed shelves directly for visual rendering. Stored in a
@@ -121,23 +102,28 @@ export default function VinylWorkflowCard({
     });
   };
 
-  // Per-part cost rollup — Feature #19
-  const perPartCosts = useMemo(() => computePerPartCosts(calc, workflow.items || []), [calc, workflow.items]);
+  // Per-part cost rollup — Feature #19. Held calcs keep the parts but the
+  // costs are unavailable — don't paint $0 allocations on real rows.
+  const perPartCosts = useMemo(
+    () => (held ? {} : computePerPartCosts(calc, workflow.items || [])),
+    [held, calc, workflow.items],
+  );
   // Yield / cost metrics — Feature #20, #21
   const metrics    = useMemo(() => computeWorkflowMetrics(calc), [calc]);
   // Stock usage — Feature #6, #37
   const stockUsage = useMemo(() => computeStockUsage(calc, vinyl), [calc, vinyl]);
 
   // Surface calc back up so the project rollup can sum across workflows.
+  // _hasIssues now also covers pricing-availability issues — the tab badge
+  // and the save guard both read it.
   useEffect(() => {
-    const hasIssues = calc.partsUnplaced > 0 || !workflow.vinyl_id;
+    const hasIssues = pricingIssues.length > 0 || calc.partsUnplaced > 0 || !workflow.vinyl_id;
     if (workflow._calc?.totalCost !== calc.totalCost
      || workflow._calc?.materialCost !== calc.materialCost
      || workflow._hasIssues !== hasIssues) {
       onChange({ ...workflow, _calc: calc, _hasIssues: hasIssues });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calc.totalCost, calc.materialCost, calc.machineCost, calc.laborCost, calc.partsUnplaced, workflow.vinyl_id]);
+  }, [calc.totalCost, calc.materialCost, calc.machineCost, calc.laborCost, calc.partsUnplaced, workflow.vinyl_id, pricingIssues.length]);
 
   // Auto-select operator roles when machines are applied. Adds any missing role
   // for the active machines and auto-fills its hours from the calculator. Runs
@@ -169,7 +155,6 @@ export default function VinylWorkflowCard({
       }
     });
     if (changed) set({ personnel: next });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     roleOptions, workflow.apply_print, workflow.apply_cut, workflow.apply_laminate,
     workflow.printer_id, workflow.cutter_id, workflow.laminator_id,
@@ -200,6 +185,25 @@ export default function VinylWorkflowCard({
 
       {open && (
         <CardContent className="space-y-4 pt-2 border-t border-slate-100">
+          {/* Pricing-availability diagnostics — calculation rows stay visible;
+              tainted totals show "Not saved" instead of a laundered $0. */}
+          {pricingIssues.length > 0 && (
+            <div
+              role="status"
+              id={`vinyl-wf-${index}-issues`}
+              className="flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-3 py-2"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-600" />
+              <div>
+                <div className="font-semibold">Pricing unavailable — {pricingIssues.length} value{pricingIssues.length === 1 ? "" : "s"} need attention</div>
+                <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                  {pricingIssues.slice(0, 6).map((it, i) => <li key={i}>{it.message}</li>)}
+                  {pricingIssues.length > 6 && <li>…and {pricingIssues.length - 6} more</li>}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Preset bar — Feature #5 */}
           <VinylPresetBar
             activePresetKey={workflow.preset_key}
@@ -214,6 +218,8 @@ export default function VinylWorkflowCard({
             presetKey={workflow.preset_key}
             installEnvironment={installEnvironment}
             recommendOnly={recommendOnly}
+            issues={pricingIssues}
+            issuesId={`vinyl-wf-${index}-issues`}
             onChange={({ vinylId, laminateId, applyLaminate, recommendOnly: ro }) => {
               if (ro !== undefined) setRecommendOnly(ro);
               if (vinylId !== undefined || laminateId !== undefined || applyLaminate !== undefined) {
@@ -260,6 +266,8 @@ export default function VinylWorkflowCard({
 
           <VinylMachinePicker
             machines={machines}
+            issues={pricingIssues}
+            issuesId={`vinyl-wf-${index}-issues`}
             value={{
               printer_id:   workflow.printer_id,
               cutter_id:    workflow.cutter_id,
@@ -295,6 +303,8 @@ export default function VinylWorkflowCard({
                   value={workflow.spoilage_buffer_percent ?? ""}
                   placeholder="0"
                   onChange={(e) => set({ spoilage_buffer_percent: e.target.value })}
+                  aria-invalid={hasIssueFor(pricingIssues, "spoilage_buffer_percent") || undefined}
+                  aria-describedby={hasIssueFor(pricingIssues, "spoilage_buffer_percent") ? `vinyl-wf-${index}-issues` : undefined}
                   className="h-8 tabular-nums"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">Adds N% extra qty to every part before nesting.</p>
@@ -306,10 +316,12 @@ export default function VinylWorkflowCard({
                   value={workflow.setup_fee_floor ?? ""}
                   placeholder="0"
                   onChange={(e) => set({ setup_fee_floor: e.target.value })}
+                  aria-invalid={hasIssueFor(pricingIssues, "setup_fee_floor") || undefined}
+                  aria-describedby={hasIssueFor(pricingIssues, "setup_fee_floor") ? `vinyl-wf-${index}-issues` : undefined}
                   className="h-8 tabular-nums"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
-                  {calc.setupFeeApplied > 0
+                  {(calc.setupFeeApplied ?? 0) > 0
                     ? <span className="text-amber-700 font-medium">Floor adding ${calc.setupFeeApplied.toFixed(2)} to this workflow.</span>
                     : "Workflow minimum charge."}
                 </p>
@@ -326,7 +338,9 @@ export default function VinylWorkflowCard({
               weedingDifficulty={workflow.weeding_difficulty}
               weedingMinutesPerPartOverride={workflow.weeding_minutes_per_part_override}
               installMinutesPerPart={workflow.install_minutes_per_part}
-              partsPlaced={calc.partsPlaced}
+              partsPlaced={calc.partsPlaced ?? 0}
+              issues={pricingIssues}
+              issuesId={`vinyl-wf-${index}-issues`}
               onChange={(p) => {
                 const patch = {};
                 if (p.transferTapeId   !== undefined) patch.transfer_tape_id   = p.transferTapeId;
@@ -344,7 +358,9 @@ export default function VinylWorkflowCard({
             personnel={workflow.personnel || []}
             roleOptions={roleOptions}
             onChange={(personnel) => set({ personnel })}
-            suggestedHours={(calc.machineRunMinutes + calc.weedingMinutes + calc.installMinutes) / 60}
+            issues={pricingIssues}
+            issuesId={`vinyl-wf-${index}-issues`}
+            suggestedHours={held ? 0 : (calc.machineRunMinutes + calc.weedingMinutes + calc.installMinutes) / 60}
           />
 
           <Card>
@@ -356,6 +372,8 @@ export default function VinylWorkflowCard({
                 items={workflow.items || []}
                 onChange={(items) => set({ items, manual_positions: {} })}
                 perPartCosts={perPartCosts}
+                issues={pricingIssues}
+                issuesId={`vinyl-wf-${index}-issues`}
                 usableWidth={calc.usableWidth}
                 defaultBleed={workflow.apply_cut ? 0 : 0.125}
                 onMoveToWorkflow={onMovePartToWorkflow ? (partIdx) => onMovePartToWorkflow(partIdx) : null}
@@ -375,6 +393,8 @@ export default function VinylWorkflowCard({
                     placeholder={String(calc.gutterH)}
                     value={workflow.gutter_h_override ?? ""}
                     onChange={(e) => set({ gutter_h_override: e.target.value })}
+                    aria-invalid={hasIssueFor(pricingIssues, "gutter_h_override") || undefined}
+                    aria-describedby={hasIssueFor(pricingIssues, "gutter_h_override") ? `vinyl-wf-${index}-issues` : undefined}
                     className="h-7 w-16 text-xs tabular-nums"
                   />
                   <span className="text-slate-500">V</span>
@@ -383,6 +403,8 @@ export default function VinylWorkflowCard({
                     placeholder={String(calc.gutterV)}
                     value={workflow.gutter_v_override ?? ""}
                     onChange={(e) => set({ gutter_v_override: e.target.value })}
+                    aria-invalid={hasIssueFor(pricingIssues, "gutter_v_override") || undefined}
+                    aria-describedby={hasIssueFor(pricingIssues, "gutter_v_override") ? `vinyl-wf-${index}-issues` : undefined}
                     className="h-7 w-16 text-xs tabular-nums"
                   />
                   {(workflow.gutter_h_override || workflow.gutter_v_override || workflow.manual_positions) && (
