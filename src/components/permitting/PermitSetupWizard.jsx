@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 
@@ -48,6 +49,31 @@ const normalizeAddress = (raw) => {
   return a.replace(/\s+/g, " ").trim().replace(/^,+|,+$/g, "") || String(raw || "").trim();
 };
 
+// Boundary picks mint reusable rules — a resolved conflict fixes every future
+// address in that postal-city pattern, not just this one (mirrors the picker).
+const ruleNameNorm = (v) => String(v || "").trim().toLowerCase().replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
+function mintResolutionRule({ address, resolution, pickedName, pickedType, forCity }) {
+  if (!address || !pickedName) return;
+  const state = String(resolution?.state || pickedName.state || "").toUpperCase();
+  if (!state) return;
+  const parts = String(address).split(",").map(s => s.trim());
+  const enteredCity = parts.length > 1 ? parts[1] : "";
+  const county = String(resolution?.location_resolution?.target?.county || resolution?.location_resolution?.candidates?.[0]?.county || "");
+  const data = {
+    rule_type: forCity && enteredCity ? "postal_name_map" : "address_override",
+    entered_name: forCity && enteredCity ? ruleNameNorm(enteredCity) : "",
+    address_key: forCity && enteredCity ? "" : ruleNameNorm(parts[0]),
+    state, county: ruleNameNorm(county),
+    jurisdiction_name: ruleNameNorm(typeof pickedName === "string" ? pickedName : pickedName.name),
+    jurisdiction_type: /township|twp/i.test(String(pickedType)) ? "township" : /county/i.test(String(pickedType)) ? "county" : /village/i.test(String(pickedType)) ? "village" : "municipality",
+    source: "staff_review",
+    evidence: `Staff resolved "${address}" -> ${typeof pickedName === "string" ? pickedName : pickedName.name} in the setup wizard.`,
+    created_from_address: String(address).slice(0, 300),
+    active: true,
+  };
+  staffEntities.PermitResolutionRule.create(data).catch(() => {});
+}
+
 const RECENT_KEY = "permitting_recent_addresses";
 const loadRecent = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } };
 const rememberRecent = (addr) => {
@@ -59,23 +85,32 @@ const rememberRecent = (addr) => {
   } catch {}
 };
 
-const PlanSteps = ({ steps }) => (
+const PlanSteps = ({ steps, dropped, onToggle }) => (
   <div className="rounded-lg border border-purple-200 bg-purple-50/50 divide-y divide-purple-100 max-h-56 overflow-y-auto">
     <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
-      {steps?.length || 0} steps
+      {(steps?.length || 0) - (dropped?.size || 0)} of {steps?.length || 0} steps kept
     </div>
-    {(steps || []).map((s, i) => (
-      <div key={i} className="px-3 py-1.5 text-xs flex items-center gap-2">
-        <span className="text-purple-400 font-mono w-4 flex-shrink-0">{i + 1}</span>
-        <span className="font-medium text-gray-800 truncate">{s.title || s.action || `Step ${i + 1}`}</span>
-        <span className={`ml-auto flex-shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${
-          s.basis === "approved_rule" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : s.basis === "pending_review" ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-gray-200 bg-gray-50 text-gray-500"}`}>
-          {s.basis === "approved_rule" ? "verified" : s.basis === "pending_review" ? "pending" : "confirm"}
-        </span>
-      </div>
-    ))}
+    {(steps || []).map((s, i) => {
+      const off = dropped?.has(i);
+      return (
+        <div key={i} className={`px-3 py-1.5 text-xs flex items-center gap-2 ${off ? "opacity-40" : ""}`}>
+          <span className="text-purple-400 font-mono w-4 flex-shrink-0">{i + 1}</span>
+          <span className={`font-medium truncate ${off ? "line-through text-gray-400" : "text-gray-800"}`}>{s.title || s.action || `Step ${i + 1}`}</span>
+          <span className={`ml-auto flex-shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${
+            s.basis === "approved_rule" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : s.basis === "pending_review" ? "border-amber-200 bg-amber-50 text-amber-700"
+            : "border-gray-200 bg-gray-50 text-gray-500"}`}>
+            {s.basis === "approved_rule" ? "verified" : s.basis === "pending_review" ? "pending" : "confirm"}
+          </span>
+          {onToggle && (
+            <button type="button" onClick={() => onToggle(i)}
+              className="flex-shrink-0 text-[9px] font-semibold text-gray-400 hover:text-red-600 underline underline-offset-2">
+              {off ? "restore" : "drop"}
+            </button>
+          )}
+        </div>
+      );
+    })}
   </div>
 );
 
@@ -97,8 +132,11 @@ export default function PermitSetupWizard({
   const [resolveError, setResolveError] = useState("");
   const [resolution, setResolution] = useState(null);
   const [pickedCandidate, setPickedCandidate] = useState(null);
+  const [rememberForCity, setRememberForCity] = useState(false);
   const [localityId, setLocalityId] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
+  const [deselectedOffices, setDeselectedOffices] = useState(new Set());
+  const [droppedSteps, setDroppedSteps] = useState(new Set());
   const [suggestions, setSuggestions] = useState([]);
   const [recent, setRecent] = useState(() => loadRecent());
   const [planForm, setPlanForm] = useState(() => defaultPlanForm(wo, siteAddress));
@@ -164,6 +202,7 @@ export default function PermitSetupWizard({
   }, [locality]);
 
   const visibleOffices = officePreview.filter(o => !o.electrical || !excludeElectrical);
+  const chosenOffices = visibleOffices.filter(o => !deselectedOffices.has(o.key));
 
   const authority = useMemo(() => (locality ? summarizeMatchedLocalityAuthority(locality) : null), [locality]);
   const verifiedCount = authority?.verified_office_count || 0;
@@ -211,17 +250,22 @@ export default function PermitSetupWizard({
     }
   };
 
-  // A boundary pick behaves like a detected target — match its name to a locality row.
+  // A boundary pick behaves like a detected target — match its name to a
+  // locality row and mint a reusable rule so future addresses skip the ask.
   useEffect(() => {
     if (!pickedCandidate?.name) return;
     const want = pickedCandidate.name.trim().toLowerCase();
     const hit = localities.find(l => String(l.name || "").trim().toLowerCase() === want);
     if (hit) setLocalityId(hit.id);
-  }, [pickedCandidate, localities]);
+    mintResolutionRule({
+      address, resolution, pickedName: pickedCandidate.name,
+      pickedType: pickedCandidate.type, forCity: rememberForCity,
+    });
+  }, [pickedCandidate, rememberForCity, localities]);
 
   const buildPlan = async () => {
     if (planning) return;
-    setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false);
+    setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false); setDroppedSteps(new Set());
     try {
       const jurisdiction = locality ? {
         jurisdiction_id: locality.jurisdiction_profile_id || "",
@@ -238,10 +282,14 @@ export default function PermitSetupWizard({
     }
   };
 
+  const cleanedPlan = () => plan
+    ? { ...plan, steps: (plan.steps || []).filter((_, i) => !droppedSteps.has(i)) }
+    : null;
+
   const savePlan = async () => {
     if (!plan || planSaved) return;
     try {
-      await saveWorkflowDraft(plan, planForm,
+      await saveWorkflowDraft(cleanedPlan(), planForm,
         `${locality?.name || "Permit"} — ${wo.client_name || "job"}`, "");
       setPlanSaved(true);
     } catch (e) {
@@ -256,14 +304,17 @@ export default function PermitSetupWizard({
     setCreating(true);
     try {
       if (plan && !plan.jurisdiction_unresolved && !planSaved) {
-        await saveWorkflowDraft(plan, planForm,
+        await saveWorkflowDraft(cleanedPlan(), planForm,
           `${locality.name || "Permit"} — ${wo.client_name || "job"}`, "").catch(() => {});
       }
       if (localityChanged) {
         await onRemoveLocality?.(appliedLocalityId);
       }
       const apply = applyReady ? onApply : onPendingApply;
-      await (apply || onApply)?.(locality.id, { excludeElectrical, locality });
+      await (apply || onApply)?.(locality.id, {
+        excludeElectrical, locality,
+        skip_office_keys: [...deselectedOffices],
+      });
       setDone(true);
       setTimeout(() => { setDone(false); onClose(); }, 1400);
     } finally {
@@ -388,6 +439,15 @@ export default function PermitSetupWizard({
                     </Button>
                   </div>
                 ))}
+                {pickedCandidate && (
+                  <label className="flex items-start gap-2 text-[11px] text-sky-900 cursor-pointer pt-1">
+                    <input type="checkbox" checked={rememberForCity} onChange={e => setRememberForCity(e.target.checked)} className="mt-0.5 accent-sky-600" />
+                    <span>
+                      Remember this for every address that says "{String(address).split(",")[1]?.trim() || "this city"}" in this county.
+                      <span className="block text-[10px] text-sky-700">Unchecked = just this one address. Only check if every address with that city name really belongs to the picked place.</span>
+                    </span>
+                  </label>
+                )}
               </div>
             )}
 
@@ -405,7 +465,7 @@ export default function PermitSetupWizard({
             {locality && officePreview.length > 0 && (
               <div className="rounded-lg border border-gray-200 divide-y">
                 <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 flex items-center justify-between">
-                  Permit lines this will create
+                  <span>Permit lines — {chosenOffices.length} of {visibleOffices.length} selected</span>
                   {officePreview.some(o => o.electrical) && (
                     <label className="flex items-center gap-1 normal-case font-medium text-gray-600 cursor-pointer">
                       <input type="checkbox" checked={excludeElectrical} onChange={e => setExcludeElectrical(e.target.checked)} className="accent-purple-600" />
@@ -413,15 +473,23 @@ export default function PermitSetupWizard({
                     </label>
                   )}
                 </div>
-                {visibleOffices.map(o => (
-                  <div key={o.key} className="px-3 py-1.5 flex items-center gap-2 text-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                    <span className="font-medium text-gray-800">{o.name}</span>
-                    <span className="text-[10px] text-gray-500 truncate">
-                      {(o.roles.length ? o.roles.map(r => ROLE_LABELS[r] || r) : [o.label]).filter(Boolean).join(" · ")}
-                    </span>
-                  </div>
-                ))}
+                {visibleOffices.map(o => {
+                  const on = !deselectedOffices.has(o.key);
+                  return (
+                    <label key={o.key} className={`px-3 py-1.5 flex items-center gap-2 text-xs cursor-pointer ${on ? "" : "opacity-40"}`}>
+                      <input type="checkbox" checked={on} className="accent-purple-600"
+                        onChange={() => setDeselectedOffices(prev => {
+                          const next = new Set(prev);
+                          if (on) next.add(o.key); else next.delete(o.key);
+                          return next;
+                        })} />
+                      <span className="font-medium text-gray-800">{o.name}</span>
+                      <span className="text-[10px] text-gray-500 truncate">
+                        {(o.roles.length ? o.roles.map(r => ROLE_LABELS[r] || r) : [o.label]).filter(Boolean).join(" · ")}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             )}
             {locality && officePreview.length === 0 && (
@@ -474,7 +542,12 @@ export default function PermitSetupWizard({
             )}
             {plan && (
               <>
-                <PlanSteps steps={plan.steps} />
+                <PlanSteps steps={plan.steps} dropped={droppedSteps}
+                  onToggle={(i) => setDroppedSteps(prev => {
+                    const next = new Set(prev);
+                    if (next.has(i)) next.delete(i); else next.add(i);
+                    return next;
+                  })} />
                 {plan.summary && <p className="text-[11px] text-purple-600">{plan.summary}</p>}
                 {planSaved && <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Saved to workflow drafts</p>}
               </>
@@ -486,7 +559,7 @@ export default function PermitSetupWizard({
                 </div>
                 {drafts.slice(0, 4).map(d => (
                   <button key={d.id} type="button"
-                    onClick={() => { setPlan(d.snapshot); setPlanForm(prev => ({ ...prev, ...(d.project_inputs || {}) })); }}
+                    onClick={() => { setPlan(d.snapshot); setPlanForm(prev => ({ ...prev, ...(d.project_inputs || {}) })); setDroppedSteps(new Set()); setPlanSaved(true); }}
                     className="w-full text-left px-3 py-2 hover:bg-purple-50 text-xs flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                     <span className="font-medium text-gray-800 truncate">{d.title}</span>
