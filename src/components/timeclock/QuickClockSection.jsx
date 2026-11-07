@@ -1613,9 +1613,10 @@ export default function QuickClockSection({
       setWorkPauseSummary({ count: 0, total_minutes: 0 });
       setActiveLabor(null);
       setLaborSummary({ count: 0, total_minutes: 0 });
-      setShowClockOut(true);
+      setClockOutDismissed(result.entry?.id, true);
       showNotification("in", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Shift started from your reported arrival time. A manager will review this Clock In.");
+      scheduleDisplayReset(5000);
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest("report_missed_clock_in", email, requestId);
