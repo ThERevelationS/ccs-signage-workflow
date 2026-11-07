@@ -5,11 +5,12 @@
 // vinyl. For each candidate width, re-runs the nesting calculator and picks
 // the cheapest viable option. Shows a one-click swap.
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, ArrowRight } from "lucide-react";
 import { calculateVinylProject } from "./vinylNestingCalculator";
+import { vinylMaterialIssues } from "./vinylPricingAvailability";
 
 const fmt = (n) => `$${(Number(n) || 0).toFixed(2)}`;
 
@@ -37,7 +38,8 @@ export default function VinylRollWidthRecommender({
   const candidates = useMemo(() => groupCandidates(vinyl, vinyls), [vinyl, vinyls]);
 
   const evaluated = useMemo(() => {
-    if (!vinyl || candidates.length === 0 || !currentCalc) return [];
+    // A held calc has no honest total to compare against — no recommendations.
+    if (!vinyl || candidates.length === 0 || !currentCalc || currentCalc.__held) return [];
     const baseArgs = {
       items: workflow.items || [],
       printer, cutter, laminator,
@@ -55,6 +57,9 @@ export default function VinylRollWidthRecommender({
       setupFeeFloor: workflow.setup_fee_floor || 0,
     };
     return candidates
+      // A candidate whose own record can't produce a real price would compare
+      // a laundered $0 — exclude it, never recommend it.
+      .filter(c => vinylMaterialIssues(c, "vinyl", 0, c.id).length === 0)
       .map(c => {
         const calc = calculateVinylProject({ ...baseArgs, vinyl: c });
         return {
@@ -68,7 +73,7 @@ export default function VinylRollWidthRecommender({
       .sort((a, b) => a.totalCost - b.totalCost);
   }, [candidates, workflow, printer, cutter, laminator, laminate, transferTape, vinyl, operatorRate, currentCalc]);
 
-  if (!vinyl || candidates.length === 0 || !currentCalc) return null;
+  if (!vinyl || candidates.length === 0 || !currentCalc || currentCalc.__held) return null;
 
   const currentTotal = currentCalc.totalCost || 0;
   const best = evaluated[0];
