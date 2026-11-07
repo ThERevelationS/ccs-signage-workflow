@@ -92,16 +92,22 @@ export default function JurisdictionDetailPanel({ jurisdiction, permitLines = []
   const [clearedDocSearchId, setClearedDocSearchId] = useState(null);
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [docVisibleCount, setDocVisibleCount] = useState(8);
   const workspaceSections = useRef({});
   const [sourceRequest, setSourceRequest] = useState(null);
+  const SECTION_TAB = { documents: 'documents', offices: 'offices', monitoring: 'offices', requirements: 'overview' };
   const navigateWorkspace = (section, sourceId) => {
     if (section === 'documents') {
       setSourceRequest(previous => typeof sourceId === 'string' && sourceId.trim()
         ? { jurisdictionId: jurisdiction.id, sourceId: sourceId.trim(), token: (previous?.token || 0) + 1 }
         : null);
     }
-    const target=workspaceSections.current[section];
-    if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
+    const tab = SECTION_TAB[section];
+    if (tab) setActiveTab(tab);
+    setTimeout(() => {
+      const target=workspaceSections.current[section];
+      if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
+    }, 60);
   };
   const [verificationTarget, setVerificationTarget] = useState(null);
   const [verificationNote, setVerificationNote] = useState("");
@@ -909,6 +915,14 @@ Answer only from the provided excerpts and cite the document title and official 
         >
           Overview
         </button>
+        <button type="button" role="tab" aria-selected={activeTab === "documents"} aria-controls="jurisdiction-overview-panel" onClick={() => setActiveTab("documents")} className={`min-h-11 flex-1 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === "documents" ? "border-b-2 border-purple-600 text-purple-700 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
+          Documents
+          {(jurisdiction.documents?.length > 0) && (<span className="ml-1 bg-purple-100 text-purple-700 text-[10px] rounded-full px-1.5 py-0.5 font-bold">{jurisdiction.documents.length}</span>)}
+        </button>
+        <button type="button" role="tab" aria-selected={activeTab === "offices"} aria-controls="jurisdiction-overview-panel" onClick={() => setActiveTab("offices")} className={`min-h-11 flex-1 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === "offices" ? "border-b-2 border-purple-600 text-purple-700 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
+          Offices
+          {(jurisdiction.office_research?.offices?.length > 0) && (<span className="ml-1 bg-purple-100 text-purple-700 text-[10px] rounded-full px-1.5 py-0.5 font-bold">{jurisdiction.office_research.offices.length}</span>)}
+        </button>
         <button
           type="button"
           role="tab"
@@ -931,11 +945,15 @@ Answer only from the provided excerpts and cite the document title and official 
         </div>
       )}
 
-      {activeTab === "overview" && <><JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+      {activeTab !== "activity" && <><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+        {activeTab === "overview" && <>
+        <JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/>
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
 
         <OfficeChangeLog jurisdiction={jurisdiction} />
+        </>}
 
+        {activeTab === "offices" && <>
         <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
           <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} canEdit={currentUser?.role === "admin"} actor={currentUser?.full_name || currentUser?.email || "CCS Staff"} onSave={updated => onSaveOfficeResearch?.(jurisdiction, updated)} onNavigate={navigateWorkspace} onPreviewWorkflow={() => { setElectricalPlanningHandoff(createElectricalPlanningHandoff(jurisdiction.office_research, jurisdiction)); setShowWorkflowDesigner(true); }}/>
         </section>
@@ -961,7 +979,9 @@ Answer only from the provided excerpts and cite the document title and official 
 
         {/* Source monitor health */}
         <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel key={jurisdiction.id} jurisdictionName={jurisdiction.name} jurisdictionId={jurisdiction.id} onNavigate={navigateWorkspace} /></section>
+        </>}
 
+        {activeTab === "overview" && <>
         <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
         <JurisdictionRequirements key={jurisdiction.id} jurisdictionId={jurisdiction.id} onDocuments={sourceId => navigateWorkspace("documents", sourceId)} />
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
@@ -1067,6 +1087,9 @@ Answer only from the provided excerpts and cite the document title and official 
         {currentUser?.role === "admin" && <OfficialSourceRescans key={jurisdiction.id} jurisdiction={jurisdiction} onUpdate={onUpdate} />}
         <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />
 
+        </>}
+
+        {activeTab === "documents" && <>
         {/* Documents */}
          <div ref={node=>{workspaceSections.current.documents=node;}} tabIndex={-1} aria-label="Documents workspace" className="scroll-mt-3 bg-green-50 rounded-lg p-3 border border-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
            <p className="text-xs font-semibold text-green-800 mb-2">
@@ -1513,13 +1536,19 @@ Answer only from the provided excerpts and cite the document title and official 
             {(!jurisdiction.documents || jurisdiction.documents.length === 0) && (
               <p className="text-xs text-gray-400 italic">No documents yet. Use the AI refresh to discover documents.</p>
             )}
+            {!docSearchTerm.trim() && (jurisdiction.documents?.length || 0) > docVisibleCount && (
+              <button type="button" onClick={() => setDocVisibleCount((jurisdiction.documents || []).length)} className="w-full rounded border border-dashed border-gray-300 bg-white py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-purple-500">
+                Show all {(jurisdiction.documents || []).length} documents
+              </button>
+            )}
           </div>
         </div>
-
+        </>}
 
       </div>
 
       {/* AI Permit Workflow Designer entry — preselects this jurisdiction */}
+      {activeTab === "overview" && <>
       <div className="border-t p-3 bg-violet-50 border-l-4 border-l-violet-400">
         <Button
           type="button"
@@ -1602,6 +1631,7 @@ Answer only from the provided excerpts and cite the document title and official 
           </Button>
         </div>
       </div>
+      </>}
       </>}
     </div>
   );
