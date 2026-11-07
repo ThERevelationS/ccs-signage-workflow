@@ -52,9 +52,6 @@ export function foundationAssemblyCatalogIssues(project, inventory = []) {
   for (const [index, pole] of (project?.poles || []).entries()) {
     check(pole, index, "pole", "pole_id", "Pole");
   }
-  for (const [index, cap] of (project?.wall_caps || []).entries()) {
-    check(cap, index, "wall_cap", "cap_inventory_id", "Wall cap");
-  }
   for (const [index, wall] of (project?.walls || []).entries()) {
     check(wall, index, "wall", "materialId", "Wall");
     if (wall.includeInternalWall) {
