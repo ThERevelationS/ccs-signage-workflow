@@ -81,6 +81,8 @@ export function defaultPrefs() {
       size: "auto",              // auto | compact | roomy
       landingPage: "",           // url opened on login ("" = default)
       collapsedGroups: {},       // side-nav group collapse memory (meetings/reports…)
+      folders: null,             // null = built-ins (Meetings/Reports); array = user's folder set
+      pageStyles: {},            // url → {name?, color?, style?} page-button overrides
     },
     workspace: {
       showWelcomeBanner: true,
@@ -190,7 +192,8 @@ export function migratePrefs(raw) {
   const nav = merged.navigation;
   for (const key of ["order", "hidden", "favorites"]) {
     if (!Array.isArray(nav[key])) nav[key] = [];
-    nav[key] = nav[key].filter((u) => typeof u === "string" && u.startsWith("/"));
+    nav[key] = nav[key].filter((u) =>
+      typeof u === "string" && (u.startsWith("/") || (key === "order" && u.startsWith("folder:"))));
   }
   // Favorites always stay visible and cannot duplicate the hidden list.
   nav.hidden = nav.hidden.filter((u) => !nav.favorites.includes(u));
@@ -201,6 +204,19 @@ export function migratePrefs(raw) {
   if (!ACCENTS[merged.appearance.accent]) merged.appearance.accent = "indigo";
   if (!["compact", "comfortable", "spacious"].includes(merged.density)) merged.density = "comfortable";
   if (!isObj(nav.collapsedGroups)) nav.collapsedGroups = {};
+  // User nav folders (null = built-ins). Shape: [{id,name,color,style,icon,items[]}].
+  if (nav.folders != null && !Array.isArray(nav.folders)) nav.folders = null;
+  if (Array.isArray(nav.folders)) {
+    nav.folders = nav.folders.filter((f) => f && typeof f.id === "string").map((f) => ({
+      id: f.id,
+      name: String(f.name || "Folder").slice(0, 30),
+      color: typeof f.color === "string" ? f.color : "#8B5CF6",
+      style: typeof f.style === "string" ? f.style : "glass",
+      icon: typeof f.icon === "string" ? f.icon : "Folder",
+      items: Array.isArray(f.items) ? f.items.filter((u) => typeof u === "string" && u.startsWith("/")) : [],
+    })).slice(0, 20);
+  }
+  if (!isObj(nav.pageStyles)) nav.pageStyles = {};
   if (nav.landingPage && !NAV_CATALOG.some((i) => i.url === nav.landingPage)) nav.landingPage = "";
   if (!isObj(merged.pipeline)) merged.pipeline = base.pipeline;
   if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
