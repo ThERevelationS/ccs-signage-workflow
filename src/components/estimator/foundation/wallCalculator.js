@@ -139,6 +139,77 @@ function wallDimensionNumber(value) {
   return Number.isFinite(number) && number > 0 ? number : null;
 }
 
+const wallRecord = value => !!value && typeof value === "object" && !Array.isArray(value);
+const wallPoint = point => wallRecord(point)
+  && typeof point.x === "number" && Number.isFinite(point.x)
+  && typeof point.z === "number" && Number.isFinite(point.z);
+
+export function foundationWallSegments(points, closed = false) {
+  if (!Array.isArray(points) || !points.every(wallPoint) || typeof closed !== "boolean") return null;
+  const segments = [];
+  const add = (a, b) => segments.push({ length: Math.hypot(b.x - a.x, b.z - a.z) });
+  for (let i = 0; i < points.length - 1; i++) add(points[i], points[i + 1]);
+  if (closed && points.length > 2) add(points[points.length - 1], points[0]);
+  return segments.every(segment => Number.isFinite(segment.length)) ? segments : null;
+}
+
+export function foundationWallOutlineBasis(shape) {
+  const result = {
+    shape: null, points: [], closed: shape?.closed === true,
+    hasRecordedPoints: false, perimeterInches: null, issues: [],
+  };
+  const add = (code, message) => result.issues.push({ code, message });
+  const unavailable = () => add("wall_outline_unavailable", "draw an outline with positive segment lengths before repricing");
+  if (!wallRecord(shape)) { unavailable(); return result; }
+  result.hasRecordedPoints = shape.points != null
+    && (!Array.isArray(shape.points) || shape.points.length > 0);
+  const validPoints = Array.isArray(shape.points) && shape.points.every(wallPoint);
+  if (validPoints) result.points = shape.points.map(point => ({ ...point }));
+  if (result.hasRecordedPoints && !validPoints) {
+    add("wall_outline_points_unavailable", "repair the recorded footprint coordinates before repricing");
+  }
+  if ((shape.closed != null || result.hasRecordedPoints) && typeof shape.closed !== "boolean") {
+    add("wall_outline_closure_unavailable", "record whether the outline is open or closed before repricing");
+  }
+  let segments = null;
+  if (!Array.isArray(shape.segments) || !shape.segments.length) {
+    unavailable();
+  } else {
+    const lengths = shape.segments.map(segment => wallRecord(segment) ? wallDimensionNumber(segment.length) : null);
+    if (lengths.some(length => length === null)) {
+      add("wall_outline_segment_unavailable", "record positive, finite segment lengths in inches before repricing");
+    } else {
+      segments = shape.segments.map((segment, index) => ({ ...segment, length: lengths[index] }));
+      if (!Number.isFinite(lengths.reduce((sum, length) => sum + length, 0))) {
+        add("wall_outline_length_unavailable", "record a finite outline perimeter before repricing");
+      }
+    }
+  }
+  if (segments && result.hasRecordedPoints && validPoints && typeof shape.closed === "boolean") {
+    const expected = foundationWallSegments(result.points, shape.closed);
+    const same = result.points.length >= (shape.closed ? 3 : 2)
+      && expected && expected.length === segments.length && expected.every((segment, index) => {
+        const stored = segments[index].length;
+        const tolerance = Number.EPSILON * 8 * Math.max(1, segment.length, stored);
+        return segment.length > 0 && Math.abs(segment.length - stored) <= tolerance;
+      });
+    if (!same) add("wall_outline_geometry_mismatch", "repair footprint points and segment lengths so they describe the same outline before repricing");
+  }
+  if (!result.issues.length) {
+    result.shape = { ...shape, segments };
+    if (validPoints) result.shape.points = result.points;
+    result.perimeterInches = segments.reduce((sum, segment) => sum + segment.length, 0);
+  }
+  return result;
+}
+
+export function foundationWallRectangle(length, width) {
+  const l = wallDimensionNumber(length), w = wallDimensionNumber(width);
+  if (l === null || w === null) return null;
+  const points = [{ x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: w }, { x: 0, z: w }];
+  return foundationWallOutlineBasis({ points, closed: true, segments: foundationWallSegments(points, true) }).shape;
+}
+
 function wallPricing(wall, inventory = [], index = 0) {
   const issues = [];
   const heightInches = wallDimensionNumber(wall?.heightInches);
@@ -153,6 +224,12 @@ function wallPricing(wall, inventory = [], index = 0) {
   if (wall?.includeInternalWall && internalWallHeightInches === null) {
     heightIssue("internalWallHeightInches", "internal_wall", "Internal wall", "internal_wall_height_unavailable");
   }
+  const outline = foundationWallOutlineBasis(wall?.shape);
+  issues.push(...outline.issues.map(issue => ({
+    ...issue, kind: "wall", index, componentId: wall?.component_id ?? wall?.id ?? null,
+    field: "shape", inventoryId: wall?.materialId ?? null,
+    message: `Wall ${index + 1}: ${issue.message}.`,
+  })));
   const check = (field, kind, label) => {
     const id = wall?.[field];
     const add = (code, message) => issues.push({
@@ -204,7 +281,7 @@ function wallPricing(wall, inventory = [], index = 0) {
   const internalMaterial = wall?.includeInternalWall
     ? check("internalMaterialId", "internal_wall", "Internal wall")
     : null;
-  return { issues, wallMaterial, internalMaterial, heightInches, internalWallHeightInches };
+  return { issues, wallMaterial, internalMaterial, heightInches, internalWallHeightInches, wallShape: outline.shape };
 }
 
 export function foundationWallPricingIssues(wall, inventory = [], index = 0) {
@@ -276,12 +353,12 @@ export function calcWalls(project, inventory, settings = {}, options = {}) {
     };
   };
   return walls.map((wall, index) => {
-    const { wallMaterial, internalMaterial, heightInches, internalWallHeightInches, issues } = wallPricing(wall, inventory, index);
+    const { wallMaterial, internalMaterial, heightInches, internalWallHeightInches, wallShape, issues } = wallPricing(wall, inventory, index);
     if (issues.length) return held(wall);
     const costs =
       calcWallCosts({
         wall,
-        wallShape: wall.shape,
+        wallShape,
         wallMaterial,
         internalMaterial,
         includeInternalWall: wall.includeInternalWall,
