@@ -8008,8 +8008,9 @@ Deno.serve(async (req) => {
 
     if (action === 'list_shift_templates') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view shift templates.' }, { status: 403 });
-      const rows = await shiftTemplateEntity.filter({ archived_admin: { $ne: true } }).catch(() => []);
-      if (!Array.isArray(rows)) throw new Error('Shift template lookup did not return a record list.');
+      const rows = await memo('tcadmin', 'shift_templates', 30000,
+        () => shiftTemplateEntity.filter({ archived_admin: { $ne: true } }).then((r) => (Array.isArray(r) ? r : [])),
+        { bypass: body?.bypass === true });
       return Response.json({ success: true, templates: rows });
     }
 
@@ -8186,8 +8187,11 @@ Deno.serve(async (req) => {
 
     if (action === 'list_devices') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view the device list.' }, { status: 403 });
-      const rows = await deviceEntity.filter({}, 'device_name', 200).catch(() => []);
-      return Response.json({ success: true, devices: Array.isArray(rows) ? rows.filter((d: any) => d.archived_test_data !== true) : [] });
+      const devices = await memo('tcadmin', 'devices', 30000,
+        () => deviceEntity.filter({}, 'device_name', 200)
+          .then((r) => (Array.isArray(r) ? r : []).filter((d: any) => d.archived_test_data !== true)),
+        { bypass: body?.bypass === true });
+      return Response.json({ success: true, devices });
     }
 
     if (action === 'update_device') {
@@ -8206,7 +8210,9 @@ Deno.serve(async (req) => {
 
     if (action === 'admin_period_compare') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required for period comparisons.' }, { status: 403 });
-      const rows = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, '-clock_in', 2000).catch(() => []);
+      const rows = await memo('tcadmin', 'period_compare', 20000,
+        () => entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, '-clock_in', 2000).then((r) => (Array.isArray(r) ? r : [])),
+        { bypass: body?.bypass === true });
       if (!Array.isArray(rows)) throw new Error('TimeEntry lookup did not return a record list.');
       const monthKey = (iso: any) => { const k = dateKeyInCompanyTime(iso); return k ? k.slice(0, 7) : ''; };
       const months: Record<string, { hours: number, entries: number, employees: Set<string> }> = {};
@@ -8227,7 +8233,9 @@ Deno.serve(async (req) => {
 
     if (action === 'list_pending_requests') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view in-flight requests.' }, { status: 403 });
-      const rows = await stateEntity.filter({}).catch(() => []);
+      const rows = await memo('tcadmin', 'pending_requests', 8000,
+        () => stateEntity.filter({}).then((r) => (Array.isArray(r) ? r : [])),
+        { bypass: body?.bypass === true });
       if (!Array.isArray(rows)) throw new Error('Employee state lookup did not return a record list.');
       const pending = rows
         .filter((s: any) => s?.id && s.status && s.status !== 'clocked_out' && s.status !== 'clocked_in'
@@ -8244,7 +8252,9 @@ Deno.serve(async (req) => {
 
     if (action === 'list_timeclock_audit') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await auditEntity.filter({}, '-created_date', 500);
+      const rows = await memo('tcadmin', 'audit_tail', 15000,
+        () => auditEntity.filter({}, '-created_date', 500).then((r) => (Array.isArray(r) ? r : [])),
+        { bypass: body?.bypass === true });
       if (!Array.isArray(rows)) throw new Error('Audit list did not return records.');
       const events = rows
         .filter((r: any) => r?.id)
@@ -8265,7 +8275,9 @@ Deno.serve(async (req) => {
     if (action === 'list_face_enrollment') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const userEntity = base44.asServiceRole.entities.User;
-      const users = await userEntity.filter({});
+      const users = await memo('tcadmin', 'face_roster', 30000,
+        () => userEntity.filter({}).then((r) => (Array.isArray(r) ? r : [])),
+        { bypass: body?.bypass === true });
       if (!Array.isArray(users)) throw new Error('User list did not return records.');
       const roster = users
         .map((u: any) => ({
