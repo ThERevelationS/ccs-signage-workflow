@@ -1,7 +1,12 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
+import { brickDraftValue, hasIssueFor } from "./brickPricingAvailability";
 
 const selectCls = "flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm";
+
+// Held pricing nulls every derived number — render a dash, never a stale $0.
+const dimText = (v) => (Number.isFinite(v) ? v.toFixed(1) : "—");
+const countText = (v) => (Number.isFinite(v) ? String(v) : "—");
 
 const FIELDS = [
   { key: "bricks_along_length", label: "Bricks along length", def: 6 },
@@ -12,7 +17,7 @@ const FIELDS = [
   { key: "waste_factor", label: "Waste factor", def: 1.1, step: "0.01" },
 ];
 
-export default function BrickGeometryPanel({ project, materials, derived, onChange }) {
+export default function BrickGeometryPanel({ project, materials, derived, issues = [], onChange }) {
   const material = materials.find((m) => m.id === project.selected_material_id);
 
   React.useEffect(() => {
@@ -45,6 +50,8 @@ export default function BrickGeometryPanel({ project, materials, derived, onChan
             });
           }}
           className={selectCls}
+          aria-invalid={hasIssueFor(issues, "selected_material_id") || undefined}
+          aria-describedby={hasIssueFor(issues, "selected_material_id") ? "brick-pricing-issues" : undefined}
         >
           <option value="">— select material —</option>
           {materials.map((m) => (
@@ -64,7 +71,9 @@ export default function BrickGeometryPanel({ project, materials, derived, onChan
               type="number"
               step={f.step}
               value={project[f.key] ?? f.def}
-              onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => onChange({ [f.key]: brickDraftValue(e.target.value) })}
+              aria-invalid={hasIssueFor(issues, f.key) || undefined}
+              aria-describedby={hasIssueFor(issues, f.key) ? "brick-pricing-issues" : undefined}
             />
           </label>
         ))}
@@ -73,12 +82,12 @@ export default function BrickGeometryPanel({ project, materials, derived, onChan
       {material ? (
         <div className="text-xs text-gray-500 border-t border-gray-100 pt-2 space-y-1">
           <div>
-            Derived footprint: {derived.derived_length.toFixed(1)}" ×{" "}
-            {derived.derived_width.toFixed(1)}" × {derived.derived_height.toFixed(1)}" high
+            Derived footprint: {dimText(derived?.derived_length)}" ×{" "}
+            {dimText(derived?.derived_width)}" × {dimText(derived?.derived_height)}" high
           </div>
           <div>
-            {derived.bricks_per_course} per course · {derived.calculated_bricks} total (with waste) ·{" "}
-            {derived.calculated_surface_area.toFixed(1)} sq ft face
+            {countText(derived?.bricks_per_course)} per course · {countText(derived?.calculated_bricks)} total (with waste) ·{" "}
+            {dimText(derived?.calculated_surface_area)} sq ft face
           </div>
         </div>
       ) : (
