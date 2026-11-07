@@ -36,7 +36,7 @@ export default function MissedPunchResolutionDialog({
     }
   }, [open, entry?.id]);
 
-  const submitMissedClockOut = async () => {
+  const submitMissedClockOut = async (skipClockIn = false) => {
     setLocalError("");
     const parsed = parseCompanyDateTimeInput(claimedClockOut);
     if (!parsed.ok) {
@@ -44,7 +44,7 @@ export default function MissedPunchResolutionDialog({
       return;
     }
     try {
-      await onMissedClockOut(parsed.iso);
+      await onMissedClockOut(parsed.iso, { skipClockIn });
     } catch (err) {
       setLocalError(err?.message || "The missed clock-out was not confirmed.");
     }
@@ -109,16 +109,26 @@ export default function MissedPunchResolutionDialog({
               inputId="missed-clock-out-time"
             />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              Enter the actual shop/company time in {TIME_CLOCK_COMPANY_TIME_LABEL}. This closes the old shift operationally, creates a manager-review correction for the time you enter, and then lets you Clock In now using server time.
+              Enter the actual shop/company time in {TIME_CLOCK_COMPANY_TIME_LABEL}. This closes the old shift operationally and creates a manager-review correction for the time you enter.
             </p>
             <Button
               type="button"
-              onClick={submitMissedClockOut}
+              onClick={() => submitMissedClockOut(false)}
               disabled={busy || !claimedClockOut || resolution?.self_service_blocked}
               className="mt-3 w-full bg-amber-600 text-white hover:bg-amber-700"
             >
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               Save missed Clock Out & Clock In now
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => submitMissedClockOut(true)}
+              disabled={busy || !claimedClockOut || resolution?.self_service_blocked}
+              className="mt-2 w-full border-amber-300 bg-white text-amber-800 hover:bg-amber-50 dark:bg-slate-900 dark:text-amber-200"
+            >
+              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Save missed Clock Out only — I'm done for now
             </Button>
           </div>
 
@@ -149,4 +159,3 @@ export default function MissedPunchResolutionDialog({
     </Dialog>
   );
 }
-
