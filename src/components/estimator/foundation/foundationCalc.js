@@ -168,7 +168,15 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     if (item.component_id) savedItems.set(item.component_id, savedItems.has(item.component_id) ? null : item);
   }
   for (const item of sourceItems) currentIds.set(item.component_id, (currentIds.get(item.component_id) || 0) + 1);
-  const catalogIssues = foundationAssemblyCatalogIssues(project, inventory);
+  // Pole availability issues come from the pole pricing check; the assembly
+  // integrity scan keeps its pole_id guard for other callers but is filtered
+  // here so each pole issue is reported once from a single source.
+  const poleCalc = calcPoles(project.poles, inventory, settings,
+    explicitSnapshot ? { savedPoles: savedProject?.poles ?? [] } : {});
+  const catalogIssues = [
+    ...poleCalc.polePricing.flatMap((entry) => entry.issues),
+    ...foundationAssemblyCatalogIssues(project, inventory).filter((issue) => issue.kind !== "pole"),
+  ];
   const inputIssues = foundationProjectInputIssues(project);
   const itemPricing = sourceItems.map((item, index) => {
     const issues = [
@@ -194,7 +202,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   );
   const walls = calcWalls(project, inventory, settings,
     explicitSnapshot ? { savedWalls: savedProject?.walls ?? [] } : {});
-  const poles = calcPoles(project.poles, inventory, settings);
+  const poles = poleCalc.poles;
   const wallCaps = calcWallCaps(project.wall_caps, inventory,
     explicitSnapshot ? { savedCaps: savedProject?.wall_caps ?? [] } : {});
 
@@ -216,7 +224,17 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     return total;
   };
   const wallTotal = sumWall("totalCost");
-  const polesTotal = poles.reduce((s, p) => s + num(p.total_cost), 0);
+  const sumPole = key => {
+    let total = 0;
+    for (const pole of poles) {
+      const value = pole?.[key];
+      if (!hasFoundationCostSnapshot(value)) return null;
+      total += value;
+      if (!Number.isFinite(total)) return null;
+    }
+    return total;
+  };
+  const polesTotal = sumPole("total_cost");
   const equipmentTotal = equipmentCostTotal(equipment);
 
   const totals = {
@@ -231,8 +249,8 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_excavation_cost: category("total_excavation_cost", sum("excavation_cost")),
     total_forming_materials_cost: category("total_forming_materials_cost", sum("forming_cost")),
     total_labor_cost: category("total_labor_cost", addKnown(sum("pouring_cost"), sum("finishing_cost"))),
-    total_pole_cost: poles.reduce((s, p) => s + num(p.pole_cost), 0),
-    total_pole_painting_cost: poles.reduce((s, p) => s + num(p.pole_painting_cost), 0),
+    total_pole_cost: category("total_pole_cost", sumPole("pole_cost")),
+    total_pole_painting_cost: category("total_pole_painting_cost", sumPole("pole_painting_cost")),
     total_brick_cost: sumWall("materialCost"),
     total_fill_cost: sumWall("internalMaterialCost"),
     total_equipment_cost: equipmentTotal,
@@ -244,10 +262,10 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
   };
 
-  totals.grand_total = itemsTotal === null || wallTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
+  totals.grand_total = itemsTotal === null || wallTotal === null || polesTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, catalogIssues, inputIssues,
   };
 }
 
