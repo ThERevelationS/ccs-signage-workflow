@@ -232,7 +232,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     total_labor_hours: addKnown(sum("finishing_hours"), sum("excavation_hours")),
   };
 
-  totals.grand_total = itemsTotal === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
+  totals.grand_total = itemsTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
     items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, catalogIssues, inputIssues,
