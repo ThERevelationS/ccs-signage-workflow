@@ -1,6 +1,8 @@
 // Helpers for building a blank Vinyl project + blank workflow + rolling up
 // totals across all workflows.
 
+import { hasVinylCostSnapshot, vinylNonNegativeNumber, vinylNumber } from "./vinylPricingAvailability";
+
 export const blankWorkflow = (index = 0) => ({
   id: `wf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   name: `Workflow ${index + 1}`,
@@ -70,42 +72,108 @@ export const migrateProject = (saved) => {
   return merged;
 };
 
-// Sum a numeric calc field across all workflows
-export const sumWorkflowField = (workflows, field) =>
-  (workflows || []).reduce((s, wf) => s + (parseFloat(wf?._calc?.[field]) || 0), 0);
+// Sum a numeric calc field across all workflows. Strict: any non-finite
+// contribution (a held workflow's null) makes the aggregate null so an
+// unavailable price can never launder into $0. Workflows whose _calc has not
+// been published yet are skipped; when a real finite current value exists it
+// always wins, otherwise the saved acknowledged snapshot is used (and only
+// when that snapshot is a real finite number — never a default).
+export const sumWorkflowField = (workflows, field) => {
+  let total = 0;
+  for (const wf of workflows || []) {
+    const calc = wf?._calc;
+    if (calc == null) continue;
+    const v = calc[field];
+    if (v === undefined) continue;
+    if (!Number.isFinite(v)) return null;
+    total += v;
+  }
+  return Number.isFinite(total) ? total : null;
+};
+
+const addOrNull = (...xs) => xs.every(v => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
+const mulOrNull = (a, b) => (Number.isFinite(a) && Number.isFinite(b)) ? a * b : null;
+const sumRowField = (rows, field) => {
+  let total = 0;
+  for (const r of rows || []) {
+    const v = vinylNumber(r?.[field]);
+    if (v === null) return null;
+    total += v;
+  }
+  return total;
+};
+
+// rollup key → saved project field used as the acknowledged fallback when
+// current pricing is unavailable. Keys mapped to null have no saved source —
+// they surface "not saved" instead of inventing a value.
+const SAVED_KEYS = {
+  vinylCost: "total_vinyl_cost",
+  laminateCost: "total_laminate_cost",
+  inkCost: "total_ink_cost",
+  bladeCost: "total_blade_cost",
+  machineCost: "total_machine_cost",
+  laborCost: "labor_cost",
+  laborHours: "labor_hours",
+  usedSqFt: "total_print_sqft",
+  totalRollSqFt: "total_vinyl_sqft",
+  laminateSqFt: "total_laminate_sqft",
+  equipmentCost: "total_equipment_cost",
+  personnelCost: "total_personnel_cost",
+  travelCost: "total_travel_cost",
+  baseSupplies: "base_supplies_cost",
+  supplies: "total_supplies_cost",
+  subtotal: "subtotal",
+  markupAmount: "markup_amount",
+  totalCost: "total_cost",
+  materialCost: null,
+  setupFeeApplied: null,
+};
 
 // Build the project rollup used by the summary panel + save payload.
-export const rollupVinylProject = (project) => {
+// Current-live values win; when a workflow or project input is held the
+// aggregate falls back to the saved acknowledged snapshot for that key, and
+// only surfaces null when no real finite snapshot exists. Never returns $0
+// in place of an unavailable price.
+export const rollupVinylProject = (project, { savedProject = project } = {}) => {
   const wfs = project.workflows || [];
-  const num = (v) => parseFloat(v) || 0;
+  // A recorded-but-malformed optional input is a flagged problem; absent means
+  // "not configured" and keeps the ported 0 contribution (dormant).
+  const optionalNonNeg = (v) =>
+    (v === undefined || v === null || v === "") ? 0 : vinylNonNegativeNumber(v);
+  const cat = (key, current) => Number.isFinite(current)
+    ? current
+    : (SAVED_KEYS[key] && hasVinylCostSnapshot(savedProject?.[SAVED_KEYS[key]])
+        ? savedProject[SAVED_KEYS[key]] : null);
 
-  const materialCost = sumWorkflowField(wfs, "materialCost");
-  const machineCost  = sumWorkflowField(wfs, "machineCost");
-  const laborCost    = sumWorkflowField(wfs, "laborCost");
-  const laborHours   = sumWorkflowField(wfs, "laborHours");
+  const materialCost = cat("materialCost", sumWorkflowField(wfs, "materialCost"));
+  const machineCost  = cat("machineCost",  sumWorkflowField(wfs, "machineCost"));
+  const laborCost    = cat("laborCost",    sumWorkflowField(wfs, "laborCost"));
+  const laborHours   = cat("laborHours",   sumWorkflowField(wfs, "laborHours"));
 
-  const vinylCost    = sumWorkflowField(wfs, "vinylCost");
-  const laminateCost = sumWorkflowField(wfs, "laminateCost");
-  const inkCost      = sumWorkflowField(wfs, "inkCost");
-  const bladeCost    = sumWorkflowField(wfs, "bladeCost");
+  const vinylCost    = cat("vinylCost",    sumWorkflowField(wfs, "vinylCost"));
+  const laminateCost = cat("laminateCost", sumWorkflowField(wfs, "laminateCost"));
+  const inkCost      = cat("inkCost",      sumWorkflowField(wfs, "inkCost"));
+  const bladeCost    = cat("bladeCost",    sumWorkflowField(wfs, "bladeCost"));
 
-  const usedSqFt        = sumWorkflowField(wfs, "usedSqFt");
-  const totalRollSqFt   = sumWorkflowField(wfs, "totalRollSqFtPulled");
-  const laminateSqFt    = sumWorkflowField(wfs, "laminateSqFt");
+  const usedSqFt      = cat("usedSqFt",      sumWorkflowField(wfs, "usedSqFt"));
+  const totalRollSqFt = cat("totalRollSqFt", sumWorkflowField(wfs, "totalRollSqFtPulled"));
+  const laminateSqFt  = cat("laminateSqFt",  sumWorkflowField(wfs, "laminateSqFt"));
 
-  const equipmentCost = (project.selected_equipment || []).reduce((s, e) => s + num(e.total_cost), 0);
-  const personnelCost = (project.personnel || []).reduce((s, p) => s + num(p.total_cost), 0);
-  const travelCost    = num(project.total_travel_cost);
+  const equipmentCost = cat("equipmentCost", sumRowField(project.selected_equipment, "total_cost"));
+  const personnelCost = cat("personnelCost", sumRowField(project.personnel, "total_cost"));
+  const travelCost    = cat("travelCost",    optionalNonNeg(project.total_travel_cost));
 
-  const baseSupplies  = materialCost * (num(project.supplies_percent_of_materials) / 100);
-  const supplies      = baseSupplies + num(project.extra_supplies_cost);
+  const suppliesPct   = optionalNonNeg(project.supplies_percent_of_materials);
+  const baseSupplies  = cat("baseSupplies", suppliesPct === null ? null : mulOrNull(materialCost, suppliesPct / 100));
+  const supplies      = cat("supplies", addOrNull(baseSupplies, optionalNonNeg(project.extra_supplies_cost)));
 
-  const subtotal      = materialCost + machineCost + laborCost + equipmentCost + personnelCost + travelCost + supplies;
-  const markupAmount  = subtotal * (num(project.markup_percent) / 100);
-  const totalCost     = subtotal + markupAmount;
+  const subtotal     = cat("subtotal", addOrNull(materialCost, machineCost, laborCost, equipmentCost, personnelCost, travelCost, supplies));
+  const markupPct    = optionalNonNeg(project.markup_percent);
+  const markupAmount = cat("markupAmount", markupPct === null ? null : mulOrNull(subtotal, markupPct / 100));
+  const totalCost    = cat("totalCost", addOrNull(subtotal, markupAmount));
 
   // Add per-workflow setup-fee adjustment for transparency
-  const setupFeeApplied = sumWorkflowField(wfs, "setupFeeApplied");
+  const setupFeeApplied = cat("setupFeeApplied", sumWorkflowField(wfs, "setupFeeApplied"));
 
   return {
     materialCost, machineCost, laborCost, laborHours,
