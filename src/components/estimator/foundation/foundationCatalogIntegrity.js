@@ -30,7 +30,6 @@ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   return issues;
 }
 
-// Availability only: this does not validate rates, geometry, or engineering.
 export function foundationAssemblyCatalogIssues(project, inventory = []) {
   const available = new Set(inventory.map((row) => row.id));
   const issues = [];
