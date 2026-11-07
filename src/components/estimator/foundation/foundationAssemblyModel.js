@@ -14,6 +14,11 @@ const isId = (v) => typeof v === "string" && v.trim().length > 0 && v.length <= 
 const isReserved = (v) => typeof v === "string" && v.startsWith(UNRESOLVED_PREFIX);
 const isUnresolvedToken = (v) => Object.values(UNRESOLVED).includes(v);
 const deepClone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
+// Preserve a malformed value raw when it cannot be JSON-cloned (functions,
+// cycles) — the copy path must not crash on legacy data.
+const cloneRawValue = (v) => {
+  try { return deepClone(v); } catch { return v; }
+};
 const cloneNode = (n) => (isRecord(n) ? { ...n } : n);
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);
@@ -306,7 +311,24 @@ export function foundationAssemblyIssues(project) {
 export function cloneFoundationComponents(project, { createId } = {}) {
   if (typeof createId !== "function") throw new Error("foundation assembly: createId(kind) factory is required");
   if (!isRecord(project)) throw new Error("foundation assembly: project must be a record");
-  const { project: normalized } = normalizeFoundationAssembly(project, { createId });
+  // Legacy rows can carry a malformed wall outline — a nonarray `shape.segments`
+  // value on a stored row. The copy path must not crash on them: detach the
+  // field for normalization, then restore the authored value raw on the clone —
+  // no id remap is possible on a non-array, so none is attempted.
+  const rawWallSegments = new Map();
+  const wallsForNormalize = (Array.isArray(project.walls) ? project.walls : []).map((w, i) => {
+    if (!isRecord(w) || !isRecord(w.shape)) return w;
+    const segs = w.shape.segments;
+    if (segs === undefined || Array.isArray(segs)) return w;
+    rawWallSegments.set(i, segs);
+    const shape = { ...w.shape };
+    delete shape.segments;
+    return { ...w, shape };
+  });
+  const { project: normalized } = normalizeFoundationAssembly(
+    rawWallSegments.size ? { ...project, walls: wallsForNormalize } : project,
+    { createId }
+  );
   const used = new Set([...collectIds(normalized), ...collectRefs(normalized)]);
   const idMap = new Map();
   const remap = (oldId, kind) => {
@@ -324,9 +346,18 @@ export function cloneFoundationComponents(project, { createId } = {}) {
   });
   if (project.items !== undefined) components.items = copyRows(normalized.items, "item");
   if (project.walls !== undefined) {
-    components.walls = copyRows(normalized.walls, "wall").map((w) => ({
+    components.walls = copyRows(normalized.walls, "wall").map((w, i) => ({
       ...w,
-      shape: isRecord(w.shape) ? { ...w.shape, segments: (w.shape.segments || []).map((s) => ({ ...s, component_id: remap(s.component_id, "wall_segment") })) } : w.shape,
+      shape: isRecord(w.shape)
+        ? {
+            ...w.shape,
+            segments: rawWallSegments.has(i)
+              ? cloneRawValue(rawWallSegments.get(i))
+              : Array.isArray(w.shape.segments)
+                ? w.shape.segments.map((s) => ({ ...s, component_id: remap(s.component_id, "wall_segment") }))
+                : (w.shape.segments || []),
+          }
+        : w.shape,
     }));
   }
   if (project.poles !== undefined) {
@@ -356,7 +387,8 @@ export function cloneFoundationComponents(project, { createId } = {}) {
   (components.poles || []).forEach((p) => { p.foundation_idx = rebuildIndex(p.foundation_component_id, parents); });
   (components.wall_caps || []).forEach((c) => {
     c.wall_index = rebuildIndex(c.wall_component_id, wallRows);
-    const segs = wallRows.find((w) => w?.component_id === c.wall_component_id)?.shape?.segments || [];
+    const rawSegs = wallRows.find((w) => w?.component_id === c.wall_component_id)?.shape?.segments;
+    const segs = Array.isArray(rawSegs) ? rawSegs : [];
     c.segment_index = rebuildIndex(c.segment_component_id, segs);
   });
   (components.signage_cabinets || []).forEach((c) => {
