@@ -11,12 +11,12 @@ const THRESHOLDS = {
   session_revokes: 5,      // revoke_session audit rows in last 24h
 };
 
-export async function handler(request: Request) {
+Deno.serve(async (request: Request) => {
   try {
-    const body = await request.json().catch(() => ({}));
-    if (!(await hasWorkflowInvocationCapability(body, 'dailyAnomalyDigest'))) {
+    const reqBody = await request.json().catch(() => ({}));
+    if (!(await hasWorkflowInvocationCapability(reqBody, 'dailyAnomalyDigest'))) {
       const probe = createClientFromRequest(request);
-      const user = await authenticateSignShopSession(probe, body?.session_token).catch(() => null);
+      const user = await authenticateSignShopSession(probe, reqBody?.session_token).catch(() => null);
       if (user?.role !== 'admin') return Response.json({ error: 'Admin access or a verified scheduled workflow is required.' }, { status: 403 });
     }
     const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request("https://internal/cron")));
