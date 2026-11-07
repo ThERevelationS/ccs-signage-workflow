@@ -21,14 +21,38 @@ const sumKnown = rows => {
 };
 
 export function calcWallCaps(wallCaps = [], inventory = []) {
-  const caps = (wallCaps || []).map((cap) => {
-    const inv = inventory.find((i) => i.id === cap.cap_inventory_id);
-    if (!inv) return { ...cap };
+  const issues = [];
+  const caps = (wallCaps || []).map((cap, index) => {
+    const id = cap.cap_inventory_id;
+    const issue = (field, code, message) => issues.push({
+      kind: "wall_cap", index, componentId: cap.component_id ?? cap.id ?? null,
+      field, inventoryId: assigned(id) ? id : null, code,
+      message: `Wall cap ${index + 1}: ${message}`,
+    });
+    const matches = assigned(id) ? inventory.filter(row => row?.id === id) : [];
+    if (matches.length !== 1) {
+      issue("cap_inventory_id", !assigned(id) ? "catalog_item_unassigned"
+        : matches.length > 1 ? "catalog_item_ambiguous" : "catalog_item_unavailable",
+      !assigned(id) ? "select a catalog material." : matches.length > 1
+        ? "the selected catalog ID is ambiguous; refresh the catalog." : "selected catalog material is unavailable.");
+      return { ...cap };
+    }
+    const inv = matches[0];
+    if (inv.material_type !== "wall_cap") {
+      issue("cap_inventory_id", "catalog_item_type_mismatch", "the selected catalog material is not a wall cap.");
+      return { ...cap };
+    }
+    const rate = stockPriceNumber(inv.cap_stock_price);
+    if (rate === null || rate < 0) {
+      issue("cap_stock_price", "wall_cap_stock_price_unavailable",
+        "record a finite nonnegative full-stock price; a missing price is not zero. Saved amounts are retained.");
+      return { ...cap };
+    }
     return {
       ...cap,
-      cap_name: inv?.material_name || "",
+      cap_name: inv.material_name || "",
       stock_length_inches: num(inv?.cap_stock_length_inches),
-      cost: num(inv?.cap_stock_price),
+      cost: rate,
     };
   });
 
