@@ -1198,7 +1198,7 @@ export default function AdminSettings() {
       name: `${rule.name || ""} (imported)`, group: rule.group || "", enabled: rule.enabled !== false,
       priority: rule.priority || 0, triggers: rule.triggers || [], actions: rule.actions || [],
     }, null, 2);
-    try { await navigator.clipboard.writeText(payload); setRuleMessage?.("Rule JSON copied to clipboard."); }
+    try { await navigator.clipboard.writeText(payload); }
     catch { window.prompt("Copy this rule JSON:", payload); }
   };
 

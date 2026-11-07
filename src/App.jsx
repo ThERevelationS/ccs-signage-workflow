@@ -84,7 +84,6 @@ const CustomerPortal = lazyPage(() => import('./pages/CustomerPortal'));
 const NewUserSetup = lazyPage(() => import('./pages/NewUserSetup'));
 const PermittingDocs = lazyPage(() => import('./pages/PermittingDocs'));
 const PermittingSearch = lazyPage(() => import('./pages/PermittingSearch'));
-const PermittingSearch = lazyPage(() => import('./pages/PermittingSearch'));
 const WorkOrderTraveler = lazyPage(() => import('./pages/WorkOrderTraveler'));
 const ProductionSchedule = lazyPage(() => import('./pages/ProductionSchedule'));
 const InstallRouteMap = lazyPage(() => import('./pages/InstallRouteMap'));
@@ -209,7 +208,6 @@ const AuthenticatedApp = () => {
           <PermittingSearch />
         </LayoutWrapper>
       } />
-      <Route path="/PermittingSearch" element={<LayoutWrapper currentPageName="PermittingSearch"><PermittingSearch /></LayoutWrapper>} />
       <Route path="/PermittingDocs" element={
         <LayoutWrapper currentPageName="PermittingDocs">
           <PermittingDocs />

@@ -1648,7 +1648,6 @@ export default function EnhancedSipChecklist({
 }
 
 // Tasks Popup Component
-// eslint-disable-next-line unused-imports/no-unused-vars
 function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, riders, setRiders, users, isRegistered, onUpdate, colors, taskTargetContext }) {
   const [showTaskCreation, setShowTaskCreation] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
@@ -1758,7 +1757,7 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
     }
   };
 
-  const _renderTaskItem = (task, index, sourceType, sourceId) => {
+  const renderTaskItem = (task, index, sourceType, sourceId) => {
     const taskKey = `${sourceType}-${sourceId || 'main'}-${index}`;
     const isExpanded = expandedTasks[taskKey];
 

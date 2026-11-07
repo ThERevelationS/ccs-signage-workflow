@@ -285,6 +285,7 @@ export default function EstimatorCustomers() {
   const workflowSyncRef = useRef(false);
   const pricingTierSaveRef = useRef(false);
   const inboxReloadRef = useRef(null);
+  const loadCustomersAndTiersRef = useRef(null);
   const importInputRef = useRef(null);
   const tierImportRef = useRef(null);
   const [importing, setImporting] = useState(false);
@@ -322,6 +323,7 @@ export default function EstimatorCustomers() {
         setLoading(false);
       }
     };
+    loadCustomersAndTiersRef.current = load;
     load().catch(() => {});
   }, []);
 
@@ -498,7 +500,7 @@ export default function EstimatorCustomers() {
         if (existing?.id) { await staffEntities.MarkupTier.update(existing.id, data); updated += 1; }
         else { await staffEntities.MarkupTier.create(data); created += 1; }
       }
-      await load();
+      await loadCustomersAndTiersRef.current?.();
       window.alert(`Pricing tiers imported — ${created} created, ${updated} updated.`);
     } catch (e) {
       window.alert(e?.message || "The tier JSON could not be imported.");

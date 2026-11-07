@@ -1,6 +1,5 @@
 import {useResearchProgress} from "./ResearchProgressContext";
-import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Plus, Wand2, MapPin, Download } from "lucide-react";

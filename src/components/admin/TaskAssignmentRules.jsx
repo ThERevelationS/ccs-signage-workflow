@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,10 +171,6 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
 
 function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
   const [expanded, setExpanded] = useState(false);
-  const [escalationRows, setEscalationRows] = useState([]);
-  const [escalationRecord, setEscalationRecord] = useState(null);
-  const [escalationSaving, setEscalationSaving] = useState(false);
-  const [escalationMsg, setEscalationMsg] = useState("");
   return (
     <div className={`clay-card p-4 ${!rule.enabled ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-2">
@@ -247,6 +242,10 @@ export default function TaskAssignmentRules() {
   const [testResult, setTestResult] = useState(null);
   const [settingRecord, setSettingRecord] = useState(null);
   const [settingsError, setSettingsError] = useState("");
+  const [escalationRecord, setEscalationRecord] = useState(null);
+  const [escalationRows, setEscalationRows] = useState([]);
+  const [escalationSaving, setEscalationSaving] = useState(false);
+  const [escalationMsg, setEscalationMsg] = useState("");
 
   // Form state
   const [form, setForm] = useState(defaultRule());

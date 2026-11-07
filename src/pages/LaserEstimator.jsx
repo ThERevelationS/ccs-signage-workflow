@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LaserProject, Settings } from "@/api/gatedEntities";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,7 @@ const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;
 
 export default function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
   const estimateId = embeddedEstimateId || searchParams.get('estimateId');
   const [isEditing, setIsEditing] = useState(false);

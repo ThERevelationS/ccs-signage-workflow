@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save, Wrench, Edit, Download, Printer, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
@@ -31,6 +31,7 @@ const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;
 
 export default function MetalEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
   const estimateId = embeddedEstimateId || searchParams.get('estimateId');
   const [isEditing, setIsEditing] = useState(false);

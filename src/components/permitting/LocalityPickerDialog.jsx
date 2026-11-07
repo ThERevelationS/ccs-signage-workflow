@@ -4,7 +4,6 @@ import SavedAddressResearch from './SavedAddressResearch';
 import AutomaticAddressScanResults from './AutomaticAddressScanResults';
 import SelectorScanActions from './SelectorScanActions';
 import ResearchProgressBar from './ResearchProgressBar';
-import {useResearchProgress} from './ResearchProgressContext';
 import ElectricalAuthorityCoverage from './ElectricalAuthorityCoverage';
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
@@ -294,10 +293,11 @@ function LocalityPickerSession({
     else if(!hasSignal&&!/,\s*\S+/.test(norm))setError("That address is missing a city, state, or ZIP — adding one usually finds it faster.");
     else setError("");
     setResult(null);
+    // Address lookups go straight to the resolver — they are not scan
+    // actions and must not register rows in Scan activity. Declared outside
+    // the try so the recovery handlers below can reuse it.
+    const invoke=(name,payload)=>base44.functions.invoke(name,payload);
     try {
-      // Address lookups go straight to the resolver — they are not scan
-      // actions and must not register rows in Scan activity.
-      const invoke=(name,payload)=>base44.functions.invoke(name,payload);
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
       let data;
       // Patient retry: the app shares one function budget, so 429s come in
