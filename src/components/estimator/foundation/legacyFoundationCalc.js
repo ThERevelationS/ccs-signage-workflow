@@ -29,6 +29,86 @@ const supplierPriceNumber = (value) => {
   return Number.isFinite(number) && number >= 0 ? number : null;
 };
 
+// Settings basis: a missing/blank Settings row keeps the ported module
+// default — the same `value === 0 ? 0 : value || fallback` pick the ported
+// getSetting applies — while a recorded value must be a finite, nonnegative
+// number. An explicit 0 is a legitimate free rate, multiplier, or time for
+// every read that only multiplies a cost component — the one read that also
+// divides (main labor backing out finishing hours) is flagged positive-only
+// at the consumption mirror below. The ported `parseFloat(settings[key] || def)`
+// partial-parsed "12abc" to 12 and returned NaN for "abc", and the `num()`
+// rollups then laundered NaN into finite-wrong persisted totals — a malformed
+// recorded setting now reports and holds the item instead.
+const foundationSettingNumber = (value, fallback) =>
+  supplierPriceNumber(value === 0 ? 0 : value || fallback);
+
+// Settings the ported calcItemCost consumes, mirrored key-by-key — only the
+// keys an item's recorded configuration actually reads are checked, each with
+// the ported getSetting fallback and a label for the diagnostic. The caller
+// mirrors this on the same effective item the ported math runs against (the
+// project default excavation method already merged). `positive` marks a read
+// where the ported math divides by the setting — an explicit 0 there is not a
+// legitimate "free" rate, it is Infinity/NaN laundered downstream.
+const itemSettingConsumption = (item) => {
+  const has = (v) => v !== undefined && v !== null;
+  // Pouring cost is always `volumeCY * pouring_cost_per_cy`.
+  const consumed = [["foundation_pouring_cost_per_cy", 15, "pouring labor cost per CY"]];
+  // Main labor defaults the excavation and finishing rates and backs out
+  // finishing hours — an explicit custom rate/hours covers that path instead.
+  // With finishing enabled and no custom finishing hours, the ported math
+  // divides `defaultFinishingCost / main_labor_rate` — a 0 rate must be a
+  // positive read there.
+  const laborDivides = Boolean(item?.include_finishing) && !has(item?.custom_finishing_hours);
+  if (!has(item?.custom_excavation_rate)
+    || item?.include_rebar
+    || (item?.include_finishing && (!has(item?.custom_finishing_rate) || !has(item?.custom_finishing_hours)))) {
+    consumed.push(["foundation_main_labor_rate", 60, laborDivides ? "positive main labor rate" : "main labor rate", laborDivides]);
+  }
+  if (item?.include_rebar) {
+    consumed.push(
+      ["foundation_rebar_time_cross_section", 0.05, "rebar time per intersection"],
+      ["foundation_rebar_time_linear_ft", 0.02, "rebar time per linear foot"],
+    );
+  }
+  if (item?.include_forming) {
+    consumed.push(
+      ["foundation_forming_cost_per_sqft", 2.5, "forming labor cost per sq ft"],
+      item?.foundation_type === "spread_foot"
+        ? ["foundation_forming_materials_spread_foot", 0.5, "spread-foot forming materials multiplier"]
+        : ["foundation_forming_materials_pillar", 0.75, "pillar forming materials multiplier"],
+    );
+  }
+  if (item?.include_finishing && !has(item?.custom_finishing_hours)) {
+    consumed.push(["foundation_finishing_cost_per_sqft", 1.25, "finishing labor cost per sq ft"]);
+  }
+  if (!has(item?.custom_excavation_hours)) {
+    consumed.push(
+      item?.excavation_method === "hand_dig" || !item?.excavation_method
+        ? ["foundation_hand_dig_time_per_cy", 2.0, "hand excavation time per CY"]
+        : ["foundation_equipment_excavation_time_per_cy", 0.5, "equipment excavation time per CY"],
+    );
+  }
+  return consumed;
+};
+
+// A consumed Settings value the ported math cannot parse is not a guessed
+// rate — the item is reported and held, the same contract as the wall/pole
+// setting checks (wall_setting_unavailable / pole_paint_setting_unavailable).
+export const foundationItemSettingIssues = (item, settings = {}, index = 0) => {
+  const issues = [];
+  for (const [key, fallback, label, positive] of itemSettingConsumption(item)) {
+    const number = foundationSettingNumber(settings?.[key], fallback);
+    if (number === null || (positive && number <= 0)) {
+      issues.push({
+        kind: "foundation", index, componentId: item?.component_id ?? null,
+        field: key, inventoryId: null, code: "foundation_setting_unavailable",
+        message: `Foundation ${index + 1}: record a finite, ${positive ? "positive" : "nonnegative"} ${label.replace(/^positive /, "")} in Estimator Settings before repricing.`,
+      });
+    }
+  }
+  return issues;
+};
+
 // Catalog price reads normalize on this calculation copy only — authored
 // inventory rows are never mutated. A null price means "not cataloged"; the
 // `field` key names the supplier column a diagnostic points at.
