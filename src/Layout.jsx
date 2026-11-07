@@ -1009,6 +1009,24 @@ function LayoutContent({ children }) {
 
         .ccs-glass-nav-item > span { color: #334155 !important; }
 
+        .ccs-nav-styled {
+          position: relative;
+          transition:
+            transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+            filter 180ms ease,
+            box-shadow 180ms ease;
+        }
+
+        .ccs-nav-styled:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.07) saturate(1.06);
+        }
+
+        .ccs-nav-styled:active {
+          transform: translateY(0) scale(0.985);
+          filter: brightness(0.96);
+        }
+
         .ccs-focus-pause-glass {
           --glass-accent-rgb: 167 139 250;
           display: grid !important;
