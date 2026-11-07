@@ -3,9 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
-import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
-
-const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+import { foundationWallCapCatalogIssues, wallCapInputNumber, wallCapCutLengthValue } from "./wallCapCalculator";
 
 export default function FoundationWallCapsPanel({ caps = [], walls = [], options = [], onChange }) {
   const patchCap = (index, changes) =>
@@ -18,6 +16,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
 
   const addCap = () => {
     const inv = options[0];
+    const stockLength = wallCapInputNumber(inv?.cap_stock_length_inches);
     onChange([
       ...caps,
       {
@@ -28,14 +27,16 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
         segment_component_id: walls[0]?.shape?.segments?.[0]?.component_id || "",
         segment_index: walls[0]?.shape?.segments?.length ? 0 : undefined,
         position_along_segment_inches: 0,
-        length_inches: num(inv?.cap_stock_length_inches) || 48,
+        length_inches: stockLength !== null && stockLength > 0 ? stockLength : "",
         rotation_offset_degrees: 0,
         lateral_offset_inches: 0,
       },
     ]);
   };
 
-  const unavailableCaps = new Set(foundationWallCapCatalogIssues(caps, options).filter(issue => issue.code !== "wall_cap_cost_total_invalid").map(issue => issue.index));
+  const capIssues = foundationWallCapCatalogIssues(caps, options);
+  const unavailableCaps = new Set(capIssues.filter(issue => issue.code !== "wall_cap_cost_total_invalid").map(issue => issue.index));
+  const geometryIssues = (index) => capIssues.filter(issue => issue.index === index && ["length_inches", "cap_stock_length_inches"].includes(issue.field));
 
   return (
     <div className="space-y-3">
@@ -69,10 +70,8 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   value={cap.cap_inventory_id || ""}
                   aria-label="Cap material"
                   onChange={(e) => {
-                    const inv = options.find((o) => o.id === e.target.value);
                     patchCap(index, {
                       cap_inventory_id: e.target.value,
-                      length_inches: num(inv?.cap_stock_length_inches) || cap.length_inches,
                     });
                   }}
                 >
@@ -150,16 +149,31 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 Cut length (in)
                 <Input
                   type="number"
-                  value={cap.length_inches ?? 48}
-                  onChange={(e) => patchCap(index, { length_inches: Math.max(1, num(e.target.value)) })}
+                  step="any"
+                  value={wallCapInputNumber(wallCapCutLengthValue(cap)) === null ? "" : wallCapCutLengthValue(cap)}
+                  aria-label={`Cap ${index + 1} cut length (inches)`}
+                  aria-invalid={geometryIssues(index).some((i) => i.field === "length_inches") || undefined}
+                  aria-describedby={geometryIssues(index).length ? `wall-cap-${index}-geometry` : undefined}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const parsed = wallCapInputNumber(raw);
+                    patchCap(index, { length_inches: parsed === null ? raw : parsed });
+                  }}
                 />
               </label>
             </div>
-            <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
+            {geometryIssues(index).length > 0 && (
+              <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
+                {geometryIssues(index).map((issue) => (
+                  <p key={issue.code}>{issue.message}</p>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mt-2 text-xs text-gray-600">
               <span>
-                Stock length: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : "Not saved"}</span>
+                {unavailableCaps.has(index) ? "Saved stock length: " : "Stock length: "}<span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : "Not saved"}</span>
               </span>
-              <div className="flex items-center gap-3">
+              <div className="ml-auto flex items-center gap-3">
                 <span className="font-bold text-gray-900">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : "Not saved"}</span>
                 {unavailableCaps.has(index) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
                 <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
