@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Project, Settings } from "@/api/gatedEntities";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,13 +20,26 @@ import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/bui
 import {
   PAINT_THICKNESSES,
   autoPaintMaskSqft,
-  calculatePaintingProject,
   normalizePaintingItem,
 } from "@/components/estimator/paint/paintCalc";
+import {
+  calcPaintingProject,
+  hasIssueFor,
+  hasPaintCostSnapshot,
+  paintDraftValue,
+} from "@/components/estimator/paint/paintPricingAvailability";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const money = (value) => Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const number = (value, digits = 2) => Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
+
+// Saved-fallback display: a non-finite live value is either the saved
+// acknowledged snapshot (shown plainly) or genuinely unsaved ("Not saved").
+const sumOrNull = (...xs) => xs.every((v) => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
+const moneyCell = (v) => hasPaintCostSnapshot(v)
+  ? money(v)
+  : <span className="text-amber-700 font-medium">Not saved</span>;
+const numCell = (v, digits = 2) => Number.isFinite(v) ? number(v, digits) : "—";
 
 const emptyItem = () => normalizePaintingItem({
   builder_item_id: newBuilderItemId("paint-item"),
@@ -102,11 +115,21 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     return () => { active = false; };
   }, [editId, estimateId]);
 
-  const calculated = useMemo(
-    () => project ? calculatePaintingProject(project, settings) : null,
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panel, the per-field diagnostics, and the save guard.
+  const priced = useMemo(
+    () => (project ? calcPaintingProject(project, settings) : null),
     [project, settings]
   );
+  const calculated = priced?.calc || null;
   const totals = calculated?.totals || {};
+  const allIssues = priced?.issues || [];
+  // Any settings-side unavailability → stronger save message; any issue at
+  // all blocks the save — unavailable pricing is never written as $0.
+  const catalogBlocked = allIssues.some((i) => i.kind === "paint_catalog");
+  const pricingBlocked = allIssues.length > 0;
+  const pricingUnavailable = !!calculated?.pricingUnavailable;
+  const itemIssues = (index) => allIssues.filter((i) => i.itemIndex === index);
 
   const patchProject = (changes) => setProject((prev) => ({ ...prev, ...changes }));
 
@@ -169,6 +192,15 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     return () => window.removeEventListener("beforeunload", warn);
   }, [saving]);
   const saveProject = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // and point the user at the flagged values.
+    if (pricingBlocked) {
+      setError(catalogBlocked
+        ? "Save paused: a Painting Settings value is missing or unusable — update it in Painting Settings, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!project?.project_name?.trim() || !project?.client_name?.trim()) {
       setError("Project name and client name are required.");
       return;
@@ -182,9 +214,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
       }));
       const pricingProject = {
         ...project,
-        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
-        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
-        total_labor_cost: Number(totals.total_labor_cost || 0),
+        total_paint_mask_cost: totals.total_paint_mask_cost,
+        total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+        total_labor_cost: totals.total_labor_cost,
       };
       const customerPricing = project.customer_pricing?.applied === true
         ? await calculateSavedCustomerPricing({
@@ -202,9 +234,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         status: "calculated",
         items: cleanItems,
         paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),
-        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
-        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
-        total_labor_cost: Number(totals.total_labor_cost || 0),
+        total_paint_mask_cost: totals.total_paint_mask_cost,
+        total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+        total_labor_cost: totals.total_labor_cost,
         customer_pricing: customerPricing,
         notes: project.notes || "",
       };
@@ -247,7 +279,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           estimateId,
           line: { project_id: projectId, module_key: "painting" },
           sourceProject: savedProject,
-          liveTotal: Number(totals.total_cost || 0),
+          liveTotal: totals.total_cost,
         });
       }
       setProject((prev) => ({ ...prev, ...savedProject, items: seedBuilderItemIds(savedProject.items || [], "paint-item") }));
@@ -263,6 +295,10 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
 
   // #78 — clone the current save payload into a brand-new Painting project.
   const handleSaveAsCopy = async () => {
+    if (pricingBlocked) {
+      setError("Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -281,9 +317,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           status: "calculated",
           items: cleanItems,
           paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),
-          total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
-          total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
-          total_labor_cost: Number(totals.total_labor_cost || 0),
+          total_paint_mask_cost: totals.total_paint_mask_cost,
+          total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost,
+          total_labor_cost: totals.total_labor_cost,
           customer_pricing: project.customer_pricing,
           notes: project.notes || "",
         },
@@ -348,6 +384,27 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
 
         {error && <div className="mb-3 px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded">{error}</div>}
 
+        {/* Pricing-availability banner — visible on every state so a blocked
+            save always shows why. */}
+        {allIssues.length > 0 && (
+          <div
+            role="status"
+            id="paint-pricing-issues"
+            className="mb-3 flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-3 py-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this estimate can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_310px] gap-4">
           <div className="space-y-4 min-w-0">
             <section className="bg-white border border-gray-200 rounded-md p-4">
@@ -363,7 +420,10 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                   <Input value={project.estimate_number || ""} onChange={(e) => patchProject({ estimate_number: e.target.value })} disabled={!!estimateId} className="mt-1 h-[32px] text-[12px]" />
                 </label>
                 <label className="text-[11px] text-gray-600">Paint application supplies / sq ft / color
-                  <Input type="number" step="0.01" min="0" value={project.paint_supplies_per_sqft ?? ""} onChange={(e) => patchProject({ paint_supplies_per_sqft: Number(e.target.value) })} className="mt-1 h-[32px] text-[12px]" />
+                  <Input type="number" step="0.01" min="0" value={project.paint_supplies_per_sqft ?? ""} onChange={(e) => patchProject({ paint_supplies_per_sqft: paintDraftValue(e.target.value) })}
+                    aria-invalid={hasIssueFor(allIssues, "paint_supplies_per_sqft") || undefined}
+                    aria-describedby={hasIssueFor(allIssues, "paint_supplies_per_sqft") ? "paint-pricing-issues" : undefined}
+                    className="mt-1 h-[32px] text-[12px]" />
                 </label>
               </div>
               <label className="block text-[11px] text-gray-600 mt-3">Notes
@@ -387,6 +447,10 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                   {project.items.map((rawItem, index) => {
                     const item = calculated.items[index] || rawItem;
                     const lettering = rawItem.item_type === "lettering";
+                    const rowIssues = itemIssues(index);
+                    const rowIssuesId = `paint-item-${index}-issues`;
+                    const fieldFlag = (field) => hasIssueFor(allIssues, field, index) || undefined;
+                    const fieldDesc = (field) => hasIssueFor(allIssues, field, index) ? rowIssuesId : undefined;
                     return (
                       <div key={rawItem.builder_item_id || index} className="p-4 space-y-3">
                         <div className="flex items-center gap-2">
@@ -406,7 +470,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                           <Field label="Type">
                             <Select value={rawItem.item_type || "panel"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>
-                              <SelectTrigger className="h-[30px] text-[11px]"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("item_type")}
+                                aria-describedby={fieldDesc("item_type")}><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="panel">Panel</SelectItem>
                                 <SelectItem value="lettering">Lettering</SelectItem>
@@ -416,28 +482,65 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                           </Field>
                           <Field label="Thickness">
                             <Select value={rawItem.thickness || "1/2"} onValueChange={(value) => patchItem(index, { thickness: value }, { autoMask: true })}>
-                              <SelectTrigger className="h-[30px] text-[11px]"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("thickness")}
+                                aria-describedby={fieldDesc("thickness")}><SelectValue /></SelectTrigger>
                               <SelectContent>{PAINT_THICKNESSES.map((size) => <SelectItem value={size} key={size}>{size}&quot;</SelectItem>)}</SelectContent>
                             </Select>
                           </Field>
                           <Field label={lettering ? "Letter height (in)" : "Length (in)"}>
-                            <Input type="number" min="0" step="0.01" value={rawItem[lettering ? "width" : "length"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? "width" : "length"]: Number(e.target.value) }, { autoMask: true })} className="h-[30px] text-[11px]" />
+                            <Input type="number" min="0" step="0.01" value={rawItem[lettering ? "width" : "length"] ?? ""} onChange={(e) => patchItem(index, { [lettering ? "width" : "length"]: paintDraftValue(e.target.value) }, { autoMask: true })}
+                              aria-invalid={fieldFlag(lettering ? "width" : "length")}
+                              aria-describedby={fieldDesc(lettering ? "width" : "length")}
+                              className="h-[30px] text-[11px]" />
                           </Field>
                           <Field label={lettering ? "Number of letters" : "Width (in)"}>
-                            <Input type="number" min="0" step={lettering ? "1" : "0.01"} value={rawItem[lettering ? "length" : "width"] ?? 0} onChange={(e) => patchItem(index, { [lettering ? "length" : "width"]: Number(e.target.value) }, { autoMask: true })} className="h-[30px] text-[11px]" />
+                            <Input type="number" min="0" step={lettering ? "1" : "0.01"} value={rawItem[lettering ? "length" : "width"] ?? ""} onChange={(e) => patchItem(index, { [lettering ? "length" : "width"]: paintDraftValue(e.target.value) }, { autoMask: true })}
+                              aria-invalid={fieldFlag(lettering ? "length" : "width")}
+                              aria-describedby={fieldDesc(lettering ? "length" : "width")}
+                              className="h-[30px] text-[11px]" />
                           </Field>
-                          {!lettering && <Field label="Quantity"><Input type="number" min="1" step="1" value={rawItem.quantity ?? 1} onChange={(e) => patchItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) })} className="h-[30px] text-[11px]" /></Field>}
+                          {!lettering && <Field label="Quantity"><Input type="number" min="1" step="1" value={rawItem.quantity ?? ""} onChange={(e) => patchItem(index, { quantity: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("quantity")}
+                            aria-describedby={fieldDesc("quantity")}
+                            className="h-[30px] text-[11px]" /></Field>}
                           <Field label="Paint sides">
                             <Select value={rawItem.paint_sides || "one_side"} onValueChange={(value) => patchItem(index, { paint_sides: value })}>
-                              <SelectTrigger className="h-[30px] text-[11px]"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-[30px] text-[11px]"
+                                aria-invalid={fieldFlag("paint_sides")}
+                                aria-describedby={fieldDesc("paint_sides")}><SelectValue /></SelectTrigger>
                               <SelectContent><SelectItem value="one_side">One side + edges</SelectItem><SelectItem value="both_sides">Both sides + edges</SelectItem></SelectContent>
                             </Select>
                           </Field>
-                          {rawItem.item_type === "complex_shapes" && <Field label="Edge complexity"><Input type="number" min="0" step="0.1" value={rawItem.edge_complexity_multiplier ?? 1} onChange={(e) => patchItem(index, { edge_complexity_multiplier: Number(e.target.value) })} className="h-[30px] text-[11px]" /></Field>}
-                          <Field label="Paint mask sq ft"><Input type="number" min="0" step="0.01" value={rawItem.paint_mask_sqft ?? 0} onChange={(e) => patchItem(index, { paint_mask_sqft: Number(e.target.value) })} className="h-[30px] text-[11px]" /></Field>
-                          <Field label="Item fixed waste (gal)"><Input type="number" min="0" step="0.01" value={rawItem.fixed_waste_gallons ?? 0} onChange={(e) => patchItem(index, { fixed_waste_gallons: Number(e.target.value) })} className="h-[30px] text-[11px]" /></Field>
-                          <Field label="Base supplies"><Input type="number" min="0" step="0.01" value={rawItem.base_supplies_cost ?? 0} onChange={(e) => patchItem(index, { base_supplies_cost: Number(e.target.value) })} className="h-[30px] text-[11px]" /></Field>
+                          {rawItem.item_type === "complex_shapes" && <Field label="Edge complexity"><Input type="number" min="0" step="0.1" value={rawItem.edge_complexity_multiplier ?? ""} onChange={(e) => patchItem(index, { edge_complexity_multiplier: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("edge_complexity_multiplier")}
+                            aria-describedby={fieldDesc("edge_complexity_multiplier")}
+                            className="h-[30px] text-[11px]" /></Field>}
+                          <Field label="Paint mask sq ft"><Input type="number" min="0" step="0.01" value={rawItem.paint_mask_sqft ?? ""} onChange={(e) => patchItem(index, { paint_mask_sqft: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("paint_mask_sqft")}
+                            aria-describedby={fieldDesc("paint_mask_sqft")}
+                            className="h-[30px] text-[11px]" /></Field>
+                          <Field label="Item fixed waste (gal)"><Input type="number" min="0" step="0.01" value={rawItem.fixed_waste_gallons ?? ""} onChange={(e) => patchItem(index, { fixed_waste_gallons: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("fixed_waste_gallons")}
+                            aria-describedby={fieldDesc("fixed_waste_gallons")}
+                            className="h-[30px] text-[11px]" /></Field>
+                          <Field label="Base supplies"><Input type="number" min="0" step="0.01" value={rawItem.base_supplies_cost ?? ""} onChange={(e) => patchItem(index, { base_supplies_cost: paintDraftValue(e.target.value) })}
+                            aria-invalid={fieldFlag("base_supplies_cost")}
+                            aria-describedby={fieldDesc("base_supplies_cost")}
+                            className="h-[30px] text-[11px]" /></Field>
                         </div>
+
+                        {/* Per-item diagnostics — a malformed value stays on
+                            the row and is explained here, never dropped. */}
+                        {rowIssues.length > 0 && (
+                          <div role="status" id={rowIssuesId}
+                            className="flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <div className="space-y-0.5">
+                              {rowIssues.map((it, i) => <div key={i}>{it.message}</div>)}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="bg-gray-50 border border-gray-100 rounded p-2.5">
                           <div className="flex items-center justify-between mb-2">
@@ -457,11 +560,11 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]">
-                          <Metric label="Paintable area" value={`${number(item.paintable_sqft)} sf`} />
-                          <Metric label="Paint mask" value={money(item.supplies_cost)} />
-                          <Metric label="Paint + supplies" value={money(item.paint_cost)} />
-                          <Metric label="Labor" value={money(item.labor_cost)} />
-                          <Metric label="Paint volume" value={`${number(item.paint_gallons, 3)} gal`} />
+                          <Metric label="Paintable area" value={Number.isFinite(item.paintable_sqft) ? `${number(item.paintable_sqft)} sf` : "—"} />
+                          <Metric label="Paint mask" value={moneyOrHeld(item.supplies_cost)} />
+                          <Metric label="Paint + supplies" value={moneyOrHeld(item.paint_cost)} />
+                          <Metric label="Labor" value={moneyOrHeld(item.labor_cost)} />
+                          <Metric label="Paint volume" value={Number.isFinite(item.paint_gallons) ? `${number(item.paint_gallons, 3)} gal` : "—"} />
                         </div>
                       </div>
                     );
@@ -478,24 +581,27 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                 <div className="text-[10px] text-gray-500">Internal Builder cost before estimate-level markup.</div>
               </div>
               <div className="p-4 space-y-2 text-[11px]">
-                <SummaryRow label="Paint mask" value={money(totals.total_paint_mask_cost)} />
-                <SummaryRow label="Liquid paint & supplies" value={money(totals.total_liquid_paint_and_supplies_cost)} />
-                <SummaryRow label="Painting labor" value={money(totals.total_labor_cost)} />
+                {pricingUnavailable && (
+                  <p className="text-[11px] text-amber-800 mb-1">Saved amounts (not current pricing) — fix the flagged values to reprice.</p>
+                )}
+                <SummaryRow label="Paint mask" value={moneyCell(Number.isFinite(totals.total_paint_mask_cost) ? totals.total_paint_mask_cost : project.total_paint_mask_cost)} />
+                <SummaryRow label="Liquid paint & supplies" value={moneyCell(Number.isFinite(totals.total_liquid_paint_and_supplies_cost) ? totals.total_liquid_paint_and_supplies_cost : project.total_liquid_paint_and_supplies_cost)} />
+                <SummaryRow label="Painting labor" value={moneyCell(Number.isFinite(totals.total_labor_cost) ? totals.total_labor_cost : project.total_labor_cost)} />
                 <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between items-center">
                   <span className="font-bold text-gray-800">Total cost</span>
-                  <span className="text-[16px] font-bold text-gray-900">{money(totals.total_cost)}</span>
+                  <span className="text-[16px] font-bold text-gray-900">{moneyCell(Number.isFinite(totals.total_cost) ? totals.total_cost : sumOrNull(project.total_paint_mask_cost, project.total_liquid_paint_and_supplies_cost, project.total_labor_cost))}</span>
                 </div>
               </div>
               <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 space-y-1.5 text-[10px] text-gray-500">
-                <SummaryRow label="Paint needed" value={`${number(totals.total_paint_gallons, 3)} gal`} subtle />
-                <SummaryRow label="Labor time" value={`${number(totals.total_labor_hours)} hr`} subtle />
-                <SummaryRow label="Unique colors" value={number(totals.unique_color_count, 0)} subtle />
-                <SummaryRow label="Mixes" value={number(totals.number_of_mixes, 0)} subtle />
-                <SummaryRow label="Setup / cleanup" value={`${number(totals.setup_hours)} hr`} subtle />
-                <SummaryRow label="Mixing" value={`${number(totals.mixing_hours)} hr`} subtle />
+                <SummaryRow label="Paint needed" value={`${numCell(totals.total_paint_gallons, 3)} gal`} subtle />
+                <SummaryRow label="Labor time" value={`${numCell(totals.total_labor_hours)} hr`} subtle />
+                <SummaryRow label="Unique colors" value={numCell(totals.unique_color_count, 0)} subtle />
+                <SummaryRow label="Mixes" value={numCell(totals.number_of_mixes, 0)} subtle />
+                <SummaryRow label="Setup / cleanup" value={`${numCell(totals.setup_hours)} hr`} subtle />
+                <SummaryRow label="Mixing" value={`${numCell(totals.mixing_hours)} hr`} subtle />
               </div>
               <div className="px-4 py-3 border-t border-gray-100 text-[10px] text-gray-500">
-                Mixed paint rate: <span className="font-semibold text-gray-700">{money(calculated.liquidPaintRate)}/sf</span>
+                Mixed paint rate: <span className="font-semibold text-gray-700">{Number.isFinite(calculated.liquidPaintRate) ? `${money(calculated.liquidPaintRate)}/sf` : "—"}</span>
               </div>
             </section>
           </aside>
@@ -505,9 +611,12 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           <CustomerPricingTab
             project={{
               ...project,
-              total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
-              total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
-              total_labor_cost: Number(totals.total_labor_cost || 0),
+              // Feed live totals so the categorizer sees current numbers. Held
+              // values surface as 0 here — this tab is advisory only; the
+              // blocked save keeps them from reaching the record.
+              total_paint_mask_cost: totals.total_paint_mask_cost ?? 0,
+              total_liquid_paint_and_supplies_cost: totals.total_liquid_paint_and_supplies_cost ?? 0,
+              total_labor_cost: totals.total_labor_cost ?? 0,
             }}
             categorize={categorizePaintProject}
             accentColor="blue"
@@ -530,6 +639,10 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
       />
     </div>
   );
+}
+
+function moneyOrHeld(v) {
+  return Number.isFinite(v) ? money(v) : "—";
 }
 
 function Field({ label, children }) {
