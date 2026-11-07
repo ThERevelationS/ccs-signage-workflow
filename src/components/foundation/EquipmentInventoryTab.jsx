@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, GripVertical } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
@@ -18,6 +17,13 @@ import { createInventoryRecordWithRecovery } from '@/components/masterInventory/
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const FoundationInventoryEntity = staffEntities.FoundationInventory;
+
+// Blank clears a numeric catalog field to null ("not cataloged" — never a
+// silent free price); a numeric draft coerces to Number; anything else stays
+// verbatim so availability validation reports it instead of a NaN or a minted
+// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
+const catalogNumberInput = (value) => (String(value).trim() === "" ? null
+  : Number.isFinite(Number(value)) ? Number(value) : value);
 
 // MultiSelect dropdown component for linking items
 function MultiSelectDropdown({ label, options, selectedIds, onChange }) {
@@ -217,9 +223,9 @@ function EquipmentList({ items, equipment = [], attachments = [], subAttachments
                                             </CardHeader>
                                             <CardContent className="px-4 pb-3 space-y-2 pl-12">
                                                 <div className="flex gap-4 text-xs text-slate-600">
-                                                    <div>Day: <span className="font-semibold">${item.cost_per_day || 0}</span></div>
-                                                    <div>Wk: <span className="font-semibold">${item.cost_per_week || 0}</span></div>
-                                                    <div>Mo: <span className="font-semibold">${item.cost_per_month || 0}</span></div>
+                                                    <div>Day: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_day)) ? `$${item.cost_per_day}` : (item.cost_per_day ?? 'Not priced')}</span></div>
+                                                    <div>Wk: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_week)) ? `$${item.cost_per_week}` : (item.cost_per_week ?? 'Not priced')}</span></div>
+                                                    <div>Mo: <span className="font-semibold">{Number.isFinite(parseFloat(item.cost_per_month)) ? `$${item.cost_per_month}` : (item.cost_per_month ?? 'Not priced')}</span></div>
                                                 </div>
                                                 
                                                 {/* Show dependencies */}
@@ -379,15 +385,15 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
             <div className="grid grid-cols-3 gap-3">
                 <div>
                     <Label className="text-xs">Cost/Day</Label>
-                    <Input type="number" className="h-8" value={form.cost_per_day} onChange={e => update('cost_per_day', parseFloat(e.target.value) || 0)} />
+                    <Input type="number" className="h-8" value={form.cost_per_day ?? ""} onChange={e => update('cost_per_day', catalogNumberInput(e.target.value))} />
                 </div>
                 <div>
                     <Label className="text-xs">Cost/Week</Label>
-                    <Input type="number" className="h-8" value={form.cost_per_week} onChange={e => update('cost_per_week', parseFloat(e.target.value) || 0)} />
+                    <Input type="number" className="h-8" value={form.cost_per_week ?? ""} onChange={e => update('cost_per_week', catalogNumberInput(e.target.value))} />
                 </div>
                 <div>
                     <Label className="text-xs">Cost/Month</Label>
-                    <Input type="number" className="h-8" value={form.cost_per_month} onChange={e => update('cost_per_month', parseFloat(e.target.value) || 0)} />
+                    <Input type="number" className="h-8" value={form.cost_per_month ?? ""} onChange={e => update('cost_per_month', catalogNumberInput(e.target.value))} />
                 </div>
             </div>
 
@@ -395,7 +401,7 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
                 {form.material_type === 'excavation_equipment' && (
                     <div>
                         <Label className="text-xs">Delivery/Pickup Cost</Label>
-                        <Input type="number" className="h-8" value={form.pickup_delivery_cost} onChange={e => update('pickup_delivery_cost', parseFloat(e.target.value) || 0)} />
+                        <Input type="number" className="h-8" value={form.pickup_delivery_cost ?? ""} onChange={e => update('pickup_delivery_cost', catalogNumberInput(e.target.value))} />
                     </div>
                 )}
             </div>
