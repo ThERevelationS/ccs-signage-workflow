@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel";
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
-import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
+import { calcBrickStoneAvailability } from "@/components/estimator/brick/brickPricingAvailability";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
@@ -86,10 +86,18 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     () => materials.find((m) => m.id === project?.selected_material_id),
     [materials, project]
   );
-  const totals = useMemo(
-    () => (project ? calcBrickStoneProject(project, material) : null),
+  // Pricing-availability: one strict calc pass shared by the banner, the
+  // totals panel, the per-field diagnostics, and every save path.
+  const priced = useMemo(
+    () => (project ? calcBrickStoneAvailability(project, material) : null),
     [project, material]
   );
+  const totals = priced?.calc || null;
+  const allIssues = priced?.issues || [];
+  // A catalog-side hold (the selected material record) gets the stronger
+  // save message; any issue at all blocks every write path.
+  const catalogBlocked = allIssues.some((i) => i.kind === "brick_catalog");
+  const pricingBlocked = allIssues.length > 0;
 
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
@@ -117,6 +125,15 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
 
   const handleSave = async () => {
+    // Pricing-availability guard: a malformed or unavailable pricing input
+    // must never be persisted as $0 or an inferred default. Block the write
+    // and point the user at the flagged values.
+    if (pricingBlocked) {
+      window.alert(catalogBlocked
+        ? "Save paused: the selected material record is missing or unusable — fix it in the masonry catalog, then save."
+        : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
+      return;
+    }
     if (!(Number(totals?.calculated_surface_area) > 0)) {
       window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
       return;
@@ -200,6 +217,18 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
 
   // #78 — clone the current save payload into a brand-new Brick & Stone project.
   const handleSaveAsCopy = async () => {
+    // Same availability gate as the save path — a copy must never clone $0 or
+    // inferred pricing into a new record (the mop-up guard gap).
+    if (pricingBlocked) {
+      window.alert(catalogBlocked
+        ? "Save paused: the selected material record is missing or unusable — fix it in the masonry catalog, then save a copy."
+        : "Save paused: fix the flagged pricing values before saving a copy — unavailable pricing is never written as $0.");
+      return;
+    }
+    if (!(Number(totals?.calculated_surface_area) > 0)) {
+      window.alert("Wall area must be greater than zero before this section can be copied. Check the wall dimensions and material selection.");
+      return;
+    }
     setSaving(true);
     try {
       const copy = await saveModuleProjectCopy({
@@ -310,6 +339,27 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           <p className="text-sm text-gray-500">{project.client_name}</p>
         </div>
 
+        {/* Pricing-availability banner — visible on every state so a blocked
+            save always shows why. */}
+        {allIssues.length > 0 && (
+          <div
+            role="status"
+            id="brick-pricing-issues"
+            className="mb-4 flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">
+                Pricing unavailable — {allIssues.length} value{allIssues.length === 1 ? "" : "s"} need{allIssues.length === 1 ? "s" : ""} attention before this section can be priced or saved.
+              </div>
+              <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                {allIssues.slice(0, 5).map((it, i) => <li key={i}>{it.message}</li>)}
+                {allIssues.length > 5 && <li>…and {allIssues.length - 5} more</li>}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -326,6 +376,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               project={project}
               materials={materials}
               derived={totals}
+              issues={allIssues}
               onChange={patch}
             />
 
@@ -343,6 +394,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             <BrickTotals
               project={project}
               totals={totals}
+              issues={allIssues}
               onChange={(changes) => patch({
                 ...changes,
                 ...(Object.prototype.hasOwnProperty.call(changes, "markup_percent")
