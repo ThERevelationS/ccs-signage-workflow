@@ -32,8 +32,10 @@ export default function NavPageLink({
   // Icon-only applies to the horizontal taskbar; the sidebar always keeps labels.
   const iconOnly = isTop && labelMode === "icons";
   const displayTitle = labelMode === "abbreviated" ? abbreviate(item.title) : item.title;
-  // Per-user button styling (color/style preset) layered over the glass look.
+  // Per-user button styling — non-glass presets are fully self-contained and
+  // drop the shell glass class so the picker's preview is what renders.
   const itemStyleLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+  const textColor = itemStyleLook.textColor || (isActive ? "#fff" : "#f1f5f9");
 
   // Drop the library's role="button" override so these stay real links.
   const { role: _dragRole, ...handleProps } = dragHandleProps || {};
@@ -68,7 +70,7 @@ export default function NavPageLink({
         event.stopPropagation();
         onContextMenuItem(item, { x: event.clientX, y: event.clientY });
       }}
-      className={`ccs-glass-nav-item flex items-center border ${
+      className={`${itemStyleLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center border ${
         isTop
           ? `flex-shrink-0 whitespace-nowrap ${sizing}`
           : `w-full ${sizing}`
@@ -91,7 +93,7 @@ export default function NavPageLink({
               ? `${compactView ? "text-[10px]" : "text-xs"} whitespace-nowrap`
               : `${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate`
           } font-medium ${isActive ? "font-bold" : ""}`}
-          style={{ color: itemStyleLook.textColor || (isActive ? "#fff" : "#f1f5f9") }}
+          style={{ color: textColor, textShadow: itemStyleLook.style?.textShadow }}
         >
           {displayTitle}
         </span>
