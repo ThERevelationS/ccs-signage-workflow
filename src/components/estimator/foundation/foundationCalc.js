@@ -194,7 +194,8 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   );
   const walls = calcWalls(project, inventory, settings);
   const poles = calcPoles(project.poles, inventory, settings);
-  const wallCaps = calcWallCaps(project.wall_caps, inventory);
+  const wallCaps = calcWallCaps(project.wall_caps, inventory,
+    explicitSnapshot ? { savedCaps: savedProject?.wall_caps ?? [] } : {});
 
   const sum = (key) => items.some((item, index) => !itemPricing[index].available && !hasFoundationCostSnapshot(item[key]))
     ? null : items.reduce((s, i) => s + num(i[key]), 0);
