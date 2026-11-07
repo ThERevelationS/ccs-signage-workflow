@@ -358,6 +358,7 @@ function LayoutContent({ children }) {
   const [navMenu, setNavMenu] = useState(null);   // {x,y,kind:'bar'|'folder'|'page', folderId?, url?}
   const [navEditor, setNavEditor] = useState(null); // {mode:'folder'|'page', isNew?, folderId?, url?}
   const [dragHoverFolder, setDragHoverFolder] = useState(null);
+  const [navDragging, setNavDragging] = useState(false);
 
   const persistNavState = useCallback((order, folders) => {
     setNavOrder(order);
@@ -406,6 +407,7 @@ function LayoutContent({ children }) {
     const { source, destination, draggableId, combine } = result;
     if (typeof window !== "undefined") window.__lastNavDrag = result;
     setDragHoverFolder(null);
+    setNavDragging(false);
     const state = navState();
 
     // Combine drop: a page released on a folder pill/group header joins that
@@ -472,6 +474,8 @@ function LayoutContent({ children }) {
       }
     }
   };
+
+  const handleNavDragStart = () => setNavDragging(true);
 
   // Live drag-hover over a folder pill → ring highlight + auto-open flyout.
   const handleNavDragUpdate = (update) => {
@@ -1428,7 +1432,7 @@ function LayoutContent({ children }) {
               className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}
               onContextMenu={handleBarContextMenu}
             >
-              <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate}>
+              <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate} onDragStart={handleNavDragStart}>
                 <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
                   {(provided) => (
                     <div
@@ -1621,7 +1625,7 @@ function LayoutContent({ children }) {
                   onContextMenu={handleBarContextMenu}
                   className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
-                  <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate}>
+                  <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate} onDragStart={handleNavDragStart}>
                     <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
                       {(provided) => (
                         <div
@@ -1655,6 +1659,7 @@ function LayoutContent({ children }) {
                                         isInSplitUrl={isInSplitView}
                                         onNavigate={handleNavClick}
                                         forceOpen={dragHoverFolder === folder.id}
+                                        suppressOutsideClose={navDragging}
                                         onContextMenuPill={({ x, y }) =>
                                           setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
                                         onContextMenuItem={(item, { x, y }) =>
