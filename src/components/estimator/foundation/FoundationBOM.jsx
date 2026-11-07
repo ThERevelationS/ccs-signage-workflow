@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { foundationWallBomRows } from "./wallCalculator";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
@@ -99,27 +100,14 @@ export default function FoundationBOM({
       add("Pole painting", "—", totals.total_pole_painting_cost);
     }
 
-    walls.forEach((w, i) => {
-      const c = w.calculatedCosts || {};
-      const label = w.name || `Wall ${i + 1}`;
-      if (num(c.materialCost) > 0) add(`${label} — ${nameOf(w.materialId)}`, qty(c.totalBricks, "units"), c.materialCost);
-      if (num(c.mortarCost) > 0) add(`${label} — mortar`, "—", c.mortarCost);
-      if (num(c.internalMaterialCost) > 0) {
-        add(
-          `${label} — ${nameOf(w.internalMaterialId)} (internal)`,
-          qty(c.internalTotalBricks, "units"),
-          c.internalMaterialCost
-        );
-      }
-      if (num(c.internalMortarCost) > 0) add(`${label} — internal mortar`, "—", c.internalMortarCost);
-    });
+    out.push(...foundationWallBomRows(walls, inventory));
 
     (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
 
     return out;
   }, [items, poles, walls, delivery, totals, inventory, itemPricing]);
 
-  const materialTotal = rows.reduce((s, r) => s + num(r.cost), 0);
+  const materialTotal = rows.every(r => hasFoundationCostSnapshot(r.cost)) ? rows.reduce((sum, row) => sum + row.cost, 0) : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -147,16 +135,16 @@ export default function FoundationBOM({
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i} className="border-b border-gray-100 last:border-0">
-                  <td className="py-1.5 text-gray-800">{r.material}</td>
-                  <td className="py-1.5 text-gray-600">{r.quantity}</td>
-                  <td className="py-1.5 text-right text-gray-900">{hasFoundationCostSnapshot(r.cost) ? money(r.cost) : "Not saved"}</td>
+                  <td className="py-1.5 pr-3 text-gray-800">{r.material}</td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-gray-600">{r.quantity}</td>
+                  <td className="py-1.5 pl-3 whitespace-nowrap text-right text-gray-900">{hasFoundationCostSnapshot(r.cost) ? money(r.cost) : "Not saved"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div className="flex justify-between pt-3 mt-1 border-t border-gray-200 font-bold text-gray-900">
             <span>Listed cost subtotal</span>
-            <span>{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : money(materialTotal)}</span>
+            <span>{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : hasFoundationCostSnapshot(materialTotal) ? money(materialTotal) : "Not saved"}</span>
           </div>
         </>
       )}
