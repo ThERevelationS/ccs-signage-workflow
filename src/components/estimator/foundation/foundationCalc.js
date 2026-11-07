@@ -116,7 +116,7 @@ export function calcEquipmentPricing(selected, inventory = []) {
     const subAttachmentRows = pricedLines(bindings.subAttachmentRows);
     return {
       ...context, pricedEntry: { ...entry, equipment_cost: entryTotal },
-      baseCost, deliveryCost: entry.include_delivery ? deliveryCharge : 0,
+      baseCost, deliveryCost: entry.include_delivery ? deliveryCost : 0,
       attachmentRows, subAttachmentRows, totalCost: entryTotal,
     };
   });
@@ -168,14 +168,18 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     if (item.component_id) savedItems.set(item.component_id, savedItems.has(item.component_id) ? null : item);
   }
   for (const item of sourceItems) currentIds.set(item.component_id, (currentIds.get(item.component_id) || 0) + 1);
-  // Pole availability issues come from the pole pricing check; the assembly
-  // integrity scan keeps its pole_id guard for other callers but is filtered
-  // here so each pole issue is reported once from a single source.
+  // Pole and wall availability issues come from their pricing checks; the
+  // assembly integrity scan keeps its guards for other callers but both kinds
+  // are filtered here so each issue is reported once from a single source.
   const poleCalc = calcPoles(project.poles, inventory, settings,
     explicitSnapshot ? { savedPoles: savedProject?.poles ?? [] } : {});
+  const wallCalc = calcWalls(project, inventory, settings,
+    explicitSnapshot ? { savedWalls: savedProject?.walls ?? [] } : {});
   const catalogIssues = [
     ...poleCalc.polePricing.flatMap((entry) => entry.issues),
-    ...foundationAssemblyCatalogIssues(project, inventory).filter((issue) => issue.kind !== "pole"),
+    ...wallCalc.wallPricing.flatMap((entry) => entry.issues),
+    ...foundationAssemblyCatalogIssues(project, inventory)
+      .filter((issue) => issue.kind !== "pole" && issue.kind !== "wall" && issue.kind !== "internal_wall"),
   ];
   const inputIssues = foundationProjectInputIssues(project);
   const itemPricing = sourceItems.map((item, index) => {
@@ -200,8 +204,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     })),
     inventory
   );
-  const walls = calcWalls(project, inventory, settings,
-    explicitSnapshot ? { savedWalls: savedProject?.walls ?? [] } : {});
+  const walls = wallCalc.walls;
   const poles = poleCalc.poles;
   const wallCaps = calcWallCaps(project.wall_caps, inventory,
     explicitSnapshot ? { savedCaps: savedProject?.wall_caps ?? [] } : {});
@@ -265,7 +268,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   totals.grand_total = itemsTotal === null || wallTotal === null || polesTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, catalogIssues, inputIssues,
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, catalogIssues, inputIssues,
   };
 }
 
