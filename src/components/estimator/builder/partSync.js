@@ -10,6 +10,8 @@ import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderPartWithRecovery } from "./builderPartPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { calcSignageCabinetPricing } from "../foundation/foundationCalc";
+import { landscapeSummary } from "../foundation/landscapeMaterials";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -1946,6 +1948,18 @@ function manualCostPart({ key, name, type = "labor", subtype = "", sourcePath = 
   });
 }
 
+// The acknowledged page-level extra total (signage cabinets, landscape) from
+// the most recent capture first: builder_calculation carries the value frozen
+// at save time; the bare project field is the same acknowledged number on
+// older saves. Only finite recorded numbers count — a missing or held total
+// is null, never a guessed $0 (hasFoundationCostSnapshot's contract).
+function foundationSavedSectionTotal(...candidates) {
+  for (const value of candidates) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
 function foundationEquipmentBreakdown(entry, catalogs) {
   const equipmentRow = catalogs.FoundationInventory?.byId.get(entry.equipment_id);
   if (!equipmentRow) return { baseRental: num(entry.equipment_cost), delivery: 0, attachmentCosts: [], subAttachmentCosts: [], total: num(entry.equipment_cost) };
@@ -2559,31 +2573,95 @@ function extractFoundation(project, catalogs) {
     }
   });
 
-  (project.signage_cabinets || []).forEach((cabinet, index) => {
+  // Signage cabinets — the authored rows are raw; the acknowledged per-row and
+  // section amounts come from the same hardened pricing check the calc runs at
+  // save time (calcSignageCabinetPricing). Rows the check can price mint their
+  // own part at the acknowledged unit_cost × quantity; a held row never mints
+  // a $0 line — the gap between the priced rows and the acknowledged section
+  // total is preserved as one saved-aggregate part, the same contract as the
+  // equipment saved-adjustment and the legacy delivery aggregate above.
+  const cabinetSavedTotal = foundationSavedSectionTotal(
+    project.builder_calculation?.cabinet_cost,
+    project.builder_calculation?.totals?.total_signage_cabinet_cost,
+    project.total_signage_cabinet_cost,
+  );
+  let representedCabinets = 0;
+  calcSignageCabinetPricing(project.signage_cabinets).forEach((row, index) => {
+    if (!row.available) return;
+    const cabinet = row.pricedEntry;
+    const quantity = cabinet.quantity === undefined || cabinet.quantity === null || cabinet.quantity === ""
+      ? 1
+      : num(cabinet.quantity, 1);
     parts.push(makePart({
       key: `foundation:cabinet:${cabinet.id || index}`,
       name: cabinet.description || "Signage Cabinet",
       type: "fabrication",
       subtype: "signage_cabinet",
       sourcePath: `signage_cabinets[${index}]`,
-      quantity: cabinet.quantity || 1,
+      quantity,
       unit: "each",
       unitCost: cabinet.unit_cost,
-      extendedCost: num(cabinet.unit_cost) * num(cabinet.quantity, 1),
+      extendedCost: row.cost,
       builderData: cabinet,
-      calculation: cabinet,
+      calculation: { ...cabinet, pricing_available: true, line_cost: row.cost },
+      pricingBasis: { pricing_mode: "cabinet_unit_cost" },
     }));
+    representedCabinets += num(row.cost);
   });
-  if (num(project.builder_calculation?.landscape_cost) > 0.005) {
+  if (cabinetSavedTotal !== null && Math.abs(cabinetSavedTotal - representedCabinets) > 0.005) {
     parts.push(manualCostPart({
-      key: "foundation:landscape",
-      name: "Landscape Materials",
+      key: "foundation:cabinet:saved-adjustment",
+      name: "Signage Cabinets — Saved Cost Adjustment",
+      type: "fabrication",
+      subtype: "signage_cabinet_adjustment",
+      sourcePath: "total_signage_cabinet_cost",
+      cost: cabinetSavedTotal - representedCabinets,
+      builderData: { signage_cabinets: project.signage_cabinets || [] },
+      calculation: { authoritative_total: cabinetSavedTotal, reconstructed_total: representedCabinets },
+    }));
+  }
+
+  // Landscape / site materials — the recorded grid is raw; landscapeSummary is
+  // the same hardened rollup the calc runs at save time. Every line it can
+  // price mints a per-material part at the acknowledged sq ft rate; lines it
+  // cannot (a held grid) never mint $0 — the gap to the acknowledged section
+  // total is preserved as a single saved-aggregate part, the same contract the
+  // old `foundation:landscape` aggregate provided for detail-less saves.
+  const landscapeSavedTotal = foundationSavedSectionTotal(
+    project.builder_calculation?.landscape_cost,
+    project.builder_calculation?.totals?.total_landscape_cost,
+    project.total_landscape_cost,
+  );
+  const landscapeCalc = landscapeSummary(project.landscape);
+  let representedLandscape = 0;
+  landscapeCalc.lines.forEach((line) => {
+    if (line.cost === null || line.sqft === null) return;
+    parts.push(makePart({
+      key: `foundation:landscape:${line.key}`,
+      name: `Site Material — ${line.label}`,
       type: "material",
       subtype: "landscape",
-      sourcePath: "builder_calculation.landscape_cost",
-      cost: project.builder_calculation.landscape_cost,
+      sourcePath: "landscape.cells",
+      quantity: line.sqft,
+      unit: "sq_ft",
+      unitCost: line.cost / line.sqft,
+      extendedCost: line.cost,
+      builderData: { material_key: line.key, cells: line.cells, cell_size_inches: project.landscape?.cell_size_inches },
+      calculation: { cells: line.cells, sqft: line.sqft, cost: line.cost },
+      pricingBasis: { pricing_mode: "landscape_material_sqft" },
+    }));
+    representedLandscape += line.cost;
+  });
+  if (landscapeSavedTotal !== null && Math.abs(landscapeSavedTotal - representedLandscape) > 0.005) {
+    parts.push(manualCostPart({
+      key: "foundation:landscape:saved-adjustment",
+      name: "Landscape Materials — Saved Cost Adjustment",
+      type: "material",
+      subtype: "landscape_adjustment",
+      sourcePath: "total_landscape_cost",
+      cost: landscapeSavedTotal - representedLandscape,
       builderData: project.landscape || {},
-      calculation: { total_cost: project.builder_calculation.landscape_cost },
+      calculation: { authoritative_total: landscapeSavedTotal, reconstructed_total: representedLandscape },
     }));
   }
   return parts;
