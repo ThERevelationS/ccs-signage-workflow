@@ -14,6 +14,8 @@ import {
   Tag,
 } from "lucide-react";
 import FoundationItemCard from "@/components/estimator/foundation/FoundationItemCard";
+import FoundationReinforcementProposalPanel from "@/components/estimator/foundation/FoundationReinforcementProposalPanel";
+import { useFoundationReinforcementEditor } from "@/components/estimator/foundation/useFoundationReinforcementEditor";
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
 import FoundationEquipmentTab from "@/components/estimator/foundation/FoundationEquipmentTab";
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
@@ -438,6 +440,40 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     if (navGuardArmedRef.current) window.addEventListener("popstate", onPop);
     return () => { document.removeEventListener("click", onClickCapture, true); window.removeEventListener("popstate", onPop); };
   }, [embedded, saving, dirty, recoveryRequired, draftOffer]);
+
+  // Versioned reinforcement proposal editor (CMP-B/O-031): the session owns
+  // disposable previews and acknowledgments; every mutation goes through the
+  // page's single `commit` (undo history, dirty marking, browser-draft
+  // persistence, edit-revision bump) so an accepted proposal is an ordinary
+  // undoable edit that reaches the entity only through the normal save path.
+  // `blocked` mirrors the same busy/availability gates other edits honor;
+  // pricingBlocked is intentionally NOT included — a held item can still be
+  // drafted and previewed, and acceptance only lands through commit/save.
+  const reinforcementEditor = useFoundationReinforcementEditor({
+    getCurrent: () => {
+      const live = currentEditorRef.current;
+      const ack = acknowledgedVersionRef.current;
+      return {
+        project: projectRef.current,
+        savedProject: ack?.sourceSnapshot ?? null,
+        inventory,
+        settings,
+        context: {
+          ...live,
+          loaded: mountedRef.current && live.loaded,
+          ownerId,
+          sourceUpdatedAt: ack?.updated_date ?? null,
+          estimateUpdatedAt: linkedEstimate?.updated_date ?? null,
+        },
+        blocked:
+          saving || !!saveAttemptRef.current || !!copyFlightRef.current || !!catalogReloadRef.current ||
+          catalogReloading || draftSessionRef.current.pending || recoveryRequired ||
+          !!sourceRefreshRef.current || !ack?.sourceSnapshot || ack?.ownerId !== ownerId ||
+          ack?.sourceId !== live.sourceId,
+      };
+    },
+    commit: (updater) => commit(updater),
+  });
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
@@ -1204,18 +1240,35 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {calc.items.map((item, index) => (
-                      <FoundationItemCard
-                        key={item.component_id || index}
-                        item={item}
-                        pricing={calc.itemPricing[index]}
-                        index={index}
-                        catalog={catalog}
-                        onChange={patchItem}
-                        onRemove={removeItem}
-                        onDuplicate={duplicateItem}
-                      />
-                    ))}
+                    {calc.items.map((item, index) => {
+                      const componentId = item.component_id;
+                      const proposalState = reinforcementEditor.read(componentId);
+                      return (
+                        <div key={componentId || index} className="space-y-2">
+                          <FoundationItemCard
+                            item={item}
+                            pricing={calc.itemPricing[index]}
+                            index={index}
+                            catalog={catalog}
+                            onChange={patchItem}
+                            onRemove={removeItem}
+                            onDuplicate={duplicateItem}
+                          />
+                          <FoundationReinforcementProposalPanel
+                            item={item}
+                            catalog={inventory.filter((row) => row.material_type === "rebar")}
+                            {...proposalState}
+                            busy={saving || catalogReloading}
+                            onStart={() => reinforcementEditor.start(componentId)}
+                            onDraftChange={(draft) => reinforcementEditor.changeDraft(componentId, draft)}
+                            onPreview={() => reinforcementEditor.preview(componentId)}
+                            onAccept={(proposalId) => reinforcementEditor.accept(componentId, proposalId)}
+                            onDiscard={() => reinforcementEditor.discard(componentId)}
+                            onAcknowledgmentsChange={(value) => reinforcementEditor.acknowledge(componentId, value)}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
