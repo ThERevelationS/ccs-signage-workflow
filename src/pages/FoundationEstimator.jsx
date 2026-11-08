@@ -1574,8 +1574,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <FoundationLayoutCanvas
                   items={project.items || []}
                   poles={project.poles || []}
+                  walls={project.walls || []}
+                  wallCaps={project.wall_caps || []}
+                  signageCabinets={project.signage_cabinets || []}
                   onMoveItem={patchItem}
                   sceneHistory={sceneHistory}
+                  sceneSelection={sceneSelection}
+                  onDeleteSelection={deleteSceneSelection}
                 />
               </TabsContent>
 
