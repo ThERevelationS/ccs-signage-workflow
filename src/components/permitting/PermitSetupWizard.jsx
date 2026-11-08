@@ -216,8 +216,8 @@ export default function PermitSetupWizard({
 
   const goTo = (n) => { setStep(n); setMaxStep(prev => Math.max(prev, n)); };
 
-  const runResolve = async () => {
-    const q = String(address || "").trim();
+  const runResolve = async (overrideAddress) => {
+    const q = String(overrideAddress ?? address ?? "").trim();
     if (!q || resolving) return;
     const seq = ++searchSeq.current;
     setResolving(true); setResolveError(""); setResolution(null); setPickedCandidate(null); setSuggestions([]);
@@ -369,7 +369,7 @@ export default function PermitSetupWizard({
                   {suggestions.map((s, i) => (
                     <button key={i} type="button"
                       className="w-full text-left px-3 py-1.5 hover:bg-purple-50 text-xs"
-                      onClick={() => { setAddress(typeof s === "string" ? s : s.description || s.label || ""); setSuggestions([]); }}>
+                      onClick={() => { const picked = typeof s === "string" ? s : s.description || s.label || ""; setAddress(picked); setSuggestions([]); runResolve(picked); }}>
                       {typeof s === "string" ? s : s.description || s.label}
                     </button>
                   ))}
@@ -380,7 +380,7 @@ export default function PermitSetupWizard({
             {recent.length > 0 && !suggestions.length && (
               <div className="flex flex-wrap gap-1.5">
                 {recent.map(r => (
-                  <button key={r} type="button" onClick={() => setAddress(r)}
+                  <button key={r} type="button" onClick={() => { setAddress(r); runResolve(r); }}
                     className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[10px] text-gray-600 hover:border-purple-300 hover:bg-purple-50 truncate max-w-[220px]">
                     {r}
                   </button>
