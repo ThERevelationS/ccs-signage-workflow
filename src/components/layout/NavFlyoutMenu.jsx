@@ -13,9 +13,9 @@ const MENU_WIDTH = 200;
 // the navigation container.
 //
 // Folder-model additions: the pill can carry a user style preset + custom
-// text color; `forceOpen` lets a drag-hover on the pill droppable open the
-// menu so its list becomes a live drop target; menu items are Draggables
-// inside a `folder-list:` droppable so pages can be reordered inside the
+// text color; dropping a page ONTO the pill is a combine drop that adds it to
+// the folder; the open menu's `folder-list:` droppable accepts precise
+// placement; menu items are Draggables so pages can be reordered inside the
 // folder or dragged out to the bar / another folder.
 export default function NavFlyoutMenu({
   label,
@@ -28,8 +28,6 @@ export default function NavFlyoutMenu({
   onNavigate,
   folderId = null,
   stylePreset = "glass",
-  forceOpen = false,
-  suppressOutsideClose = false,
   onContextMenuPill,
   onContextMenuItem,
 }) {
@@ -37,10 +35,6 @@ export default function NavFlyoutMenu({
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (forceOpen) setOpen(true);
-  }, [forceOpen]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -53,7 +47,9 @@ export default function NavFlyoutMenu({
   useEffect(() => {
     if (!open) return undefined;
     const onPointerDown = (event) => {
-      if (suppressOutsideClose) return; // keep the menu open as a drop target during drags
+      // Keep the menu open as a drop target during drags (plain flag — no
+      // React state may change while a drag is in flight).
+      if (window.__ccsNavDragging) return;
       if (triggerRef.current?.contains(event.target)) return;
       if (menuRef.current?.contains(event.target)) return;
       // Presses inside the nav surface keep the flyout open — a page drag
@@ -76,7 +72,7 @@ export default function NavFlyoutMenu({
       document.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
-  }, [open, suppressOutsideClose]);
+  }, [open]);
 
   const hasActive = items.some((item) => item.url === activePath);
   const look = navButtonStyle(stylePreset, accent);
