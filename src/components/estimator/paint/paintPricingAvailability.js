@@ -25,7 +25,6 @@
 
 import {
   calculatePaintingProject,
-  paintSettingNumber,
   paintSettingRecorded,
   paintStrictNumber,
   paintThicknessNumber,
