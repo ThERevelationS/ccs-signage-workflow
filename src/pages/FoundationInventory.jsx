@@ -22,7 +22,10 @@ const FoundationInventoryEntity = staffEntities.FoundationInventory;
 // clears to null ("not cataloged" — never a silent free price), a numeric
 // draft coerces to Number, anything else stays verbatim so availability
 // validation reports it instead of a NaN or minted 0 leaking into records.
-import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
+// canonicalWallMaterialSubtype (CMP-D03) classifies the recorded subtype so
+// poured-concrete rows display/edit on the volume basis even when the stored
+// spelling is an alias ("poured concrete", "cast_in_place").
+import { inventoryNumberInput as catalogNumberInput, canonicalWallMaterialSubtype } from "@/components/masterInventory/inventoryNormalization";
 
 // `list` field drafts (O-021 / CMP-B07): rebar_support_compatible_bar_sizes is
 // a stored string array edited as a comma-separated text draft. listFieldDraft
@@ -262,14 +265,16 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
     ...item,
   });
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-  const isConcrete = form.wall_material_subtype === 'concrete';
+  const isConcrete = canonicalWallMaterialSubtype(form.wall_material_subtype) === 'concrete';
 
   const applyPreset = (subtype) => {
     set('wall_material_subtype', subtype);
-    if (subtype === 'brick') { set('wall_unit_length_inches', 8); set('wall_unit_width_inches', 3.75); set('wall_unit_height_inches', 2.25); }
-    else if (subtype === 'cinderblock') { set('wall_unit_length_inches', 16); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 8); }
-    else if (subtype === 'stone') { set('wall_unit_length_inches', 12); set('wall_unit_width_inches', 6); set('wall_unit_height_inches', 4); }
-    else if (subtype === 'concrete') { set('wall_unit_length_inches', 0); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 0); set('wall_color', '#9ca3af'); set('wall_texture', 'smooth'); }
+    if (subtype === 'brick') { set('wall_unit_length_inches', 8); set('wall_unit_width_inches', 3.75); set('wall_unit_height_inches', 2.25); set('unit', 'each'); }
+    else if (subtype === 'cinderblock') { set('wall_unit_length_inches', 16); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', 8); set('unit', 'each'); }
+    else if (subtype === 'stone') { set('wall_unit_length_inches', 12); set('wall_unit_width_inches', 6); set('wall_unit_height_inches', 4); set('unit', 'each'); }
+    // Poured concrete has no unit length/height — those fields are cleared
+    // (not zeroed) and the cost basis is declared per cubic yard (CMP-D03).
+    else if (subtype === 'concrete') { set('wall_unit_length_inches', null); set('wall_unit_width_inches', 8); set('wall_unit_height_inches', null); set('unit', 'cy'); set('wall_color', '#9ca3af'); set('wall_texture', 'smooth'); }
   };
 
   return (
@@ -281,13 +286,16 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
         </div>
         <div>
           <Label className="text-xs">Material Subtype</Label>
-          <Select value={form.wall_material_subtype} onValueChange={applyPreset}>
+          {/* Alias spellings (e.g. "poured_concrete") display as their
+              canonical option; the authored value is preserved verbatim in
+              form state until the user picks a subtype (CMP-D03). */}
+          <Select value={canonicalWallMaterialSubtype(form.wall_material_subtype) || form.wall_material_subtype} onValueChange={applyPreset}>
             <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
             <SelectContent>{WALL_SUBTYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-xs">Cost Per Unit ($)</Label>
+          <Label className="text-xs">Cost Per {isConcrete ? 'Cubic Yard' : 'Unit'} ($)</Label>
           <Input type="number" className="h-8" value={form.cost_per_unit ?? ""} onChange={e => set('cost_per_unit', catalogNumberInput(e.target.value))} step="0.01" min="0" />
         </div>
       </div>
@@ -333,7 +341,9 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!form.material_name}>Save</Button>
+        {/* Poured rows persist the $/CY basis the label declares — a saved
+            row never carries a contradicting unit (CMP-D03). */}
+        <Button size="sm" onClick={() => onSave(isConcrete ? { ...form, unit: 'cy' } : form)} disabled={!form.material_name}>Save</Button>
       </div>
     </div>
   );
@@ -628,9 +638,9 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
-                      {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
-                      {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / unit` : (m.cost_per_unit ?? 'Not priced')}</div>
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / ${canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' ? 'CY' : 'unit'}` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
@@ -680,9 +690,9 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 text-xs text-slate-600 space-y-1">
-                      {m.wall_material_subtype !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
-                      {m.wall_material_subtype === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
-                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / unit` : (m.cost_per_unit ?? 'Not priced')}</div>
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) !== 'concrete' && <div>Size: {m.wall_unit_length_inches}"L × {m.wall_unit_width_inches}"W × {m.wall_unit_height_inches}"H</div>}
+                      {canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' && <div>Wall depth: {m.wall_unit_width_inches}"</div>}
+                      <div>Cost: {Number.isFinite(parseFloat(m.cost_per_unit)) ? `${parseFloat(m.cost_per_unit).toFixed(2)} / ${canonicalWallMaterialSubtype(m.wall_material_subtype) === 'concrete' ? 'CY' : 'unit'}` : (m.cost_per_unit ?? 'Not priced')}</div>
                       <div>Texture: <span className="capitalize">{m.wall_texture}</span></div>
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
