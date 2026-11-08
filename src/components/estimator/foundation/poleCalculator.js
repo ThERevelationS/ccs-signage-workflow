@@ -9,39 +9,29 @@
 const assignedId = value => (typeof value === "string" && value.trim() !== "")
   || (typeof value === "number" && Number.isFinite(value));
 
-// Explicit-0-respecting setting pick (same semantics as wallSettingValue).
-const poleSettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
+// Inventory normalization boundary (CMP-A08): the canonical settings pick and
+// price/dimension/measurement kernels live in
+// masterInventory/inventoryNormalization.
+//   poleSettingValue      — explicit-0-respecting pick (same semantics as wallSettingValue)
+//   polePriceNumber       — catalog/customer price basis: finite, nonnegative
+//                           (explicit 0 is a valid free price)
+//   poleDimensionNumber   — positive finite dimension in inches/feet (height
+//                           above grade, stock length, pole width)
+//   poleOffsetNumber      — finite nonnegative measurement (depth in ground may
+//                           legitimately be zero; negatives are not lengths)
+//   poleSettingNumber / polePositiveSettingNumber — setting compositions;
+//                           missing/blank settings keep the module default,
+//                           recorded values must parse on the basis.
+import {
+  inventorySettingValue as poleSettingValue,
+  inventoryNonnegativeNumber as polePriceNumber,
+  inventoryPositiveNumber as poleDimensionNumber,
+  inventoryNonnegativeMeasurement as poleOffsetNumber,
+  inventorySettingNumber as poleSettingNumber,
+  inventoryPositiveSettingNumber as polePositiveSettingNumber,
+} from "@/components/masterInventory/inventoryNormalization";
 
 const setting = (settings, key, def) => parseFloat(poleSettingValue(settings?.[key], def));
-
-// Catalog/customer price basis: finite, nonnegative — an explicit 0 is a valid free price.
-const polePriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
-
-// Positive finite dimension in inches/feet (height above grade, stock length, pole width).
-const poleDimensionNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-};
-
-// Depth in ground may legitimately be zero (surface-mounted pole); negatives are not lengths.
-const poleOffsetNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
-
-// Missing/blank settings fall back to the module default; present values must be
-// finite nonnegative numbers (explicit 0 honored — a genuinely free rate).
-const poleSettingNumber = (value, fallback) => polePriceNumber(poleSettingValue(value, fallback));
-const polePositiveSettingNumber = (value, fallback) => poleDimensionNumber(poleSettingValue(value, fallback));
 
 const POLE_PAINT_SETTING_DEFAULTS = {
   pole_paint_cost_per_lf: 3.5,
