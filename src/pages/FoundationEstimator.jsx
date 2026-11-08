@@ -1302,6 +1302,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   itemPricing={calc.itemPricing}
                   polePricing={calc.polePricing}
                   wallPricing={calc.wallPricing}
+                  cabinets={project.signage_cabinets || []}
+                  landscape={project.landscape}
+                  landscapePricing={calc.landscapePricing}
                   pricingUnavailable={pricingBlocked}
                 />
               </TabsContent>
