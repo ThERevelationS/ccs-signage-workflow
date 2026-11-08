@@ -49,11 +49,27 @@ function buildScene(scene, project, solid, showGround) {
   });
 
   (project.poles || []).forEach((p) => {
-    const h = (Number(p.height_inches) || 96) * IN;
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, h, 16), poleMat);
+    // CMP-E02: distinct quantities — the pole top sits at base offset plus
+    // height above grade; embedment extends BELOW grade (canonical
+    // embedment_inches; the legacy y_offset_inches spelling carries the same
+    // authored "depth in ground" quantity and is no longer read as an upward
+    // elevation — CMP-AUD07). Cross-section follows the authored/resolved
+    // pole_shape; unspecified stays the round default.
+    const height = (Number(p.height_inches) || 96) * IN;
+    const embed = (Number(p.embedment_inches ?? p.y_offset_inches) || 0) * IN;
+    const base = (Number(p.base_offset_inches) || 0) * IN;
+    const len = height + embed;
+    const shape = typeof p.pole_shape === "string" ? p.pole_shape.toLowerCase() : "round";
+    let pole;
+    if (shape === "square" || shape === "rectangular") {
+      pole = new THREE.Mesh(new THREE.BoxGeometry(0.7, len, shape === "rectangular" ? 0.45 : 0.7), poleMat);
+    } else {
+      pole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, len, 16), poleMat);
+      if (shape === "elliptical") pole.scale.z = 0.55;
+    }
     pole.position.set(
       (Number(p.x_inches) || 0) * IN,
-      (Number(p.y_offset_inches) || 0) * IN + h / 2,
+      base + (height - embed) / 2,
       (Number(p.z_inches) || 0) * IN
     );
     group.add(pole);
