@@ -100,7 +100,13 @@ export default function FoundationBOM({
       if (polePricing[index]?.available === false) return;
       if (!p.pole_id) return;
       poleGroups[p.pole_id] = poleGroups[p.pole_id] || { ft: 0, cost: 0 };
-      poleGroups[p.pole_id].ft += (num(p.height_inches) + num(p.y_offset_inches)) / 12;
+      // Billed length is the distinct required-length snapshot (explicit total
+      // stock length, or height + embedment); the legacy y_offset_inches
+      // spelling of embedment is the fallback for pre-CMP-E02 rows.
+      const billedInches = hasFoundationCostSnapshot(p.required_length_inches)
+        ? p.required_length_inches
+        : num(p.height_inches) + num(p.embedment_inches ?? p.y_offset_inches);
+      poleGroups[p.pole_id].ft += billedInches / 12;
       poleGroups[p.pole_id].cost += num(p.pole_cost);
     });
     Object.entries(poleGroups).forEach(([id, g]) => add(nameOf(id), qty(g.ft, "LF"), g.cost, g.ft));
@@ -112,7 +118,9 @@ export default function FoundationBOM({
     }
 
     const savedPoleFt = (p) => {
-      const h = Number(p.height_inches), d = Number(p.y_offset_inches);
+      const req = Number(p.required_length_inches);
+      if (Number.isFinite(req) && req > 0) return req / 12;
+      const h = Number(p.height_inches), d = Number(p.embedment_inches ?? p.y_offset_inches);
       return Number.isFinite(h) && h > 0 && Number.isFinite(d) && d >= 0 ? (h + d) / 12 : null;
     };
     poles.forEach((p, index) => {
