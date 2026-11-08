@@ -20,10 +20,10 @@ import {
   sceneEditFromNudge,
   sceneEditCoalesceKey,
   hitTestPlanAll,
+  snapCandidatesForScene,
 } from "./foundationSceneInput";
 import {
   createSceneHistory,
-  rowsWithPatch,
   sceneLayoutAnchor,
 } from "./foundationSceneHistory";
 import {
@@ -32,6 +32,56 @@ import {
   isClickRelease,
   sceneNodeId,
 } from "./foundationSceneSelection";
+import {
+  beginItemResize,
+  resizeItemFromHandle,
+  beginItemRotate,
+  rotateItemFromPointer,
+  rotateItemBy,
+  snapDraggedItem,
+  snapCandidatesOutside,
+  moveSelectionPatch,
+  alignSelectionPatch,
+  distributeSelectionPatch,
+  typedItemPatch,
+  beforeFieldsOf,
+  patchesFitSingleItemChannel,
+  editRecordForPatches,
+  deleteSelectionPlan,
+  duplicateSelectionPlan,
+  opSceneWithPatches,
+  ITEM_RESIZE_HANDLES,
+  ALIGN_EDGES,
+  DEFAULT_SNAP_TOLERANCE_INCHES,
+  ROTATE_KEY_STEP_DEGREES,
+  ROTATE_KEY_BIG_STEP_DEGREES,
+} from "./foundationSceneEditOps";
+import {
+  parseFoundationDimension,
+  formatFoundationDimension,
+} from "./foundationFtInEntry";
+
+const HANDLE_CURSORS = {
+  nw: "nwse-resize", se: "nwse-resize",
+  ne: "nesw-resize", sw: "nesw-resize",
+  n: "ns-resize", s: "ns-resize",
+  e: "ew-resize", w: "ew-resize",
+};
+const HANDLE_POSITION = {
+  nw: { left: "-4px", top: "-4px" },
+  n: { left: "calc(50% - 4px)", top: "-4px" },
+  ne: { right: "-4px", top: "-4px" },
+  e: { right: "-4px", top: "calc(50% - 4px)" },
+  se: { right: "-4px", bottom: "-4px" },
+  s: { left: "calc(50% - 4px)", bottom: "-4px" },
+  sw: { left: "-4px", bottom: "-4px" },
+  w: { left: "-4px", top: "calc(50% - 4px)" },
+};
+const ALIGN_LABELS = {
+  left: "Align left edges", centerX: "Align horizontal centers", right: "Align right edges",
+  top: "Align top edges", centerZ: "Align vertical centers", bottom: "Align bottom edges",
+};
+const ALIGN_TEXT = { left: "◧", centerX: "↔", right: "◨", top: "⬒", centerZ: "↕", bottom: "⬓" };
 
 export default function FoundationLayoutCanvas({
   items = [],
@@ -43,12 +93,19 @@ export default function FoundationLayoutCanvas({
   sceneHistory = null,
   sceneSelection = null,
   onDeleteSelection,
+  onDuplicateSelection,
+  onPatchScene,
+  objectSnap = true,
+  snapToleranceInches = DEFAULT_SNAP_TOLERANCE_INCHES,
+  gridSnapInches = 0,
 }) {
   const boxRef = useRef(null);
   const [zoom, setZoom] = useState(1);
-  const dragRef = useRef(null);
-  const [preview, setPreview] = useState(null); // {key,x,z} transient only
+  const dragRef = useRef(null);   // move gesture record (O-039 shape) + _item/_multi
+  const editDragRef = useRef(null); // resize/rotate gesture: {mode,pointerId,key,identityKind,legacyIndex,count,fingerprint,session,snapCandidates}
+  const [preview, setPreview] = useState(null); // {patches:{key:patch}, guides:[...] } transient only
   const editable = typeof onMoveItem === "function";
+  const multiChannel = typeof onPatchScene === "function";
 
   // The full scene the selection model sees — the canvas renders items +
   // poles today, but hit tests, the object tree, cycling, region selects
@@ -62,10 +119,13 @@ export default function FoundationLayoutCanvas({
   if (!internalHistoryRef.current) internalHistoryRef.current = createSceneHistory();
   const history = sceneHistory || internalHistoryRef.current;
 
-  // Geometry-CAS reconciliation — every items change that did NOT come
+  // Geometry-CAS reconciliation — every scene change that did NOT come
   // through this canvas's recorded strokes detaches the undo chain, so undo
-  // can never resurrect stale geometry over an external write.
-  useEffect(() => { history.observe(sceneLayoutAnchor(items)); }, [history, items]);
+  // can never resurrect stale geometry over an external write. O-035:
+  // observe spans the whole scene (items + poles + walls) so single-row
+  // and multi-row entries chain in ONE domain — an external pole/wall
+  // write detaches recorded geometry just like an items write.
+  useEffect(() => { history.observe(sceneLayoutAnchor(scene)); }, [history, items, poles, walls]);
 
   // O-034 selection seam — same mount shape as the history store: an
   // internal store keeps the component self-contained; a mounted editor
@@ -95,11 +155,17 @@ export default function FoundationLayoutCanvas({
   const pctD = (inches) => `${(inches / FOUNDATION_LAYOUT_DEPTH_INCHES) * 100}%`;
 
   const mountedRef = useRef(true);
-  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; dragRef.current = null; pickRef.current = null; marqueeRef.current = null; }; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; dragRef.current = null; editDragRef.current = null; pickRef.current = null; marqueeRef.current = null; }; }, []);
 
   const cancelDrag = (e) => {
-    if (e?.pointerId !== undefined && dragRef.current && e.pointerId !== dragRef.current.pointerId) return;
-    dragRef.current = null;
+    if (e?.pointerId !== undefined) {
+      if (dragRef.current && e.pointerId === dragRef.current.pointerId) dragRef.current = null;
+      else if (editDragRef.current && e.pointerId === editDragRef.current.pointerId) editDragRef.current = null;
+      else if (dragRef.current || editDragRef.current) return; // foreign pointer — active gesture continues
+    } else {
+      dragRef.current = null;
+      editDragRef.current = null;
+    }
     pickRef.current = null;
     marqueeRef.current = null;
     selection.cancelMarquee();
@@ -111,6 +177,75 @@ export default function FoundationLayoutCanvas({
     // the tree (and an item's arrows keep nudging the SELECTED row).
     const el = boxRef.current?.querySelector?.(`[data-node-id="${String(id).replace(/"/g, '\\"')}"]`);
     if (el && typeof el.focus === "function") el.focus();
+  };
+
+  // Snap helpers — candidates for everything except the moving row(s).
+  const snapOpts = () => ({
+    tolInches: Number.isFinite(snapToleranceInches) ? snapToleranceInches : DEFAULT_SNAP_TOLERANCE_INCHES,
+    gridStepInches: Number.isFinite(gridSnapInches) && gridSnapInches > 0 ? gridSnapInches : 0,
+  });
+  const snapEnabled = (e) => (objectSnap !== false || snapOpts().gridStepInches > 0) && !(e && e.shiftKey);
+  const candidatesExcept = (keys) => {
+    const list = Array.isArray(keys) ? keys : [keys];
+    // The input seam's excludeKey drops one row; for several moving rows
+    // build candidates from the scene minus movers (same helper).
+    if (list.length === 1) return snapCandidatesForScene(scene, { excludeKey: list[0] });
+    const moving = new Set(list);
+    const keep = (rows) => (Array.isArray(rows) ? rows.filter((r, i) => !moving.has(layoutItemKey(r, i))) : []);
+    return snapCandidatesForScene({ items: keep(items), poles: keep(poles), walls: keep(walls) });
+  };
+
+  // O-035 commit channel — route a computed patch list to the single-item
+  // channel when it fits (patchItem already round-trips its undo) or the
+  // optional multi-row channel. Anything else reports 'unavailable' so a
+  // partial application can never happen silently.
+  //
+  // ALL recorded anchors live in the full-scene domain — the same domain
+  // observe() uses — so single and multi entries chain together and the
+  // mounted page's undo gate reads sceneLayoutAnchor({items,poles,walls}).
+  const anchorWith = (patches, side) =>
+    sceneLayoutAnchor(opSceneWithPatches(scene, patches, { side }));
+  const commitOpPatches = (op, method, patches, { label } = {}) => {
+    if (!Array.isArray(patches) || !patches.length) return { status: "noop" };
+    if (patchesFitSingleItemChannel(patches) && editable) {
+      const p = patches[0];
+      const applied = onMoveItem(p.index, p.patch);
+      if (applied === false) return { status: "commit-refused", op };
+      const edit = editRecordForPatches(op, method, patches, { label });
+      if (edit) {
+        history.recordEdit({
+          ...edit,
+          coalesceKey: null,
+          beforeAnchor: anchorWith(patches, "before"),
+          afterAnchor: anchorWith(patches, "patch"),
+        });
+      }
+      return { status: "applied", channel: "single", op };
+    }
+    if (multiChannel) {
+      const applied = onPatchScene(patches);
+      if (applied === false) return { status: "commit-refused", op };
+      const edit = editRecordForPatches(op, method, patches, { label });
+      if (edit) {
+        // One op = one undo command, recorded through the stroke seam.
+        // Anchors span the FULL scene; the multi record carries
+        // target:null so the current single-row undo apply refuses it
+        // explicitly ('rejected') instead of fake-applying a no-op —
+        // the mounted multi apply branches on rev.patch.multi and never
+        // touches target (MOUNT-ANCHORS.md).
+        history.beginStroke({
+          kind: edit.kind, method: edit.method, label: edit.label, target: edit.target,
+          before: edit.before,
+          beforeAnchor: anchorWith(patches, "before"),
+        });
+        history.commitStroke({
+          after: edit.after, label: edit.label,
+          afterAnchor: anchorWith(patches, "patch"),
+        });
+      }
+      return { status: "applied", channel: "multi", op };
+    }
+    return { status: "unavailable", op };
   };
 
   // Selection keys shared by item elements and the plan container:
@@ -128,9 +263,22 @@ export default function FoundationLayoutCanvas({
     return true;
   };
 
+  // Ctrl/Cmd+D — duplicate hook. The descriptor (sources + suggested
+  // offset) goes to the consumer; the canvas never clones business data.
+  const applyDuplicateKey = (e) => {
+    if (!e || !(e.ctrlKey || e.metaKey) || e.altKey) return false;
+    if (e.key !== "d" && e.key !== "D") return false;
+    e.preventDefault();
+    if (typeof onDuplicateSelection === "function") {
+      const plan = duplicateSelectionPlan(scene, selection.entries());
+      if (plan.status === "ok") onDuplicateSelection(plan);
+    }
+    return true;
+  };
+
   const onPointerDown = (e, item, index) => {
     if (!mountedRef.current || e.button !== 0) return;
-    if (e.isPrimary === false || dragRef.current) return; // secondary touch must not replace an active gesture
+    if (e.isPrimary === false || dragRef.current || editDragRef.current) return; // secondary touch must not replace an active gesture
     const rect = boxRef.current?.getBoundingClientRect();
     const point = layoutPointInches(e.clientX, e.clientY, rect);
     if (!point) return;
@@ -157,7 +305,7 @@ export default function FoundationLayoutCanvas({
     const [kind] = key.split(":");
     // O-039 input seam — the gesture record comes from the shared primitive;
     // pos/point are already validated above so beginSceneDrag cannot fail.
-    dragRef.current = beginSceneDrag({
+    const drag = beginSceneDrag({
       pointerId: e.pointerId,
       key,
       identityKind: kind,
@@ -167,9 +315,43 @@ export default function FoundationLayoutCanvas({
       grabPoint: point,
       fingerprint: layoutItemFingerprint(item),
     });
+    // O-035: the row record + multi-drag marker ride the gesture record —
+    // resolveSceneDragTarget/commitSceneDrag read only the fields they
+    // know, so the extras are inert on the O-039 path.
+    drag._item = item;
+    drag._multi =
+      multiChannel && selIds.has(sceneNodeId.item(key)) && selState.count > 1;
+    dragRef.current = drag;
     try { boxRef.current.setPointerCapture(e.pointerId); }
     catch { cancelDrag(); return; }
-    setPreview({ key, x: pos.x_inches, z: pos.z_inches });
+    setPreview({ patches: { [key]: { x_inches: pos.x_inches, z_inches: pos.z_inches } }, guides: [] });
+  };
+
+  // O-035 handle press — resize ('nw'|'n'|...|'w') or rotate. Handles live
+  // inside the primary item's rotated div so they track rotated corners /
+  // edges for free; the press stops before the item's move-drag seam.
+  const onHandleDown = (e, item, index, mode, handle) => {
+    e.stopPropagation();
+    if (!mountedRef.current || !editable || e.button !== 0) return;
+    if (e.isPrimary === false || dragRef.current || editDragRef.current) return;
+    const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
+    if (!point) return;
+    const key = layoutItemKey(item, index);
+    const [kind] = key.split(":");
+    const session = mode === "resize"
+      ? beginItemResize(item, handle, point)
+      : beginItemRotate(item, point);
+    if (!session) return;
+    editDragRef.current = {
+      mode, pointerId: e.pointerId, key,
+      identityKind: kind, legacyIndex: index, count: items.length,
+      fingerprint: layoutItemFingerprint(item),
+      session,
+      snapCandidates: snapEnabled(e) ? candidatesExcept(key) : null,
+    };
+    try { boxRef.current.setPointerCapture(e.pointerId); }
+    catch { editDragRef.current = null; return; }
+    setPreview({ patches: {}, guides: [] });
   };
 
   // Press on the plan background — the marquee seam. Item divs are direct
@@ -196,13 +378,54 @@ export default function FoundationLayoutCanvas({
   };
 
   const onPointerMove = (e) => {
+    const ed = editDragRef.current;
+    if (ed && e.pointerId === ed.pointerId) {
+      const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
+      if (!point) return;
+      if (ed.mode === "resize") {
+        const r = resizeItemFromHandle(ed.session, point, {
+          snap: ed.snapCandidates ? { candidates: ed.snapCandidates, tolInches: snapOpts().tolInches } : null,
+        });
+        if (r?.patch) setPreview({ patches: { [ed.key]: r.patch }, guides: r.guides || [] });
+      } else if (ed.mode === "rotate") {
+        const r = rotateItemFromPointer(ed.session, point, { free: e.shiftKey });
+        if (r?.patch) setPreview({ patches: { [ed.key]: r.patch }, guides: [] });
+      }
+      return;
+    }
     const d = dragRef.current;
     if (d && e.pointerId === d.pointerId) {
       const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
       if (!point) return;
       d.moved = true;
-      d.last = sceneDragCorner(d, point);
-      setPreview({ key: d.key, x: d.last.x, z: d.last.z });
+      const raw = sceneDragCorner(d, point);
+      if (!raw) return;
+      d.last = raw;
+      // O-035 snap-assisted drag: object candidates (edges/centers/poles/
+      // wall vertices/bounds) then grid on unsnapped axes — Shift frees it.
+      if (d._multi) {
+        const delta = { dx: raw.x - d.corner.x, dz: raw.z - d.corner.z };
+        const r = moveSelectionPatch(scene, selState.ids, delta, {
+          snap: snapEnabled(e) ? { candidates: snapCandidatesOutside(scene, selState.ids), tolInches: snapOpts().tolInches } : null,
+          gridStepInches: snapEnabled(e) ? snapOpts().gridStepInches : 0,
+        });
+        if (r.status === "ok") {
+          const patches = {};
+          for (const p of r.patches) {
+            // Wall patches carry {shape} — only item corners preview.
+            if (p.collection === "items") patches[p.key] = p.patch;
+          }
+          setPreview({ patches, guides: r.guides || [] });
+        }
+        return;
+      }
+      const adj = snapEnabled(e) && d._item
+        ? snapDraggedItem(d._item, raw, candidatesExcept(d.key), snapOpts())
+        : null;
+      const cx = raw.x + (adj?.dx ?? 0);
+      const cz = raw.z + (adj?.dz ?? 0);
+      d._guides = adj?.guides || [];
+      setPreview({ patches: { [d.key]: { x_inches: cx, z_inches: cz } }, guides: d._guides });
       return;
     }
     const m = marqueeRef.current;
@@ -213,6 +436,7 @@ export default function FoundationLayoutCanvas({
   };
 
   const commitDrag = (e) => {
+    const ed = editDragRef.current;
     const d = dragRef.current;
     const pick = pickRef.current;
     const marquee = marqueeRef.current;
@@ -227,6 +451,39 @@ export default function FoundationLayoutCanvas({
       // plain clears. Beyond it, commit the region.
       selection.commitMarquee(scene, { empty: isClickRelease(marquee, e) });
       pickRef.current = null;
+      return;
+    }
+    // O-035 resize/rotate gesture — one commit at release, one history
+    // command. No click candidate was recorded (handle presses stop before
+    // the item's pointer seam), so a null patch is a clean cancel.
+    if (ed && e.pointerId === ed.pointerId) {
+      editDragRef.current = null;
+      try { boxRef.current?.releasePointerCapture(e.pointerId); } catch { }
+      setPreview(null);
+      if (!mountedRef.current) return;
+      const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
+      if (!point) return;
+      const target = resolveSceneDragTarget(ed, items);
+      if (!target) return;
+      if (ed.mode === "resize") {
+        const r = resizeItemFromHandle(ed.session, point, {
+          round: true,
+          snap: ed.snapCandidates ? { candidates: ed.snapCandidates, tolInches: snapOpts().tolInches } : null,
+        });
+        if (!r?.patch) return;
+        const patch = { collection: "items", index: target.index, key: ed.key, before: beforeFieldsOf(target.item, r.patch), patch: r.patch };
+        if (JSON.stringify(patch.before) === JSON.stringify(patch.patch)) return;
+        commitOpPatches("resize", "handle", [patch], { label: `Resize Foundation ${target.index + 1}` });
+        return;
+      }
+      if (ed.mode === "rotate") {
+        const r = rotateItemFromPointer(ed.session, point, { free: e.shiftKey });
+        if (!r?.patch) return;
+        const patch = { collection: "items", index: target.index, key: ed.key, before: beforeFieldsOf(target.item, r.patch), patch: r.patch };
+        if (JSON.stringify(patch.before) === JSON.stringify(patch.patch)) return;
+        commitOpPatches("rotate", "handle", [patch], { label: `Rotate Foundation ${target.index + 1}` });
+        return;
+      }
       return;
     }
     // Click-candidate gesture with no drag record (read-only press, or a
@@ -250,7 +507,20 @@ export default function FoundationLayoutCanvas({
     // sub-inch-wiggle guards and returns the whole-inch patch; the target
     // resolver re-finds the row (deletion/reorder during gesture) and checks
     // the fingerprint (authoritative change mid-drag).
-    const patch = commitSceneDrag(d, point);
+    const releasePoint = (() => {
+      // O-035 snap assist: adjust the release point by the same bounds
+      // adjustment the live preview showed, then the unchanged path runs
+      // the O-039 math verbatim (snap disabled → identical results).
+      if (!snapEnabled(e) || !d._item || d._multi) return point;
+      const raw = sceneDragCorner(d, point);
+      const adj = raw ? snapDraggedItem(d._item, raw, candidatesExcept(d.key), snapOpts()) : null;
+      // layoutPointInches returns {x_inches,z_inches} — preserve the shape,
+      // adjusting the same fields the point actually carries.
+      return adj
+        ? { ...point, x_inches: point.x_inches + adj.dx, z_inches: point.z_inches + adj.dz }
+        : point;
+    })();
+    const patch = commitSceneDrag(d, releasePoint);
     if (!patch) {
       // No move landed. Release inside the click threshold selects the
       // down-point hit; a drag that travelled and returned does NOT
@@ -265,6 +535,30 @@ export default function FoundationLayoutCanvas({
     const target = resolveSceneDragTarget(d, items);
     if (!target) return;
     if (typeof onMoveItem !== "function") return;
+    if (d._multi) {
+      // Multi-drag: the raw corner delta translates every selected planar
+      // row — one op, one multi-channel commit, one history stroke. Snap
+      // runs on the selection bounds (same math the preview showed).
+      const raw = sceneDragCorner(d, point);
+      const delta = raw ? { dx: raw.x - d.corner.x, dz: raw.z - d.corner.z } : null;
+      const r = delta
+        ? moveSelectionPatch(scene, selState.ids, delta, {
+            round: true,
+            snap: snapEnabled(e) ? { candidates: snapCandidatesOutside(scene, selState.ids), tolInches: snapOpts().tolInches } : null,
+            gridStepInches: snapEnabled(e) ? snapOpts().gridStepInches : 0,
+          })
+        : null;
+      if (r?.status === "ok") {
+        commitOpPatches("move", "drag", r.patches, { label: `Move ${r.patches.length} objects` });
+        return;
+      }
+      // No move landed — the click-vs-drag rule applies exactly like the
+      // single-item path.
+      if (pick && isClickRelease(pick, e)) {
+        selection.selectHit(pick.hit, { additive: pick.additive });
+      }
+      return;
+    }
     // O-040: the whole gesture — begin, every preview move, commit — records
     // as ONE history command carrying the pre-stroke corner as its inverse
     // patch. Anchors are computed as "the scene with only this row's
@@ -274,19 +568,57 @@ export default function FoundationLayoutCanvas({
     const applied = onMoveItem(target.index, patch);
     if (applied === false) return; // refused commit — nothing landed to undo
     if (edit) {
+      const patchRow = { collection: "items", index: target.index, before: edit.before, patch };
       history.recordEdit({
         ...edit,
         target: { key: d.key, index: target.index },
         label: `Move Foundation ${target.index + 1}`,
         coalesceKey: sceneEditCoalesceKey(edit),
-        beforeAnchor: sceneLayoutAnchor(rowsWithPatch(items, target.index, edit.before)),
-        afterAnchor: sceneLayoutAnchor(rowsWithPatch(items, target.index, patch)),
+        beforeAnchor: anchorWith([patchRow], "before"),
+        afterAnchor: anchorWith([patchRow], "patch"),
       });
     }
   };
 
+  // O-035 keyboard rotate — '[' / ']' step the focused item about its
+  // center (Shift = the 45° big step), bursts on one row coalescing into
+  // one undo command like arrow nudges do.
+  const applyRotateKey = (e, item, index) => {
+    if (!editable || !item) return false;
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;
+    if (e.key !== "[" && e.key !== "]") return false;
+    const fp = foundationLayoutFootprint(item);
+    const pos = layoutPositionInches(item);
+    if (!fp || !pos.valid) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    const step = e.shiftKey ? ROTATE_KEY_BIG_STEP_DEGREES : ROTATE_KEY_STEP_DEGREES;
+    const r = rotateItemBy(item, e.key === "]" ? step : -step);
+    if (!r?.patch) return true;
+    const key = layoutItemKey(item, index);
+    const patchRow = { collection: "items", index, key, before: beforeFieldsOf(item, r.patch), patch: r.patch };
+    if (JSON.stringify(patchRow.before) === JSON.stringify(patchRow.patch)) return true;
+    // Coalesce a key burst into one command — same window/identity rule
+    // the nudge path uses, keyed to the rotate op on this row.
+    const applied = onMoveItem(index, r.patch);
+    if (applied === false) return true;
+    const edit = editRecordForPatches("rotate", "key", [patchRow], { label: `Rotate Foundation ${index + 1}` });
+    if (edit) {
+      history.recordEdit({
+        ...edit,
+        coalesceKey: `editop-rotate:${key}`,
+        beforeAnchor: anchorWith([patchRow], "before"),
+        afterAnchor: anchorWith([patchRow], "patch"),
+      });
+    }
+    return true;
+  };
+
   const onKeyDown = (e, item, index) => {
     if (!mountedRef.current || !editable) return;
+    // O-035 — duplicate/rotate hooks run before the nudge/selection split.
+    if (applyDuplicateKey(e)) { e.stopPropagation(); return; }
+    if (applyRotateKey(e, item, index)) return;
     // O-039 input seam — keyboardNudge carries the modifier guard, the arrow
     // map and the Shift 12-inch big-step; nudgePatch builds the same patch.
     const delta = keyboardNudge(e);
@@ -304,13 +636,14 @@ export default function FoundationLayoutCanvas({
       if (applied === false) return; // refused commit — nothing landed to undo
       const edit = sceneEditFromNudge(layoutItemKey(item, index), pos, patch);
       if (edit) {
+        const patchRow = { collection: "items", index, before: edit.before, patch };
         history.recordEdit({
           ...edit,
           target: { key: layoutItemKey(item, index), index },
           label: `Move Foundation ${index + 1}`,
           coalesceKey: sceneEditCoalesceKey(edit),
-          beforeAnchor: sceneLayoutAnchor(rowsWithPatch(items, index, edit.before)),
-          afterAnchor: sceneLayoutAnchor(rowsWithPatch(items, index, patch)),
+          beforeAnchor: anchorWith([patchRow], "before"),
+          afterAnchor: anchorWith([patchRow], "patch"),
         });
       }
       return;
@@ -323,7 +656,93 @@ export default function FoundationLayoutCanvas({
   const onPlanKeyDown = (e) => {
     if (!mountedRef.current) return;
     if (e.target !== e.currentTarget) return; // item elements handle their own keys first
+    if (applyDuplicateKey(e)) return;
     applySelectionKey(e);
+  };
+
+  // O-035 ops toolbar actions — each runs the pure op over the live
+  // selection and routes the patch list through commitOpPatches.
+  const runOp = (fn, { label } = {}) => {
+    const result = fn();
+    if (result?.status === "ok") commitOpPatches(result.op, "toolbar", result.patches, { label });
+    return result;
+  };
+  const opAlign = (edge) => runOp(
+    () => alignSelectionPatch(scene, selState.ids, edge, { primaryId: selState.primaryId, round: true }),
+    { label: `${ALIGN_LABELS[edge]} (${selState.count} sel)` },
+  );
+  const opDistribute = (axis) => runOp(
+    () => distributeSelectionPatch(scene, selState.ids, axis, { round: true }),
+    { label: `Distribute ${axis === "x" ? "horizontally" : "vertically"} (${selState.count} sel)` },
+  );
+  const opRotateStep = (deg) => {
+    // Toolbar rotation applies to every selected ITEM row.
+    const ids = selState.ids.filter((id) => id.startsWith("item:"));
+    const patches = [];
+    ids.forEach((id) => {
+      const res = items.findIndex((it, i) => layoutItemKey(it, i) === id.split(":").slice(1).join(":"));
+      if (res < 0) return;
+      const r = rotateItemBy(items[res], deg);
+      if (r?.patch) patches.push({ collection: "items", index: res, key: layoutItemKey(items[res], res), before: beforeFieldsOf(items[res], r.patch), patch: r.patch });
+    });
+    if (patches.length) commitOpPatches("rotate", "toolbar", patches, { label: `Rotate ${deg > 0 ? "+" : ""}${deg}°` });
+  };
+  const opDelete = () => {
+    const plan = deleteSelectionPlan(scene, selection.entries());
+    if (plan.status === "ok" && typeof onDeleteSelection === "function") onDeleteSelection(selection.entries());
+  };
+  const opDuplicate = () => {
+    const plan = duplicateSelectionPlan(scene, selection.entries());
+    if (plan.status === "ok" && typeof onDuplicateSelection === "function") onDuplicateSelection(plan);
+  };
+
+  // Typed-coordinate commits — a field blur/Enter parses (ft/in via the
+  // O-093 boundary for length fields, strict numeric for rotation), the
+  // typed op validates atomically, and a landed patch records like any
+  // other single-item command.
+  const primaryEntry = selState.primary;
+  const primaryItemRow = (() => {
+    if (!primaryEntry?.id?.startsWith("item:")) return null;
+    const key = primaryEntry.id.slice(5);
+    const i = items.findIndex((it, j) => layoutItemKey(it, j) === key);
+    return i >= 0 ? { item: items[i], index: i, key } : null;
+  })();
+  // Enter commits then blurs — the blur's own commit runs in the SAME tick
+  // against this stale render closure (the row still shows the pre-commit
+  // value), which would record the same patch twice. Dedupe identical
+  // commits inside a short window; a genuinely different value or a later
+  // commit always re-validates against fresh state.
+  const typedCommitRef = useRef(null); // {field, value, at}
+  const commitTypedField = (field, text, parse) => {
+    if (!primaryItemRow) return;
+    const parsed = parse(text);
+    if (parsed === undefined) return; // input stays verbatim; nothing landed
+    const last = typedCommitRef.current;
+    if (last && last.field === field && last.value === parsed && Date.now() - last.at < 600) return;
+    const r = typedItemPatch(primaryItemRow.item, { [field]: parsed });
+    if (r.status !== "ok") return;
+    const patchRow = { collection: "items", index: primaryItemRow.index, key: primaryItemRow.key, before: r.before, patch: r.patch };
+    if (JSON.stringify(patchRow.before) === JSON.stringify(patchRow.patch)) return;
+    const applied = onMoveItem(primaryItemRow.index, r.patch);
+    if (applied === false) return;
+    typedCommitRef.current = { field, value: parsed, at: Date.now() };
+    const edit = editRecordForPatches("geometry", "typed", [patchRow], { label: `Edit Foundation ${primaryItemRow.index + 1} ${field}` });
+    if (edit) {
+      history.recordEdit({
+        ...edit,
+        coalesceKey: null,
+        beforeAnchor: anchorWith([patchRow], "before"),
+        afterAnchor: anchorWith([patchRow], "patch"),
+      });
+    }
+  };
+  const dimParse = (text) => {
+    const p = parseFoundationDimension(text);
+    return p.ok ? p.inches : undefined;
+  };
+  const rotParse = (text) => {
+    const t = String(text).trim();
+    return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(t) ? Number(t) : undefined;
   };
 
   const invalidNotes = items.map((item, index) => ({ item, index }))
@@ -338,6 +757,37 @@ export default function FoundationLayoutCanvas({
         h: Math.abs(marquee.current.z - marquee.start.z),
       }
     : null;
+
+  const guides = preview?.guides || [];
+  const selectedItemCount = selState.ids.filter((id) => id.startsWith("item:")).length;
+  const singleItemSel = selState.count === 1 && selectedItemCount === 1 && primaryItemRow;
+  // An op needs the multi channel when it can touch anything other than
+  // exactly one items row.
+  const alignNeedsMulti = selState.count > 1;
+  const canAlign = editable && selState.count >= 1 && (!alignNeedsMulti || multiChannel);
+  const canDistribute = editable && selState.count >= 3 && multiChannel;
+  const canRotateSel = editable && selectedItemCount >= 1 && (selectedItemCount === 1 || multiChannel);
+  const canDuplicate = typeof onDuplicateSelection === "function";
+  const canDelete = typeof onDeleteSelection === "function" && selState.count >= 1;
+
+  const typedField = (field, label, stored, parse, format) => (
+    <input
+      key={`${primaryItemRow?.key}:${field}:${String(stored)}`}
+      type="text"
+      defaultValue={format ? format(stored) : String(stored ?? "")}
+      aria-label={label}
+      title={label}
+      data-typed-field={field}
+      className="w-14 h-6 px-1 rounded-sm border border-gray-300 text-[11px] text-gray-800"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commitTypedField(field, e.currentTarget.value, parse); e.currentTarget.blur(); }
+        if (e.key === "Escape") { e.currentTarget.value = format ? format(stored) : String(stored ?? ""); e.currentTarget.blur(); }
+        e.stopPropagation();
+      }}
+      onBlur={(e) => commitTypedField(field, e.currentTarget.value, parse)}
+      onPointerDown={(e) => e.stopPropagation()}
+    />
+  );
 
   return (
     <div className="bg-white rounded-sm border border-gray-200 p-3">
@@ -404,7 +854,13 @@ export default function FoundationLayoutCanvas({
             const nodeId = sceneNodeId.item(key);
             const isSel = selIds.has(nodeId);
             const isPrimary = selState.primaryId === nodeId;
-            const shown = preview && preview.key === key ? { x_inches: preview.x, z_inches: preview.z } : pos;
+            const pv = preview?.patches?.[key];
+            const shown = pv
+              ? { x_inches: pv.x_inches ?? pos.x_inches, z_inches: pv.z_inches ?? pos.z_inches }
+              : pos;
+            const shownW = pv?.diameter ?? pv?.length_inches ?? fp.width;
+            const shownD = pv?.diameter ?? pv?.width_inches ?? fp.depth;
+            const shownRot = pv?.rotation_degrees ?? item.rotation_degrees ?? 0;
             return (
               <div
                 key={key}
@@ -425,29 +881,52 @@ export default function FoundationLayoutCanvas({
                 style={{
                   left: pctW(shown.x_inches),
                   top: pctD(shown.z_inches),
-                  width: pctW(fp.width),
-                  height: pctD(fp.depth),
-                  transform: `rotate(${item.rotation_degrees || 0}deg)`,
+                  width: pctW(shownW),
+                  height: pctD(shownD),
+                  transform: `rotate(${shownRot}deg)`,
                   touchAction: editable ? "none" : undefined,
                 }}
                 title={`Foundation ${index + 1}`}
               >
-                Foundation {index + 1}
-                {isPrimary && editable && [0, 1, 2, 3].map((h) => (
+                <span className="flex flex-col items-center leading-tight" style={{ pointerEvents: "none" }}>
+                  <span>Foundation {index + 1}</span>
+                  {isSel && (
+                    <span data-dim-chip="true" className="text-[9px] font-normal">
+                      {item.foundation_type === "pillar"
+                        ? `⌀ ${formatFoundationDimension(shownW)}`
+                        : `${formatFoundationDimension(shownW)} × ${formatFoundationDimension(shownD)}`}
+                    </span>
+                  )}
+                </span>
+                {isPrimary && editable && ITEM_RESIZE_HANDLES.map((h) => (
                   <span
                     key={h}
-                    data-selection-handle="true"
+                    data-resize-handle={h}
                     aria-hidden="true"
+                    onPointerDown={(e) => onHandleDown(e, item, index, "resize", h)}
                     className="absolute w-2 h-2 bg-white border border-sky-700 rounded-[2px]"
                     style={{
-                      left: h === 0 || h === 3 ? "-4px" : undefined,
-                      right: h === 1 || h === 2 ? "-4px" : undefined,
-                      top: h === 0 || h === 1 ? "-4px" : undefined,
-                      bottom: h === 2 || h === 3 ? "-4px" : undefined,
-                      pointerEvents: "none",
+                      ...HANDLE_POSITION[h],
+                      cursor: HANDLE_CURSORS[h],
+                      pointerEvents: "auto",
                     }}
                   />
                 ))}
+                {isPrimary && editable && (
+                  <span
+                    data-rotate-handle="true"
+                    aria-hidden="true"
+                    onPointerDown={(e) => onHandleDown(e, item, index, "rotate", "n")}
+                    className="absolute w-2.5 h-2.5 bg-sky-500 border border-sky-800 rounded-full"
+                    style={{
+                      left: "calc(50% - 5px)",
+                      top: "-18px",
+                      cursor: "grab",
+                      pointerEvents: "auto",
+                      boxShadow: "0 0 0 1px rgba(255,255,255,0.8)",
+                    }}
+                  />
+                )}
               </div>
             );
           })}
@@ -457,6 +936,12 @@ export default function FoundationLayoutCanvas({
               Move preview - release to apply
             </div>
           )}
+
+          {guides.map((gd, i) => (
+            gd.axis === "x"
+              ? <div key={`gx-${i}`} data-snap-guide="x" aria-hidden="true" className="absolute top-0 bottom-0 border-l border-sky-500/70 z-20" style={{ left: pctW(gd.value), pointerEvents: "none" }} />
+              : <div key={`gz-${i}`} data-snap-guide="z" aria-hidden="true" className="absolute left-0 right-0 border-t border-sky-500/70 z-20" style={{ top: pctD(gd.value), pointerEvents: "none" }} />
+          ))}
 
           {marqueeRect && (
             <div
@@ -498,6 +983,100 @@ export default function FoundationLayoutCanvas({
           })}
         </div>
       </div>
+
+      {selState.count >= 1 && editable && (
+        <div data-editops-toolbar="true" className="flex flex-wrap items-center gap-1 mt-2 text-[10px]">
+          <span className="text-gray-500 mr-1">{selState.count} selected:</span>
+          {ALIGN_EDGES.map((edge) => (
+            <button
+              key={edge}
+              type="button"
+              data-op={`align-${edge}`}
+              disabled={!canAlign}
+              title={canAlign ? `${ALIGN_LABELS[edge]}${selState.count > 1 ? " to primary" : " to plan"}` : "Requires multi-object page channel (O-035 mount)"}
+              onClick={() => opAlign(edge)}
+              className={`px-1.5 py-0.5 rounded-sm border ${canAlign ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+            >
+              {ALIGN_TEXT[edge]}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-op="distribute-x"
+            disabled={!canDistribute}
+            title={selState.count < 3 ? "Select 3+ objects to distribute" : multiChannel ? "Distribute horizontally" : "Requires multi-object page channel (O-035 mount)"}
+            onClick={() => opDistribute("x")}
+            className={`px-1.5 py-0.5 rounded-sm border ${canDistribute ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Dist X
+          </button>
+          <button
+            type="button"
+            data-op="distribute-z"
+            disabled={!canDistribute}
+            title={selState.count < 3 ? "Select 3+ objects to distribute" : multiChannel ? "Distribute vertically" : "Requires multi-object page channel (O-035 mount)"}
+            onClick={() => opDistribute("z")}
+            className={`px-1.5 py-0.5 rounded-sm border ${canDistribute ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Dist Z
+          </button>
+          <button
+            type="button"
+            data-op="rotate-ccw"
+            disabled={!canRotateSel}
+            title={canRotateSel ? "Rotate −15° ([ key)" : "Select an item to rotate"}
+            onClick={() => opRotateStep(-ROTATE_KEY_STEP_DEGREES)}
+            className={`px-1.5 py-0.5 rounded-sm border ${canRotateSel ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            ⟲15°
+          </button>
+          <button
+            type="button"
+            data-op="rotate-cw"
+            disabled={!canRotateSel}
+            title={canRotateSel ? "Rotate +15° (] key)" : "Select an item to rotate"}
+            onClick={() => opRotateStep(ROTATE_KEY_STEP_DEGREES)}
+            className={`px-1.5 py-0.5 rounded-sm border ${canRotateSel ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            ⟳15°
+          </button>
+          <button
+            type="button"
+            data-op="duplicate"
+            disabled={!canDuplicate}
+            title={canDuplicate ? "Duplicate selection (Ctrl+D)" : "Requires duplicate page channel (O-035 mount)"}
+            onClick={opDuplicate}
+            className={`px-1.5 py-0.5 rounded-sm border ${canDuplicate ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            data-op="delete"
+            disabled={!canDelete}
+            title={canDelete ? "Delete selection (Del)" : "Requires delete page channel"}
+            onClick={opDelete}
+            className={`px-1.5 py-0.5 rounded-sm border ${canDelete ? "border-red-300 hover:bg-red-50 text-red-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {singleItemSel && editable && (
+        <div data-typed-bar="true" className="flex flex-wrap items-center gap-1 mt-2 text-[10px] text-gray-500">
+          <span className="mr-1">Position/size (in):</span>
+          {typedField("x", "Plan X (inches, e.g. 96 or 8')", primaryItemRow.item.x_inches, dimParse, formatFoundationDimension)}
+          {typedField("z", "Plan Z (inches)", primaryItemRow.item.z_inches, dimParse, formatFoundationDimension)}
+          {primaryItemRow.item.foundation_type === "pillar"
+            ? typedField("diameter", "Diameter (inches)", primaryItemRow.item.diameter, dimParse, formatFoundationDimension)
+            : <>
+                {typedField("length", "Length (inches)", primaryItemRow.item.length_inches, dimParse, formatFoundationDimension)}
+                {typedField("width", "Width (inches)", primaryItemRow.item.width_inches, dimParse, formatFoundationDimension)}
+              </>}
+          {typedField("rotation", "Rotation (degrees)", primaryItemRow.item.rotation_degrees ?? 0, rotParse, (v) => String(v ?? 0))}
+        </div>
+      )}
 
       {invalidNotes.map(({ index }) => (
         <p key={index} className="mt-1 text-[11px] text-amber-700">
