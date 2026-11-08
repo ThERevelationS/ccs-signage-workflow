@@ -23,6 +23,11 @@
 // the concrete-supplier field-name adapter — converges on the single boundary
 // module (CMP-A08). `supplierPriceNumber` keeps its local name for the ported
 // reads below; it IS the canonical catalog price basis.
+//
+// CMP-A08 tail: the adapted supplier row now rides the boundary's explicit-0
+// semantics end to end — `default_rate`/minimum fields keep null for "not
+// cataloged" (no ported `|| 0` minted-zero tail) — and carries a canonical
+// `supplier_key` for the explicit supply grouping the catalog UX renders.
 import {
   inventoryNonnegativeNumber as supplierPriceNumber,
   inventorySettingNumber as foundationSettingNumber,
