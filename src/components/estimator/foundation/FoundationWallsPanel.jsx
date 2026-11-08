@@ -5,9 +5,11 @@ import { Trash2, Plus, PenLine } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { foundationWallPricingIssues } from "./wallCalculator";
+import { inventoryDraftInput } from "@/components/masterInventory/inventoryNormalization";
 import WallShapeEditor from "./WallShapeEditor";
 
-const heightInput = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
+// Blank-preserving project-entry draft, delegated to the boundary (CMP-A08).
+const heightInput = inventoryDraftInput;
 
 function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
