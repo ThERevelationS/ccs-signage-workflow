@@ -11,7 +11,23 @@ export async function saveFoundationTemplate({ idempotencyKey, data }) {
   });
 }
 
-const isNotFound = (e) => e?.status === 404 || e?.response?.status === 404;
+// Mirrors the canonical not-found detection in builderEntityPersistence
+// (isEntityNotFoundError): a genuinely-missing record is "already gone" while
+// every other fetch failure stays an error so the UI never drops a live row.
+// All message fields are scanned (not just the first) so a generic top-level
+// message cannot hide a nested "not found" detail.
+const isNotFound = (e) => {
+  const status = Number(e?.status || e?.response?.status || e?.response?.statusCode || e?.data?.status || 0);
+  if (status === 404) return true;
+  const message = [
+    e?.message,
+    e?.response?.data?.message,
+    e?.response?.data?.error,
+    e?.data?.message,
+    e?.data?.error,
+  ].map((v) => String(v || "").toLowerCase()).join(" ");
+  return message.includes("not found") || message.includes("does not exist");
+};
 
 export async function deleteFoundationTemplate(templateId) {
   const id = String(templateId || "").trim();
