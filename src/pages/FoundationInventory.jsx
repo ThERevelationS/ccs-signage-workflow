@@ -18,12 +18,11 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
-// Blank clears a numeric catalog field to null ("not cataloged" — never a
-// silent free price); a numeric draft coerces to Number; anything else stays
-// verbatim so availability validation reports it instead of a NaN or a minted
-// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
-const catalogNumberInput = (value) => (String(value).trim() === "" ? null
-  : Number.isFinite(Number(value)) ? Number(value) : value);
+// catalogNumberInput is the boundary's numeric catalog draft (CMP-A08): blank
+// clears to null ("not cataloged" — never a silent free price), a numeric
+// draft coerces to Number, anything else stays verbatim so availability
+// validation reports it instead of a NaN or minted 0 leaking into records.
+import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
 
 // ─── Wall Material constants ───────────────────────────────────────────────
 const WALL_SUBTYPES = [
