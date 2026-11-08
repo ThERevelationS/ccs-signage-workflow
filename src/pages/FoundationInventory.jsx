@@ -24,6 +24,12 @@ const FoundationInventoryEntity = staffEntities.FoundationInventory;
 // validation reports it instead of a NaN or minted 0 leaking into records.
 import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
 
+// `list` field drafts (O-021 / CMP-B07): rebar_support_compatible_bar_sizes is
+// a stored string array edited as a comma-separated text draft. listFieldDraft
+// renders the draft; listFieldValue tokenizes it on save (blank -> [] =
+// "compatibility unknown", never universal; non-string values stay verbatim).
+import { listFieldDraft, listFieldValue } from "@/components/masterInventory/foundationFieldSchema";
+
 // ─── Wall Material constants ───────────────────────────────────────────────
 const WALL_SUBTYPES = [
   { value: 'brick', label: 'Brick' },
@@ -81,6 +87,33 @@ const TAB_CONFIGS = {
       { key: 'notes', label: 'Notes', type: 'text' },
     ],
   },
+  // O-021 / CMP-B07: rebar supports (chairs / stands / bolsters). Numeric
+  // metadata fields default to null — a blank support spec is "not cataloged",
+  // never an authored 0-inch height or a free 0-cost. `kind` is an optional
+  // enum: blank stays untyped (the schema leaves other hardware unmodeled).
+  // `compatible_bar_sizes` is a `list` field (comma-separated draft -> array).
+  supports: {
+    label: 'Rebar Support',
+    types: ['rebar_support'],
+    defaultType: 'rebar_support',
+    fields: [
+      { key: 'material_name', label: 'Support Name *', type: 'text', required: true },
+      { key: 'rebar_support_kind', label: 'Kind', type: 'select', optional: true, blankLabel: '— not specified —', options: [{ value: 'chair', label: 'Chair' }, { value: 'stand', label: 'Stand' }, { value: 'bolster', label: 'Bolster' }] },
+      { key: 'rebar_support_height_inches', label: 'Height (inches)', type: 'number', default: null },
+      { key: 'rebar_support_height_min_inches', label: 'Height Min (inches, adjustable)', type: 'number', default: null },
+      { key: 'rebar_support_height_max_inches', label: 'Height Max (inches, adjustable)', type: 'number', default: null },
+      { key: 'rebar_support_footprint_length_inches', label: 'Footprint Length (in)', type: 'number', default: null },
+      { key: 'rebar_support_footprint_width_inches', label: 'Footprint Width (in)', type: 'number', default: null },
+      { key: 'rebar_support_material', label: 'Material (steel / plastic / concrete)', type: 'text' },
+      { key: 'rebar_support_pack_size', label: 'Pack Size (units per pack)', type: 'number', default: null },
+      { key: 'rebar_support_compatible_bar_sizes', label: 'Compatible Bar Sizes (comma-separated, e.g. #3, #4)', type: 'list' },
+      { key: 'rebar_support_placement_notes', label: 'Placement Notes / Constraints', type: 'text' },
+      { key: 'supplier', label: 'Supplier', type: 'text' },
+      { key: 'unit', label: 'Unit', type: 'select', options: [{ value: 'each', label: 'Each' }, { value: 'pack', label: 'Pack' }, { value: 'box', label: 'Box' }] },
+      { key: 'cost_per_unit', label: 'Cost Per Unit ($)', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
   forming: {
     label: 'Forming',
     types: ['forming_material'],
@@ -122,8 +155,9 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
   const config = TAB_CONFIGS[tabKey];
   const defaults = { material_type: config.defaultType };
   config.fields.forEach(f => {
-    if (f.type === 'number') defaults[f.key] = 0;
-    else if (f.type === 'select') defaults[f.key] = f.options?.[0]?.value || '';
+    if (f.default !== undefined) defaults[f.key] = f.default;
+    else if (f.type === 'number') defaults[f.key] = 0;
+    else if (f.type === 'select') defaults[f.key] = f.optional ? null : (f.options?.[0]?.value || '');
     else defaults[f.key] = '';
   });
 
@@ -139,12 +173,23 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
           <div key={field.key} className={field.key === 'material_name' || field.key === 'notes' ? 'col-span-2' : ''}>
             <Label className="text-xs">{field.label}</Label>
             {field.type === 'select' ? (
-              <Select value={String(form[field.key] ?? field.options?.[0]?.value ?? '')} onValueChange={v => set(field.key, v)}>
+              // `optional` selects get an explicit "not specified" sentinel —
+              // radix SelectItem cannot carry an empty-string value, and an
+              // optional enum must be able to stay untyped (blank -> null).
+              <Select
+                value={form[field.key] === null || form[field.key] === undefined ? (field.optional ? '__unspecified__' : (field.options?.[0]?.value ?? '')) : String(form[field.key])}
+                onValueChange={v => set(field.key, field.optional && v === '__unspecified__' ? null : v)}
+              >
                 <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  {field.optional && <SelectItem value="__unspecified__">{field.blankLabel || '— not specified —'}</SelectItem>}
                   {field.options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
+            ) : field.type === 'list' ? (
+              // Comma-separated draft for a stored string array; tokenized on
+              // save via listFieldValue (see handleSave button below).
+              <Input className="h-8" value={listFieldDraft(form[field.key])} onChange={e => set(field.key, e.target.value)} />
             ) : field.type === 'number' ? (
               <Input type="number" className="h-8" value={form[field.key] ?? ""} step="0.01" min="0"
                 onChange={e => set(field.key, catalogNumberInput(e.target.value))} />
@@ -195,7 +240,14 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
 
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!isValid}>Save</Button>
+        <Button size="sm" onClick={() => {
+          const out = { ...form };
+          // `list` fields hold comma-separated drafts while editing; tokenize
+          // on save (blank -> [] = "unknown"). Non-string stored values pass
+          // through verbatim (fail-closed).
+          config.fields.forEach(f => { if (f.type === 'list') out[f.key] = listFieldValue(out[f.key]); });
+          onSave(out);
+        }} disabled={!isValid}>Save</Button>
       </div>
     </div>
   );
@@ -322,7 +374,7 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                       const val = item[f.key];
                       if (!val && val !== 0) return null;
                       const label = f.label.replace(' ($)', '').replace(' *', '');
-                      const display = f.type === 'number' && f.label.includes('$') && Number.isFinite(parseFloat(val)) ? `$${parseFloat(val).toFixed(2)}` : val;
+                      const display = f.type === 'number' && f.label.includes('$') && Number.isFinite(parseFloat(val)) ? `$${parseFloat(val).toFixed(2)}` : (Array.isArray(val) ? val.join(', ') : val);
                       return <span key={f.key} className="text-xs text-slate-500">{label}: <span className="text-slate-700 font-medium">{display}</span></span>;
                     })}
                     {item.cost_per_unit > 0 && !displayFields.find(f => f.key === 'cost_per_unit') && (
@@ -528,6 +580,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
           <TabsTrigger value="wall_material" className="flex items-center gap-1"><Building2 className="w-3 h-3" /> Wall Materials</TabsTrigger>
           <TabsTrigger value="concrete">Concrete</TabsTrigger>
           <TabsTrigger value="rebar">Rebar</TabsTrigger>
+          <TabsTrigger value="supports">Supports</TabsTrigger>
           <TabsTrigger value="forming">Forming</TabsTrigger>
           {!embedded && <TabsTrigger value="equipment" className="flex items-center gap-1"><Wrench className="w-3 h-3" /> Equipment</TabsTrigger>}
           {!embedded && <TabsTrigger value="poles">Poles</TabsTrigger>}
