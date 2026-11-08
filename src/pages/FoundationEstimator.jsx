@@ -1251,6 +1251,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           const detail = recovery.status === "mismatch" && recovery.attempt?.estimate_id
             ? "Open the linked estimate to review." : recovery.message || "A saved Builder sync attempt is still unacknowledged.";
           return (
+            <>
             <div role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900 flex items-center gap-3">
               <span>{detail} Current displayed totals will be synchronized; accepted quote prices remain under the platform workflow. {dirty ? "You also have unsaved local edits." : ""}</span>
               {recovery.status === "mismatch" && recovery.attempt?.estimate_id && (
@@ -1273,6 +1274,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 }}
               />
             </div>
+            </>
           );
         })()}
 
