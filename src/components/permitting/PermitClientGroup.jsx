@@ -66,6 +66,13 @@ export default function PermitClientGroup({
   });
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  // Collapse/expand all lines — rows persist their own expanded state in
+  // localStorage, so this stamps every line's key and remounts the list.
+  const [compactNonce, setCompactNonce] = useState(0);
+  const setAllLinesExpanded = (open) => {
+    (group.lines || []).forEach(li => { try { localStorage.setItem(`permitline_expanded_${li.id}`, open ? "1" : "0"); } catch {} });
+    setCompactNonce(n => n + 1);
+  };
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
@@ -491,6 +498,12 @@ export default function PermitClientGroup({
             </div>
           )}
           {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowSetupWizard(true)}>Edit permit setup…</Button>
+            {group.lines.length > 2 && (
+              <>
+                <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
+                <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
+              </>
+            )}
             {appliedLocality && onRemoveLocality && (
 
               <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
@@ -550,7 +563,7 @@ export default function PermitClientGroup({
             <>
               <div className="divide-y">
                 {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
-                  <div key={li.id} className="flex items-stretch gap-0">
+                  <div key={`${li.id}:${compactNonce}`} className="flex items-stretch gap-0">
                     <div className="flex flex-col justify-center pl-1 pr-0.5">
                       <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
                       <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
