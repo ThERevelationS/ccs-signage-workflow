@@ -244,6 +244,16 @@ export function normalizeFoundationInventoryRow(row) {
   // the row on its authored value instead of silently picking a method.
   const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
   if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
+  // Canonical supplier-group key (CMP-A08 tail): filled on the calculation
+  // copy from the authored supplier field so every consumer — catalog-UX
+  // grouping now, per-supplier delivery grouping later — reads ONE canonical
+  // key. Materialized only when the key is absent and the supplier field
+  // resolves; an authored supplier_key wins verbatim, and an unrecorded
+  // supplier stays absent (the unassigned group — never minted).
+  if (out.supplier_key === undefined) {
+    const key = inventorySupplierKey(out.supplier);
+    if (key !== null) out.supplier_key = key;
+  }
   return out;
 }
 
@@ -252,6 +262,49 @@ export function normalizeFoundationInventoryRow(row) {
 export const normalizeFoundationInventoryRows = (rows) =>
   (Array.isArray(rows) ? rows.map(normalizeFoundationInventoryRow) : rows);
 
+// ── Supplier grouping (CMP-A08 tail / O-008t) ───────────────────────────────
+
+// Canonical supplier-group key. The catalog stores supplier/vendor names as
+// free text, so the same vendor is spelled differently across rows
+// ("Citywide", "citywide ", "Citywide Ready-Mix") — grouping on the raw
+// string fragments one supplier into several groups. The canonical key is
+// trimmed, lowercased, and separator-collapsed so case/spacing/punctuation
+// variants group together. An unrecorded or blank supplier keys to null —
+// the "unassigned" group — never guessed into another supplier's group.
+// Non-string authored values stay ungrouped the same way (never fabricated).
+export const inventorySupplierKey = (value) => {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
+  return key === "" ? null : key;
+};
+
+// Group catalog rows by their canonical supplier key for the catalog UX
+// (explicit supply grouping — CMP-A08 tail). Returns
+// [{ key, label, rows }] ordered alphabetically by key; rows with no recorded
+// supplier form the unassigned group (key null) which always sorts LAST so a
+// missing supplier is visible, never silently merged into a named vendor.
+// `label` keeps the first-seen authored spelling for display. `getSupplier`
+// reads the row's authored supplier field — `supplier` on FoundationInventory
+// rows (the default), `vendor_name || service_name` on raw
+// LaborServiceInventory rows, `rental_company` on equipment rows. Input order
+// inside each group is preserved (caller sorting is untouched).
+export const groupInventoryBySupplier = (rows, getSupplier) => {
+  const read = typeof getSupplier === "function" ? getSupplier : (row) => row?.supplier;
+  const groups = new Map();
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const authored = read(row);
+    const label = typeof authored === "string" && authored.trim() !== "" ? authored.trim() : null;
+    const key = inventorySupplierKey(label);
+    if (!groups.has(key)) groups.set(key, { key, label, rows: [] });
+    groups.get(key).rows.push(row);
+  }
+  return [...groups.values()].sort((a, b) => {
+    if (a.key === null) return 1;
+    if (b.key === null) return -1;
+    return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+  });
+};
+
 // ── Cross-entity source adaptation ──────────────────────────────────────────
 
 // Normalize a LaborServiceInventory concrete supplier into the
@@ -259,17 +312,31 @@ export const normalizeFoundationInventoryRows = (rows) =>
 // catalog price fields keep null for "not authored" — a missing catalog price
 // is unavailable, never a fabricated free price. (Moved verbatim from
 // legacyFoundationCalc; re-exported there for existing import paths.)
+//
+// CMP-A08 tail: cost_per_unit and the delivery-minimum fields now ride the
+// same nonnegative price basis as every other catalog price — an explicit 0
+// is still a legitimate free rate, but an absent/blank/malformed value keeps
+// null ("not cataloged") instead of the ported `|| 0` minted-zero (or a
+// verbatim malformed value) leaking into the normalized row. Downstream the
+// ported `selectedConcrete?.cost_per_unit || 0` read resolves a null rate to
+// the same 0 the minted field produced, so totals are unchanged; the minimum
+// fields have no ported consumer at all (schema-declared, partSync reads the
+// raw LaborServiceInventory row for its own snapshot).
 export const normalizeConcreteSupplier = (row) => ({
   id: row.id,
   material_name: row.service_name,
   material_description: row.description || "",
   material_type: "concrete_service",
   supplier: row.vendor_name || row.service_name,
-  cost_per_unit: row.default_rate || 0,
+  // Canonical supplier-group key — the explicit grouping the catalog UX
+  // renders and the delivery-side remainder can group on. Null when the row
+  // carries no recorded vendor (the unassigned group).
+  supplier_key: inventorySupplierKey(row.vendor_name || row.service_name),
+  cost_per_unit: inventoryNonnegativeNumber(row.default_rate),
   unit: "cy",
-  minimum_order_yards: row.minimum_order_yards || 0,
-  below_minimum_cost_per_cy: row.below_minimum_cost_per_cy || 0,
-  minimum_cost: row.minimum_charge || 0,
+  minimum_order_yards: inventoryNonnegativeNumber(row.minimum_order_yards),
+  below_minimum_cost_per_cy: inventoryNonnegativeNumber(row.below_minimum_cost_per_cy),
+  minimum_cost: inventoryNonnegativeNumber(row.minimum_charge),
   mix_3500_price: row.mix_3500_price ?? null,
   mix_4000_price: row.mix_4000_price ?? null,
   mix_4500_price: row.mix_4500_price ?? null,
