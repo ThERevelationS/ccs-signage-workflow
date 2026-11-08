@@ -685,6 +685,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     equipment_excavation_labor_rate: project.equipment_excavation_labor_rate,
     ai_engineering_recommendation: project.ai_engineering_recommendation,
     ai_engineering_data: project.ai_engineering_data,
+    design_basis: project.design_basis,
+    site_hazard: project.site_hazard,
     concrete_delivery_snapshot: captureConcreteDeliverySnapshot(calc.delivery),
     total_concrete_cost: calc.totals.total_concrete_cost,
     total_rebar_cost: calc.totals.total_rebar_cost,
