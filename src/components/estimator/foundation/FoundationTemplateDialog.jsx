@@ -7,7 +7,7 @@ import { createFoundationTemplateSnapshot } from "./foundationTemplateModel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
-export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply }) {
+export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply, saveDisabled = false, saveDisabledReason = "" }) {
   const [templates, setTemplates] = useState([]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -93,6 +93,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
   const save = () => {
     const sc = saveContext;
     if (saveFlightRef.current) return saveFlightRef.current;
+    if (saveDisabled) return null;
     const trimmed = name.trim();
     if (!trimmed || !sameContext(sc) || sc.mode !== "save" || draftRef.current.project !== project || draftRef.current.name !== name) return null;
     let snapshot;
@@ -169,6 +170,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
       await deleteFoundationTemplate(t.id);
       if (!sameContext(sc)) return;
       setTemplates((prev) => prev.filter((x) => x.id !== t.id));
+      setError(null);
     } catch (e) {
       if (sameContext(sc)) setError(e?.message || "Template could not be deleted.");
     }
@@ -200,13 +202,18 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                 className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] focus:outline-none focus:border-red-400"
               />
             </label>
+            {saveDisabled ? (
+              <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                {saveDisabledReason || "Saving a template is not available right now."}
+              </p>
+            ) : null}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={onClose} className="h-[30px] px-3 border border-gray-300 rounded-sm text-[12px]">
                 Cancel
               </button>
               <button type="button"
                 onClick={save}
-                disabled={busy}
+                disabled={busy || saveDisabled}
                 className="h-[30px] px-4 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 disabled:opacity-60"
               >
                 Save Template
