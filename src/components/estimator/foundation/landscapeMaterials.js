@@ -19,24 +19,15 @@ export const GRID_ROWS = 16;
 
 const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 
-// Price basis: finite, nonnegative — an explicit 0 is a legitimate free
-// material. Mirrors wallPriceNumber/equipmentPriceNumber.
-const landscapePriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
-
-// Cell size multiplies every painted cell's area — it must be finite positive.
-// A missing size is not a guessable 12": it is unavailable, so the recorded
-// landscape total is held rather than silently repriced on a guessed basis.
-const landscapeCellSizeNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-};
+// Inventory normalization boundary (CMP-A08): landscapePriceNumber is the
+// canonical catalog price basis (finite, nonnegative — an explicit 0 is a
+// legitimate free material); landscapeCellSizeNumber is the positive
+// dimension basis — a missing cell size is not a guessable 12", it is
+// unavailable so the recorded total is held rather than repriced on a guess.
+import {
+  inventoryNonnegativeNumber as landscapePriceNumber,
+  inventoryPositiveNumber as landscapeCellSizeNumber,
+} from "@/components/masterInventory/inventoryNormalization";
 
 // Availability issues for the recorded site-materials grid. Only values the
 // summary math actually consumes are flagged: with no priced cells the grid
