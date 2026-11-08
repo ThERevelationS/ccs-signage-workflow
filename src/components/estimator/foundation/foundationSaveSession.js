@@ -25,11 +25,17 @@ export function createFoundationSaveSession() {
       try {
         savedProject = await saveSource();
       } catch (error) {
-        return { ...base, status: isCurrent() ? classify(error) : 'superseded', error };
+        // conflictDetected marks a REAL classified concurrent-edit conflict
+        // (CAS moved under the save) — distinct from the local 'conflict'
+        // outcomes the page synthesizes for its draft-pending/reload gates, so
+        // the merge-conflict dialog opens only for genuine source divergence.
+        const cls = classify(error);
+        return { ...base, status: isCurrent() ? cls : 'superseded', error, ...(cls === 'conflict' ? { conflictDetected: true } : {}) };
       }
       if (!savedProject || savedProject.id !== sourceId || typeof savedProject.updated_date !== 'string' || !savedProject.updated_date) {
         const error = new Error('Source save returned an unverified record.');
-        return { ...base, status: isCurrent() ? classify(error) : 'superseded', error };
+        const cls = classify(error);
+        return { ...base, status: isCurrent() ? cls : 'superseded', error, ...(cls === 'conflict' ? { conflictDetected: true } : {}) };
       }
       base.sourceSaved = true;
       base.sourceVersion = savedProject.updated_date;
