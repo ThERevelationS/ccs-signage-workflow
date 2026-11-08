@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { inventoryNumberInput } from "@/components/masterInventory/inventoryNormalization";
 
 const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
 const num2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : "Not saved");
@@ -51,10 +52,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   // Blank clears the override (null); a malformed draft is preserved verbatim so
   // the item validation reports it instead of a NaN leaking into saved costs.
-  const nullSet = (key) => (e) => set({
-    [key]: e.target.value === "" ? null
-      : Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : e.target.value,
-  });
+  // Delegates to the boundary's catalog draft (CMP-A08) — identical contract,
+  // plus whitespace-only drafts clear to null instead of minting Number(" ")=0.
+  const nullSet = (key) => (e) => set({ [key]: inventoryNumberInput(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
   const unavailable = pricing?.available === false;
   const concreteRow = (catalog.concrete || []).find((c) => c.id === item.selected_concrete_id);
