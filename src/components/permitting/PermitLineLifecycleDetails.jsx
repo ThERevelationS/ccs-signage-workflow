@@ -160,12 +160,38 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
     lineItem?.jurisdiction_fee_amount,
     lineItem?.jurisdiction_fee_status,
     lineItem?.jurisdiction_fee_paid_date,
-  ].some((value) => value !== null && value !== undefined && value !== ""), [lineItem]);
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(hasAdditionalDetails || handoffReadiness.hasIssues);
+    lineItem?.application_reference_number,
+    lineItem?.permit_number,
+    lineItem?.permit_document_url,
+    lineItem?.application_document_url,
+    lineItem?.site_photo_url,
+    lineItem?.note_attachment_url,
+    lineItem?.submission_method,
+    lineItem?.confirmation_number,
+    lineItem?.urgent,
+    lineItem?.application_revision,
+    lineItem?.denial_date,
+    lineItem?.denial_reason,
+    lineItem?.appeal_deadline,
+    lineItem?.fee_payment_link,
+    lineItem?.expected_response_date,
+    lineItem?.variance_required,
+    lineItem?.variance_status,
+    lineItem?.variance_hearing_date,
+    lineItem?.correction_required,
+    lineItem?.correction_deadline,
+    lineItem?.correction_resolved_date,
+    lineItem?.office_contacted_date,
+    lineItem?.office_responded_date,
+    lineItem?.inspector_contact,
+    lineItem?.approval_date,
+    lineItem?.expiration_date,
+  ].some((value) => value !== null && value !== undefined && value !== "" && value !== false), [lineItem]);
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(handoffReadiness.hasIssues);
 
   useEffect(() => {
-    if (hasAdditionalDetails || handoffReadiness.hasIssues) setShowAdditionalDetails(true);
-  }, [hasAdditionalDetails, handoffReadiness.hasIssues]);
+    if (handoffReadiness.hasIssues) setShowAdditionalDetails(true);
+  }, [handoffReadiness.hasIssues]);
 
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
@@ -239,7 +265,45 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <CommitTextField
+          label="Next action"
+          value={lineItem.next_action}
+          placeholder="What happens next? (e.g. Call the office Friday)"
+          disabled={!isRegistered}
+          onCommit={(value) => update("next_action", value)}
+        />
+        <DateField
+          label="Check back on"
+          value={lineItem.follow_up_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("follow_up_date", value)}
+        />
+        <CommitTextField
+          label="Call / chase notes"
+          value={lineItem.notes}
+          placeholder="e.g. 10/22 — called office, resubmit Friday"
+          disabled={!isRegistered}
+          onCommit={(value) => update("notes", value)}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowAdditionalDetails((open) => !open)}
+        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
+        aria-expanded={showAdditionalDetails}
+      >
+        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {showAdditionalDetails ? "Hide application fields, corrections & fees" : "Show all application fields, corrections & fees"}
+        {hasAdditionalDetails && !showAdditionalDetails && (
+          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
+        )}
+      </button>
+
+      {showAdditionalDetails && (
+        <>
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <CommitTextField
           label="Application / Reference #"
           value={lineItem.application_reference_number}
@@ -281,13 +345,6 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
           placeholder="Photo/scan for the notes"
           disabled={!isRegistered}
           onCommit={(value) => update("note_attachment_url", value)}
-        />
-        <CommitTextField
-          label="Next action"
-          value={lineItem.next_action}
-          placeholder="What happens next? (e.g. Call the office Friday)"
-          disabled={!isRegistered}
-          onCommit={(value) => update("next_action", value)}
         />
         <CommitTextField
           label="How it was submitted"
@@ -421,19 +478,6 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
             }}
           >Copy follow-up email</button>
         )}
-        <DateField
-          label="Check back on"
-          value={lineItem.follow_up_date}
-          disabled={!isRegistered}
-          onCommit={(value) => update("follow_up_date", value)}
-        />
-        <CommitTextField
-          label="Call / chase notes"
-          value={lineItem.notes}
-          placeholder="e.g. 10/22 — called office, resubmit Friday"
-          disabled={!isRegistered}
-          onCommit={(value) => update("notes", value)}
-        />
         <CommitTextField
           label="Inspector contact"
           value={lineItem.inspector_contact}
@@ -455,21 +499,6 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAdditionalDetails((open) => !open)}
-        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
-        aria-expanded={showAdditionalDetails}
-      >
-        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        {showAdditionalDetails ? "Hide additional details" : "Show corrections, inspections & fees"}
-        {hasAdditionalDetails && !showAdditionalDetails && (
-          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
-        )}
-      </button>
-
-      {showAdditionalDetails && (
-        <>
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fixes the office asked for</span>
