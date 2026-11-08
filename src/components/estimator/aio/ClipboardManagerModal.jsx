@@ -73,9 +73,20 @@ export default function ClipboardManagerModal({ open, estimateId, expectedEstima
   };
 
   const remove = async (item) => {
+    if (!item?.id || busyId) return;
     if (!window.confirm(`Remove "${item.item_name}" from the clipboard?`)) return;
-    await removeClipboardItem(item.id);
-    setItems((current) => current.filter((row) => row.id !== item.id));
+    setBusyId(item.id);
+    setError("");
+    try {
+      // The row is only filtered out after a confirmed removal — a transient
+      // failure surfaces here instead of stale-removing a live clipboard item.
+      await removeClipboardItem(item.id);
+      setItems((current) => current.filter((row) => row.id !== item.id));
+    } catch (err) {
+      setError(err?.message || "Clipboard item could not be removed.");
+    } finally {
+      setBusyId("");
+    }
   };
 
   return (
