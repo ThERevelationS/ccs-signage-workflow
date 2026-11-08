@@ -1,4 +1,5 @@
 import { normalizeFoundationAssembly, cloneFoundationComponents } from "./foundationAssemblyModel.js";
+import { ensurePreliminaryNotice } from "./foundationPreliminaryNotice.js";
 
 // Shared allowlist: the page's template-apply fields plus selected_concrete_id
 // and notes. Identity, receipt, and creation keys are never carried.
@@ -29,6 +30,9 @@ import { normalizeFoundationAssembly, cloneFoundationComponents } from "./founda
 //     mismatch and shows its stale banner. The key is kept (it is the true
 //     reference to the analyzed design) and the record gains explicit
 //     provenance fields marking the note as template-carried.
+//   * notes is client-estimate-adjacent free text; template-authored notes
+//     always lead with the canonical O-119 preliminary-engineering sentence
+//     (see stampTemplateNotesNotice) on BOTH snapshot and apply.
 //   * pricing_engine is excluded: it is external per-project engine context
 //     (customer-tier config opt-in), never page-authored, and must not
 //     transplant one project's engine settings onto another. Totals,
@@ -124,6 +128,23 @@ const stampTemplateAppliedAiData = (v, { appliedAt } = {}) => {
   return out;
 };
 
+// notes: a template-authored note leads with the canonical O-119 preliminary
+// sentence on BOTH snapshot (the stored template carries it at rest — the
+// source project is itself a preliminary concept, so the sentence is true the
+// moment it is written, and the dialog row preview stays honest) and apply
+// (covers templates stored before this change or authored outside the
+// snapshot path). Idempotent — ensurePreliminaryNotice returns an
+// already-stamped note unchanged, so save -> apply -> save chains never
+// double-stamp. null travels as null (an explicit template clear stays a
+// clear); absent stays absent so apply never injects notes onto a target that
+// keeps its own. Non-string values fail closed, same as customer_pricing.
+const stampTemplateNotesNotice = (v) => {
+  if (v === undefined) return v;
+  if (v === null) return null;
+  if (typeof v !== "string") throw new Error("Foundation template notes must be a string.");
+  return ensurePreliminaryNotice(v);
+};
+
 // Snapshot the allowed design fields of a project for template storage.
 // Validates supplied assembly arrays; preserves values verbatim otherwise.
 export function createFoundationTemplateSnapshot(project, { createId } = {}) {
@@ -134,6 +155,9 @@ export function createFoundationTemplateSnapshot(project, { createId } = {}) {
   }
   if (out.customer_pricing !== undefined) {
     out.customer_pricing = sanitizeTemplateCustomerPricing(out.customer_pricing);
+  }
+  if (out.notes !== undefined) {
+    out.notes = stampTemplateNotesNotice(out.notes);
   }
   const supplied = {};
   let hasAssembly = false;
@@ -168,6 +192,9 @@ export function prepareFoundationTemplatePatch(data, { createId, appliedAt } = {
   }
   if (provided.ai_engineering_data !== undefined) {
     provided.ai_engineering_data = stampTemplateAppliedAiData(provided.ai_engineering_data, { appliedAt });
+  }
+  if (provided.notes !== undefined) {
+    provided.notes = stampTemplateNotesNotice(provided.notes);
   }
   const arrays = {};
   for (const k of ASSEMBLY_ARRAYS) if (provided[k] !== undefined) arrays[k] = provided[k];
