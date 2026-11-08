@@ -67,24 +67,45 @@ export function sourceProjectTotal(line, record) {
   if (line?.module_key === "foundation") {
     const direct = num(record.grand_total, NaN);
     if (Number.isFinite(direct)) return direct;
-    const known = [
-      "total_concrete_cost",
-      "total_rebar_cost",
-      "total_excavation_cost",
-      "total_forming_materials_cost",
-      "total_labor_cost",
-      "total_wall_cost",
-      "total_pole_cost",
-      "total_pole_painting_cost",
-      "total_equipment_cost",
-      "total_wall_cap_cost",
-      "total_signage_cabinet_cost",
-      "total_landscape_cost",
-    ];
-    return known.reduce((sum, key) => sum + num(record[key]), 0);
+    return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
   }
 
   return num(record.total_cost, num(line?.total_snapshot));
+}
+
+// The 12 persisted split-total cost fields — the authoritative cost partition
+// on a saved FoundationProject record. total_brick_cost and total_fill_cost
+// are deliberately absent: they are subsets of total_wall_cost, so counting
+// them would double-count wall cost. grand_total is never persisted; it is
+// recomputed from these fields by the Builder. Shared by sourceProjectTotal's
+// foundation branch and foundationRecordSavedTotal (CMP-A10).
+export const FOUNDATION_RECORD_TOTAL_FIELDS = [
+  "total_concrete_cost",
+  "total_rebar_cost",
+  "total_excavation_cost",
+  "total_forming_materials_cost",
+  "total_labor_cost",
+  "total_wall_cost",
+  "total_pole_cost",
+  "total_pole_painting_cost",
+  "total_equipment_cost",
+  "total_wall_cap_cost",
+  "total_signage_cabinet_cost",
+  "total_landscape_cost",
+];
+
+// The acknowledged section total persisted on a FoundationProject record —
+// the same split-field sum the linked estimate stores as live_total_snapshot
+// at each Builder save (manual add-on Product parts live only on the estimate
+// side and are intentionally not represented here). Null when the record
+// carries no persisted totals at all (never priced/saved with totals); absent
+// fields count as $0, matching sourceProjectTotal's foundation branch.
+export function foundationRecordSavedTotal(record) {
+  if (!record || typeof record !== "object") return null;
+  const direct = num(record.grand_total, NaN);
+  if (Number.isFinite(direct)) return direct;
+  if (!FOUNDATION_RECORD_TOTAL_FIELDS.some((key) => Number.isFinite(Number(record[key])))) return null;
+  return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
 }
 
 async function findBuilderProduct(line, estimateId) {
