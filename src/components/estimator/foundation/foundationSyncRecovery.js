@@ -112,3 +112,60 @@ export async function resolveFoundationSyncReceiptForSave({ project, estimateId,
   }
   return { ok: true, clearStaleReceipt: true };
 }
+
+// ---------------------------------------------------------------------------
+// Partial Builder-sync retry classification (CMP-A04 tail).
+//
+// A save's estimate-side leg can stop part-way while the source project write
+// already landed. Two durable markers describe what remains un-synced:
+//   * project.builder_sync_attempt — the receipt naming the estimate context
+//     being synchronized (written inside the CAS source save);
+//   * line.price_acceptance_pending — the estimate-line recovery marker whose
+//     stored plan (part acceptance / patches / deletes / group creates) is the
+//     exact un-applied remainder of the mutation.
+// The retry surface replays ONLY the un-synced portion — recordBuilderSave's
+// estimate-side chain — never the source write. Modes:
+//   resume_pending         — a durable line marker exists; the stored plan is
+//                            replayed verbatim (verify-before-write per step)
+//   resync_unacknowledged  — receipt pending with no line marker: the attempt
+//                            died before the marker write, possibly after
+//                            detect-phase part writes; the sync converges on
+//                            part_key identity (existing rows reused, stale
+//                            keys deactivated/pending-removal — never duped)
+//   none_needed            — acknowledged, or no receipt and no marker
+//   blocked_mismatch       — receipt names another estimate context
+//   blocked_unsupported    — unrecognized receipt shape (left untouched)
+//   blocked_no_estimate    — standalone project; nothing to synchronize to
+// ---------------------------------------------------------------------------
+
+const pendingLineMarker = (line) => {
+  const pending = line?.price_acceptance_pending;
+  return pending && typeof pending === "object" && !Array.isArray(pending) && String(pending.key || "").trim()
+    ? pending
+    : null;
+};
+
+export function classifyFoundationSyncRetry({ project, estimateId, estimate } = {}) {
+  const state = foundationSyncRecoveryState({ project, estimateId, estimate });
+  const line = state.line || null;
+  const pending = pendingLineMarker(line);
+  const attempt = state.attempt ?? null;
+  const base = { attempt, line, pendingKey: pending ? String(pending.key) : null, stateStatus: state.status };
+
+  if (state.status === "unsupported") {
+    return { ...base, mode: "blocked_unsupported", retryable: false, reason: state.message || "An unrecognised Builder sync receipt blocks retrying; review it first." };
+  }
+  if (state.status === "mismatch") {
+    return { ...base, mode: "blocked_mismatch", retryable: false, reason: state.message || "This project's sync receipt belongs to a different estimate context." };
+  }
+  if (!estimateId) {
+    return { ...base, mode: "blocked_no_estimate", retryable: false, reason: "This project is not linked to an estimate; there is no Builder sync to retry." };
+  }
+  if (pending) {
+    return { ...base, mode: "resume_pending", retryable: true, reason: "A saved Builder mutation is still in progress; retry resumes its recorded remainder." };
+  }
+  if (state.status === "pending") {
+    return { ...base, mode: "resync_unacknowledged", retryable: true, reason: state.message || "A saved Builder sync attempt is still unacknowledged." };
+  }
+  return { ...base, mode: "none_needed", retryable: false, reason: "" };
+}
