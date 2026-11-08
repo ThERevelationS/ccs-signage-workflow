@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, Edit, Plus, Wrench } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
+import { inventoryNumberInput } from "@/components/masterInventory/inventoryNormalization";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const ChannelLetterInstallInventoryEntity = staffEntities.ChannelLetterInstallInventory;
@@ -475,7 +476,7 @@ function FoundationFields({ form, set }) {
             </SelectContent>
           </Select>
         </div>
-        <div><Label className="text-xs">Cost / Unit ($)</Label><Input type="number" className="h-8" value={form.cost_per_unit} onChange={(e) => set("cost_per_unit", parseFloat(e.target.value) || 0)} /></div>
+        <div><Label className="text-xs">Cost / Unit ($)</Label><Input type="number" className="h-8" value={form.cost_per_unit ?? ""} onChange={(e) => set("cost_per_unit", inventoryNumberInput(e.target.value))} /></div>
       </div>
       <div>
         <Label className="text-xs">Description</Label>
