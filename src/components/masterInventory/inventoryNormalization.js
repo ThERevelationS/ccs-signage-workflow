@@ -28,9 +28,9 @@
 //                                reports it instead of persisting a laundered
 //                                number.
 //
-// Authored entity rows are never mutated: field-name/unit canonicalization
-// returns a calculation copy with canonical fields filled in alongside the
-// authored ones (see normalizeFoundationInventoryRow).
+// Authored entity rows are never mutated: field-name/unit/subtype
+// canonicalization returns a calculation copy with canonical fields filled in
+// alongside the authored ones (see normalizeFoundationInventoryRow).
 
 // ── Scalar numeric kernels ──────────────────────────────────────────────────
 
@@ -142,6 +142,70 @@ export const FOUNDATION_FIELD_ALIASES = [
   ["wall_unit_height_inches", "brick_height_inches"],
 ];
 
+// Canonical wall-material subtype enum (FoundationInventory
+// `wall_material_subtype`, schema-order): brick / cinderblock (CMU) / stone are
+// UNIT MASONRY — the quantity method is unit count from cataloged unit
+// dimensions. `concrete` is POURED concrete — a different quantity basis
+// (placed volume in cubic yards on the wall-face footprint x cataloged
+// thickness) with no units, courses, or mortar joints. CMP-D03 / O-046.
+export const WALL_MATERIAL_SUBTYPES = ["brick", "cinderblock", "stone", "concrete"];
+export const WALL_MATERIAL_UNIT_MASONRY_SUBTYPES = ["brick", "cinderblock", "stone"];
+
+// Recorded spellings that canonicalize onto the enum. Before this map existed
+// the only subtype read was the strict `=== 'concrete'` test, so a row authored
+// "poured_concrete" or "cmu" silently priced as mortared unit masonry — poured
+// concrete billed for bricks and mortar bags (the laundering CMP-D03 removes).
+// Keys are normalized: trimmed, lowercased, separators collapsed to "_".
+export const FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES = {
+  brick: "brick",
+  clay_brick: "brick",
+  face_brick: "brick",
+  veneer_brick: "brick",
+  cinderblock: "cinderblock",
+  cinder_block: "cinderblock",
+  cmu: "cinderblock",
+  concrete_block: "cinderblock",
+  cement_block: "cinderblock",
+  concrete_masonry_unit: "cinderblock",
+  masonry_block: "cinderblock",
+  block: "cinderblock",
+  stone: "stone",
+  natural_stone: "stone",
+  cut_stone: "stone",
+  stone_veneer: "stone",
+  veneer_stone: "stone",
+  limestone: "stone",
+  sandstone: "stone",
+  concrete: "concrete",
+  poured_concrete: "concrete",
+  poured: "concrete",
+  poured_in_place: "concrete",
+  cast_in_place: "concrete",
+  cast_in_place_concrete: "concrete",
+  monolithic_concrete: "concrete",
+};
+
+const wallMaterialSubtypeKey = (value) => (typeof value === "string"
+  ? value.trim().toLowerCase().replace(/[\s\-_]+/g, "_") : null);
+
+// Whether a subtype value carries an authored classification at all (absent,
+// null, and blank-string all mean "not recorded" — the calculator treats them
+// as the legacy unit-masonry default, never as an error).
+export const wallMaterialSubtypeRecorded = (value) => value !== undefined
+  && value !== null
+  && (typeof value !== "string" || value.trim() !== "");
+
+// Classify a recorded wall_material_subtype onto the canonical enum: returns
+// the enum value, or null when the value is absent/blank (not recorded) or
+// recorded but unrecognized — an unrecognized subtype returns null so the
+// consumption check can hold the row instead of silently choosing a quantity
+// method for it (never laundered to masonry, never guessed concrete).
+export const canonicalWallMaterialSubtype = (value) => {
+  if (!wallMaterialSubtypeRecorded(value)) return null;
+  const key = wallMaterialSubtypeKey(value);
+  return key ? (FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES[key] ?? null) : null;
+};
+
 // Unit canonicalization — inches→feet: the schema's canonical pole stock
 // length is feet-denominated (`pole_stock_length_ft`, see foundationFieldSchema
 // and the ported calculator's reads). A legacy row authored under an
@@ -172,6 +236,14 @@ export function normalizeFoundationInventoryRow(row) {
     const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);
     if (stockLengthInches !== null) out.pole_stock_length_ft = stockLengthInches / INCHES_PER_FOOT;
   }
+  // Wall-material subtype canonicalization (CMP-D03): a recorded subtype the
+  // alias table resolves is rewritten to its canonical enum value on the
+  // calculation copy ("cmu" → "cinderblock", "poured concrete" → "concrete").
+  // Absent/blank stays absent (the calculator's legacy unit-masonry default);
+  // recorded-but-unrecognized passes through VERBATIM so the wall check holds
+  // the row on its authored value instead of silently picking a method.
+  const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
+  if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
   return out;
 }
 
