@@ -399,12 +399,16 @@ function LayoutContent({ children }) {
         if (dropEl.__ccsFrozen) continue;
         dropEl.__ccsFrozen = true;
         const rect = dropEl.getBoundingClientRect();
+        // Measure EVERYTHING first — setting position:absolute on one element
+        // reflows its siblings, so measuring lazily corrupts later offsets.
+        const els = [...dropEl.querySelectorAll("[data-rfd-draggable-id]")];
+        const rects = els.map((el) => el.getBoundingClientRect());
         dropEl.__ccsSavedStyle = { position: dropEl.style.position, height: dropEl.style.height };
         dropEl.classList.add(FROZEN);
         dropEl.style.position = "relative";
         dropEl.style.height = `${rect.height}px`;
-        for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
-          const r = el.getBoundingClientRect();
+        els.forEach((el, i) => {
+          const r = rects[i];
           el.__ccsSavedStyle = {
             position: el.style.position, left: el.style.left,
             top: el.style.top, margin: el.style.margin, zIndex: el.style.zIndex,
@@ -414,7 +418,7 @@ function LayoutContent({ children }) {
           el.style.top = `${r.top - rect.top}px`;
           el.style.margin = "0";
           el.style.zIndex = "1";
-        }
+        });
       }
     };
     const unfreezeAll = () => {
