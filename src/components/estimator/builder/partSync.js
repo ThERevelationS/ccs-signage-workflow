@@ -2360,7 +2360,10 @@ function extractFoundation(project, catalogs) {
         entity: "FoundationInventory",
         inventoryId: wall.materialId,
         quantity: wall.calculatedCosts?.totalBricks || 1,
-        unit: "unit",
+        // CMP-D03: poured-concrete snapshots carry materialQuantityUnit "cy"
+        // — the part unit mirrors the recorded basis instead of always
+        // claiming a unit count.
+        unit: wall.calculatedCosts?.materialQuantityUnit === "cy" ? "cy" : "unit",
         extendedCost: wall.calculatedCosts?.materialCost,
         builderData: wall,
         calculation: wall.calculatedCosts || {},
@@ -2376,7 +2379,7 @@ function extractFoundation(project, catalogs) {
         entity: "FoundationInventory",
         inventoryId: wall.internalMaterialId,
         quantity: wall.calculatedCosts?.internalTotalBricks || 1,
-        unit: "unit",
+        unit: wall.calculatedCosts?.internalMaterialQuantityUnit === "cy" ? "cy" : "unit",
         extendedCost: wall.calculatedCosts?.internalMaterialCost,
         builderData: wall,
         calculation: wall.calculatedCosts || {},
