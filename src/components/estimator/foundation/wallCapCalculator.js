@@ -1,11 +1,8 @@
 // Wall cap pricing - ported from SignEstimate Pro (WallCapsTab.jsx).
 // A cut cap piece is always charged at FULL stock price; cuts do not reduce price.
-export const wallCapInputNumber = value => {
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  if (typeof value !== "string" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())) return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-};
+// wallCapInputNumber is the boundary's finite signed basis (CMP-A08).
+import { inventoryFiniteNumber as wallCapInputNumber } from "@/components/masterInventory/inventoryNormalization";
+export { wallCapInputNumber };
 export function wallCapCutLengthValue(cap) {
   if (!cap || typeof cap !== "object" || Array.isArray(cap)) return undefined;
   // Do not replace an explicitly cleared current cut with an old legacy value.
