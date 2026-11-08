@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +31,7 @@ import Foundation3DPreview from "@/components/estimator/foundation/Foundation3DP
 import FoundationTemplateDialog from "@/components/estimator/foundation/FoundationTemplateDialog";
 import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
+import { createSceneHistory, sceneLayoutAnchor } from "@/components/estimator/foundation/foundationSceneHistory";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
 import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPricingPanel";
@@ -127,6 +128,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const saveAttemptRef = useRef(null);
   const exitGenerationRef = useRef(-1);
   const loadedOwnerRef = useRef(null);
+  // O-040 scene history — stroke-level undo for canvas geometry edits. One
+  // store per mounted editor; the canvas records every committed gesture
+  // into it (foundationSceneHistory.js — see MOUNT-ANCHORS.md).
+  const sceneHistoryRef = useRef(null);
+  if (!sceneHistoryRef.current) sceneHistoryRef.current = createSceneHistory();
+  const sceneHistory = sceneHistoryRef.current;
+  // Re-render on history mutations so the undo UI state stays live.
+  useSyncExternalStore(sceneHistory.subscribe, () => sceneHistory.stateVersion);
   const [saveError, setSaveError] = useState("");
   const [reloadRevision, setReloadRevision] = useState(0);
   const [linkedEstimate, setLinkedEstimate] = useState(null);
@@ -137,6 +146,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     contextKeyRef.current = contextKey;
     editRevisionRef.current += 1;
     contextGenerationRef.current += 1;
+    // O-040: project/source switch — reset the scene undo chain so recorded
+    // gestures from the previous context can never apply to this one.
+    sceneHistory.clear(sceneLayoutAnchor(project?.items || []));
     const previousAcknowledgment = acknowledgedVersionRef.current;
     acknowledgedVersionRef.current = project?.id ? {
       sourceId: project.id, updated_date: project.updated_date, ownerId,
@@ -555,6 +567,22 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items: prev.items.map((it, i) => (i === index ? { ...it, ...changes } : it)),
     }));
 
+  // O-040 scene undo/redo — revert canvas geometry edits through the same
+  // commit channel the canvas already uses (patchItem → commit: CAS guards,
+  // normalize, draft backup all stay in force). The store returns
+  // patch-shaped payloads; a refused commit reports 'rejected' and the
+  // stacks stay untouched.
+  const sceneUndo = () =>
+    sceneHistory.undo(
+      sceneLayoutAnchor(projectRef.current?.items || []),
+      (rev) => patchItem(rev.target.index, rev.patch) !== false,
+    );
+  const sceneRedo = () =>
+    sceneHistory.redo(
+      sceneLayoutAnchor(projectRef.current?.items || []),
+      (rev) => patchItem(rev.target.index, rev.patch) !== false,
+    );
+
   const removeItem = (index) => {
     const label = project.items?.[index]?.description || `item ${index + 1}`;
     if (!window.confirm(`Delete "${label}"? Dependent placements are retained for review.`)) return;
@@ -784,6 +812,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     setProject(nextState);
     setDirty(true);
     persistBrowserDraft(nextState);
+  };
+
+  // O-040: route undo/redo through the scene store first — a committed
+  // canvas gesture reverts with stroke-level fidelity ('applied').
+  // Anything else falls back to the whole-project snapshot history.
+  const handleUndo = () => {
+    if (sceneUndo()?.status === "applied") return;
+    undo();
+  };
+  const handleRedo = () => {
+    if (sceneRedo()?.status === "applied") return;
+    redo();
   };
 
   const payload = () => ({
@@ -1356,10 +1396,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           autoSave={autoSave}
           pricingUnavailable={pricingBlocked}
           onToggleAutoSave={() => { if (!draftSessionRef.current.pending) setAutoSave((v) => !v); }}
-          canUndo={history.past.length > 0}
-          canRedo={history.future.length > 0}
-          onUndo={undo}
-          onRedo={redo}
+          canUndo={history.past.length > 0 || sceneHistory.getState().canUndo}
+          canRedo={history.future.length > 0 || sceneHistory.getState().canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
           onSave={handleSave}
           onSaveAndExit={handleSaveAndExit}
           onSaveAsCopy={handleSaveAsCopy}
@@ -1488,6 +1528,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   items={project.items || []}
                   poles={project.poles || []}
                   onMoveItem={patchItem}
+                  sceneHistory={sceneHistory}
                 />
               </TabsContent>
 
