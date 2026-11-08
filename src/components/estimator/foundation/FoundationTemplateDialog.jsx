@@ -4,6 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2 } from "lucide-react";
 import { deleteFoundationTemplate, saveFoundationTemplate } from "./foundationTemplateService";
 import { createFoundationTemplateSnapshot } from "./foundationTemplateModel";
+import {
+  FOUNDATION_ASSEMBLY_PRESETS,
+  describeFoundationAssemblyPreset,
+  foundationAssemblyPresetTemplateData,
+} from "./foundationAssemblyPresets";
 import { PRELIMINARY_NOTICE_TEXT } from "./foundationPreliminaryNotice";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -163,6 +168,28 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
     }
   };
 
+  // O-094: start-from-assembly presets ride the same onApply(data) lane as a
+  // saved template — the page's prepareFoundationTemplatePatch gate validates
+  // the preset record, mints fresh component ids, and remaps references.
+  const applyPreset = (preset) => {
+    const sc = saveContext;
+    if (!sameContext(sc)) return;
+    let ok = false;
+    try {
+      ok = onApply(foundationAssemblyPresetTemplateData(preset)) === true;
+    } catch (e) {
+      if (sameContext(sc)) setError(e?.message || "Assembly preset could not be applied.");
+      return;
+    }
+    if (!sameContext(sc)) return;
+    if (ok) {
+      setError(null);
+      onClose();
+    } else {
+      setError("Preset was not applied; the current project was left unchanged.");
+    }
+  };
+
   const remove = async (t) => {
     const sc = saveContext;
     if (!sameContext(sc)) return;
@@ -224,50 +251,83 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
               </button>
             </div>
           </div>
-        ) : loading ? (
-          <p className="text-[12px] text-gray-500 py-4">Loading…</p>
-        ) : loadFailed ? (
-          <div className="py-4 space-y-2">
-            <p className="text-[12px] text-gray-500">Templates could not be loaded.</p>
-            <button type="button"
-              onClick={() => { const c = saveContext; if (sameContext(c)) loadRows(generationRef.current); }}
-              className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
-            >
-              Retry
-            </button>
-          </div>
-        ) : templates.length === 0 ? (
-          <p className="text-[12px] text-gray-500 py-4">No foundation templates saved yet.</p>
         ) : (
-          <div className="divide-y divide-gray-200 max-h-[320px] overflow-y-auto">
-            {templates.map((t) => (
-              <div key={t.id} className="flex items-center gap-2 py-2">
-                <div className="flex-1">
-                  <div className="text-[12px] font-semibold text-gray-800">{t.template_name}</div>
-                  <div className="text-[11px] text-gray-500">
-                    {(t.project_data?.items || []).length} foundations
-                  </div>
-                  {typeof t.project_data?.ai_engineering_recommendation === "string" &&
-                  t.project_data.ai_engineering_recommendation.trim() ? (
-                    <div className="text-[10px] text-violet-600">
-                      Includes an AI review note — stale on this project
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Start from an assembly preset</p>
+              <div className="divide-y divide-gray-100 border border-gray-200 rounded-sm">
+                {FOUNDATION_ASSEMBLY_PRESETS.map((p) => {
+                  const d = describeFoundationAssemblyPreset(p);
+                  return (
+                    <div key={d.preset_key} className="flex items-center gap-2 px-2 py-2">
+                      <div className="flex-1">
+                        <div className="text-[12px] font-semibold text-gray-800">{d.name}</div>
+                        <div className="text-[11px] text-gray-500">{d.summary}</div>
+                        <div className="text-[10px] text-gray-400">{d.counts_label}</div>
+                      </div>
+                      <button type="button"
+                        onClick={() => applyPreset(p)}
+                        className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
+                      >
+                        Apply
+                      </button>
                     </div>
-                  ) : null}
-                  {typeof t.project_data?.notes === "string" && t.project_data.notes.trim() ? (
-                    <div className="text-[10px] text-gray-500">Includes project notes</div>
-                  ) : null}
-                </div>
-                <button type="button"
-                  onClick={() => apply(t)}
-                  className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
-                >
-                  Apply
-                </button>
-                <button type="button" onClick={() => remove(t)} className="text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" aria-hidden="true" />
-                </button>
+                  );
+                })}
               </div>
-            ))}
+              <p className="text-[10px] text-gray-400 mt-1">
+                Applying a preset replaces the current foundation assembly sections.
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Saved templates</p>
+              {loading ? (
+                <p className="text-[12px] text-gray-500 py-4">Loading…</p>
+              ) : loadFailed ? (
+                <div className="py-4 space-y-2">
+                  <p className="text-[12px] text-gray-500">Templates could not be loaded.</p>
+                  <button type="button"
+                    onClick={() => { const c = saveContext; if (sameContext(c)) loadRows(generationRef.current); }}
+                    className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : templates.length === 0 ? (
+                <p className="text-[12px] text-gray-500 py-4">No foundation templates saved yet.</p>
+              ) : (
+                <div className="divide-y divide-gray-200 max-h-[320px] overflow-y-auto border border-gray-200 rounded-sm">
+                  {templates.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 px-2 py-2">
+                      <div className="flex-1">
+                        <div className="text-[12px] font-semibold text-gray-800">{t.template_name}</div>
+                        <div className="text-[11px] text-gray-500">
+                          {(t.project_data?.items || []).length} foundations
+                        </div>
+                        {typeof t.project_data?.ai_engineering_recommendation === "string" &&
+                        t.project_data.ai_engineering_recommendation.trim() ? (
+                          <div className="text-[10px] text-violet-600">
+                            Includes an AI review note — stale on this project
+                          </div>
+                        ) : null}
+                        {typeof t.project_data?.notes === "string" && t.project_data.notes.trim() ? (
+                          <div className="text-[10px] text-gray-500">Includes project notes</div>
+                        ) : null}
+                      </div>
+                      <button type="button"
+                        onClick={() => apply(t)}
+                        className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
+                      >
+                        Apply
+                      </button>
+                      <button type="button" onClick={() => remove(t)} className="text-gray-400 hover:text-red-600">
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>
