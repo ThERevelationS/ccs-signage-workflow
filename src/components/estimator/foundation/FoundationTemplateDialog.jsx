@@ -243,6 +243,12 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                   <div className="text-[11px] text-gray-500">
                     {(t.project_data?.items || []).length} foundations
                   </div>
+                  {typeof t.project_data?.ai_engineering_recommendation === "string" &&
+                  t.project_data.ai_engineering_recommendation.trim() ? (
+                    <div className="text-[10px] text-violet-600">
+                      Includes an AI review note — stale on this project
+                    </div>
+                  ) : null}
                 </div>
                 <button type="button"
                   onClick={() => apply(t)}
