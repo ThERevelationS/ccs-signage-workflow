@@ -29,6 +29,7 @@ import FoundationSectionBanner from "@/components/estimator/foundation/Foundatio
 import AiEngineeringAssistant from "@/components/estimator/foundation/AiEngineeringAssistant";
 import Foundation3DPreview from "@/components/estimator/foundation/Foundation3DPreview";
 import FoundationTemplateDialog from "@/components/estimator/foundation/FoundationTemplateDialog";
+import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
@@ -45,9 +46,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject, sourcePatchMatches } from "@/components/estimator/builder/sourceProjectPersistence";
 import { loadFoundationBuilderRecovery, verifyFoundationRecoverySource } from "@/components/estimator/foundation/foundationBuilderRecovery";
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
-import { createFoundationDraftStore } from "@/components/estimator/foundation/foundationDraftRecovery";
+import { createFoundationDraftStore, foundationDraftRebaseProject, FOUNDATION_DRAFT_FIELDS } from "@/components/estimator/foundation/foundationDraftRecovery";
 import { useAuth } from "@/components/auth/EmailGate";
-import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt, resolveFoundationSyncReceiptForSave } from "@/components/estimator/foundation/foundationSyncRecovery";
+import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt, resolveFoundationSyncReceiptForSave, classifyFoundationSyncRetry } from "@/components/estimator/foundation/foundationSyncRecovery";
 import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from "@/components/estimator/foundation/foundationAssemblyModel";
 import { prepareFoundationTemplatePatch } from "@/components/estimator/foundation/foundationTemplateModel";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -173,6 +174,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   if (draftSessionRef.current.store !== draftStore) draftSessionRef.current = { store: draftStore, revision: null, pending: false };
   const [draftOffer, setDraftOffer] = useState(null); // { store, revision, draft?, message?, warning? } scoped to current store
   const draftVisible = draftOffer?.store === draftStore ? draftOffer : null;
+  // Merge-conflict dialog + partial Builder-sync retry state (CMP-A04 tail).
+  const syncConflict = useFoundationSyncConflict();
+  const lastSyncCaptureRef = useRef(null);
+  const syncRetry = useFoundationBuilderSyncRetry(() => ({
+    sourceId: id,
+    estimateId,
+    expectedSourceVersion: acknowledgedVersionRef.current?.updated_date,
+    savedProject: acknowledgedVersionRef.current?.sourceSnapshot,
+    builderCalculation: lastSyncCaptureRef.current?.builderCalculation ?? null,
+    liveTotal: lastSyncCaptureRef.current?.liveTotal,
+    expectedPendingKey: classifyFoundationSyncRetry({ project, estimateId, estimate: linkedEstimate }).pendingKey ?? undefined,
+  }));
 
   useEffect(() => {
     copyAttemptRef.current = { signature: "", key: "" };
@@ -733,6 +746,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       totals: calc.totals, sectionTotal, cabinetCost, landscapeCost,
       computedPricing: undefined,
     };
+    // Retain the transient calc capture so a later Builder-sync retry can
+    // rebuild byte-identical part descriptors (persisted-record fallbacks are coarser).
+    lastSyncCaptureRef.current = {
+      builderCalculation: { totals: captured.totals, delivery: captured.delivery, cabinet_cost: captured.cabinetCost, landscape_cost: captured.landscapeCost, section_total: captured.sectionTotal },
+      liveTotal: captured.sectionTotal,
+    };
     if (!saveContext.loaded) {
       return Promise.resolve(staleOutcome);
     }
@@ -890,6 +909,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         setSaveError("Source saved; estimate/Builder sync incomplete. Retry save.");
         setDirty(true);
       } else if (sameContext && (outcome.status === "conflict" || outcome.status === "failed")) {
+        if (outcome.status === "conflict" && outcome.conflictDetected) {
+          // Genuine classified CAS concurrent-edit conflict — open the merge
+          // dialog with the best available draft (stored backup, else live edits).
+          const latestDraft = draftSessionRef.current.store === draftStore ? draftStore.read() : { status: "unavailable" };
+          const draftBackedUp = latestDraft.status === "found";
+          syncConflict.openSaveConflict({
+            draft: draftBackedUp ? latestDraft.draft : (projectRef.current ?? project),
+            draftSavedAt: draftBackedUp ? latestDraft.savedAt ?? null : null,
+            baseUpdatedAt: draftBackedUp ? latestDraft.baseUpdatedAt ?? null : acknowledgedVersionRef.current?.updated_date ?? null,
+            getSavedProject: () => staffEntities.FoundationProject.get(id),
+            hasUnbackedEdits: !draftBackedUp,
+          });
+        }
         setSaveError(outcome.error?.pricingUnavailable
           ? "Pricing unavailable: fix highlighted design inputs or catalog selections before saving."
           : "Save failed: " + (outcome.error?.message || outcome.status));
