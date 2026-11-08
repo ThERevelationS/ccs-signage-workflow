@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundationFieldSchema";
+// groupInventoryBySupplier (CMP-A08 tail) sections the catalog list by
+// canonical supplier key — "No supplier recorded" stays visible last.
+import { groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -60,6 +63,21 @@ export default function FoundationCatalog() {
   const ROW_PAGE = 60;
   const [visibleCount, setVisibleCount] = useState(ROW_PAGE);
   useEffect(() => { setVisibleCount(ROW_PAGE); }, [activeType, q]);
+
+  // CMP-A08 tail: the filtered list sections by canonical supplier key
+  // (unrecorded suppliers sort last, never merged). The visibleCount window
+  // still caps rendered ROWS — group headers don't count against it.
+  const catalogSections = (() => {
+    let budget = visibleCount;
+    const out = [];
+    for (const group of groupInventoryBySupplier(visible)) {
+      if (budget <= 0) break;
+      const groupRows = group.rows.slice(0, budget);
+      budget -= groupRows.length;
+      out.push({ ...group, rows: groupRows });
+    }
+    return out;
+  })();
 
   const handleDelete = async (row) => {
     if (!row?.id || loadError || deleteRef.current.has(row.id)) return;
@@ -164,8 +182,16 @@ export default function FoundationCatalog() {
             No {typeLabel(activeType)} entries yet.
           </div>
         ) : (
-          <div className="space-y-2">
-            {visible.slice(0, visibleCount).map((row) => (
+          <div className="space-y-4">
+            {catalogSections.map((group) => (
+              <div key={group.key ?? "__unassigned__"} className="space-y-2">
+                {/* CMP-A08 tail: explicit supply grouping — rows split by their
+                    canonical supplier key; unrecorded suppliers stay visible
+                    last instead of silently merging into another vendor. */}
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 pb-1">
+                  {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+                </div>
+                {group.rows.map((row) => (
               <div
                 key={row.id}
                 className="bg-white rounded-xl border border-gray-200 p-3 flex items-center justify-between gap-3"
@@ -199,6 +225,8 @@ export default function FoundationCatalog() {
                     <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
+              </div>
+                ))}
               </div>
             ))}
             {visible.length > visibleCount && (
