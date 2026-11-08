@@ -5,11 +5,15 @@ import { Trash2, Plus, PenLine } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { foundationWallPricingIssues } from "./wallCalculator";
-import { inventoryDraftInput } from "@/components/masterInventory/inventoryNormalization";
+import { FoundationDimensionInput } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import WallShapeEditor from "./WallShapeEditor";
 
-// Blank-preserving project-entry draft, delegated to the boundary (CMP-A08).
-const heightInput = inventoryDraftInput;
+// O-093 (CMP-H02): linear-dimension fields take feet/inches entry through the
+// shared dimension field — same verbatim-draft contract as the CMP-A08
+// boundary it replaces, canonical inches stored, plain-language label + help +
+// suggested-format placeholder from the field meta map (never stored defaults).
+const wallDimMeta = (field) => foundationDimensionFieldMeta("wall", field);
 
 function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
@@ -41,32 +45,24 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <label className="text-xs text-gray-500">
-          Height (in)
-          <Input
-            type="number"
-            step="any"
-            value={wall.heightInches ?? ""}
-            onChange={(e) => set({ heightInches: heightInput(e.target.value) })}
-            aria-label="Wall height (in)"
-            aria-invalid={fieldIssue("heightInches") || undefined}
-            aria-describedby={describedBy("heightInches")}
-          />
-        </label>
-        <label className="text-xs text-gray-500">
-          Mortar gap (in)
-          <Input
-            type="number"
-            step="0.125"
-            min="0"
-            value={wall.mortarGapInches ?? 0.375}
-            placeholder="0.375"
-            onChange={(e) => set({ mortarGapInches: heightInput(e.target.value) })}
-            aria-label="Wall mortar gap (in)"
-            aria-invalid={fieldIssue("mortarGapInches") || undefined}
-            aria-describedby={describedBy("mortarGapInches")}
-          />
-        </label>
+        <FoundationDimensionInput
+          {...wallDimMeta("heightInches")}
+          value={wall.heightInches ?? ""}
+          onCommit={(v) => set({ heightInches: v })}
+          ariaLabel="Wall height (in)"
+          invalid={fieldIssue("heightInches") || undefined}
+          describedBy={describedBy("heightInches")}
+        />
+        <FoundationDimensionInput
+          {...wallDimMeta("mortarGapInches")}
+          // Display-only fallback: 0.375 shows until a value is recorded —
+          // nothing is stored by the fallback (explicit-null discipline).
+          value={wall.mortarGapInches ?? 0.375}
+          onCommit={(v) => set({ mortarGapInches: v })}
+          ariaLabel="Wall mortar gap (in)"
+          invalid={fieldIssue("mortarGapInches") || undefined}
+          describedBy={describedBy("mortarGapInches")}
+        />
         <label className="text-xs text-gray-500 md:col-span-2">
           Wall material
           <select
@@ -128,32 +124,25 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
                 <span className="block text-[10px] text-amber-700 mt-1">Catalog material unavailable; current pricing needs review.</span>
               )}
             </label>
-            <label className="text-xs text-gray-500">
-              Fill height (in)
-              <Input
-                type="number"
-                step="any"
-                value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
-                onChange={(e) => set({ internalWallHeightInches: heightInput(e.target.value) })}
-                aria-label="Internal wall height (in)"
-                aria-invalid={fieldIssue("internalWallHeightInches") || undefined}
-                aria-describedby={describedBy("internalWallHeightInches")}
-              />
-            </label>
-            <label className="text-xs text-gray-500">
-              Fill mortar gap (in)
-              <Input
-                type="number"
-                step="0.125"
-                min="0"
-                value={wall.internalMortarGapInches ?? 0.375}
-                placeholder="0.375"
-                onChange={(e) => set({ internalMortarGapInches: heightInput(e.target.value) })}
-                aria-label="Internal wall mortar gap (in)"
-                aria-invalid={fieldIssue("internalMortarGapInches") || undefined}
-                aria-describedby={describedBy("internalMortarGapInches")}
-              />
-            </label>
+            <FoundationDimensionInput
+              {...wallDimMeta("internalWallHeightInches")}
+              // Display-only fallback: blank follows the outer wall height —
+              // nothing is stored by the fallback (explicit-null discipline).
+              value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
+              onCommit={(v) => set({ internalWallHeightInches: v })}
+              ariaLabel="Internal wall height (in)"
+              invalid={fieldIssue("internalWallHeightInches") || undefined}
+              describedBy={describedBy("internalWallHeightInches")}
+            />
+            <FoundationDimensionInput
+              {...wallDimMeta("internalMortarGapInches")}
+              // Display-only fallback: 0.375 shows until a value is recorded.
+              value={wall.internalMortarGapInches ?? 0.375}
+              onCommit={(v) => set({ internalMortarGapInches: v })}
+              ariaLabel="Internal wall mortar gap (in)"
+              invalid={fieldIssue("internalMortarGapInches") || undefined}
+              describedBy={describedBy("internalMortarGapInches")}
+            />
           </div>
         )}
       </div>
