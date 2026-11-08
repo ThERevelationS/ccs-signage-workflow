@@ -12,7 +12,6 @@
 // item is, so all existing fields/settings are still available.
 
 import { useEffect, useMemo, useRef, useState, Fragment } from "react";
-import { base44 } from "@/api/base44Client";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
