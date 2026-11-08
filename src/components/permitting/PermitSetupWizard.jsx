@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Loader2, MapPin, Search, Sparkles,
   AlertTriangle, Pencil, ListChecks, FileText,
@@ -22,11 +23,31 @@ const ROLE_LABELS = {
   transportation: "Transportation", other: "Other",
 };
 const KNOWN_ROLES = new Set(Object.keys(ROLE_LABELS));
+const SPECULATIVE_ROLES = new Set(["historic_review", "right_of_way", "transportation", "planning", "other"]);
 const officeRoles = (o) => {
   const roles = (Array.isArray(o?.authority_roles) ? o.authority_roles : []).filter(r => KNOWN_ROLES.has(r));
   if (roles.length) return roles;
   return (Array.isArray(o?.office_types) && o.office_types.length ? o.office_types : o?.office_type ? [o.office_type] : [])
     .filter(t => KNOWN_ROLES.has(t));
+};
+const normalizePlaceName = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+const normalizeCountyName = (value) => normalizePlaceName(value).replace(/\s+county$/, "");
+const localityCounty = (locality) => locality?.county_name || locality?.parent_county_name || "";
+const localityIdentityKey = (locality) => [
+  normalizePlaceName(locality?.name),
+  normalizePlaceName(locality?.state),
+  normalizeCountyName(localityCounty(locality)),
+].join("|");
+const matchCandidateLocality = (candidate, localities) => {
+  const name = normalizePlaceName(candidate?.name);
+  if (!name) return [];
+  return localities.filter((locality) => {
+    if (normalizePlaceName(locality?.name) !== name) return false;
+    if (candidate.state && normalizePlaceName(locality?.state) !== normalizePlaceName(candidate.state)) return false;
+    const county = localityCounty(locality);
+    if (candidate.county && county && normalizeCountyName(county) !== normalizeCountyName(candidate.county)) return false;
+    return true;
+  });
 };
 
 const STEPS = ["Site", "Offices", "AI plan", "Review"];
@@ -40,6 +61,21 @@ const defaultPlanForm = (wo, address) => ({
   zoningContext: "", exemptionStatus: "",
 });
 
+const OfficeSelectionRow = ({ office, on, onToggle }) => (
+  <label className={`px-3 py-1.5 flex items-center gap-2 text-xs cursor-pointer ${on ? "" : "opacity-40"}`}>
+    <input type="checkbox" checked={on} className="accent-purple-600" onChange={onToggle} />
+    <span className="font-medium text-gray-800">{office.name}</span>
+    <span className="text-[10px] text-gray-500 truncate">
+      {(office.roles.length ? office.roles.map(role => ROLE_LABELS[role] || role) : [office.label]).filter(Boolean).join(" · ")}
+    </span>
+    <span className={`ml-auto shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
+      office.verified ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"
+    }`}>
+      {office.verified ? "verified" : "unverified"}
+    </span>
+  </label>
+);
+
 const normalizeAddress = (raw) => {
   let a = String(raw || "").replace(/\s+/g, " ").trim();
   a = a.replace(/\b(unit|suite|ste|apt|apartment|#)\s*[A-Za-z0-9-]+\b/ig, "");
@@ -52,13 +88,13 @@ const normalizeAddress = (raw) => {
 // Boundary picks mint reusable rules — a resolved conflict fixes every future
 // address in that postal-city pattern, not just this one (mirrors the picker).
 const ruleNameNorm = (v) => String(v || "").trim().toLowerCase().replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
-function mintResolutionRule({ address, resolution, pickedName, pickedType, forCity }) {
+function mintResolutionRule({ address, resolution, pickedName, pickedType, pickedCounty, forCity }) {
   if (!address || !pickedName) return;
   const state = String(resolution?.state || pickedName.state || "").toUpperCase();
   if (!state) return;
   const parts = String(address).split(",").map(s => s.trim());
   const enteredCity = parts.length > 1 ? parts[1] : "";
-  const county = String(resolution?.location_resolution?.target?.county || resolution?.location_resolution?.candidates?.[0]?.county || "");
+  const county = String(pickedCounty || resolution?.location_resolution?.target?.county || resolution?.location_resolution?.candidates?.[0]?.county || "");
   const data = {
     rule_type: forCity && enteredCity ? "postal_name_map" : "address_override",
     entered_name: forCity && enteredCity ? ruleNameNorm(enteredCity) : "",
@@ -116,17 +152,18 @@ const PlanSteps = ({ steps, dropped, onToggle }) => (
 
 export default function PermitSetupWizard({
   isOpen, onClose, workOrder, existingLines = [], localities = [],
-  onApply, onPendingApply, onRemoveLocality,
+  onApply, onPendingApply, onRemoveLocality, onDeleteLines, initialStep,
 }) {
   const { sessionToken } = useAuth() || {};
   const wo = workOrder || {};
   const isEdit = existingLines.length > 0;
   const appliedLocalityId = existingLines.find(li => li.locality_id)?.locality_id || "";
+  const startStep = Number.isInteger(initialStep) ? initialStep : isEdit ? 3 : 0;
   const siteAddress = [wo.install_location, wo.address_line_2, wo.township_city, wo.county, wo.state]
     .filter(v => String(v || "").trim()).join(", ");
 
-  const [step, setStep] = useState(isEdit ? 3 : 0);
-  const [maxStep, setMaxStep] = useState(isEdit ? 3 : 0);
+  const [step, setStep] = useState(startStep);
+  const [maxStep, setMaxStep] = useState(Math.max(startStep, isEdit ? 3 : 0));
   const [address, setAddress] = useState(siteAddress);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
@@ -134,8 +171,12 @@ export default function PermitSetupWizard({
   const [pickedCandidate, setPickedCandidate] = useState(null);
   const [rememberForCity, setRememberForCity] = useState(false);
   const [localityId, setLocalityId] = useState("");
+  const [localitySearchQuery, setLocalitySearchQuery] = useState("");
+  const [localitySearchOpen, setLocalitySearchOpen] = useState(false);
+  const [candidateMatchNote, setCandidateMatchNote] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
   const [deselectedOffices, setDeselectedOffices] = useState(new Set());
+  const [confirmRemoveLines, setConfirmRemoveLines] = useState(false);
   const [droppedSteps, setDroppedSteps] = useState(new Set());
   const [suggestions, setSuggestions] = useState([]);
   const [recent, setRecent] = useState(() => loadRecent());
@@ -149,6 +190,8 @@ export default function PermitSetupWizard({
   const [done, setDone] = useState(false);
   const searchSeq = useRef(0);
   const suggestionReq = useRef(0);
+  const initializedAppliedLocalityRef = useRef(false);
+  const editPrefillLocalityRef = useRef("");
 
   const locality = useMemo(
     () => localities.find(l => l.id === localityId) || null,
@@ -158,8 +201,11 @@ export default function PermitSetupWizard({
   useEffect(() => {
     if (!isOpen) return;
     const existingLocalityId = appliedLocalityId;
-    if (existingLocalityId && !localityId) setLocalityId(existingLocalityId);
-  }, [isOpen, appliedLocalityId]);
+    if (existingLocalityId && !initializedAppliedLocalityRef.current && !localityId) {
+      setLocalityId(existingLocalityId);
+      initializedAppliedLocalityRef.current = true;
+    }
+  }, [isOpen, appliedLocalityId, localityId]);
 
   useEffect(() => {
     if (!isOpen || !locality) return;
@@ -187,19 +233,58 @@ export default function PermitSetupWizard({
   const officePreview = useMemo(() => {
     if (!locality) return [];
     const offices = Array.isArray(locality.offices) && locality.offices.length ? locality.offices : null;
-    if (offices) return offices.map((o, i) => ({
-      key: o.id || `office-${i}`,
-      name: o.name || "Office",
-      roles: officeRoles(o),
-      label: o.office_type || "",
-      electrical: officeRoles(o).some(r => /electrical/i.test(r)) || /electrical/i.test(o.office_type || o.name || ""),
-    }));
+    if (offices) return offices.map((o, i) => {
+      const roles = officeRoles(o);
+      const verified = o.authority_verification_status === "staff_verified";
+      return {
+        key: o.id || `office-${i}`,
+        officeId: o.id || "",
+        name: o.name || "Office",
+        roles,
+        label: o.office_type || "",
+        verified,
+        speculative: !verified && (!roles.length || roles.every(role => SPECULATIVE_ROLES.has(role))),
+        electrical: roles.some(r => /electrical/i.test(r)) || /electrical/i.test(o.office_type || o.name || ""),
+      };
+    });
     const cats = locality.categories?.length ? locality.categories : [locality.office_type || "General"];
     return cats.map((cat, i) => ({
-      key: `cat-${i}`, name: cat, roles: [], label: cat,
+      key: `cat-${i}`, officeId: "", name: cat, roles: [], label: cat,
+      verified: false, speculative: true,
       electrical: /electrical/i.test(cat),
     }));
   }, [locality]);
+
+  const officePreviewRef = useRef(officePreview);
+  officePreviewRef.current = officePreview;
+
+  useEffect(() => {
+    if (!localityId) {
+      setDeselectedOffices(new Set());
+      return;
+    }
+    if (isEdit && String(localityId) === String(appliedLocalityId)) return;
+    setDeselectedOffices(new Set(officePreviewRef.current.filter(o => o.speculative).map(o => o.key)));
+    setConfirmRemoveLines(false);
+  }, [localityId, isEdit, appliedLocalityId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isEdit || String(localityId) !== String(appliedLocalityId)) {
+      editPrefillLocalityRef.current = "";
+      return;
+    }
+    if (!locality || String(locality.id) !== String(appliedLocalityId)
+      || editPrefillLocalityRef.current === String(locality.id)) return;
+    const existingOfficeIds = new Set(existingLines
+      .filter(line => String(line.locality_id || "") === String(locality.id))
+      .map(line => String(line.locality_office_id || "")));
+    setDeselectedOffices(new Set(officePreview
+      .filter(office => !existingOfficeIds.has(String(office.officeId || "")))
+      .map(office => office.key)));
+    setConfirmRemoveLines(false);
+    editPrefillLocalityRef.current = String(locality.id);
+  }, [isOpen, isEdit, localityId, locality, appliedLocalityId, existingLines, officePreview]);
 
   const visibleOffices = officePreview.filter(o => !o.electrical || !excludeElectrical);
   const chosenOffices = visibleOffices.filter(o => !deselectedOffices.has(o.key));
@@ -214,6 +299,78 @@ export default function PermitSetupWizard({
     return Array.isArray(list) ? list : [];
   }, [resolution]);
 
+  const duplicateLocalityCounts = useMemo(() => {
+    const counts = new Map();
+    for (const item of localities) {
+      const key = localityIdentityKey(item);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return counts;
+  }, [localities]);
+
+  const searchResults = useMemo(() => {
+    const tokens = localitySearchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const targetCounty = normalizeCountyName(
+      resolution?.location_resolution?.target?.county || resolution?.ai_county || "",
+    );
+    const targetState = normalizePlaceName(resolution?.ai_state || resolution?.state || "");
+    const rank = (item) => {
+      const sameState = !!targetState && normalizePlaceName(item.state) === targetState;
+      const sameCounty = !!targetCounty && normalizeCountyName(localityCounty(item)) === targetCounty;
+      return sameState && sameCounty ? 0 : sameState ? 1 : 2;
+    };
+    return localities
+      .filter((item) => {
+        const county = localityCounty(item);
+        const haystack = `${item.name || ""} ${county} ${item.state || ""}`.toLowerCase();
+        return tokens.every(token => haystack.includes(token));
+      })
+      .sort((a, b) => rank(a) - rank(b)
+        || normalizePlaceName(a.name).localeCompare(normalizePlaceName(b.name))
+        || normalizeCountyName(localityCounty(a)).localeCompare(normalizeCountyName(localityCounty(b)))
+        || normalizePlaceName(a.state).localeCompare(normalizePlaceName(b.state)))
+      .slice(0, 40);
+  }, [localities, localitySearchQuery, resolution]);
+
+  const sameLocalityLines = useMemo(
+    () => existingLines.filter(line => String(line.locality_id || "") === String(localityId || "")),
+    [existingLines, localityId],
+  );
+  const toAdd = chosenOffices.filter(office => !sameLocalityLines.some(
+    line => String(line.locality_office_id || "") === String(office.officeId || ""),
+  ));
+  const toRemove = sameLocalityLines.filter(line => {
+    const office = officePreview.find(item => String(item.officeId || "") === String(line.locality_office_id || ""));
+    return office && !chosenOffices.some(item => item.key === office.key);
+  });
+  const removeLineSignature = toRemove.map(line => line.id).sort().join("|");
+  const hasRemovalProgress = (line) => Boolean(
+    line.submitted_date || line.permit_number || line.permit_received_date || line.application_reference_number,
+  );
+  const existingLocalityGroups = useMemo(() => {
+    const groups = new Map();
+    for (const line of existingLines) {
+      const key = String(line.locality_id || line.locality_name || "unknown");
+      if (!groups.has(key)) {
+        const configured = localities.find(item => String(item.id) === String(line.locality_id || ""));
+        groups.set(key, {
+          key,
+          id: line.locality_id || "",
+          name: configured?.name || line.locality_name || "Unknown jurisdiction",
+        });
+      }
+    }
+    return [...groups.values()];
+  }, [existingLines, localities]);
+  const firstExistingLocalityName = localities.find(item => String(item.id) === String(appliedLocalityId))?.name
+    || existingLines.find(line => String(line.locality_id || "") === String(appliedLocalityId))?.locality_name
+    || existingLocalityGroups[0]?.name
+    || "the first jurisdiction";
+
+  useEffect(() => {
+    setConfirmRemoveLines(false);
+  }, [localityId, removeLineSignature]);
+
   const goTo = (n) => { setStep(n); setMaxStep(prev => Math.max(prev, n)); };
 
   const runResolve = async (overrideAddress) => {
@@ -221,6 +378,7 @@ export default function PermitSetupWizard({
     if (!q || resolving) return;
     const seq = ++searchSeq.current;
     setResolving(true); setResolveError(""); setResolution(null); setPickedCandidate(null); setSuggestions([]);
+    setLocalityId(""); setCandidateMatchNote("");
     try {
       let data;
       for (let attempt = 0; ; attempt++) {
@@ -238,7 +396,14 @@ export default function PermitSetupWizard({
       } else {
         setResolution(data);
         const suggested = data?.suggested_locality?.id;
-        if (suggested && localities.some(l => l.id === suggested)) setLocalityId(suggested);
+        if (suggested && localities.some(l => l.id === suggested)) {
+          setLocalityId(suggested);
+          setLocalitySearchQuery("");
+          setLocalitySearchOpen(false);
+        } else {
+          setLocalitySearchQuery(data?.ai_locality_name || "");
+          setLocalitySearchOpen(true);
+        }
         if (data?.suggested_locality || data?.geocode) { rememberRecent(q); setRecent(loadRecent()); }
         setPlanForm(prev => ({ ...prev, address: q }));
         goTo(1);
@@ -250,18 +415,26 @@ export default function PermitSetupWizard({
     }
   };
 
-  // A boundary pick behaves like a detected target — match its name to a
-  // locality row and mint a reusable rule so future addresses skip the ask.
+  // A boundary pick behaves like a detected target — match it to a configured locality.
   useEffect(() => {
-    if (!pickedCandidate?.name) return;
-    const want = pickedCandidate.name.trim().toLowerCase();
-    const hit = localities.find(l => String(l.name || "").trim().toLowerCase() === want);
-    if (hit) setLocalityId(hit.id);
-    mintResolutionRule({
-      address, resolution, pickedName: pickedCandidate.name,
-      pickedType: pickedCandidate.type, forCity: rememberForCity,
-    });
-  }, [pickedCandidate, rememberForCity, localities]);
+    if (!pickedCandidate?.name) {
+      setCandidateMatchNote("");
+      return;
+    }
+    const matches = matchCandidateLocality(pickedCandidate, localities);
+    if (matches.length === 1) {
+      setLocalityId(matches[0].id);
+      setLocalitySearchOpen(false);
+      setLocalitySearchQuery("");
+      setCandidateMatchNote("");
+      return;
+    }
+    setLocalitySearchQuery(pickedCandidate.name);
+    setLocalitySearchOpen(true);
+    setCandidateMatchNote(matches.length
+      ? `${matches.length} configured places named ${pickedCandidate.name} — pick the right one below`
+      : `No configured jurisdiction matches ${pickedCandidate.name} yet — search below`);
+  }, [pickedCandidate, localities]);
 
   const buildPlan = async () => {
     if (planning) return;
@@ -303,18 +476,45 @@ export default function PermitSetupWizard({
     if (!locality || creating) return;
     setCreating(true);
     try {
+      if (pickedCandidate?.name && normalizePlaceName(locality.name) === normalizePlaceName(pickedCandidate.name)) {
+        mintResolutionRule({
+          address,
+          resolution,
+          pickedName: pickedCandidate.name,
+          pickedType: pickedCandidate.type,
+          pickedCounty: pickedCandidate.county,
+          forCity: rememberForCity,
+        });
+      }
       if (plan && !plan.jurisdiction_unresolved && !planSaved) {
         await saveWorkflowDraft(cleanedPlan(), planForm,
           `${locality.name || "Permit"} — ${wo.client_name || "job"}`, "").catch(() => {});
       }
       if (localityChanged) {
         await onRemoveLocality?.(appliedLocalityId);
+        const apply = applyReady ? onApply : onPendingApply;
+        await (apply || onApply)?.(locality.id, {
+          excludeElectrical, locality,
+          skip_office_keys: [...deselectedOffices],
+        });
+      } else if (isEdit) {
+        if (toRemove.length) await onDeleteLines?.(toRemove.map(line => line.id));
+        if (toAdd.length) {
+          const addKeys = new Set(toAdd.map(office => office.key));
+          await onApply?.(locality.id, {
+            excludeElectrical,
+            locality,
+            add_missing_only: true,
+            skip_office_keys: officePreview.filter(office => !addKeys.has(office.key)).map(office => office.key),
+          });
+        }
+      } else {
+        const apply = applyReady ? onApply : onPendingApply;
+        await (apply || onApply)?.(locality.id, {
+          excludeElectrical, locality,
+          skip_office_keys: [...deselectedOffices],
+        });
       }
-      const apply = applyReady ? onApply : onPendingApply;
-      await (apply || onApply)?.(locality.id, {
-        excludeElectrical, locality,
-        skip_office_keys: [...deselectedOffices],
-      });
       setDone(true);
       setTimeout(() => { setDone(false); onClose(); }, 1400);
     } finally {
@@ -451,16 +651,68 @@ export default function PermitSetupWizard({
               </div>
             )}
 
-            <div>
-              <Label className="text-sm">Permitting office</Label>
-              <Select value={localityId} onValueChange={setLocalityId}>
-                <SelectTrigger className="h-9 text-sm mt-1"><SelectValue placeholder="Pick the jurisdiction…" /></SelectTrigger>
-                <SelectContent>
-                  {localities.map(l => (
-                    <SelectItem key={l.id} value={l.id}>{l.name}{l.state ? ` (${l.state})` : ""}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-1">
+              <Label className="text-sm">Jurisdiction</Label>
+              {locality && !localitySearchOpen ? (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {locality.name}
+                      {(duplicateLocalityCounts.get(localityIdentityKey(locality)) || 0) > 1
+                        ? ` #${String(locality.id || "").slice(-5)}`
+                        : ""}
+                    </p>
+                    <p className="truncate text-[11px] text-gray-500">
+                      {localityCounty(locality) || "county unknown"}, {locality.state || "state unknown"} · {(locality.offices || []).length} offices · {(locality.offices || []).filter(office => office.authority_verification_status === "staff_verified").length} verified
+                    </p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" className="h-7 shrink-0 text-xs"
+                    onClick={() => setLocalitySearchOpen(true)}>
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <Command shouldFilter={false} className="mt-1 rounded-lg border border-gray-200 bg-white">
+                  <CommandInput
+                    value={localitySearchQuery}
+                    onValueChange={setLocalitySearchQuery}
+                    placeholder="Search jurisdiction, county, or state…"
+                    className="h-9"
+                  />
+                  <CommandList className="max-h-56">
+                    {searchResults.length ? searchResults.map(item => {
+                      const key = localityIdentityKey(item);
+                      const duplicate = (duplicateLocalityCounts.get(key) || 0) > 1;
+                      return (
+                        <CommandItem
+                          key={item.id}
+                          value={`${item.id} ${item.name} ${localityCounty(item)} ${item.state || ""}`}
+                          onSelect={() => {
+                            setLocalityId(item.id);
+                            setLocalitySearchOpen(false);
+                            setCandidateMatchNote("");
+                          }}
+                          className="cursor-pointer items-start py-2"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-gray-900">
+                              {item.name}{duplicate ? ` #${String(item.id || "").slice(-5)}` : ""}
+                            </span>
+                            <span className="block truncate text-[11px] text-gray-500">
+                              {localityCounty(item) || "county unknown"}, {item.state || "state unknown"} · {(item.offices || []).length} offices · {(item.offices || []).filter(office => office.authority_verification_status === "staff_verified").length} verified
+                            </span>
+                          </span>
+                        </CommandItem>
+                      );
+                    }) : (
+                      <div className="px-3 py-4 text-center text-xs text-gray-500">No jurisdictions match this search.</div>
+                    )}
+                  </CommandList>
+                </Command>
+              )}
+              {candidateMatchNote && (
+                <p className="text-[11px] text-amber-800">{candidateMatchNote}</p>
+              )}
             </div>
             {locality && officePreview.length > 0 && (
               <div className="rounded-lg border border-gray-200 divide-y">
@@ -473,23 +725,33 @@ export default function PermitSetupWizard({
                     </label>
                   )}
                 </div>
-                {visibleOffices.map(o => {
+                {visibleOffices.filter(o => !o.speculative).map(o => {
                   const on = !deselectedOffices.has(o.key);
                   return (
-                    <label key={o.key} className={`px-3 py-1.5 flex items-center gap-2 text-xs cursor-pointer ${on ? "" : "opacity-40"}`}>
-                      <input type="checkbox" checked={on} className="accent-purple-600"
-                        onChange={() => setDeselectedOffices(prev => {
+                    <OfficeSelectionRow key={o.key} office={o} on={on} onToggle={() => setDeselectedOffices(prev => {
+                      const next = new Set(prev);
+                      if (on) next.add(o.key); else next.delete(o.key);
+                      return next;
+                    })} />
+                  );
+                })}
+                {visibleOffices.some(o => o.speculative) && (
+                  <>
+                    <div className="bg-amber-50 px-3 py-1.5 text-[10px] font-semibold text-amber-900">
+                      Possibly needed — tick only if this job requires it
+                    </div>
+                    {visibleOffices.filter(o => o.speculative).map(o => {
+                      const on = !deselectedOffices.has(o.key);
+                      return (
+                        <OfficeSelectionRow key={o.key} office={o} on={on} onToggle={() => setDeselectedOffices(prev => {
                           const next = new Set(prev);
                           if (on) next.add(o.key); else next.delete(o.key);
                           return next;
                         })} />
-                      <span className="font-medium text-gray-800">{o.name}</span>
-                      <span className="text-[10px] text-gray-500 truncate">
-                        {(o.roles.length ? o.roles.map(r => ROLE_LABELS[r] || r) : [o.label]).filter(Boolean).join(" · ")}
-                      </span>
-                    </label>
-                  );
-                })}
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
             {locality && officePreview.length === 0 && (
@@ -596,17 +858,61 @@ export default function PermitSetupWizard({
             {isEdit ? (
               <div className="rounded-lg border border-gray-200 divide-y">
                 <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">Current setup</div>
-                {existingLines.map(li => (
-                  <div key={li.id} className="px-3 py-1.5 flex items-center gap-2 text-xs">
-                    <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 ${li.status === "complete" ? "text-emerald-500" : "text-gray-300"}`} />
-                    <span className="font-medium text-gray-800">{li.row_name || li.office_type || "Line"}</span>
-                    <span className="text-[10px] text-gray-500">{li.locality_name}</span>
-                    <span className="ml-auto text-[10px] text-gray-400">{li.status}</span>
+                {existingLocalityGroups.map(group => (
+                  <div key={group.key}>
+                    {existingLocalityGroups.length > 1 && (
+                      <div className="bg-gray-50 px-3 py-1 text-[10px] font-semibold text-gray-600">{group.name}</div>
+                    )}
+                    {existingLines
+                      .filter(line => String(line.locality_id || line.locality_name || "unknown") === group.key)
+                      .map(li => (
+                        <div key={li.id} className="px-3 py-1.5 flex items-center gap-2 text-xs">
+                          <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 ${li.status === "complete" ? "text-emerald-500" : "text-gray-300"}`} />
+                          <span className="font-medium text-gray-800">{li.row_name || li.office_type || "Line"}</span>
+                          <span className="text-[10px] text-gray-500">{li.locality_name}</span>
+                          <span className="ml-auto text-[10px] text-gray-400">{li.status}</span>
+                        </div>
+                      ))}
                   </div>
                 ))}
                 {localityChanged && (
                   <div className="px-3 py-2 text-xs text-amber-800 bg-amber-50">
-                    Switching to <strong>{locality?.name}</strong> will remove the lines above and create {visibleOffices.length || 1} new one{visibleOffices.length === 1 ? "" : "s"}.
+                    Switching to <strong>{locality?.name}</strong> will remove the lines above and create {chosenOffices.length || 1} new one{(chosenOffices.length || 1) === 1 ? "" : "s"}.
+                  </div>
+                )}
+                {existingLocalityGroups.length > 1 && (
+                  <div className="px-3 py-2 text-xs text-amber-900 bg-amber-50">
+                    This job has lines from {existingLocalityGroups.length} jurisdictions: {existingLocalityGroups.map(group => group.name).join(", ")}. Editing applies to {firstExistingLocalityName}.
+                  </div>
+                )}
+                {!localityChanged && (
+                  <div className="space-y-1.5 px-3 py-2 text-xs">
+                    <div>
+                      <span className="font-semibold text-gray-700">Will add: </span>
+                      <span className="text-gray-600">{toAdd.length ? toAdd.map(office => office.name).join(", ") : "None"}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-semibold text-gray-700">Will remove: </span>
+                      {toRemove.length ? toRemove.map(line => (
+                        <div key={line.id} className="pl-1 text-gray-600">
+                          {line.row_name || line.office_type || "Permit line"}
+                          {hasRemovalProgress(line) && (
+                            <span className="ml-1 font-semibold text-red-700">has recorded progress — its data will be deleted</span>
+                          )}
+                        </div>
+                      )) : <span className="text-gray-600">None</span>}
+                    </div>
+                    {toRemove.length > 0 && (
+                      <label className="mt-2 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 font-medium text-red-800">
+                        <input
+                          type="checkbox"
+                          checked={confirmRemoveLines}
+                          onChange={event => setConfirmRemoveLines(event.target.checked)}
+                          className="mt-0.5 accent-red-600"
+                        />
+                        <span>I understand {toRemove.length} permit line{toRemove.length === 1 ? "" : "s"} will be deleted</span>
+                      </label>
+                    )}
                   </div>
                 )}
               </div>
@@ -617,7 +923,7 @@ export default function PermitSetupWizard({
                   <span className="font-medium text-gray-800 text-right">{address || "—"}</span>
                 </div>
                 <div className="px-3 py-2 flex justify-between">
-                  <span className="text-gray-500">Office</span>
+                  <span className="text-gray-500">Jurisdiction</span>
                   <span className="font-medium text-gray-800">{locality?.name}{locality?.state ? `, ${locality.state}` : ""}</span>
                 </div>
                 <div className="px-3 py-2 flex justify-between">
@@ -634,7 +940,9 @@ export default function PermitSetupWizard({
             {!applyReady && locality && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-start gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                Offices for {locality.name} aren't verified — {isEdit ? "changes apply" : "the setup applies"} automatically when verification finishes.
+                {isEdit && !localityChanged
+                  ? <>Offices for {locality.name} aren't fully verified — line changes apply now, and added lines carry a review note.</>
+                  : <>Offices for {locality.name} aren't verified — the setup applies automatically when verification finishes.</>}
               </div>
             )}
 
@@ -650,6 +958,14 @@ export default function PermitSetupWizard({
                         className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
                         {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                         {done ? "Saved!" : `Switch to ${locality?.name || "new office"}`}
+                      </Button>
+                    )}
+                    {!localityChanged && (
+                      <Button size="sm" onClick={finish}
+                        disabled={!locality || creating || (toRemove.length > 0 && !confirmRemoveLines)}
+                        className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
+                        {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                        {done ? "Saved!" : "Save setup"}
                       </Button>
                     )}
                   </>
