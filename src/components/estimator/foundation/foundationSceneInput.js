@@ -614,3 +614,61 @@ export function snapToCandidates(point, candidates, tolInches) {
   if (gz) guides.push({ axis: "z", value: gz.value, source: gz.source, delta: gz.delta });
   return { x: gx ? gx.value : p.x, z: gz ? gz.value : p.z, guides };
 }
+
+// ---------------------------------------------------------------------------
+// Scene-edit records (O-040 — the stroke-undo seam)
+// ---------------------------------------------------------------------------
+//
+// A finished gesture or keyboard edit as a history-ready record: `before`
+// holds the pre-stroke state, `after` the committed patch — for item moves
+// both are { x_inches, z_inches } patch-shaped, so the record doubles as
+// the undo payload. Anchors are the history store's concern (consumers
+// stamp before/after anchors at record time); identity (`key`,
+// `identityKind`) rides along for target resolution + labels.
+
+export const SCENE_EDIT_ITEM_MOVE = "item-move";
+
+// A committed corner drag. `drag` is the live beginSceneDrag record (its
+// `corner` is the captured pre-stroke state); `patch` is the commitSceneDrag
+// result. Null on any missing/invalid piece — callers already null-check
+// patch/target upstream.
+export function sceneEditFromDrag(drag, patch) {
+  if (!drag || !patch) return null;
+  if (!fin(drag?.corner?.x) || !fin(drag?.corner?.z)) return null;
+  if (!fin(patch?.x_inches) || !fin(patch?.z_inches)) return null;
+  return {
+    kind: SCENE_EDIT_ITEM_MOVE,
+    method: "drag",
+    key: drag.key ?? null,
+    identityKind: drag.identityKind ?? null,
+    before: { x_inches: drag.corner.x, z_inches: drag.corner.z },
+    after: { x_inches: patch.x_inches, z_inches: patch.z_inches },
+  };
+}
+
+// A keyboard nudge — same before/after shape as the drag path so the
+// history store treats every item move uniformly. `position` is the row's
+// current authored position ({x,z} or {x_inches,z_inches}); `key` is the
+// layoutItemKey identity the consumer resolves targets + bursts by.
+export function sceneEditFromNudge(key, position, patch) {
+  const pos = planPointOf(position);
+  if (!pos || !patch || !fin(patch?.x_inches) || !fin(patch?.z_inches)) return null;
+  return {
+    kind: SCENE_EDIT_ITEM_MOVE,
+    method: "nudge",
+    key: key ?? null,
+    identityKind: "key",
+    before: { x_inches: pos.x, z_inches: pos.z },
+    after: { x_inches: patch.x_inches, z_inches: patch.z_inches },
+  };
+}
+
+// Burst-coalescing identity (O-040 "sensible history"): drags never merge —
+// one gesture is already one commit. Nudges on the same row merge while the
+// key stream keeps hitting the same target; the merge window lives in the
+// history store, this is only the identity. Anything else returns null and
+// records as its own command.
+export function sceneEditCoalesceKey(edit) {
+  if (!edit || edit.method !== "nudge" || typeof edit.key !== "string" || !edit.key) return null;
+  return `nudge:${edit.key}`;
+}
