@@ -8,26 +8,37 @@ import {
   materialByKey,
 } from "./landscapeMaterials";
 import { money } from "./foundationCalc";
+import {
+  foundationDimensionDraftValue,
+  foundationDimensionInputIssue,
+  foundationDimensionStoredText,
+} from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
+
+// O-093 (CMP-H02): the cell size takes feet/inches entry — same verbatim-draft
+// contract as the landscapeInputValue it replaces (blank stays, malformed
+// stores verbatim for diagnostics), canonical inches stored. The cell size is
+// never defaulted here — the ported `|| 12` minted a guess on a missing value;
+// the meta placeholder below is display text only, never a stored value.
+const cellMeta = foundationDimensionFieldMeta("landscape", "cell_size_inches");
 
 const sqftLabel = (l) =>
   Number.isFinite(l.sqft) ? `${l.sqft.toFixed(0)} sq ft`
     : `${l.cells} cell${l.cells === 1 ? "" : "s"} — area unavailable`;
 const costLabel = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 
-// Blank-preserving draft coercion (same rule as the cabinet panel): a blank
-// draft stays blank, a numeric draft becomes a number, and a malformed draft
-// is stored verbatim so the pricing diagnostics can flag it. The cell size is
-// never defaulted here — the ported `|| 12` minted a guess on a missing value.
-const landscapeInputValue = (value) =>
-  value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
-
 export default function LandscapeDesigner({ landscape, onChange }) {
   const [brush, setBrush] = useState("grass");
   const [painting, setPainting] = useState(false);
+  // Focused-edit draft for the cell size — while focused the user edits raw
+  // text (partial ft/in never snaps); on blur the stored canonical inches
+  // (or a verbatim malformed draft) displays again.
+  const [cellDraft, setCellDraft] = useState(null);
   const cells = landscape?.cells || {};
   const summary = landscapeSummary(landscape);
   const broken = summary.issues.length > 0;
   const cellSizeIssue = summary.issues.some((i) => i.field === "cell_size_inches");
+  const cellHint = foundationDimensionInputIssue(landscape?.cell_size_inches);
 
   const paint = (x, y) => {
     const key = `${x},${y}`;
@@ -50,21 +61,35 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         </div>
         <div className="flex items-center gap-2">
           <label className="text-[10px] text-gray-500">
-            Cell size (in)
+            {cellMeta?.label ?? "Cell size (in)"}
             <input
-              type="number"
-              min={0}
-              step="any"
+              type="text"
+              inputMode="text"
               data-landscape-field="cell_size_inches"
-              value={landscape?.cell_size_inches ?? ""}
-              aria-invalid={cellSizeIssue || undefined}
-              aria-describedby={cellSizeIssue ? "landscape-pricing" : undefined}
-              onChange={(e) => onChange({
-                cell_size_inches: landscapeInputValue(e.target.value),
-                cells,
-              })}
-              className={`ml-1 h-7 w-16 rounded-sm border px-1 text-[11px] ${cellSizeIssue ? "border-amber-400 bg-amber-50" : "border-gray-300"}`}
+              title={cellMeta?.help}
+              placeholder={cellMeta?.placeholder}
+              value={cellDraft !== null
+                ? cellDraft
+                : foundationDimensionStoredText(landscape?.cell_size_inches)}
+              aria-invalid={cellSizeIssue || !!cellHint || undefined}
+              aria-describedby={[cellSizeIssue ? "landscape-pricing" : null, cellHint ? "landscape-cell-hint" : null]
+                .filter(Boolean).join(" ") || undefined}
+              onFocus={() => setCellDraft(foundationDimensionStoredText(landscape?.cell_size_inches))}
+              onChange={(e) => {
+                setCellDraft(e.target.value);
+                onChange({
+                  cell_size_inches: foundationDimensionDraftValue(e.target.value),
+                  cells,
+                });
+              }}
+              onBlur={() => setCellDraft(null)}
+              className={`ml-1 h-7 w-16 rounded-sm border px-1 text-[11px] ${cellSizeIssue || cellHint ? "border-amber-400 bg-amber-50" : "border-gray-300"}`}
             />
+            {cellHint && (
+              <span id="landscape-cell-hint" role="status" className="block mt-0.5 text-amber-700">
+                {cellHint}
+              </span>
+            )}
           </label>
           <button type="button"
             onClick={() => {
