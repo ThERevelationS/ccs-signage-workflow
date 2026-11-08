@@ -5,7 +5,8 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, FileDown, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, FileDown, Loader2, MapPin, MoreHorizontal, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -1276,7 +1277,6 @@ export default function Permitting() {
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-              <Button variant="outline" className="min-h-11" onClick={() => setShowDraftLibrary(true)}>Workflow drafts</Button>
               <details className="relative">
                 <summary className="min-h-11 inline-flex items-center gap-1 rounded-md border px-3 text-sm cursor-pointer select-none hover:bg-gray-50">Need help?</summary>
                 <div className="absolute right-0 z-50 mt-1 w-72 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-lg space-y-2">
@@ -1357,55 +1357,52 @@ export default function Permitting() {
                   setViewName(name || "");
                 }}
               />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-                  const rows = [
-                    ["Job", "Office", "Permit #", "Fee", "Fee status", "Paid date", "Payment link"],
-                    ...(lineItems || []).map((li) => [
-                      li.work_order_title || "", li.locality_name || "", li.permit_number || "",
-                      li.jurisdiction_fee_amount || "", li.jurisdiction_fee_status || "",
-                      li.jurisdiction_fee_paid_date || "", li.fee_payment_link || "",
-                    ]),
-                  ].map((r) => r.map(esc).join(",")).join("\r\n");
-                  const url = URL.createObjectURL(new Blob([rows], { type: "text/csv" }));
-                  const a = document.createElement("a");
-                  a.href = url; a.download = `permit-fees-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                className="gap-1 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
-                title="Export all permit fees as a CSV for accounting"
-              >
-                <FileDown className="w-4 h-4" /> Fees CSV
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => openJurisdictions(null)}
-                className="gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
-                title="Browse and manage reusable jurisdiction permitting knowledge without leaving Permitting"
-              >
-                <MapPin className="w-4 h-4" /> Jurisdictions
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setShowWorkflowDesigner(true)}
-                className="gap-1 border-violet-300 text-violet-800 hover:bg-violet-50"
-                title="AI-generate a reviewable permit workflow from approved rules"
-              >
-                <Sparkles className="w-4 h-4" /> Designer
-              </Button>
-              {isRegistered && currentUser?.role === 'admin' && (
-                <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
-                  <Settings className="w-4 h-4" /> Settings
-                </Button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" size="sm" variant="outline" className="gap-1" title="More permitting tools">
+                    <MoreHorizontal className="w-4 h-4" /> More
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => openJurisdictions(null)} className="gap-2">
+                    <MapPin className="w-4 h-4 text-purple-700" /> Jurisdictions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowWorkflowDesigner(true)} className="gap-2">
+                    <Sparkles className="w-4 h-4 text-violet-700" /> AI designer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowDraftLibrary(true)} className="gap-2">
+                    <FileDown className="w-4 h-4 text-slate-600 rotate-180" /> Workflow drafts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-2"
+                    onClick={() => {
+                      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                      const rows = [
+                        ["Job", "Office", "Permit #", "Fee", "Fee status", "Paid date", "Payment link"],
+                        ...(lineItems || []).map((li) => [
+                          li.work_order_title || "", li.locality_name || "", li.permit_number || "",
+                          li.jurisdiction_fee_amount || "", li.jurisdiction_fee_status || "",
+                          li.jurisdiction_fee_paid_date || "", li.fee_payment_link || "",
+                        ]),
+                      ].map((r) => r.map(esc).join(",")).join("\r\n");
+                      const url = URL.createObjectURL(new Blob([rows], { type: "text/csv" }));
+                      const a = document.createElement("a");
+                      a.href = url; a.download = `permit-fees-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <FileDown className="w-4 h-4 text-emerald-700" /> Fees CSV
+                  </DropdownMenuItem>
+                  {isRegistered && currentUser?.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowSettings(true)} className="gap-2">
+                        <Settings className="w-4 h-4 text-slate-600" /> Settings
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           {hasActiveFilters && (
