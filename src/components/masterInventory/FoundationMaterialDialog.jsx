@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
-import { MATERIAL_TYPES, fieldsFor } from "./foundationFieldSchema";
+import { MATERIAL_TYPES, fieldsFor, listFieldDraft, listFieldValue } from "./foundationFieldSchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 
@@ -38,6 +38,12 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
       ["id", "created_date", "updated_date", "created_by_id", "created_by"].forEach((key) => delete data[key]);
       data.material_type = type;
       data.show_in_foundation = true;
+      // `list` fields hold comma-separated drafts while editing; tokenize on
+      // save (blank -> [] = "unknown", never universal). A stored non-string
+      // value stays verbatim so validation can report it (fail-closed).
+      for (const f of fieldsFor(type)) {
+        if (f.type === "list") data[f.key] = listFieldValue(data[f.key]);
+      }
       if (id) {
         const live = await base44.entities.FoundationInventory.get(id);
         if (!live) {
@@ -103,13 +109,39 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
             {fieldsFor(type).map((f) => (
               <label key={f.key} className="text-xs text-gray-500">
                 {f.label}
-                <Input
-                  type={f.type}
-                  value={form[f.key] ?? ""}
-                  onChange={(e) =>
-                    set({ [f.key]: f.type === "number" ? catalogNumberInput(e.target.value) : e.target.value })
-                  }
-                />
+                {f.type === "select" ? (
+                  <select
+                    value={form[f.key] ?? ""}
+                    onChange={(e) => set({ [f.key]: e.target.value === "" ? null : e.target.value })}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+                  >
+                    <option value="">—</option>
+                    {(f.options || []).map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                    {/* A stored value outside the declared options stays
+                        verbatim so it is never silently remapped. */}
+                    {form[f.key] !== null && form[f.key] !== undefined && form[f.key] !== "" && !(f.options || []).some((o) => o.value === form[f.key]) && (
+                      <option value={form[f.key]}>{String(form[f.key])}</option>
+                    )}
+                  </select>
+                ) : f.type === "list" ? (
+                  <Input
+                    type="text"
+                    value={listFieldDraft(form[f.key])}
+                    onChange={(e) => set({ [f.key]: e.target.value })}
+                  />
+                ) : (
+                  <Input
+                    type={f.type}
+                    value={form[f.key] ?? ""}
+                    onChange={(e) =>
+                      set({ [f.key]: f.type === "number" ? catalogNumberInput(e.target.value) : e.target.value })
+                    }
+                  />
+                )}
               </label>
             ))}
           </div>
