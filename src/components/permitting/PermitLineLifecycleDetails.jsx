@@ -143,6 +143,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
 export default function PermitLineLifecycleDetails({ lineItem, locality = null, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
+  const lineOffice = locality?.offices?.find(o => o.id === lineItem.locality_office_id);
   const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
   const hasActiveCorrections = ["corrections_received", "working_corrections"].includes(correctionStatus);
   const storedCompletionNeedsRepair = lineItem?.status === "completed" && !isPermitLineEffectivelyComplete(lineItem);
@@ -241,16 +242,14 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
         </div>
       </div>
 
-      {locality && (locality.offices || []).length > 0 && (
+      {lineOffice && (
         <div className="mb-2 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-[11px] text-indigo-900">
-          {(locality.offices || []).map((o) => (
-            <div key={o.id || o.name} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-0.5">
-              <span className="font-semibold">{o.name || "Office"}</span>
-              {o.contact_phone && <a className="font-medium underline" href={`tel:${String(o.contact_phone).replace(/[^+\d]/g, "")}`}>Call {o.contact_phone}</a>}
-              {o.contact_website && <a className="font-medium underline" href={o.contact_website} target="_blank" rel="noopener noreferrer">Permit site ↗</a>}
-              {o.contact_address && <a className="font-medium underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(o.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a>}
-            </div>
-          ))}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="font-semibold">{lineOffice.name || "Office"}</span>
+            {lineOffice.contact_phone && <><span>·</span><a className="font-medium underline" href={`tel:${String(lineOffice.contact_phone).replace(/[^+\d]/g, "")}`}>Call {lineOffice.contact_phone}</a></>}
+            {lineOffice.contact_website && <><span>·</span><a className="font-medium underline" href={lineOffice.contact_website} target="_blank" rel="noopener noreferrer">Permit site ↗</a></>}
+            {lineOffice.contact_address && <><span>·</span><a className="font-medium underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(lineOffice.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a></>}
+          </div>
         </div>
       )}
 
