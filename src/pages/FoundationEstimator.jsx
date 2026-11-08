@@ -1344,7 +1344,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
-                  <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} savedSectionTotal={savedSectionTotal} sectionTotal={sectionTotal} />
+                  <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} savedSectionTotal={savedSectionTotal} sectionTotal={sectionTotal} project={project} calc={calc} />
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <div className="flex justify-between">
                       <span>Signage cabinets</span>
