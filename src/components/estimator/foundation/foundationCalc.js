@@ -18,6 +18,7 @@ import { calcWallCaps } from "./wallCapCalculator";
 import { foundationAssemblyCatalogIssues, foundationItemCatalogIssues, hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
 import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from "./foundationInputValidation";
+import { foundationConstructionWarnings } from "./foundationConstructionChecks";
 import { landscapeSummary } from "./landscapeMaterials";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
@@ -430,6 +431,12 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
     ? savedConcreteDelivery(savedProject)
     : deliveryCheck;
   if (deliveryCheck?.issues?.length) catalogIssues.push(...deliveryCheck.issues);
+  // Advisory construction checks (CMP-B16) — verify-style warnings about
+  // authored assumptions and incompatible choices. They live on their own
+  // channel and never feed itemPricing/inputBlocked/pricingBlocked, so an
+  // advisory warning can never pause save or estimate handoff.
+  const constructionWarnings = foundationConstructionWarnings(project, inventory,
+    { items, deliveryCheck });
   const walls = wallCalc.walls;
   const poles = poleCalc.poles;
   const wallCaps = calcWallCaps(project.wall_caps, inventory,
@@ -498,7 +505,7 @@ export function calcProject(project, inventory, settings = {}, options = {}) {
   totals.grand_total = itemsTotal === null || wallTotal === null || polesTotal === null || equipmentTotal === null || wallCaps.total === null ? null : itemsTotal + wallTotal + polesTotal + equipmentTotal + wallCaps.total;
 
   return {
-    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues,
+    items, equipment, walls, poles, wallCaps: wallCaps.caps, totals, delivery, itemPricing, polePricing: poleCalc.polePricing, wallPricing: wallCalc.wallPricing, equipmentPricing, signageCabinetPricing, landscapePricing, catalogIssues, inputIssues, constructionWarnings,
   };
 }
 
