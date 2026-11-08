@@ -295,6 +295,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const inputIssues = calc?.inputIssues || [];
   const inputBlocked = inputIssues.length > 0;
   const pricingBlocked = catalogBlocked || inputBlocked;
+  // Advisory construction checks (CMP-B16) — verify-style warnings only;
+  // they render on the diagnostics surface but never block save or handoff.
+  const constructionWarnings = calc?.constructionWarnings || [];
   const [catalogReloading, setCatalogReloading] = useState(false);
   const catalogReloadRef = useRef(null);
 
@@ -1044,6 +1047,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             <ul className="list-disc pl-5 mt-1 space-y-0.5">
               {assemblyIssues.map((issue, i) => (
                 <li key={`${issue.code}-${issue.kind}-${issue.componentId || ""}-${issue.parentId || ""}-${i}`}>{issue.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {constructionWarnings.length > 0 && (
+          <div role="status" className="mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[12px] text-blue-900">
+            <span className="font-semibold">Construction checks — verify before build</span>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              {constructionWarnings.map((warning, i) => (
+                <li key={`${warning.code}-${warning.kind}-${warning.index ?? ""}-${i}`}>{warning.message}</li>
               ))}
             </ul>
           </div>
