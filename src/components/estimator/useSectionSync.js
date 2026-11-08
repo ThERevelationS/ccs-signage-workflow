@@ -55,9 +55,38 @@ export async function refreshSectionSnapshots(lineItems) {
   return refreshed;
 }
 
-// Owned sections are created by the estimate, so removing one removes its record.
+// Mirrors the canonical not-found detection in builderEntityPersistence
+// (isEntityNotFoundError): a genuinely-missing record is "already gone" while
+// every other fetch failure stays an error so a caller never reports a
+// section removed when it was not.
+const isNotFound = (e) => {
+  const status = Number(e?.status || e?.response?.status || e?.response?.statusCode || e?.data?.status || 0);
+  if (status === 404) return true;
+  const message = [
+    e?.message,
+    e?.response?.data?.message,
+    e?.response?.data?.error,
+    e?.data?.message,
+    e?.data?.error,
+  ].map((v) => String(v || "").toLowerCase()).join(" ");
+  return message.includes("not found") || message.includes("does not exist");
+};
+
+// Owned sections are created by the estimate, so removing one removes its
+// record. (O-014u note: this export had no callers at HEAD 37d401b5a and was
+// a latent swallowed-delete defect — fixed rather than removed so the
+// documented API stays available but can never fail silently.)
+// Returns true when the record is deleted or already gone, false when the
+// line is not an owned section (nothing to delete). Transient delete errors
+// rethrow so the caller can surface or retry them.
 export async function deleteOwnedSection(line) {
   const mod = getModule(line?.module_key);
-  if (!line?.owned || !mod || !line.project_id) return;
-  await base44.entities[mod.entity].delete(line.project_id).catch(() => null);
+  if (!line?.owned || !mod || !line.project_id) return false;
+  try {
+    await base44.entities[mod.entity].delete(line.project_id);
+  } catch (e) {
+    if (isNotFound(e)) return true;
+    throw e;
+  }
+  return true;
 }
