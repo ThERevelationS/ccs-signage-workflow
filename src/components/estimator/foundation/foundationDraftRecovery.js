@@ -192,3 +192,229 @@ export function createFoundationDraftStore({ getStorage, ownerId, sourceId, esti
 
   return { read, write, clear };
 }
+
+// ---------------------------------------------------------------------------
+// Draft ↔ saved-source merge-conflict model (CMP-A04 tail).
+// Pure comparison/summary helpers only — no storage, page, router, or entity
+// logic. The dialog renders what each side holds; the store keeps its
+// write/CAS-clear contract so a resolution never silently drops either side.
+//
+// Semantics that shape the model:
+//   * A draft envelope anchors to the saved revision it was written against
+//     (env.baseUpdatedAt). When that anchor no longer equals the record's
+//     current updated_date, a concurrent save moved underneath the draft —
+//     that is the only divergent-base signal a browser tab can ever see.
+//   * Draft restore is an OVERLAY through the page's commit path
+//     ({...current, ...draft}): fields the draft never recorded keep the
+//     current editor values, so "saved has it, draft lacks it" is a
+//     keep-saved-by-omission field — displayed, never counted as a conflict.
+//   * There is no true three-way merge: the envelope stores the base revision
+//     STRING, not the base content, so "who changed" cannot be proven per
+//     field. Resolution choices are therefore honest whole-draft choices:
+//     keep-draft (draft fields win on overlay), keep-saved (discard draft),
+//     keep-both (saved stays open; the draft is re-anchored as a fresh offer).
+// ---------------------------------------------------------------------------
+
+// Same normalize/compare discipline as sourcePatchMatches — key-sorted,
+// whitespace-normalized strings, 1e-6 numeric tolerance.
+const normalizeDraftValue = (value) => {
+  if (Array.isArray(value)) return value.map(normalizeDraftValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = normalizeDraftValue(value[key]);
+    return out;
+  }, {});
+};
+
+export function sameFoundationDraftValue(a, b) {
+  const emptyA = a === undefined || a === null || a === "";
+  const emptyB = b === undefined || b === null || b === "";
+  if (emptyA && emptyB) return true;
+  if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+    return Math.abs(Number(a) - Number(b)) <= 0.000001;
+  }
+  if (typeof a === "string" && typeof b === "string") {
+    return String(a).trim().replace(/\s+/g, " ") === String(b).trim().replace(/\s+/g, " ");
+  }
+  return JSON.stringify(normalizeDraftValue(a ?? null)) === JSON.stringify(normalizeDraftValue(b ?? null));
+}
+
+const DRAFT_FIELD_LABELS = {
+  project_name: "Section name",
+  notes: "Notes",
+  assembly_schema_version: "Assembly schema",
+  items: "Foundation items",
+  walls: "Masonry walls",
+  poles: "Poles",
+  wall_caps: "Wall caps",
+  signage_cabinets: "Signage cabinets",
+  selected_equipment: "Equipment",
+  landscape: "Site landscape",
+  project_concrete_type: "Concrete type",
+  project_concrete_admixtures: "Concrete admixtures",
+  excavation_method: "Excavation method",
+  selected_concrete_id: "Concrete supplier",
+  ai_engineering_recommendation: "AI recommendation",
+  ai_engineering_data: "AI review note",
+  design_basis: "Design basis",
+  site_hazard: "Site / hazard notes",
+  customer_markup_percent: "Customer markup %",
+  customer_price_override: "Customer price override",
+  customer_pricing: "Applied pricing tier",
+  concrete_cost_per_cy: "Concrete $/CY",
+  rebar_cost_per_ft: "Rebar $/ft",
+  forming_materials_cost_spread_foot: "Forming materials $ (spread foot)",
+  forming_materials_cost_pillar: "Forming materials $ (pillar)",
+  min_excavation_time_hours: "Min excavation hours",
+  hand_dig_excavation_cost_per_cy: "Hand-dig excavation $/CY",
+  equipment_excavation_cost_per_cy: "Equipment excavation $/CY",
+  forming_labor_rate: "Forming labor rate",
+  pouring_labor_rate: "Pouring labor rate",
+  finishing_labor_rate: "Finishing labor rate",
+  hand_dig_labor_rate: "Hand-dig labor rate",
+  equipment_excavation_labor_rate: "Equipment excavation labor rate",
+};
+
+export function foundationDraftFieldLabel(field) {
+  return DRAFT_FIELD_LABELS[field] || field;
+}
+
+const clip = (text, max = 56) => {
+  const t = String(text);
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+};
+
+const rowCountLabel = (field, n) => {
+  const labels = {
+    items: ["foundation item", "foundation items"],
+    walls: ["wall", "walls"],
+    poles: ["pole", "poles"],
+    wall_caps: ["wall cap", "wall caps"],
+    signage_cabinets: ["signage cabinet", "signage cabinets"],
+    selected_equipment: ["equipment row", "equipment rows"],
+    project_concrete_admixtures: ["admixture", "admixtures"],
+  };
+  const [one, many] = labels[field] || ["row", "rows"];
+  return `${n} ${n === 1 ? one : many}`;
+};
+
+// Display-safe one-line summary of one side's value for a draft field. Never
+// claims equality (the diff row carries that) — this is a shape/size hint so a
+// reviewer can tell "3 items" from "2 items" and an applied tier from markup.
+export function summarizeFoundationDraftField(field, value) {
+  if (value === undefined) return { kind: "absent", text: "—" };
+  if (value === null) return { kind: "value", text: "null" };
+  if (Array.isArray(value)) return { kind: "rows", count: value.length, text: rowCountLabel(field, value.length) };
+  if (typeof value === "object") {
+    if (field === "landscape") {
+      const cells = value.cells && typeof value.cells === "object" ? Object.keys(value.cells).length : 0;
+      return { kind: "record", text: `landscape grid — ${cells} filled ${cells === 1 ? "cell" : "cells"}` };
+    }
+    if (field === "customer_pricing") {
+      if (value.applied === true) {
+        const tier = Number.isFinite(Number(value.tier_number)) ? `tier ${value.tier_number}` : "a pricing tier";
+        return { kind: "record", text: `Applied ${tier}` };
+      }
+      return { kind: "record", text: "No tier applied" };
+    }
+    if (field === "ai_engineering_data") return { kind: "record", text: "AI review note (recorded)" };
+    const keys = Object.keys(value).length;
+    return { kind: "record", text: `record (${keys} ${keys === 1 ? "field" : "fields"})` };
+  }
+  if (typeof value === "boolean") return { kind: "value", text: value ? "yes" : "no" };
+  return { kind: "value", text: clip(value) };
+}
+
+// Per-field diff over FOUNDATION_DRAFT_FIELDS — the union of keys present on
+// either side. Status vocabulary:
+//   same        — both sides equal (or both absent)
+//   diverged    — both present with different values (a real conflict row)
+//   draft_only  — draft recorded a value the saved record does not carry
+//   saved_only  — saved record carries a value the draft never recorded;
+//                 a draft restore OVERLAYS draft fields, so this value is
+//                 untouched by either restore choice — displayed for honesty,
+//                 never counted toward the conflict
+export function diffFoundationDraftFields({ draft, saved }) {
+  const safeDraft = isPlain(draft) ? draft : {};
+  const safeSaved = isPlain(saved) ? saved : {};
+  const rows = [];
+  for (const field of FOUNDATION_DRAFT_FIELDS) {
+    const hasDraft = Object.hasOwn(safeDraft, field);
+    const hasSaved = Object.hasOwn(safeSaved, field);
+    if (!hasDraft && !hasSaved) continue;
+    const dv = hasDraft ? safeDraft[field] : undefined;
+    const sv = hasSaved ? safeSaved[field] : undefined;
+    let status;
+    if (hasDraft && hasSaved) status = sameFoundationDraftValue(dv, sv) ? "same" : "diverged";
+    else status = hasDraft ? "draft_only" : "saved_only";
+    rows.push({
+      field,
+      label: foundationDraftFieldLabel(field),
+      status,
+      draft: summarizeFoundationDraftField(field, dv),
+      saved: summarizeFoundationDraftField(field, sv),
+    });
+  }
+  return rows;
+}
+
+// Whole-conflict summary. `saved` is the persisted/acknowledged project record
+// (the side a CAS conflict or a moved draft anchor is judged against);
+// `baseUpdatedAt`/`draftSavedAt` come off the draft envelope.
+// Statuses:
+//   in_sync              — anchor matches AND no field differences (draft is the
+//                          saved baseline verbatim; nothing to resolve)
+//   edits_only           — anchor matches, fields differ (ordinary unsent
+//                          edits; the normal offer flow, not a merge conflict)
+//   base_moved_identical — anchor stale but content identical to saved; only
+//                          the anchor needs rebasing
+//   conflict             — anchor stale AND >=1 diverged/draft_only field
+//   unverifiable         — a side could not be compared (non-record draft, or
+//                          no saved record supplied); the dialog shows what it
+//                          can and never diffs blind
+export function summarizeFoundationDraftConflict({ draft, saved, baseUpdatedAt = null, draftSavedAt = null } = {}) {
+  const savedUpdatedAt = isPlain(saved) && typeof saved.updated_date === "string" ? saved.updated_date : null;
+  const baseMoved = !!baseUpdatedAt && !!savedUpdatedAt && baseUpdatedAt !== savedUpdatedAt;
+  const base = {
+    baseUpdatedAt: baseUpdatedAt ?? null,
+    savedUpdatedAt,
+    draftSavedAt: draftSavedAt ?? null,
+    baseMoved,
+  };
+  if (!isPlain(draft)) {
+    return { ...base, status: "unverifiable", reason: "draft_unreadable", fields: [], counts: { diverged: 0, draftOnly: 0, savedOnly: 0, same: 0 } };
+  }
+  if (!isPlain(saved)) {
+    return { ...base, status: "unverifiable", reason: "saved_unreadable", fields: [], counts: { diverged: 0, draftOnly: 0, savedOnly: 0, same: 0 } };
+  }
+  const fields = diffFoundationDraftFields({ draft, saved });
+  const counts = fields.reduce((acc, row) => {
+    if (row.status === "diverged") acc.diverged += 1;
+    else if (row.status === "draft_only") acc.draftOnly += 1;
+    else if (row.status === "saved_only") acc.savedOnly += 1;
+    else acc.same += 1;
+    return acc;
+  }, { diverged: 0, draftOnly: 0, savedOnly: 0, same: 0 });
+  const differs = counts.diverged + counts.draftOnly;
+  const status = differs > 0
+    ? (baseMoved ? "conflict" : "edits_only")
+    : (baseMoved ? "base_moved_identical" : "in_sync");
+  return { ...base, status, fields, counts };
+}
+
+// True when a conflict summary is a state the user should actively resolve
+// rather than pass through the ordinary restore/discard offer.
+export function foundationDraftConflictNeedsReview(summary) {
+  return ["conflict", "base_moved_identical", "unverifiable"].includes(summary?.status);
+}
+
+// Build the project-shaped payload for a "keep both" re-anchor: the draft's
+// recorded fields verbatim over the store's required identity. Writing this
+// through store.write() re-bases the same draft content onto the CURRENT saved
+// revision (baseUpdatedAt = the acknowledged updated_date), converting a
+// stale-anchored draft into a fresh draft the reviewer explicitly chose to
+// keep — it remains an ordinary restorable offer afterwards.
+export function foundationDraftRebaseProject({ draft, sourceId } = {}) {
+  if (!isPlain(draft) || !validId(sourceId)) return null;
+  return { id: sourceId, ...cloneChecked(draft) };
+}
