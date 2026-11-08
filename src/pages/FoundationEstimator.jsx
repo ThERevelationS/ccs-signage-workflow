@@ -32,6 +32,7 @@ import FoundationTemplateDialog from "@/components/estimator/foundation/Foundati
 import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
 import { createSceneHistory, sceneLayoutAnchor } from "@/components/estimator/foundation/foundationSceneHistory";
+import { createSceneSelection } from "@/components/estimator/foundation/foundationSceneSelection";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
 import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPricingPanel";
