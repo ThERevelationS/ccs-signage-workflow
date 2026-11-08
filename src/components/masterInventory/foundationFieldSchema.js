@@ -3,6 +3,9 @@ export const MATERIAL_TYPES = [
   { value: "concrete_service", label: "Ready-Mix Concrete" },
   { value: "bagged_concrete", label: "Bagged Concrete" },
   { value: "rebar", label: "Rebar" },
+  // O-021 / CMP-B07: rebar supports (chairs / stands / bolsters) sit next to
+  // rebar in every type picker — same reinforcement family, own catalog type.
+  { value: "rebar_support", label: "Rebar Support" },
   { value: "forming_material", label: "Forming Material" },
   { value: "excavation_equipment", label: "Excavation Equipment" },
   { value: "pole", label: "Pole" },
@@ -28,6 +31,33 @@ const BY_TYPE = {
   ],
   bagged_concrete: [{ key: "minimum_cost", label: "Minimum cost", type: "number" }],
   rebar: [{ key: "rebar_size", label: "Rebar size (e.g. #4)", type: "text" }],
+  // O-021 / CMP-B07: the ten rebar_support_* catalog fields plus the COMMON
+  // name/description/supplier/unit/cost_per_unit row. Field descriptor types:
+  //   • "select" — renders a native <select> with the given options plus a
+  //     blank option that clears the field to null (untyped, never guessed);
+  //     a stored value outside the options list is shown verbatim.
+  //   • "list"   — a comma-separated text draft parsed into a string array on
+  //     save via listFieldValue (blank clears to [] = "unknown, not
+  //     universal"; a stored non-string/non-array value passes through
+  //     verbatim so validation can report it).
+  rebar_support: [
+    {
+      key: "rebar_support_kind", label: "Kind", type: "select", options: [
+        { value: "chair", label: "Chair" },
+        { value: "stand", label: "Stand" },
+        { value: "bolster", label: "Bolster" },
+      ],
+    },
+    { key: "rebar_support_height_inches", label: "Height (in)", type: "number" },
+    { key: "rebar_support_height_min_inches", label: "Height min (in, adjustable)", type: "number" },
+    { key: "rebar_support_height_max_inches", label: "Height max (in, adjustable)", type: "number" },
+    { key: "rebar_support_footprint_length_inches", label: "Footprint length (in)", type: "number" },
+    { key: "rebar_support_footprint_width_inches", label: "Footprint width (in)", type: "number" },
+    { key: "rebar_support_material", label: "Material (steel / plastic / concrete)", type: "text" },
+    { key: "rebar_support_pack_size", label: "Pack size (units per pack)", type: "number" },
+    { key: "rebar_support_compatible_bar_sizes", label: "Compatible bar sizes (comma-separated, e.g. #3, #4)", type: "list" },
+    { key: "rebar_support_placement_notes", label: "Placement notes / constraints", type: "text" },
+  ],
   forming_material: [
     { key: "lumber_size", label: "Lumber size", type: "text" },
     { key: "thickness_inches", label: "Thickness (in)", type: "number" },
@@ -73,3 +103,16 @@ const BY_TYPE = {
 export const fieldsFor = (type) => [...COMMON, ...(BY_TYPE[type] || [])];
 
 export const typeLabel = (type) => MATERIAL_TYPES.find((t) => t.value === type)?.label || type;
+
+// ─── "list" field drafts (O-021 / CMP-B07) ─────────────────────────────────
+// Display draft for a `list` field: a stored string array joins into a
+// comma-separated draft; anything else renders verbatim (absent -> "").
+export const listFieldDraft = (value) => (Array.isArray(value) ? value.join(", ") : (value ?? ""));
+
+// Save-side parse for a `list` field: a string draft tokenizes on commas
+// (blank clears to [] — "compatibility unknown", never universal); arrays
+// pass through untouched; a stored non-string/non-array value stays VERBATIM
+// so availability validation reports it instead of laundering it into a list.
+export const listFieldValue = (value) => (typeof value === "string"
+  ? value.split(",").map((token) => token.trim()).filter(Boolean)
+  : value);
