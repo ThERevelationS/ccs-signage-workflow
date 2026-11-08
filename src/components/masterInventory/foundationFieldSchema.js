@@ -85,8 +85,12 @@ const BY_TYPE = {
     { key: "brick_color", label: "Color", type: "text" },
   ],
   wall_material: [
+    // CMP-D03: subtype picks the quantity method — brick/cinderblock/stone are
+    // unit masonry (priced per unit from the unit dims below); "concrete" is
+    // poured, priced per cubic yard on wall thickness alone.
+    { key: "wall_material_subtype", label: "Subtype (brick / cinderblock / stone / concrete)", type: "text" },
     { key: "wall_unit_length_inches", label: "Unit length (in)", type: "number" },
-    { key: "wall_unit_width_inches", label: "Unit width (in)", type: "number" },
+    { key: "wall_unit_width_inches", label: "Unit width (in) — wall thickness for poured concrete", type: "number" },
     { key: "wall_unit_height_inches", label: "Unit height (in)", type: "number" },
     { key: "wall_color", label: "Color", type: "text" },
   ],
