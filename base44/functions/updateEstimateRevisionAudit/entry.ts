@@ -38,7 +38,10 @@ Deno.serve(async (req) => {
     const action = text(body?.action, 80);
     const estimateId = text(body?.estimate_id, 128);
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
-    const EstimateUser = base44.entities.AllInOneEstimate;
+    // AllInOneEstimate is backend-only RLS — the caller-scoped client can
+    // never read it, so this verification read must go through the service
+    // role like the sibling RevisionService handle (auth is checked above).
+    const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;
 
     if (!estimateId) return Response.json({ error: 'Estimate id is required.' }, { status: 400 });
 
@@ -62,7 +65,7 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This Estimate revision changed in another session. Reload before completing it.' }, { status: 409 });
       }
 
-      const estimate = await EstimateUser.get(estimateId).catch(() => null);
+      const estimate = await EstimateService.get(estimateId).catch(() => null);
       if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified before completing its revision.' }, { status: 404 });
       if (expectedEstimateUpdatedDate && String(estimate.updated_date || '') !== expectedEstimateUpdatedDate) {
         return Response.json({ error: 'This estimate changed in another session. Reload before completing its revision.' }, { status: 409 });
