@@ -37,7 +37,7 @@ import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomer
 import { hasFoundationCostSnapshot } from "@/components/estimator/foundation/foundationCatalogIntegrity";
 import { calcProject, money, captureConcreteDeliverySnapshot } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
-import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { recordBuilderSave, foundationRecordSavedTotal } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject, sourcePatchMatches } from "@/components/estimator/builder/sourceProjectPersistence";
 import { loadFoundationBuilderRecovery, verifyFoundationRecoverySource } from "@/components/estimator/foundation/foundationBuilderRecovery";
@@ -574,6 +574,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const sectionTotal = calc.totals.grand_total === null || cabinetCost === null || landscapeCost === null
     ? null
     : calc.totals.grand_total + cabinetCost + landscapeCost;
+
+  // Saved-vs-current reconciliation (CMP-A10): the acknowledged record's
+  // persisted 12-field split-total sum — the same number the linked estimate
+  // stored as live_total_snapshot at the last Builder save (manual add-on
+  // Product parts live only on the estimate side, so record-sum is the right
+  // comparator for this module-scoped sectionTotal). Null for a never-priced
+  // record; the totals panel renders the advisory delta, never blocking.
+  const savedSectionTotal = foundationRecordSavedTotal(savedSourceProject);
 
   const undo = () => {
     const live = currentEditorRef.current;
@@ -1276,7 +1284,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
-                  <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} />
+                  <FoundationTotals totals={calc.totals} pricingUnavailable={pricingBlocked} savedSectionTotal={savedSectionTotal} sectionTotal={sectionTotal} />
                   <div className="mt-3 space-y-1 text-[12px] text-gray-600">
                     <div className="flex justify-between">
                       <span>Signage cabinets</span>
