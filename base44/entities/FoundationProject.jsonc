@@ -177,19 +177,23 @@
             "type": "number"
           },
           "selected_pole_id": {
-            "type": "string"
+            "type": "string",
+            "description": "LEGACY item-level pole selection (CMP-E01). Never priced \u2014 the canonical representation is project.poles; migrate via the Poles panel."
           },
           "pole_offset_from_bottom_inches": {
             "type": "number",
-            "default": 0
+            "default": 0,
+            "description": "LEGACY item-level pole offset above the footing bottom. Not interpreted as embedment."
           },
           "pole_total_height_inches": {
             "type": "number",
-            "default": 0
+            "default": 0,
+            "description": "LEGACY item-level total pole height in inches. Never priced \u2014 see project.poles."
           },
           "include_pole_painting": {
             "type": "boolean",
-            "default": false
+            "default": false,
+            "description": "LEGACY item-level pole-painting flag; the canonical flag lives on project.poles rows."
           },
           "include_wall_material": {
             "type": "boolean",
@@ -306,10 +310,12 @@
             "type": "number"
           },
           "pole_cost": {
-            "type": "number"
+            "type": "number",
+            "description": "LEGACY item-level pole cost snapshot \u2014 never summed into totals (poles are priced on project.poles only, CMP-E01)."
           },
           "pole_painting_cost": {
-            "type": "number"
+            "type": "number",
+            "description": "LEGACY item-level pole painting cost snapshot \u2014 never summed into totals."
           },
           "brick_count": {
             "type": "number"
@@ -412,10 +418,36 @@
             "type": "number"
           },
           "height_inches": {
-            "type": "number"
+            "type": "number",
+            "description": "Height of the pole above finished grade in inches \u2014 a distinct required quantity (CMP-E02)."
           },
           "y_offset_inches": {
-            "type": "number"
+            "type": "number",
+            "description": "Legacy spelling of embedment below grade in inches; the canonical field is embedment_inches. When both are recorded they must agree."
+          },
+          "embedment_inches": {
+            "type": "number",
+            "description": "Canonical depth of the pole below finished grade in inches; supersedes the legacy y_offset_inches spelling of the same quantity."
+          },
+          "base_offset_inches": {
+            "type": "number",
+            "description": "Height of the pole's base above finished grade (wall/pier mounting). Placement metadata only \u2014 never contributes to billed material length."
+          },
+          "total_length_inches": {
+            "type": "number",
+            "description": "Explicit purchased/billed total stock length override; when recorded it is the billed length instead of height above grade plus embedment."
+          },
+          "required_length_inches": {
+            "type": "number",
+            "description": "Calculated billed material length snapshot \u2014 the explicit total stock length when recorded, else height above grade plus embedment."
+          },
+          "stock_pieces": {
+            "type": "integer",
+            "description": "Calculated stock-piece count under the catalog stock_price pricing mode; null under per-foot pricing."
+          },
+          "pole_shape": {
+            "type": "string",
+            "description": "Actual cross-section shape (round/square/rectangular/elliptical/other or a catalog value); falls back to the catalog row's pole_shape when unrecorded."
           },
           "component_id": {
             "type": "string"
@@ -428,6 +460,43 @@
           },
           "paint": {
             "type": "boolean"
+          },
+          "include_pole_painting": {
+            "type": "boolean",
+            "default": false,
+            "description": "Canonical pole-painting flag consumed by the priced path (the 'paint' boolean is a legacy alias not read by pricing)."
+          },
+          "custom_cost_per_unit": {
+            "type": "number",
+            "description": "Per-pole rate override \u2014 $/linear foot or $/stock piece depending on the catalog row's pole_pricing_mode."
+          },
+          "pole_name": {
+            "type": "string",
+            "description": "Calculated snapshot of the resolved catalog material name."
+          },
+          "pole_cost": {
+            "type": "number",
+            "description": "Calculated pole material cost snapshot."
+          },
+          "pole_painting_cost": {
+            "type": "number",
+            "description": "Calculated pole painting cost snapshot."
+          },
+          "total_cost": {
+            "type": "number",
+            "description": "Calculated pole + painting cost snapshot."
+          },
+          "migrated_from": {
+            "type": "string",
+            "description": "Provenance marker; 'legacy_item' when the row was created from legacy item-level pole fields (CMP-E01)."
+          },
+          "source_item_component_id": {
+            "type": "string",
+            "description": "Foundation item this pole was migrated from, when migrated_from is set."
+          },
+          "legacy_pole_offset_from_bottom_inches": {
+            "type": "number",
+            "description": "Preserved legacy item field \u2014 offset of the pole above the footing bottom. Never interpreted as embedment."
           },
           "rotation_degrees": {
             "type": "number"
