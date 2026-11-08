@@ -1,6 +1,8 @@
 
 // These are the rates the ported SignEstimate Pro math actually reads (Settings keys).
 // They are shop-wide, so they are shown here read-only — edit them in Estimator Settings.
+import FoundationDesignBasisPanel from "./FoundationDesignBasisPanel";
+
 const RATES = [
   { key: "foundation_main_labor_rate", label: "Main labor $/hr", def: 60 },
   { key: "foundation_pouring_cost_per_cy", label: "Pouring $/CY", def: 15 },
@@ -18,6 +20,7 @@ const RATES = [
 
 export default function FoundationRatesPanel({ settings = {}, project, onChange }) {
   return (
+    <>
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="font-semibold text-gray-900">Rates in Use</h2>
@@ -47,5 +50,10 @@ export default function FoundationRatesPanel({ settings = {}, project, onChange 
         </select>
       </label>
     </div>
+    {/* O-104/O-105 — project design-basis + site/hazard capture mounts on the
+        project-level settings surface and writes through the same patch
+        contract (project.design_basis / project.site_hazard). */}
+    <FoundationDesignBasisPanel project={project} onChange={onChange} />
+    </>
   );
 }
