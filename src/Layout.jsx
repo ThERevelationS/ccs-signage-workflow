@@ -489,11 +489,16 @@ function LayoutContent({ children }) {
   const handleNavDragStart = () => setNavDragging(true);
 
   // Live drag-hover over a folder pill → ring highlight + auto-open flyout.
+  // Hysteresis: once a folder is "armed" it stays armed until the pointer
+  // reaches a DIFFERENT folder — page/empty hovers keep the current target.
+  // Without this, hovering the boundary between a pill and a page button
+  // flickers the combine target every frame → whole-shell re-render per
+  // frame → the drag effectively locks up.
   const handleNavDragUpdate = (update) => {
     const target = update?.combine?.draggableId ? String(update.combine.draggableId) : "";
     const id = isFolderToken(target) ? tokenFolderId(target)
       : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
-    setDragHoverFolder(id);
+    setDragHoverFolder((prev) => (id && id !== prev ? id : prev));
   };
 
   // Hidden pages keep their tail slot in the saved order.
