@@ -72,3 +72,44 @@ export function assertFoundationBuilderAcknowledgment({ sourceProject, estimateI
     throw new Error("A previous Builder mutation may have been recovered, but this source revision is not yet synchronized. Review and retry Save.");
   }
 }
+/**
+ * Resolve whether a persisted builder_sync_attempt receipt may proceed past
+ * the save-time gate. The receipt names the estimate context that was being
+ * synchronized when the source last saved:
+ *   - same estimateId -> proceed (the pending op belongs to this save);
+ *   - a different estimate that can still be read -> block; the pending
+ *     operation must be resumed in its own context first;
+ *   - a different estimate that is definitively absent -> the pending op can
+ *     never complete, so the orphaned receipt may be retired with this save
+ *     (caller writes builder_sync_attempt: null through the same CAS patch);
+ *   - anything unverifiable -> stay blocked (fail closed).
+ * `getEstimate` is the caller's estimate point-read (staffEntities
+ * AllInOneEstimate.get); it resolves to a record, or rejects/absent for a
+ * missing id. A rejection with an HTTP-404-style status is treated as
+ * definitively absent — the same contract staffDataRead itself uses.
+ */
+export async function resolveFoundationSyncReceiptForSave({ project, estimateId, getEstimate }) {
+  const prior = project?.builder_sync_attempt;
+  if (prior === undefined || prior === null) return { ok: true, clearStaleReceipt: false };
+  if (!attemptShapeOk(prior) || prior.source_project_id !== project?.id) {
+    return { ok: false, error: "An unrecognised Builder sync receipt blocks saving. Reload and retry." };
+  }
+  if (!!estimateId && prior.estimate_id === estimateId) {
+    return { ok: true, clearStaleReceipt: false };
+  }
+  if (typeof getEstimate !== "function") {
+    return { ok: false, error: "This project's Builder sync receipt belongs to a different estimate. Open the linked estimate to review and save it first." };
+  }
+  const named = await Promise.resolve()
+    .then(() => getEstimate(prior.estimate_id))
+    .then((row) => row || null)
+    .catch((error) => (Number(error?.status) === 404 ? null : undefined));
+  if (named === undefined) {
+    return { ok: false, error: "The estimate named by the saved Builder sync receipt could not be verified. Reload and retry." };
+  }
+  if (named) {
+    return { ok: false, error: "This project's Builder sync receipt belongs to a different estimate. Open the linked estimate to review and save it first." };
+  }
+  return { ok: true, clearStaleReceipt: true };
+}
+
