@@ -316,10 +316,22 @@ export default function EstimateDetail() {
         archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
       };
       try {
-        await staffEntities.AllInOneEstimate.update(secondary.id, {
+        // update() is not an allowed op on estimates — archive through the
+        // same field-level CAS helper the queue archive path uses, anchored
+        // to the secondary's loaded version so a drifted/trashed row throws
+        // (and reaches the alert below) instead of silently skipping.
+        const mergeArchiveFields = {
           status: secondaryAfter.status,
           archived_at: secondaryAfter.archived_at,
           archived_reason: secondaryAfter.archived_reason,
+        };
+        await replaceEstimateFieldsIfUnchanged({
+          entity: staffEntities.AllInOneEstimate,
+          estimateId: secondary.id,
+          expectedFields: expectedEstimateFields(secondary, mergeArchiveFields),
+          guardFields: { updated_date: secondary.updated_date },
+          nextFields: mergeArchiveFields,
+          label: "Estimate merge archive",
         });
         await ensureEstimateLifecycleRevision({
           idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,
