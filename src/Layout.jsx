@@ -358,8 +358,10 @@ function LayoutContent({ children }) {
 
   const [navMenu, setNavMenu] = useState(null);   // {x,y,kind:'bar'|'folder'|'page', folderId?, url?}
   const [navEditor, setNavEditor] = useState(null); // {mode:'folder'|'page', isNew?, folderId?, url?}
-  const [dragHoverFolder, setDragHoverFolder] = useState(null);
-  const [navDragging, setNavDragging] = useState(false);
+  // Drag state lives in a plain global — NO React state may change during a
+  // drag lifecycle (onDragStart/Update re-renders mid-flight can kill the
+  // active drag with "Cannot stop drag when no active drag").
+  const navDragFlag = (v) => { if (v === undefined) return window.__ccsNavDragging; window.__ccsNavDragging = v; };
 
   const persistNavState = useCallback((order, folders) => {
     setNavOrder(order);
@@ -406,8 +408,7 @@ function LayoutContent({ children }) {
 
   const handleNavReorder = (result) => {
     const { source, destination, draggableId, combine } = result;
-    setDragHoverFolder(null);
-    setNavDragging(false);
+    navDragFlag(false);
     const state = navState();
 
     // Combine drop: a page released on a folder pill/group header joins that
@@ -486,20 +487,10 @@ function LayoutContent({ children }) {
     }
   };
 
-  const handleNavDragStart = () => setNavDragging(true);
-
-  // Live drag-hover over a folder pill → ring highlight + auto-open flyout.
-  // Hysteresis: once a folder is "armed" it stays armed until the pointer
-  // reaches a DIFFERENT folder — page/empty hovers keep the current target.
-  // Without this, hovering the boundary between a pill and a page button
-  // flickers the combine target every frame → whole-shell re-render per
-  // frame → the drag effectively locks up.
-  const handleNavDragUpdate = (update) => {
-    const target = update?.combine?.draggableId ? String(update.combine.draggableId) : "";
-    const id = isFolderToken(target) ? tokenFolderId(target)
-      : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
-    setDragHoverFolder((prev) => (id && id !== prev ? id : prev));
-  };
+  const handleNavDragStart = () => navDragFlag(true);
+  // Intentionally no onDragUpdate handler — updating state mid-drag re-renders
+  // the DnD tree and can abort the drag. Combine targets and open folder
+  // lists give all the feedback needed.
 
   // Hidden pages keep their tail slot in the saved order.
   const hiddenTail = () => orderedNavItems.filter((i) => navHidden.includes(i.url)).map((i) => i.url);
@@ -1465,7 +1456,7 @@ function LayoutContent({ children }) {
               className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}
               onContextMenu={handleBarContextMenu}
             >
-              <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate} onDragStart={handleNavDragStart}>
+              <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                 <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
                   {(provided) => (
                     <div
@@ -1658,7 +1649,7 @@ function LayoutContent({ children }) {
                   onContextMenu={handleBarContextMenu}
                   className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
-                  <DragDropContext onDragEnd={handleNavReorder} onDragUpdate={handleNavDragUpdate} onDragStart={handleNavDragStart}>
+                  <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                     <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
                       {(provided) => (
                         <div
@@ -1678,7 +1669,7 @@ function LayoutContent({ children }) {
                                       {...dragProvided.draggableProps}
                                       {...dragProvided.dragHandleProps}
                                       style={dragProvided.draggableProps.style}
-                                      className={`rounded-lg ${dragHoverFolder === folder.id ? "ring-2 ring-violet-400" : ""}`}
+                                      className="rounded-lg"
                                     >
                                       <NavFlyoutMenu
                                         label={folder.name}
@@ -1691,8 +1682,6 @@ function LayoutContent({ children }) {
                                         activePath={location.pathname}
                                         isInSplitUrl={isInSplitView}
                                         onNavigate={handleNavClick}
-                                        forceOpen={dragHoverFolder === folder.id}
-                                        suppressOutsideClose={navDragging}
                                         onContextMenuPill={({ x, y }) =>
                                           setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
                                         onContextMenuItem={(item, { x, y }) =>
