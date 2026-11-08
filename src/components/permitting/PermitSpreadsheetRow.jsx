@@ -741,7 +741,7 @@ export default function PermitSpreadsheetRow({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this permit line?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the {lineItem.row_name || lineItem.office_type || "permit"} line and its recorded workflow values from this Work Order. Other permit lines and the Work Order will not be deleted. If you need it back, re-add it from "Choose jurisdiction" — the pick will recreate the line.
+              This removes the {lineItem.row_name || lineItem.office_type || "permit"} line and its recorded workflow values from this Work Order. Other permit lines and the Work Order will not be deleted. If you need it back, re-add it with "Edit permit setup…" on the job card.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
