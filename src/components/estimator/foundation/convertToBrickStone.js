@@ -1,5 +1,6 @@
 import { staffEntities } from "@/components/staff/staffEntities";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { ensurePreliminaryNotice } from "./foundationPreliminaryNotice.js";
 
 // Convert a Foundation project into a Brick & Stone draft (#77). Carries the
 // shared identity fields; geometry/materials stay at module defaults for
@@ -16,7 +17,7 @@ export async function convertFoundationToBrickStone({ project, attemptRef } = {}
     estimate_number: String(project.estimate_number || "").trim() || undefined,
     hyperlink: String(project.hyperlink || "").trim() || undefined,
     status: "draft",
-    notes: `Converted from Foundation project "${sourceName}" (${project.id}). Re-enter masonry dimensions to calculate.`,
+    notes: ensurePreliminaryNotice(`Converted from Foundation project "${sourceName}" (${project.id}). Re-enter masonry dimensions to calculate.`),
   };
   const signature = JSON.stringify(payload);
   if (attemptRef && attemptRef.current?.signature !== signature) {
