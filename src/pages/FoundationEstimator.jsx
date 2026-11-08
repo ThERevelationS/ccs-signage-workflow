@@ -898,6 +898,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         project_name: `${project.project_name || "Foundation"} (Copy)`,
         client_name: project.client_name,
         customer_id: project.customer_id,
+        // Same-job metadata payload() does not own — a copy keeps the
+        // document link, the saved estimate-number lineage (mirroring
+        // convertFoundationToBrickStone), the persisted beautify brief
+        // image, and any externally-set pricing-engine context.
+        estimate_number: project.estimate_number,
+        hyperlink: project.hyperlink,
+        beautify_data_url: project.beautify_data_url,
+        pricing_engine: project.pricing_engine,
       };
       const signature = JSON.stringify(baseData);
       if (copyAttemptRef.current.signature !== signature) {
@@ -1350,6 +1358,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         mode={templateMode}
         onClose={() => setTemplateMode(null)}
         project={project}
+        saveDisabled={pricingBlocked || catalogReloading}
+        saveDisabledReason="Pricing unavailable: fix highlighted design inputs or catalog selections before saving a template."
         onApply={(data) => {
           let patchData;
           try {
