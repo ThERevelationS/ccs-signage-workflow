@@ -304,18 +304,36 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     const next = !open;
     setOpen(next);
     if (!readOnly) {
-      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+      let current;
+      try {
+        current = await base44.entities.BuilderPartGroup.get(group.id);
+      } catch (error) {
+        // Transient pre-read failure — the optimistic toggle would diverge
+        // from persisted is_collapsed, so revert it and surface the error.
+        setOpen(!next);
+        window.alert(`Part Group collapsed state could not be saved.${error?.message ? `\n\n${error.message}` : ""}`);
+        return;
+      }
       if (!current?.id || current.builder_product_id !== builderProductId) return;
       const collapsePatch = { is_collapsed: !next };
-      const updated = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderPartGroup,
-        id: group.id,
-        expectedUpdatedAt: current.updated_date || "",
-        expectedFields: expectedBuilderEntityFields(current, collapsePatch),
-        nextFields: collapsePatch,
-        guardFields: { builder_product_id: builderProductId },
-        label: "Part Group collapsed state",
-      }).catch(() => null);
+      let updated;
+      try {
+        updated = await replaceBuilderEntityFieldsIfUnchanged({
+          entity: base44.entities.BuilderPartGroup,
+          id: group.id,
+          expectedUpdatedAt: current.updated_date || "",
+          expectedFields: expectedBuilderEntityFields(current, collapsePatch),
+          nextFields: collapsePatch,
+          guardFields: { builder_product_id: builderProductId },
+          label: "Part Group collapsed state",
+        });
+      } catch (error) {
+        // Same rule as the pre-read — a swallowed write failure leaves the UI
+        // showing a collapsed state the record does not hold until reload.
+        setOpen(!next);
+        window.alert(`Part Group collapsed state could not be saved.${error?.message ? `\n\n${error.message}` : ""}`);
+        return;
+      }
       if (updated?.updated_date) groupVersionRef.current = updated.updated_date;
       else if (current?.updated_date) groupVersionRef.current = current.updated_date;
     }
@@ -774,13 +792,39 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
 
   let offset = 0;
   const partsFrozenTotal = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
-  const persistGroupOrder = async (nextGroups) => {
+  const persistGroupOrder = async (nextGroups, previousGroups) => {
+    const failures = [];
     for (let i = 0; i < nextGroups.length; i++) {
       const g = nextGroups[i];
       if (Number(g.sort_order) !== i) {
-        await staffEntities.BuilderPartGroup.updateMany({ id: g.id }, { sort_order: i }).catch(() => null);
+        try {
+          // Anchored on the loaded updated_date when it is known — a group
+          // that changed in another session reports updated:0 and is counted
+          // below instead of silently writing a stale order. The result count
+          // is verified; a swallowed .catch(() => null) here used to make the
+          // drag order LOOK applied while it silently reverted on reload.
+          const result = await staffEntities.BuilderPartGroup.updateMany(
+            g.updated_date ? { id: g.id, updated_date: g.updated_date } : { id: g.id },
+            { sort_order: i },
+          );
+          if (!result || result.updated !== 1) {
+            failures.push(g.group_name || "Part Group");
+          }
+        } catch {
+          failures.push(g.group_name || "Part Group");
+        }
       }
     }
+    if (failures.length) {
+      // The order must never LOOK persisted when it is not — restore the
+      // pre-drag order and re-read the groups so the next attempt starts
+      // from server truth.
+      if (previousGroups) setGroups(previousGroups);
+      setRefreshNonce((value) => value + 1);
+      window.alert(`${failures.length} Part Group${failures.length === 1 ? "" : "s"} could not be reordered (${failures.join(", ")}). The saved order was restored — try again.`);
+      return false;
+    }
+    return true;
   };
 
 
@@ -901,8 +945,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               setGroups(next);
               setDragGroupIdx(null);
               setDragOverIdx(null);
-              await persistGroupOrder(next);
-              setRefreshNonce((v) => v + 1);
+              const persisted = await persistGroupOrder(next, groups);
+              // persistGroupOrder re-reads + reverts on failure itself; on
+              // success re-read so the rendered order reflects stored truth.
+              if (persisted) setRefreshNonce((v) => v + 1);
             }}
             onDragEnd={() => { setDragGroupIdx(null); setDragOverIdx(null); }}
             className={`${dragOverIdx === groups.indexOf(group) ? "ring-2 ring-emerald-400 rounded" : ""}`}
