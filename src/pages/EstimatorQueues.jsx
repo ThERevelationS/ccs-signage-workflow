@@ -86,7 +86,12 @@ function syncExpiredFlags(rows) {
   }).slice(0, EXPIRY_FLAG_SWEEP_LIMIT);
   for (const e of stale) {
     const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
-    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});
+    // Best-effort sweep stays swallowed — a stale anchor just no-ops and
+    // the next load retries (update() is not an allowed op on estimates).
+    staffEntities.AllInOneEstimate.updateMany(
+      { id: e.id, updated_date: e.updated_date },
+      { $set: { quote_expired: expired } },
+    ).catch(() => {});
   }
 }
 
@@ -190,7 +195,14 @@ export default function EstimatorQueues() {
         continue;
       }
       try {
-        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });
+        // update() is not an allowed op on estimates — anchor the write to
+        // the loaded row's updated_date; a zero-match means the row changed
+        // since the queue loaded and must surface as a failure, not a no-op.
+        const bulkResult = await staffEntities.AllInOneEstimate.updateMany(
+          { id, updated_date: row?.updated_date },
+          { $set: { status: bulkStatus } },
+        );
+        if (!bulkResult || bulkResult.updated !== 1) throw new Error("estimate changed in another session — reload and retry");
       } catch (error) {
         failures.push(`${id}: ${error?.message || "update failed"}`);
       }
