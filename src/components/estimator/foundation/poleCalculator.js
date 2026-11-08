@@ -52,6 +52,11 @@ import {
   inventoryPositiveSettingNumber as polePositiveSettingNumber,
   inventoryFiniteNumber as poleFiniteNumber,
 } from "@/components/masterInventory/inventoryNormalization";
+// O-009 tail: the catalog lifecycle classifier is the single contract —
+// a resolved-but-inactive/deleted pole row now flags catalog_item_inactive /
+// catalog_item_deleted instead of silently repricing; the acknowledged
+// snapshot still holds through the unchanged issues channel.
+import { foundationCatalogRowAvailability } from "./foundationCatalogIntegrity";
 
 const setting = (settings, key, def) => parseFloat(poleSettingValue(settings?.[key], def));
 
@@ -455,7 +460,19 @@ function polePricing(pole, inventory = [], index = 0, settings = {}) {
     } else if (matches[0].material_type !== "pole") {
       add("pole_id", "catalog_item_type_mismatch", "selected catalog material is not a pole");
     } else {
-      inv = matches[0];
+      // O-009 tail: existence -> type -> lifecycle -> consumed basis, the same
+      // precedence as the item scan. A resolved-but-inactive/deleted row held
+      // a silent price; it is flagged here so the pole keeps its acknowledged
+      // snapshot instead of repricing on a deactivated/deleted catalog row.
+      const availability = foundationCatalogRowAvailability(matches[0]);
+      if (availability !== "active") {
+        add("pole_id", availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
+          availability === "deleted"
+            ? "selected catalog material is marked deleted — pick a replacement"
+            : "selected catalog material is inactive — reactivate it or pick a replacement");
+      } else {
+        inv = matches[0];
+      }
     }
   }
   // Distinct authored/calculated quantities (CMP-E02). The height and
