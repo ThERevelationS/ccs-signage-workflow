@@ -14,7 +14,6 @@
 // shown here. EQUIPMENT lives in the Equipment tab. POLES live in the
 // Extruded Metals & Poles tab.
 
-import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import FoundationInventoryPage from "@/pages/FoundationInventory";
 
