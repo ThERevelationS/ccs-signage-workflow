@@ -56,6 +56,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   // plus whitespace-only drafts clear to null instead of minting Number(" ")=0.
   const nullSet = (key) => (e) => set({ [key]: inventoryNumberInput(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
+  // Versioned items price steel from the accepted reinforcement design — the
+  // legacy implicit fields below do not apply to them and stay hidden.
+  const legacyReinforcement = item.reinforcement_calculation_version == null || item.reinforcement_calculation_version === 1;
   const unavailable = pricing?.available === false;
   const concreteRow = (catalog.concrete || []).find((c) => c.id === item.selected_concrete_id);
   const overrideLabel = !concreteRow
@@ -212,7 +215,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         />
       </div>
 
-      {item.include_rebar && (
+      {item.include_rebar && legacyReinforcement && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
           {isPillar ? (
             <>
@@ -268,6 +271,17 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             {amt(item.rebar_cost)}
           </div>
         </div>
+      )}
+
+      {!legacyReinforcement && (
+        <p className="mt-3 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-600">
+          {item.reinforcement_calculation_version === 2 ? (
+            <>Version 2 reinforcement uses the accepted design. Edit geometry and pricing through the controlled proposal below.{" "}
+              <span className="font-semibold text-gray-800">Physical {num2(item.rebar_geometry_feet)} ft / priced {num2(item.rebar_feet)} ft - {amt(item.rebar_cost)}</span></>
+          ) : (
+            <>Unsupported reinforcement version. Reload before changing reinforcement pricing.</>
+          )}
+        </p>
       )}
 
       {/* Excavation summary */}
