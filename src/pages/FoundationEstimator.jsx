@@ -48,7 +48,7 @@ import { loadFoundationBuilderRecovery, verifyFoundationRecoverySource } from "@
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
 import { createFoundationDraftStore, foundationDraftRebaseProject, FOUNDATION_DRAFT_FIELDS } from "@/components/estimator/foundation/foundationDraftRecovery";
 import { useAuth } from "@/components/auth/EmailGate";
-import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt, resolveFoundationSyncReceiptForSave, classifyFoundationSyncRetry } from "@/components/estimator/foundation/foundationSyncRecovery";
+import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, resolveFoundationSyncReceiptForSave, classifyFoundationSyncRetry } from "@/components/estimator/foundation/foundationSyncRecovery";
 import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from "@/components/estimator/foundation/foundationAssemblyModel";
 import { prepareFoundationTemplatePatch } from "@/components/estimator/foundation/foundationTemplateModel";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
