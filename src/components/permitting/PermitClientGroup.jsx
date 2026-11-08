@@ -126,6 +126,9 @@ export default function PermitClientGroup({
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
   const progress = getPermitGroupProgress(group, today);
   const authorityCoverage = summarizePermitGroupAuthorityCoverage(group.lines, localities);
+  const authorityNeedsCheck = authorityCoverage.some(
+    ({ authority }) => authority?.coverage_status && authority.coverage_status !== 'configured_offices_reviewed'
+  );
 
   // Est/Inv # — prefer corbridge_invoice_number, else est_inv_at
   const estInvNumber = wo?.corbridge_invoice_number || wo?.est_inv_at || "";
@@ -315,11 +318,39 @@ export default function PermitClientGroup({
               )}
             </>
           )}
+          {!expanded && readiness.hasBlockers && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 font-semibold text-red-800 hover:bg-red-100"
+            >
+              <AlertTriangle className="w-3 h-3" /> {readiness.blockers.length} blocker{readiness.blockers.length === 1 ? "" : "s"}
+            </button>
+          )}
+          {!expanded && !readiness.hasBlockers && readiness.reviews.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              {readiness.reviews.length} to review
+            </button>
+          )}
+          {!expanded && authorityNeedsCheck && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              office check
+            </button>
+          )}
           <span className="font-semibold text-gray-600">Next:</span>
           <span className="text-gray-700">{queueState.nextAction}</span>
         </div>
       )}
 
+      {expanded && (<>
       {progress.totalCount > 1 && (
         <div className="border-b bg-slate-50/70 px-3 py-2 text-xs">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -485,6 +516,7 @@ export default function PermitClientGroup({
           </button>
         </div>
       )}
+      </>)}
 
       {/* EXPANDED BODY */}
       {expanded && (
