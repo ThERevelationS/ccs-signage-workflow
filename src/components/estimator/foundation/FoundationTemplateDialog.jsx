@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2 } from "lucide-react";
 import { deleteFoundationTemplate, saveFoundationTemplate } from "./foundationTemplateService";
 import { createFoundationTemplateSnapshot } from "./foundationTemplateModel";
+import { PRELIMINARY_NOTICE_TEXT } from "./foundationPreliminaryNotice";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
@@ -207,6 +208,9 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                 {saveDisabledReason || "Saving a template is not available right now."}
               </p>
             ) : null}
+            <p className="text-[11px] text-gray-500">
+              Saved template notes lead with &quot;{PRELIMINARY_NOTICE_TEXT}&quot;.
+            </p>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={onClose} className="h-[30px] px-3 border border-gray-300 rounded-sm text-[12px]">
                 Cancel
@@ -248,6 +252,9 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                     <div className="text-[10px] text-violet-600">
                       Includes an AI review note — stale on this project
                     </div>
+                  ) : null}
+                  {typeof t.project_data?.notes === "string" && t.project_data.notes.trim() ? (
+                    <div className="text-[10px] text-gray-500">Includes project notes</div>
                   ) : null}
                 </div>
                 <button type="button"
