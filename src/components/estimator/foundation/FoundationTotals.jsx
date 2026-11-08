@@ -3,10 +3,21 @@ import { money } from "./foundationCalc";
 const amt = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 const known = (v, d, u) => (Number.isFinite(v) ? `${v.toFixed(d)} ${u}` : "Not saved");
 
-export default function FoundationTotals({ totals, pricingUnavailable = false }) {
+export default function FoundationTotals({ totals, pricingUnavailable = false, savedSectionTotal = null, sectionTotal = null }) {
   const wallMortar = [totals.total_wall_cost, totals.total_brick_cost, totals.total_fill_cost].every(Number.isFinite)
     ? totals.total_wall_cost - totals.total_brick_cost - totals.total_fill_cost
     : null;
+  // Saved-vs-current reconciliation (CMP-A10): `savedSectionTotal` is the
+  // acknowledged record's persisted split-total sum (the same number the
+  // linked estimate stored as live_total_snapshot at the last Builder save);
+  // `sectionTotal` is the live recalculation including cabinets + landscape.
+  // Advisory only — never blocks — and |delta| <= $0.005 never fires, the
+  // same tolerance builderService.sameNumber / useSectionSync / ProductRow
+  // already use for frozen-vs-live snapshot comparisons.
+  const saved = Number.isFinite(savedSectionTotal) ? savedSectionTotal : null;
+  const currentKnown = Number.isFinite(sectionTotal);
+  const savedDelta = saved !== null && currentKnown ? sectionTotal - saved : null;
+  const savedDiffers = savedDelta !== null && Math.abs(savedDelta) > 0.005;
   const lines = [
     ["Concrete", totals.total_concrete_cost],
     ["Rebar", totals.total_rebar_cost],
@@ -52,6 +63,17 @@ export default function FoundationTotals({ totals, pricingUnavailable = false })
           <span className="text-red-600">{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : money(totals.grand_total)}</span>
         </div>
       </div>
+
+      {saved !== null && !currentKnown && (
+        <div role="status" className="mt-3 rounded-sm border border-gray-300 bg-slate-50 px-2 py-1 text-[11px] text-gray-700">
+          Saved section total {money(saved)} — current pricing unavailable.
+        </div>
+      )}
+      {savedDiffers && (
+        <div role="status" className="mt-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
+          Saved {money(saved)} — current {money(sectionTotal)} ({savedDelta > 0 ? "+" : "−"}{money(Math.abs(savedDelta))}) — recalculated from current inputs and catalog. Save to update the estimate.
+        </div>
+      )}
     </div>
   );
 }
