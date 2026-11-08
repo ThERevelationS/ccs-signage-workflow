@@ -948,6 +948,115 @@
     "ai_engineering_data": {
       "type": "object",
       "additionalProperties": true
+    },
+    "design_basis": {
+      "type": "object",
+      "description": "O-104/CMP-I03 \u2014 the project's recorded design basis: which locally adopted code edition and jurisdiction the preliminary foundation engineering stands on. Captured explicitly per project \u2014 the newest published edition is never assumed to equal the locally adopted one. Written only through the design-basis surface with basis_source/timestamp provenance; nothing rewrites an existing project's basis silently.",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Block shape version; 1 = the O-104 capture layout."
+        },
+        "code_edition": {
+          "type": "string",
+          "description": "The locally adopted code/standard edition this project's preliminary basis uses (e.g. 'ASCE 7-16', 'ASCE 7-22', 'OBC 2019'). Authored only \u2014 never auto-filled with a newest-published value."
+        },
+        "code_edition_prior": {
+          "type": "string",
+          "description": "Superseded edition preserved when code_edition changes after a basis was captured \u2014 the recorded trail that keeps an edition change visible instead of silent."
+        },
+        "jurisdiction": {
+          "type": "string",
+          "description": "Free-text adopted-code locality (e.g. 'City of Milford, Clermont County, OH'). A future PermitLocality/JurisdictionProfile link may refine this text, never replace it."
+        },
+        "basis_notes": {
+          "type": "string",
+          "description": "Adopted-code nuance a bare edition cannot hold \u2014 local amendments, ordinance references, partial adoptions (CMP-I02 keeps these distinct from the referenced standards)."
+        },
+        "basis_source": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "official_report",
+            "api"
+          ],
+          "description": "How this basis was recorded. 'api' is reserved \u2014 no current writer; any authored content edit re-marks the block 'manual' unless an official-report transcription is explicitly selected."
+        },
+        "basis_captured_at": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the FIRST authored basis capture; not rewritten by later edits."
+        },
+        "basis_updated_at": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the most recent authored basis edit \u2014 a basis never changes without a recorded when."
+        },
+        "basis_locked": {
+          "type": "boolean",
+          "description": "Operator lock on a captured basis: while true, basis edits require an explicit re-capture confirmation. Stripped when no basis content remains."
+        }
+      }
+    },
+    "site_hazard": {
+      "type": "object",
+      "description": "O-105/CMP-I04 \u2014 site/hazard inputs recorded for this project: coordinates, unit system, risk category, exposure assumptions, and entry provenance/timestamp. Manual and official-report transcription are supported now; 'api' is a reserved enum value with no current writer. The adopted standard edition is recorded once in design_basis.code_edition, not duplicated here.",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Block shape version; 1 = the O-105 capture layout."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Site latitude in decimal degrees (-90..90); null = recorded-but-unset, absent = never captured \u2014 never zero-filled."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Site longitude in decimal degrees (-180..180); null = recorded-but-unset, absent = never captured."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "imperial",
+            "metric"
+          ],
+          "description": "Unit system the site/hazard values are authored in. Absent = unstated; never assumed."
+        },
+        "risk_category": {
+          "type": "string",
+          "enum": [
+            "I",
+            "II",
+            "III",
+            "IV"
+          ],
+          "description": "Risk category I\u2013IV recorded for the structure (ASCE 7-style). Absent = unrecorded."
+        },
+        "exposure_category": {
+          "type": "string",
+          "enum": [
+            "B",
+            "C",
+            "D"
+          ],
+          "description": "Wind exposure category recorded for the site. Absent = unrecorded."
+        },
+        "exposure_assumption": {
+          "type": "string",
+          "description": "Free-text exposure/terrain assumption (e.g. 'Exposure C assumed \u2014 open terrain, verify on site')."
+        },
+        "entry_method": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "official_report",
+            "api"
+          ],
+          "description": "How these inputs were entered; only manual/official_report are written today \u2014 'api' reserved for a future automation writer."
+        },
+        "input_timestamp": {
+          "type": "string",
+          "description": "ISO-8601 timestamp of the most recent authored change to this block."
+        }
+      }
     }
   },
   "required": [
