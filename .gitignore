@@ -30,3 +30,12 @@ dist-ssr
 .env
 base44/.app.jsonc
 dist-nomin
+
+# Agent/build scratch - never commit
+.tmp-*
+tmp_*
+*.mpnew
+NUL
+nul
+C:/
+.audit-tmp/
