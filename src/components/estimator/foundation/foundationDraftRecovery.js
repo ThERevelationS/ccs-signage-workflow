@@ -5,6 +5,10 @@ export const FOUNDATION_DRAFT_FIELDS = [
   "items", "walls", "poles", "wall_caps", "signage_cabinets", "selected_equipment", "landscape",
   "project_concrete_type", "project_concrete_admixtures", "excavation_method", "selected_concrete_id",
   "ai_engineering_recommendation", "ai_engineering_data",
+  // Customer Pricing tab surface — markup %, manual price override, and the
+  // applied-tier record (applied/tier_number). Persisted by payload(); restored
+  // verbatim through the assembly normalizer's passthrough.
+  "customer_markup_percent", "customer_price_override", "customer_pricing",
   "concrete_cost_per_cy", "rebar_cost_per_ft",
   "forming_materials_cost_spread_foot", "forming_materials_cost_pillar",
   "min_excavation_time_hours",
@@ -57,6 +61,8 @@ const checkAssembly = (data) => {
     if (f in data && !Array.isArray(data[f])) return `${f} must be an array.`;
     if (Array.isArray(data[f])) for (const r of data[f]) if (!isPlain(r)) return `${f} must contain plain records.`;
   }
+  if (data.customer_pricing !== undefined && !isPlain(data.customer_pricing))
+    return "customer_pricing must be a record.";
   if (data.assembly_schema_version !== undefined && data.assembly_schema_version !== 1)
     return `Unsupported assembly_schema_version: ${data.assembly_schema_version}`;
   return null;
@@ -82,6 +88,10 @@ const validEnvelope = (raw, ownerId, sourceId, estimateId) => {
   if (!validId(env.token)) return { ok: false, message: "Missing draft token." };
   if (!validId(env.baseUpdatedAt)) return { ok: false, message: "Missing base revision." };
   if (typeof env.savedAt !== "string" || !Number.isFinite(Date.parse(env.savedAt))) return { ok: false, message: "Invalid savedAt timestamp." };
+  // A loss marker is a small tombstone written when a draft could not be
+  // stored (quota/size). It carries no data; read() surfaces it as invalid so
+  // the page warns and offers Discard instead of losing the draft silently.
+  if (env.draftLost === true) return { ok: true, env, lost: true };
   if (!isPlain(env.data)) return { ok: false, message: "Draft data missing." };
   const bad = checkAssembly(env.data);
   if (bad) return { ok: false, message: bad };
@@ -115,6 +125,7 @@ export function createFoundationDraftStore({ getStorage, ownerId, sourceId, esti
     if (got.raw.length > MAX_CHARS) return { status: "invalid", revision: got.raw, message: "Stored draft exceeds size limit." };
     const v = validEnvelope(got.raw, ownerId, sourceId, estimateId);
     if (!v.ok) return { status: "invalid", revision: got.raw, message: v.message };
+    if (v.lost) return { status: "invalid", revision: got.raw, savedAt: v.env.savedAt, baseUpdatedAt: v.env.baseUpdatedAt, message: `A browser draft (saved ${v.env.savedAt}) could not be kept — the browser's per-tab storage refused to store it. Nothing was restored; the saved project is unchanged.` };
     return { status: "found", revision: got.raw, draft: v.data, savedAt: v.env.savedAt, baseUpdatedAt: v.env.baseUpdatedAt, token: v.env.token };
   };
 
@@ -132,12 +143,36 @@ export function createFoundationDraftStore({ getStorage, ownerId, sourceId, esti
       if (bad) return { status: "invalid", message: bad };
       const envelope = { version: 1, ownerId, sourceId, estimateId: estimateId ?? null, token, baseUpdatedAt, savedAt, data };
       const serialized = JSON.stringify(envelope);
-      if (serialized.length > MAX_CHARS) return { status: "invalid", message: "Draft exceeds 1,000,000 character limit; previous draft retained." };
       const got = getItem(s);
       if (got.err) return unavailable(got.err);
+      // Graceful-loss marker: when nothing is stored and a write cannot land
+      // (size cap or quota throw), leave a small tombstone so the next open
+      // warns and offers Discard instead of losing the draft silently. Never
+      // clobber an existing stored draft — it is always more valuable.
+      const leaveLossMarker = (bytes) => {
+        try {
+          const cur = getItem(s);
+          if (cur.err || (cur.raw !== null && cur.raw !== undefined)) return false;
+          const marker = JSON.stringify({ version: 1, ownerId, sourceId, estimateId: estimateId ?? null, token, baseUpdatedAt, savedAt, draftLost: true, droppedBytes: bytes });
+          if (marker.length > MAX_CHARS) return false;
+          s.setItem(key, marker);
+          return true;
+        } catch { return false; }
+      };
+      if (serialized.length > MAX_CHARS) {
+        const marked = leaveLossMarker(serialized.length);
+        return { status: "invalid", message: got.raw !== null && got.raw !== undefined
+          ? "Draft exceeds 1,000,000 character limit; previous draft retained."
+          : `Draft exceeds 1,000,000 character limit.${marked ? " A loss marker was stored so reopening this tab warns." : ""}` };
+      }
       if ((got.raw ?? null) !== (expectedRevision ?? null))
         return { status: "conflict", revision: got.raw ?? undefined, message: "Draft changed since expected revision; existing draft retained." };
-      try { s.setItem(key, serialized); } catch (e) { return unavailable(`Draft write failed: ${e.message || e}`); }
+      try { s.setItem(key, serialized); } catch (e) {
+        const marked = leaveLossMarker(serialized.length);
+        const suffix = marked ? " A loss marker was stored so reopening this tab warns."
+          : (got.raw !== null && got.raw !== undefined ? " The previously stored draft was retained." : "");
+        return unavailable(`Draft write failed: ${e.message || e}${suffix}`);
+      }
       return { status: "stored", revision: serialized, draft: data };
     } catch (e) { return { status: "invalid", message: String(e.message || e) }; }
   };
