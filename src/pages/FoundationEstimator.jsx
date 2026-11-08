@@ -1258,6 +1258,21 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               )}
               <button type="button" disabled={saving || recovery.status === "unsupported" || recovery.status === "mismatch"} className="px-2 py-1 rounded bg-amber-600 text-white disabled:opacity-50" onClick={() => saveRef.current?.()}>Review and retry Save</button>
             </div>
+            <div className="mb-3">
+              <FoundationSyncRetryAction
+                retryState={classifyFoundationSyncRetry({ project, estimateId, estimate: linkedEstimate })}
+                retrying={syncRetry.retrying}
+                lastOutcome={syncRetry.lastOutcome}
+                estimateHref={estimateId ? `/EstimateDetail?id=${estimateId}` : null}
+                onRetry={async () => {
+                  const o = await syncRetry.retry();
+                  if (o?.status === "synced" || o?.status === "already_synced") {
+                    setRecoveryRequired(false);
+                    if (o.line) setLinkedEstimate((prev) => (prev && prev.id === estimateId ? { ...prev, line_items: (prev.line_items || []).map((it) => (it.module_key === "foundation" && it.project_id === id ? o.line : it)) } : prev));
+                  }
+                }}
+              />
+            </div>
           );
         })()}
 
@@ -1297,7 +1312,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               <>
                 <div className="font-semibold">Unsent browser-tab draft found. Nothing restored or sent. {draftVisible.savedAt ? `Saved ${draftVisible.savedAt}.` : ""} Recovery covers design and customer-pricing fields; customer links and saved receipts stay as stored.</div>
                 {draftVisible.baseUpdatedAt && acknowledgedVersionRef.current?.updated_date !== draftVisible.baseUpdatedAt && (
-                  <div className="mt-1">Saved project changed since these edits.</div>
+                  <div className="mt-1">Saved project changed since these edits.
+                    <button
+                      type="button"
+                      className="ml-2 font-semibold underline"
+                      onClick={() => syncConflict.openDraftConflict({
+                        draft: draftVisible.draft,
+                        draftSavedAt: draftVisible.savedAt ?? null,
+                        baseUpdatedAt: draftVisible.baseUpdatedAt,
+                        savedProject: acknowledgedVersionRef.current?.sourceSnapshot ?? null,
+                        getSavedProject: () => staffEntities.FoundationProject.get(id),
+                      })}
+                    >Review changes</button>
+                  </div>
                 )}
                 <div className="mt-2 flex gap-2">
                   <button type="button" onClick={restoreBrowserDraft} className="rounded-sm border border-indigo-400 bg-white px-2 py-1 text-[12px] font-semibold text-indigo-800">Restore browser draft</button>
@@ -1582,6 +1609,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         </fieldset>
       </div>
 
+      <FoundationSyncConflictDialog
+        conflict={syncConflict.conflict}
+        busy={saving || syncConflict.resolving}
+        disabled={{
+          keep_draft: sourceRefreshRef.current
+            ? "The project must be reloaded after the earlier save finished — reload before applying draft edits."
+            : null,
+        }}
+        onKeepDraft={handleConflictKeepDraft}
+        onKeepSaved={handleConflictKeepSaved}
+        onKeepBoth={handleConflictKeepBoth}
+        onDismiss={syncConflict.dismiss}
+      />
       <FoundationTemplateDialog
         open={!!templateMode && !draftSessionRef.current.pending}
         mode={templateMode}
