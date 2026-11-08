@@ -25,7 +25,8 @@
         "brick_stone",
         "fill_material",
         "wall_material",
-        "wall_cap"
+        "wall_cap",
+        "rebar_support"
       ],
       "description": "Type of material"
     },
@@ -259,6 +260,62 @@
     },
     "rebar_size": {
       "type": "string"
+    },
+    "rebar_diameter_inches": {
+      "type": "number",
+      "description": "Explicit nominal bar diameter in inches for preliminary version-2 reinforcement. No inferred default from the size label."
+    },
+    "rebar_weight_lb_per_ft": {
+      "type": "number",
+      "description": "Explicit verified steel weight in pounds per foot. Missing metadata is unknown, never an authored zero or a guessed conversion."
+    },
+    "rebar_support_kind": {
+      "type": "string",
+      "enum": [
+        "chair",
+        "stand",
+        "bolster"
+      ],
+      "description": "Support style for a rebar_support catalog row (chair, stand, or bolster); other hardware stays untyped until modeled."
+    },
+    "rebar_support_height_inches": {
+      "type": "number",
+      "description": "Nominal support height in inches from the resting plane to the supported bar."
+    },
+    "rebar_support_height_min_inches": {
+      "type": "number",
+      "description": "Lowest usable support height in inches for an adjustable or range-rated support."
+    },
+    "rebar_support_height_max_inches": {
+      "type": "number",
+      "description": "Highest usable support height in inches for an adjustable or range-rated support."
+    },
+    "rebar_support_footprint_length_inches": {
+      "type": "number",
+      "description": "Resting footprint length in inches; used for cover and clearance checks, never structural approval."
+    },
+    "rebar_support_footprint_width_inches": {
+      "type": "number",
+      "description": "Resting footprint width in inches; used for cover and clearance checks, never structural approval."
+    },
+    "rebar_support_material": {
+      "type": "string",
+      "description": "Support material as cataloged (for example steel, plastic, concrete); free text, never inferred."
+    },
+    "rebar_support_pack_size": {
+      "type": "integer",
+      "description": "Units per purchased pack; cost_per_unit remains the per-unit catalog price basis."
+    },
+    "rebar_support_compatible_bar_sizes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Bar sizes this support is rated to carry (for example #3, #4); empty means compatibility is unknown, not universal."
+    },
+    "rebar_support_placement_notes": {
+      "type": "string",
+      "description": "Cataloged placement constraints or manufacturer notes; free text, not a derived spacing rule."
     },
     "notes": {
       "type": "string"
