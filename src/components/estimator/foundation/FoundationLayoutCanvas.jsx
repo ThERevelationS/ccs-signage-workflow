@@ -9,6 +9,14 @@ import {
   layoutItemKey,
   layoutItemFingerprint,
 } from "./foundationLayoutModel";
+import {
+  beginSceneDrag,
+  sceneDragCorner,
+  commitSceneDrag,
+  resolveSceneDragTarget,
+  keyboardNudge,
+  nudgePatch,
+} from "./foundationSceneInput";
 
 export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveItem }) {
   const boxRef = useRef(null);
@@ -19,14 +27,6 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
 
   const pctW = (inches) => `${(inches / FOUNDATION_LAYOUT_WIDTH_INCHES) * 100}%`;
   const pctD = (inches) => `${(inches / FOUNDATION_LAYOUT_DEPTH_INCHES) * 100}%`;
-
-  const findCurrentIndex = (d) => {
-    if (d.identityKind === "index") {
-      // id-less legacy fallback: index identity only, cancel if array changed
-      return items.length === d.count ? d.legacyIndex : -1;
-    }
-    return items.findIndex((it, i) => layoutItemKey(it, i) === d.key);
-  };
 
   const mountedRef = useRef(true);
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; dragRef.current = null; }; }, []);
@@ -48,17 +48,18 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
     if (!point) return;
     const key = layoutItemKey(item, index);
     const [kind] = key.split(":");
-    dragRef.current = {
+    // O-039 input seam — the gesture record comes from the shared primitive;
+    // pos/point are already validated above so beginSceneDrag cannot fail.
+    dragRef.current = beginSceneDrag({
       pointerId: e.pointerId,
       key,
       identityKind: kind,
       legacyIndex: index,
       count: items.length,
       corner: { x: pos.x_inches, z: pos.z_inches },
-      grab: { dx: point.x_inches - pos.x_inches, dz: point.z_inches - pos.z_inches },
+      grabPoint: point,
       fingerprint: layoutItemFingerprint(item),
-      moved: false,
-    };
+    });
     try { boxRef.current.setPointerCapture(e.pointerId); }
     catch { cancelDrag(); return; }
     setPreview({ key, x: pos.x_inches, z: pos.z_inches });
@@ -70,7 +71,7 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
     const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
     if (!point) return;
     d.moved = true;
-    d.last = { x: point.x_inches - d.grab.dx, z: point.z_inches - d.grab.dz };
+    d.last = sceneDragCorner(d, point);
     setPreview({ key: d.key, x: d.last.x, z: d.last.z });
   };
 
@@ -84,30 +85,29 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
     // final corner from the release point itself, not the last move preview
     const point = layoutPointInches(e.clientX, e.clientY, boxRef.current?.getBoundingClientRect());
     if (!point) return;
-    const raw = { x: point.x_inches - d.grab.dx, z: point.z_inches - d.grab.dz };
-    if (raw.x === d.corner.x && raw.z === d.corner.z) return; // unchanged incl. fractional legacy corners
-    const roundX = Math.round(raw.x), roundZ = Math.round(raw.z);
-    if (roundX === d.corner.x && roundZ === d.corner.z) return; // sub-inch wiggle rounded to same corner
-    const index = findCurrentIndex(d);
-    if (index < 0) return; // deleted during gesture
-    const live = items[index];
-    if (layoutItemFingerprint(live) !== d.fingerprint) return; // authoritative change mid-drag
+    // O-039 input seam — commitSceneDrag applies the unchanged-corner and
+    // sub-inch-wiggle guards and returns the whole-inch patch; the target
+    // resolver re-finds the row (deletion/reorder during gesture) and checks
+    // the fingerprint (authoritative change mid-drag).
+    const patch = commitSceneDrag(d, point);
+    if (!patch) return;
+    const target = resolveSceneDragTarget(d, items);
+    if (!target) return;
     if (typeof onMoveItem !== "function") return;
-    onMoveItem(index, { x_inches: roundX, z_inches: roundZ });
+    onMoveItem(target.index, patch);
   };
 
   const onKeyDown = (e, item, index) => {
     if (!mountedRef.current || !editable) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const step = e.shiftKey ? 12 : 1;
-    const dirs = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
-    const dir = dirs[e.key];
-    if (!dir) return;
+    // O-039 input seam — keyboardNudge carries the modifier guard, the arrow
+    // map and the Shift 12-inch big-step; nudgePatch builds the same patch.
+    const delta = keyboardNudge(e);
+    if (!delta) return;
     const fp = foundationLayoutFootprint(item);
     const pos = layoutPositionInches(item);
     if (!fp || !pos.valid) return;
     e.preventDefault();
-    onMoveItem(index, { x_inches: pos.x_inches + dir[0], z_inches: pos.z_inches + dir[1] });
+    onMoveItem(index, nudgePatch(pos, delta));
   };
 
   const invalidNotes = items.map((item, index) => ({ item, index }))
