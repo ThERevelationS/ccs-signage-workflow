@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Trash2, Package } from "lucide-react";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { findInventoryEstimateUsage } from "./inventoryPersistence";
+// groupInventoryBySupplier (CMP-A08 tail) renders the explicit supply
+// grouping in the generic table — rows section by canonical supplier key;
+// "—" (unrecorded) sorts last instead of silently merging vendors.
+import { groupInventoryBySupplier } from "./inventoryNormalization";
 import { base44 } from "@/api/base44Client";
 
 // Lazily resolves how many estimates consume this item's inventory row via
@@ -79,13 +83,6 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
-  const allVisibleSelected = sortedItems.length > 0 && sortedItems.every((it) => selectedIds.has(it.id));
-  const toggleSelectAll = () => setSelectedIds((prev) => {
-    if (allVisibleSelected) return new Set();
-    const next = new Set(prev);
-    sortedItems.forEach((it) => next.add(it.id));
-    return next;
-  });
 
   const toggleSort = (name) => {
     setSort((prev) => {
@@ -110,6 +107,19 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
     const cmp = as.localeCompare(bs, undefined, { numeric: true, sensitivity: "base" });
     return sort.dir === "asc" ? cmp : -cmp;
   });
+
+  const allVisibleSelected = sortedItems.length > 0 && sortedItems.every((it) => selectedIds.has(it.id));
+  const toggleSelectAll = () => setSelectedIds((prev) => {
+    if (allVisibleSelected) return new Set();
+    const next = new Set(prev);
+    sortedItems.forEach((it) => next.add(it.id));
+    return next;
+  });
+
+  // CMP-A08 tail: the authored supplier field per row — `supplier` on the
+  // declarative catalog entities; raw LaborServiceInventory rows group on
+  // vendor_name (service_name fallback), matching the boundary contract.
+  const tableSupplier = (row) => row?.supplier || row?.vendor_name || row?.service_name;
 
   const handleToggle = async (item, field, next) => {
     const lockKey = `${item.id}:${field.name}`;
@@ -203,7 +213,18 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
           </tr>
         </thead>
         <tbody className="divide-y">
-          {sortedItems.map((item) => (
+          {groupInventoryBySupplier(sortedItems, tableSupplier).map((group) => (
+            // CMP-A08 tail: explicit supply grouping — a supplier header row
+            // sections the table by canonical supplier key; unrecorded
+            // suppliers stay visible last, never merged.
+            <Fragment key={group.key ?? "__unassigned__"}>
+              <tr className="bg-slate-50/80">
+                <td colSpan={tableFields.length + (canEdit ? 1 : 0) + (bulkField && canEdit ? 1 : 0)} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Supplier: <span className="text-slate-700 normal-case">{group.label || "— not recorded"}</span>
+                  <span className="ml-2 font-normal normal-case text-slate-400">({group.rows.length})</span>
+                </td>
+              </tr>
+              {group.rows.map((item) => (
             <tr key={item.id} className="hover:bg-slate-50 transition-colors">
               {bulkField && canEdit && (
                 <td className="w-8 px-2 py-3 align-top">
@@ -249,6 +270,8 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
                 </td>
               )}
             </tr>
+              ))}
+            </Fragment>
           ))}
         </tbody>
       </table>
