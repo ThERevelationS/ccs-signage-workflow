@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, Fragment } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ChevronDown, Columns } from "lucide-react";
@@ -174,16 +174,11 @@ export default function NavFlyoutMenu({
                   style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
                 >
                   {items.map((item, index) => (
-                    <Fragment key={item.url}>
-                      <Draggable draggableId={`fld-${folderId}-${item.url}`} index={index}>
-                        {(dragProvided) => renderItem(item, dragProvided)}
-                      </Draggable>
-                      {/* Placeholder at the source slot holds the gap so
-                          targets don't slide under the pointer mid-drag */}
-                      {dropSnapshot.draggingFromThisWith === `fld-${folderId}-${item.url}` && dropProvided.placeholder}
-                    </Fragment>
+                    <Draggable key={item.url} draggableId={`fld-${folderId}-${item.url}`} index={index}>
+                      {(dragProvided) => renderItem(item, dragProvided)}
+                    </Draggable>
                   ))}
-                  {!dropSnapshot.draggingFromThisWith && dropProvided.placeholder}
+                  {dropProvided.placeholder}
                   {!items.length && <div className="px-3 py-2 text-xs text-slate-400">Empty — drag pages here</div>}
                 </div>
               )}
