@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { generateDocNumber } from "@/functions/generateDocNumber";
+import { assertNoPendingLinesForCopy } from "@/components/estimator/builder/builderMutationRecovery";
 
 export function newEstimateCreationKey() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -46,7 +47,7 @@ const DUPLICATE_EXCLUDE = new Set([
 // check would treat the retry as a different create and reject it.
 const duplicateNumberByCreationKey = new Map();
 
-export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false } = {}) {
+export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false, skipPendingGuard = false } = {}) {
   const clone = {};
   for (const [key, value] of Object.entries(source)) {
     if (DUPLICATE_EXCLUDE.has(key) || key.startsWith("_")) continue;
@@ -55,6 +56,12 @@ export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false
   clone.status = "draft";
   clone.estimate_number = keepEstimateNumber ? String(source.estimate_number || "").trim() : "";
   clone.duplicated_from_estimate_id = source.id || "";
+  // Lines are cloned verbatim — a durable Builder recovery marker would
+  // transplant an unresumable foreign estimate_id into the copy (locking its
+  // Product/Part mutations and permanently breaking that section's
+  // reconciliation). The pending op stays resumable on the source estimate.
+  // buildSplitEstimate defers this until after its line selection filter.
+  if (!skipPendingGuard) assertNoPendingLinesForCopy(clone.line_items, "duplicating this estimate");
   return clone;
 }
 
@@ -66,7 +73,7 @@ export function estimateLineSelectionKey(line, index) {
 }
 
 export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
-  const clone = buildDuplicateEstimate(source);
+  const clone = buildDuplicateEstimate(source, { skipPendingGuard: true });
   const keep = new Set(lineItemIds);
   const lines = Array.isArray(source?.line_items) ? source.line_items : [];
   const selectedKeys = lines.map(estimateLineSelectionKey);
@@ -74,6 +81,10 @@ export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
     throw new Error("The selected products changed or have ambiguous identifiers. Reload and select them again.");
   }
   clone.line_items = lines.filter((line, index) => keep.has(selectedKeys[index]));
+  // Same transplant guard as duplicate — only picked lines are copied, so an
+  // unpicked line's pending op must not block the split while a picked one
+  // must be resumed on the source estimate first.
+  assertNoPendingLinesForCopy(clone.line_items, "splitting this estimate");
   clone.split_from_estimate_id = source.id || "";
   clone.project_name = `${source.project_name || source.estimate_number || "Estimate"} (split)`;
   return clone;
