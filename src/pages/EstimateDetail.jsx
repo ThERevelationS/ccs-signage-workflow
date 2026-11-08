@@ -24,6 +24,7 @@ import {
   acceptBuilderPrice,
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
+import { assertNoPendingLinesForCopy } from "@/components/estimator/builder/builderMutationRecovery";
 import { refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, resumeQuickProductInsertion, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
@@ -261,6 +262,13 @@ export default function EstimateDetail() {
       throw new Error("The selected sections changed or have ambiguous identifiers. Reload the merge dialog and select them again.");
     }
     const picked = secondaryLines.filter((_, index) => keep.has(secondaryKeys[index]));
+    // A durable Builder recovery marker names the estimate that owns its
+    // pending operation. Copying it here would transplant an unresumable
+    // marker — the gate would block this estimate's Product/Part mutations
+    // while the marker's own estimate_id could never validate against this
+    // record. Refuse the merge; the operator resumes the operation on the
+    // source estimate first.
+    assertNoPendingLinesForCopy(picked, "merging them into this estimate");
 
     // Section keys must stay unique on the merged estimate — a merged section
     // that collides with an existing key gets a fresh line_id.
