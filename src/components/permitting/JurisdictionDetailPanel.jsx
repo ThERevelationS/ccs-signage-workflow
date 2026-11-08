@@ -987,9 +987,9 @@ Answer only from the provided excerpts and cite the document title and official 
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
-          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
+          <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-l-amber-400 space-y-3">
             <div>
-              <p className="text-xs font-semibold text-red-800 mb-2">Collected profile notes · unverified summary</p>
+              <p className="text-xs font-semibold text-amber-800 mb-2">Collected profile notes · unverified summary</p>
               <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                 {req.requires_permit !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
@@ -1018,31 +1018,31 @@ Answer only from the provided excerpts and cite the document title and official 
             </div>
 
             {(jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
-              <div className="border-t border-red-200 pt-3">
-                <p className="text-xs font-semibold text-red-800 mb-2">Detailed Rules</p>
+              <details className="border-t border-amber-200 pt-2">
+                <summary className="cursor-pointer select-none text-xs font-semibold text-amber-800 hover:text-amber-950">Detailed rules — size, height, setbacks, lighting</summary>
                 <div className="space-y-2 text-xs text-gray-700">
                   {jurisdiction.sqft_width_height_rules && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
+                      <span className="font-medium text-amber-800">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
                     </div>
                   )}
                   {jurisdiction.height_allowances && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Height Allowances:</span> {jurisdiction.height_allowances}
+                      <span className="font-medium text-amber-800">Height Allowances:</span> {jurisdiction.height_allowances}
                     </div>
                   )}
                   {jurisdiction.setback_rules && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Setback Rules:</span> {jurisdiction.setback_rules}
+                      <span className="font-medium text-amber-800">Setback Rules:</span> {jurisdiction.setback_rules}
                     </div>
                   )}
                   {jurisdiction.lighting_allowances && (
                     <div className="min-w-0 break-words leading-relaxed">
-                      <span className="font-medium text-red-700">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
+                      <span className="font-medium text-amber-800">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
                     </div>
                   )}
                 </div>
-              </div>
+              </details>
             )}
           </div>
         )}
@@ -1549,7 +1549,8 @@ Answer only from the provided excerpts and cite the document title and official 
 
       {/* AI Permit Workflow Designer entry — preselects this jurisdiction */}
       {activeTab === "overview" && <>
-      <div className="border-t p-3 bg-violet-50 border-l-4 border-l-violet-400">
+      <div className="border-t bg-slate-50 p-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">AI tools</p>
         <Button
           type="button"
           variant="outline"
@@ -1584,8 +1585,8 @@ Answer only from the provided excerpts and cite the document title and official 
       )}
 
       {/* Chat Interface */}
-      <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">
-        <p className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1">
+      <div className="bg-slate-50 px-3 pb-3">
+        <p className="mb-2 text-xs font-semibold text-slate-600 flex items-center gap-1">
           <MessageSquare className="w-3 h-3" /> Ask AI about this office
         </p>
         {(chatHistory.length > 0 || asking) && (
