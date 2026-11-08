@@ -1,6 +1,16 @@
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { money, calcSignageCabinetPricing } from "./foundationCalc";
+import { FoundationDimensionInput } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
+
+// O-093 (CMP-H02): cabinet dimensions take feet/inches entry through the
+// shared dimension field — same verbatim-draft contract as the panel's
+// cabinetInputValue (blank stays, malformed stores verbatim for diagnostics),
+// canonical inches stored, plain-language label + help + suggested-format
+// placeholder from the field meta map (never stored defaults). Quantity and
+// unit cost are counts/currency, not dimensions — they keep the numeric path.
+const cabDimMeta = (field) => foundationDimensionFieldMeta("cabinet", field);
 
 const blankCabinet = (mount, index, canonId) => ({
   id: `cab_${Date.now()}`,
@@ -61,14 +71,41 @@ function CabinetRow({ cabinet, detail, diagId, onChange, onRemove }) {
         </ul>
       )}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <Field label="Width (in)" type="number" value={cabinet.width_inches ?? 0} onChange={num("width_inches")} />
-        <Field label="Height (in)" type="number" value={cabinet.height_inches ?? 0} onChange={num("height_inches")} />
-        <Field label="Depth (in)" type="number" value={cabinet.depth_inches ?? 0} onChange={num("depth_inches")} />
-        <Field
-          label="Mount ht (in)"
-          type="number"
+        <FoundationDimensionInput
+          {...cabDimMeta("width_inches")}
+          value={cabinet.width_inches ?? 0}
+          onCommit={(v) => onChange({ width_inches: v })}
+          invalid={fieldIssue("width_inches") || undefined}
+          describedBy={describedBy("width_inches")}
+          labelClassName="text-[10px] text-gray-500"
+          inputClassName="h-8 text-[12px]"
+        />
+        <FoundationDimensionInput
+          {...cabDimMeta("height_inches")}
+          value={cabinet.height_inches ?? 0}
+          onCommit={(v) => onChange({ height_inches: v })}
+          invalid={fieldIssue("height_inches") || undefined}
+          describedBy={describedBy("height_inches")}
+          labelClassName="text-[10px] text-gray-500"
+          inputClassName="h-8 text-[12px]"
+        />
+        <FoundationDimensionInput
+          {...cabDimMeta("depth_inches")}
+          value={cabinet.depth_inches ?? 0}
+          onCommit={(v) => onChange({ depth_inches: v })}
+          invalid={fieldIssue("depth_inches") || undefined}
+          describedBy={describedBy("depth_inches")}
+          labelClassName="text-[10px] text-gray-500"
+          inputClassName="h-8 text-[12px]"
+        />
+        <FoundationDimensionInput
+          {...cabDimMeta("mount_height_inches")}
           value={cabinet.mount_height_inches ?? 0}
-          onChange={num("mount_height_inches")}
+          onCommit={(v) => onChange({ mount_height_inches: v })}
+          invalid={fieldIssue("mount_height_inches") || undefined}
+          describedBy={describedBy("mount_height_inches")}
+          labelClassName="text-[10px] text-gray-500"
+          inputClassName="h-8 text-[12px]"
         />
         <Field
           label="Qty"
