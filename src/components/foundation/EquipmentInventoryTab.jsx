@@ -122,7 +122,11 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
   };
 
   const openAdd = (type) => {
-      setEditItem({ material_type: type, material_name: '', cost_per_day: 0, cost_per_week: 0, cost_per_month: 0, pickup_delivery_cost: 0, allow_multiple: false, compatible_attachment_ids: [], compatible_sub_attachment_ids: [], is_pillar_excavation: false, is_spread_foot_excavation: false, is_non_excavation_equipment: false, is_miscellaneous_attachment: false, sort_order: 0 });
+      // CMP-A08 tail: price/sort fields open null ("not cataloged") rather
+      // than minted 0s that would persist a fabricated free rental rate the
+      // admin never typed. Sorting treats null as 0 identically; an explicit
+      // 0 typed into the form still saves as a real authored zero.
+      setEditItem({ material_type: type, material_name: '', cost_per_day: null, cost_per_week: null, cost_per_month: null, pickup_delivery_cost: null, allow_multiple: false, compatible_attachment_ids: [], compatible_sub_attachment_ids: [], is_pillar_excavation: false, is_spread_foot_excavation: false, is_non_excavation_equipment: false, is_miscellaneous_attachment: false, sort_order: null });
       setShowForm(true);
   };
 
