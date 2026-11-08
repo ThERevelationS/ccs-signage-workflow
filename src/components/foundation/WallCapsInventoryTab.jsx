@@ -24,12 +24,11 @@ const PRESET_COLORS = [
   '#f5e6c8', '#795548', '#f5f5f5', '#b5451b', '#1f2937',
 ];
 
-// Blank clears a numeric catalog field to null ("not cataloged" — never a
-// silent free price); a numeric draft coerces to Number; anything else stays
-// verbatim so availability validation reports it instead of a NaN or a minted
-// 0 leaking into recorded catalog prices. Mirrors FoundationItemCard nullSet.
-const catalogNumberInput = (value) => (String(value).trim() === "" ? null
-  : Number.isFinite(Number(value)) ? Number(value) : value);
+// catalogNumberInput is the boundary's numeric catalog draft (CMP-A08): blank
+// clears to null ("not cataloged" — never a silent free price), a numeric
+// draft coerces to Number, anything else stays verbatim so availability
+// validation reports it instead of a NaN or minted 0 leaking into records.
+import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
 
 function CapForm({ item, onSave, onCancel }) {
   const [form, setForm] = useState({
