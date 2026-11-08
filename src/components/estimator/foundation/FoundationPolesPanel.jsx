@@ -1,16 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { inventoryDraftInput } from "@/components/masterInventory/inventoryNormalization";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { FoundationDimensionInput } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import {
   POLE_SHAPE_VALUES,
   consolidateFoundationPoles,
 } from "./poleCalculator";
 
-// Blank-preserving project-entry draft, delegated to the boundary (CMP-A08).
-const heightInput = inventoryDraftInput;
+// O-093 (CMP-H02): linear-dimension fields take feet/inches entry through the
+// shared dimension field — same verbatim-draft contract as the CMP-A08
+// boundary it replaces, canonical inches stored, plain-language label + help +
+// suggested-format placeholder from the field meta map (never stored defaults).
+const poleDimMeta = (field) => foundationDimensionFieldMeta("pole", field);
 
 // CMP-E01/O-056: the project-level poles list below is the single priced
 // representation. Items can still carry pre-consolidation pole fields; they
@@ -164,63 +167,47 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                     ))}
                   </select>
                 </label>
-                <label className="text-xs text-gray-500">
-                  Height above grade (in)
-                  <Input
-                    type="number"
-                    step="any"
-                    value={pole.height_inches ?? ""}
-                    aria-label={`Pole ${index + 1} height above grade (inches)`}
-                    aria-invalid={fieldIssue("height_inches") || undefined}
-                    aria-describedby={fieldIssue("height_inches") ? describedBy : undefined}
-                    onChange={(e) => patchPole(index, { height_inches: heightInput(e.target.value) })}
-                  />
-                </label>
-                <label className="text-xs text-gray-500">
-                  Embedment below grade (in)
-                  <Input
-                    type="number"
-                    step="any"
-                    // A recorded canonical value wins; blank canonical falls
-                    // back to the legacy spelling so display matches pricing.
-                    value={(pole.embedment_inches !== undefined && pole.embedment_inches !== null && pole.embedment_inches !== "")
-                      ? pole.embedment_inches
-                      : (pole.y_offset_inches ?? "")}
-                    aria-label={`Pole ${index + 1} embedment below grade (inches)`}
-                    aria-invalid={fieldIssue("embedment_inches") || fieldIssue("y_offset_inches") || undefined}
-                    aria-describedby={(fieldIssue("embedment_inches") || fieldIssue("y_offset_inches")) ? describedBy : undefined}
-                    onChange={(e) => patchPole(index, {
-                      // Canonical field carries the edit; the legacy spelling
-                      // clears so the two can never diverge into a conflict.
-                      embedment_inches: heightInput(e.target.value),
-                      y_offset_inches: undefined,
-                    })}
-                  />
-                </label>
-                <label className="text-xs text-gray-500">
-                  Base offset above grade (in)
-                  <Input
-                    type="number"
-                    step="any"
-                    value={pole.base_offset_inches ?? ""}
-                    aria-label={`Pole ${index + 1} base offset above grade (inches)`}
-                    aria-invalid={fieldIssue("base_offset_inches") || undefined}
-                    aria-describedby={fieldIssue("base_offset_inches") ? describedBy : undefined}
-                    onChange={(e) => patchPole(index, { base_offset_inches: heightInput(e.target.value) })}
-                  />
-                </label>
-                <label className="text-xs text-gray-500">
-                  Total stock length (in)
-                  <Input
-                    type="number"
-                    step="any"
-                    value={pole.total_length_inches ?? ""}
-                    aria-label={`Pole ${index + 1} total stock length (inches)`}
-                    aria-invalid={fieldIssue("total_length_inches") || undefined}
-                    aria-describedby={fieldIssue("total_length_inches") ? describedBy : undefined}
-                    onChange={(e) => patchPole(index, { total_length_inches: heightInput(e.target.value) })}
-                  />
-                </label>
+                <FoundationDimensionInput
+                  {...poleDimMeta("height_inches")}
+                  value={pole.height_inches ?? ""}
+                  onCommit={(v) => patchPole(index, { height_inches: v })}
+                  ariaLabel={`Pole ${index + 1} height above grade (inches)`}
+                  invalid={fieldIssue("height_inches") || undefined}
+                  describedBy={fieldIssue("height_inches") ? describedBy : undefined}
+                />
+                <FoundationDimensionInput
+                  {...poleDimMeta("embedment_inches")}
+                  // A recorded canonical value wins; blank canonical falls
+                  // back to the legacy spelling so display matches pricing.
+                  value={(pole.embedment_inches !== undefined && pole.embedment_inches !== null && pole.embedment_inches !== "")
+                    ? pole.embedment_inches
+                    : (pole.y_offset_inches ?? "")}
+                  onCommit={(v) => patchPole(index, {
+                    // Canonical field carries the edit; the legacy spelling
+                    // clears so the two can never diverge into a conflict.
+                    embedment_inches: v,
+                    y_offset_inches: undefined,
+                  })}
+                  ariaLabel={`Pole ${index + 1} embedment below grade (inches)`}
+                  invalid={fieldIssue("embedment_inches") || fieldIssue("y_offset_inches") || undefined}
+                  describedBy={(fieldIssue("embedment_inches") || fieldIssue("y_offset_inches")) ? describedBy : undefined}
+                />
+                <FoundationDimensionInput
+                  {...poleDimMeta("base_offset_inches")}
+                  value={pole.base_offset_inches ?? ""}
+                  onCommit={(v) => patchPole(index, { base_offset_inches: v })}
+                  ariaLabel={`Pole ${index + 1} base offset above grade (inches)`}
+                  invalid={fieldIssue("base_offset_inches") || undefined}
+                  describedBy={fieldIssue("base_offset_inches") ? describedBy : undefined}
+                />
+                <FoundationDimensionInput
+                  {...poleDimMeta("total_length_inches")}
+                  value={pole.total_length_inches ?? ""}
+                  onCommit={(v) => patchPole(index, { total_length_inches: v })}
+                  ariaLabel={`Pole ${index + 1} total stock length (inches)`}
+                  invalid={fieldIssue("total_length_inches") || undefined}
+                  describedBy={fieldIssue("total_length_inches") ? describedBy : undefined}
+                />
               </div>
 
               <div className="flex items-center justify-between mt-2">
