@@ -1,3 +1,12 @@
+// O-009 tail: catalog lifecycle classification is the single contract — a
+// resolved-but-inactive/deleted equipment/attachment row flags
+// catalog_item_inactive / catalog_item_deleted on the same issue channel the
+// unassigned/unavailable checks feed, so the entry holds its acknowledged
+// cost instead of silently repricing. The integrity module imports
+// foundationEquipmentCatalogIssues back from this file — both directions are
+// call-time function declarations, so the import cycle is eval-safe.
+import { foundationCatalogRowAvailability } from "./foundationCatalogIntegrity";
+
 const num = (value, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -42,7 +51,19 @@ export function resolveFoundationEquipment(entry = {}, inventory = [], index = 0
   }));
   const issues = [];
   const check = (id, record, kind, field) => {
-    if (assigned(id) && record) return;
+    if (assigned(id) && record) {
+      // Existence -> lifecycle (O-009 tail): a resolved-but-inactive/deleted
+      // catalog row was priced silently — flag it so the entry is held.
+      const availability = foundationCatalogRowAvailability(record);
+      if (availability === "active") return;
+      issues.push({
+        kind, index, componentId: source.component_id ?? source._id ?? null, field,
+        inventoryId: id,
+        code: availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
+        message: `Equipment ${index + 1}: ${kind.replaceAll("_", " ")} ${String(id)} is ${availability === "deleted" ? "marked deleted — pick a replacement" : "inactive — reactivate it or pick a replacement"}.`,
+      });
+      return;
+    }
     const hasSelection = assigned(id);
     issues.push({
       kind, index, componentId: source.component_id ?? source._id ?? null, field,
