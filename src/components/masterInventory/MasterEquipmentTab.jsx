@@ -30,6 +30,7 @@ import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, S
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
 import { createInventoryRecordWithRecovery, findInventoryPartReferences } from "./inventoryPersistence";
+import { inventoryNumberInput } from "./inventoryNormalization";
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 const ChannelLetterInstallEquipmentEntity = staffEntities.ChannelLetterInstallEquipment;
@@ -997,9 +998,9 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         <div className="rounded-lg border bg-slate-50 p-3 space-y-3">
           <p className="text-xs font-semibold text-slate-700">Rental Pricing (per day / week / month)</p>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label className="text-xs">Cost/Day</Label><Input type="number" className="h-8" value={form.cost_per_day} onChange={(e) => set("cost_per_day", parseFloat(e.target.value) || 0)} /></div>
-            <div><Label className="text-xs">Cost/Week</Label><Input type="number" className="h-8" value={form.cost_per_week} onChange={(e) => set("cost_per_week", parseFloat(e.target.value) || 0)} /></div>
-            <div><Label className="text-xs">Cost/Month</Label><Input type="number" className="h-8" value={form.cost_per_month} onChange={(e) => set("cost_per_month", parseFloat(e.target.value) || 0)} /></div>
+            <div><Label className="text-xs">Cost/Day</Label><Input type="number" className="h-8" value={form.cost_per_day ?? ""} onChange={(e) => set("cost_per_day", inventoryNumberInput(e.target.value))} /></div>
+            <div><Label className="text-xs">Cost/Week</Label><Input type="number" className="h-8" value={form.cost_per_week ?? ""} onChange={(e) => set("cost_per_week", inventoryNumberInput(e.target.value))} /></div>
+            <div><Label className="text-xs">Cost/Month</Label><Input type="number" className="h-8" value={form.cost_per_month ?? ""} onChange={(e) => set("cost_per_month", inventoryNumberInput(e.target.value))} /></div>
           </div>
           <div>
             <Label className="text-xs">Rental Company</Label>
@@ -1018,9 +1019,9 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         <Input
           type="number"
           className="h-8"
-          value={source === "channel_letter_equipment" ? (form.delivery_pickup_cost || 0) : (form.pickup_delivery_cost || 0)}
+          value={source === "channel_letter_equipment" ? (form.delivery_pickup_cost ?? "") : (form.pickup_delivery_cost ?? "")}
           onChange={(e) => {
-            const v = parseFloat(e.target.value) || 0;
+            const v = inventoryNumberInput(e.target.value);
             if (source === "channel_letter_equipment") set("delivery_pickup_cost", v);
             else set("pickup_delivery_cost", v);
           }}
