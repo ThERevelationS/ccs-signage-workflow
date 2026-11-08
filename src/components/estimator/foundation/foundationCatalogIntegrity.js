@@ -20,6 +20,20 @@ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   };
   check("selected_concrete_id", ["bagged_concrete", "concrete_service"], "selected concrete catalog material");
   if (item.include_forming) check("selected_forming_id", ["forming_material"], "selected forming catalog material");
+  // Versioned items price steel through their explicit reinforcement_material
+  // basis — a catalog basis needs exactly one current rebar-typed row; the
+  // legacy rebar_size lookup below does not apply to them.
+  if (item.reinforcement_calculation_version != null && item.reinforcement_calculation_version !== 1) {
+    if (item.reinforcement_calculation_version === 2 && item.include_rebar && item.reinforcement_material?.kind === "catalog") {
+      const id = item.reinforcement_material.inventory_id;
+      const matches = selected(id) ? inventory.filter(row => row.id === id) : [];
+      if (matches.length !== 1 || matches[0].material_type !== "rebar") {
+        add("reinforcement_material.inventory_id", id, "selected reinforcement catalog material",
+          !selected(id) ? "catalog_item_unassigned" : matches.length > 1 ? "catalog_item_ambiguous" : "catalog_item_unavailable");
+      }
+    }
+    return issues;
+  }
   const manualRebar = hasFoundationCostSnapshot(item.custom_rebar_cost_per_ft) && item.custom_rebar_cost_per_ft >= 0;
   if (item.include_rebar && !manualRebar) {
     const field = item.foundation_type === "spread_foot" ? "rebar_size" : "pillar_rebar_size";
