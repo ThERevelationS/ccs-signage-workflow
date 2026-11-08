@@ -33,6 +33,7 @@ import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationB
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
 import { createSceneHistory, sceneLayoutAnchor } from "@/components/estimator/foundation/foundationSceneHistory";
 import { createSceneSelection } from "@/components/estimator/foundation/foundationSceneSelection";
+import { duplicateFoundationAssembly } from "@/components/estimator/foundation/foundationDuplicateMirror";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
 import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPricingPanel";
@@ -158,7 +159,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     contextGenerationRef.current += 1;
     // O-040: project/source switch — reset the scene undo chain so recorded
     // gestures from the previous context can never apply to this one.
-    sceneHistory.clear(sceneLayoutAnchor(project?.items || []));
+    // O-035: the scene CAS domain is {items, poles, walls} — the canvas
+    // observes and records in the full domain now, so the reset anchor must
+    // match or every later entry quarantines stale.
+    sceneHistory.clear(sceneLayoutAnchor({ items: project?.items || [], poles: project?.poles || [], walls: project?.walls || [] }));
     const previousAcknowledgment = acknowledgedVersionRef.current;
     acknowledgedVersionRef.current = project?.id ? {
       sourceId: project.id, updated_date: project.updated_date, ownerId,
@@ -577,21 +581,72 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items: prev.items.map((it, i) => (i === index ? { ...it, ...changes } : it)),
     }));
 
+  // O-035 multi-row commit channel — patch lists that do not fit the
+  // single-items channel (moves/resizes across poles or walls, align,
+  // distribute, multi-row drags) route here through the SAME commit path
+  // patchItem uses, so CAS guards + normalize + draft backup stay in force.
+  // One commit for the whole list keeps the op atomic on the business side,
+  // matching the single history entry the canvas records. Refusing (false)
+  // means the canvas records nothing — no silent partial application.
+  const patchScene = (patches) => {
+    const list = (Array.isArray(patches) ? patches : []).filter(
+      (p) => p && typeof p.collection === "string" && Number.isInteger(p.index) && p.index >= 0 && p.patch && typeof p.patch === "object",
+    );
+    const base = projectRef.current ?? project;
+    const applicable = list.filter((p) => Array.isArray(base?.[p.collection]) && base[p.collection][p.index]);
+    if (!applicable.length) return false;
+    return commit((prev) => {
+      const changes = {};
+      for (const p of applicable) {
+        const rows = prev?.[p.collection];
+        if (!Array.isArray(rows) || !rows[p.index]) continue;
+        const nextRows = changes[p.collection] || (changes[p.collection] = rows.slice());
+        nextRows[p.index] = { ...nextRows[p.index], ...p.patch };
+      }
+      return changes;
+    }) !== false;
+  };
+
+  // O-035 canvas snap prefs — optional Settings rows
+  // (foundation_layout_object_snap=false disables object snap;
+  // foundation_layout_snap_tolerance_inches and
+  // foundation_layout_grid_snap_inches are inches). Absent or malformed
+  // values fall through to the canvas defaults (object snap on, 3in
+  // tolerance, grid off); Shift frees snapping per gesture in the canvas.
+  const prefNumber = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : undefined; };
+  const layoutPrefs = {
+    objectSnap: `${settings?.foundation_layout_object_snap ?? "true"}`.trim().toLowerCase() !== "false",
+    snapToleranceInches: prefNumber(settings?.foundation_layout_snap_tolerance_inches),
+    gridSnapInches: prefNumber(settings?.foundation_layout_grid_snap_inches),
+  };
+
   // O-040 scene undo/redo — revert canvas geometry edits through the same
   // commit channel the canvas already uses (patchItem → commit: CAS guards,
   // normalize, draft backup all stay in force). The store returns
   // patch-shaped payloads; a refused commit reports 'rejected' and the
   // stacks stay untouched.
+  // O-035: undo/redo/observe anchors span the full scene domain
+  // ({items, poles, walls}) — the canvas records and observes there now, so
+  // single-row and multi-row entries chain in ONE domain and an external
+  // pole/wall write detaches recorded geometry just like an items write.
+  const sceneAnchorOf = (p) =>
+    sceneLayoutAnchor({ items: p?.items || [], poles: p?.poles || [], walls: p?.walls || [] });
+  // Multi-row entries carry kind 'scene-multi', target:null (the honesty
+  // guard — a single-row apply would throw on .index and report
+  // 'rejected'), and patch {multi:[{collection,index,fields}]} where fields
+  // is the before-side on undo and the after-side on redo. Branch BEFORE
+  // touching rev.target so a real multi apply never trips the guard.
+  const applySceneRev = (rev) => {
+    if (rev?.kind === "scene-multi" || Array.isArray(rev?.patch?.multi)) {
+      const multi = Array.isArray(rev?.patch?.multi) ? rev.patch.multi : [];
+      return patchScene(multi.map((m) => ({ collection: m?.collection, index: m?.index, patch: m?.fields })));
+    }
+    return patchItem(rev.target.index, rev.patch) !== false;
+  };
   const sceneUndo = () =>
-    sceneHistory.undo(
-      sceneLayoutAnchor(projectRef.current?.items || []),
-      (rev) => patchItem(rev.target.index, rev.patch) !== false,
-    );
+    sceneHistory.undo(sceneAnchorOf(projectRef.current), applySceneRev);
   const sceneRedo = () =>
-    sceneHistory.redo(
-      sceneLayoutAnchor(projectRef.current?.items || []),
-      (rev) => patchItem(rev.target.index, rev.patch) !== false,
-    );
+    sceneHistory.redo(sceneAnchorOf(projectRef.current), applySceneRev);
 
   const removeItem = (index) => {
     const label = project.items?.[index]?.description || `item ${index + 1}`;
@@ -642,6 +697,29 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items.splice(index + 1, 0, { ...JSON.parse(JSON.stringify(items[index])), component_id: newCreationRequestKey("foundation_item") });
       return { items };
     });
+
+  // O-035 scene duplicate — the canvas emits a pure plan
+  // ({sources:[{collection,index,componentId}], offset_inches:{x,z}}) and
+  // never mutates business data; foundationDuplicateMirror owns clone +
+  // component-id minting + reference remap, and the resulting patch rides
+  // the same commit channel as every other assembly edit (CAS guards,
+  // normalize, draft backup all stay in force).
+  const duplicateSceneSelection = (plan) => {
+    try {
+      const component_ids = (Array.isArray(plan?.sources) ? plan.sources : [])
+        .map((s) => s?.componentId)
+        .filter((v) => typeof v === "string" && v.length > 0);
+      if (!component_ids.length) return;
+      commit((prev) => duplicateFoundationAssembly(prev, {
+        component_ids,
+        include_dependents: true,
+        offset_inches: plan?.offset_inches,
+        createId: (kind) => newCreationRequestKey(`foundation_${kind}`),
+      }).patch);
+    } catch (e) {
+      setSaveError(e?.message || "Selected objects could not be duplicated.");
+    }
+  };
 
   const addItem = (type) => commit((prev) => ({ items: [...(prev.items || []), blankItem(type)] }));
 
@@ -1578,9 +1656,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   wallCaps={project.wall_caps || []}
                   signageCabinets={project.signage_cabinets || []}
                   onMoveItem={patchItem}
+                  onPatchScene={patchScene}
                   sceneHistory={sceneHistory}
                   sceneSelection={sceneSelection}
                   onDeleteSelection={deleteSceneSelection}
+                  onDuplicateSelection={duplicateSceneSelection}
+                  objectSnap={layoutPrefs.objectSnap}
+                  snapToleranceInches={layoutPrefs.snapToleranceInches}
+                  gridSnapInches={layoutPrefs.gridSnapInches}
                 />
               </TabsContent>
 
