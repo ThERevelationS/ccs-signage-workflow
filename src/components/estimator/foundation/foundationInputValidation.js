@@ -1,17 +1,16 @@
 import { landscapeInputIssues } from "./landscapeMaterials";
 
-const inputNumber = value => {
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  if (typeof value !== "string" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())) return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-};
-
-const positiveWholeNumber = value => {
-  const number = inputNumber(value);
-  const whole = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
-  return whole && Number.isSafeInteger(number) && number > 0;
-};
+// Inventory normalization boundary (CMP-A08): the canonical numeric kernels
+// live in masterInventory/inventoryNormalization. inputNumber is the finite
+// signed basis; positiveWholeNumber the positive-whole predicate;
+// cabinetQuantityNumber the positive basis; cabinetPriceNumber the catalog
+// price basis.
+import {
+  inventoryFiniteNumber as inputNumber,
+  inventoryIsPositiveWhole as positiveWholeNumber,
+  inventoryPositiveNumber as cabinetQuantityNumber,
+  inventoryNonnegativeNumber as cabinetPriceNumber,
+} from "@/components/masterInventory/inventoryNormalization";
 
 const ITEM_CUSTOM_OVERRIDE_FIELDS = [
   ["custom_concrete_cost_per_cy", "concrete cost-per-unit override"],
@@ -124,19 +123,8 @@ export function foundationItemInputIssues(item, index = 0) {
 // unit_cost: must be present, finite and nonnegative. A missing or blank
 // price laundered to a $0 "current" amount under `|| 0`; an explicit recorded
 // 0 remains a legitimate free cabinet.
-const cabinetQuantityNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-};
-
-const cabinetPriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
+// cabinetQuantityNumber / cabinetPriceNumber are imported aliases of the
+// boundary's positive and price bases (see the import block above).
 
 export function signageCabinetInputIssues(cabinet, index = 0) {
   const issues = [];
