@@ -2012,6 +2012,25 @@ function foundationEquipmentBreakdown(entry, catalogs) {
 
 function extractFoundation(project, catalogs) {
   const parts = [];
+  // Estimate-side reconciliation feeds this extractor the raw persisted
+  // record — the Foundation editor normalizes these arrays at load, but
+  // stored legacy rows can carry malformed non-array subsections (the same
+  // class cloneFoundationComponents defends against on the copy path).
+  // Coerce once so a malformed subsection degrades to "no rows" instead of
+  // crashing the Builder handoff.
+  const rows = (v) => (Array.isArray(v) ? v.filter((r) => r && typeof r === "object") : []);
+  project = {
+    ...(project || {}),
+    items: rows(project?.items),
+    walls: rows(project?.walls),
+    poles: rows(project?.poles),
+    wall_caps: rows(project?.wall_caps),
+    selected_equipment: rows(project?.selected_equipment),
+    signage_cabinets: rows(project?.signage_cabinets),
+    project_concrete_admixtures: Array.isArray(project?.project_concrete_admixtures)
+      ? project.project_concrete_admixtures
+      : [],
+  };
   (project.items || []).forEach((item, index) => {
     const concreteId = item.selected_concrete_id || project.selected_concrete_id || "";
     if (concreteId) {
