@@ -22,13 +22,52 @@ export default function ModuleTemplateDialog({
   const [templates, setTemplates] = useState([]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [error, setError] = useState(null);
   const saveAttemptRef = useRef({ signature: "", key: "" });
+  const loadSeqRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const loadRows = () => {
+    const seq = ++loadSeqRef.current;
+    setLoading(true);
+    setLoadFailed(false);
+    setError(null);
+    // loadAllEntityRows rethrows failures — an un-caught rejection would both
+    // leak an unhandled promise and render a fake "no templates" list. The
+    // catch marks the load failed and offers a retry (same honest-empty shape
+    // the landed O-014 Foundation dialog uses).
+    listModuleTemplates({ moduleKey })
+      .then((rows) => {
+        if (!mountedRef.current || loadSeqRef.current !== seq) return;
+        setTemplates(rows || []);
+        setError(null);
+      })
+      .catch((e) => {
+        if (!mountedRef.current || loadSeqRef.current !== seq) return;
+        setTemplates([]);
+        setLoadFailed(true);
+        setError(e?.message || "Templates could not be loaded.");
+      })
+      .finally(() => {
+        if (mountedRef.current && loadSeqRef.current === seq) setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!open) return;
     saveAttemptRef.current = { signature: "", key: "" };
+    setTemplates([]);
+    setError(null);
+    setLoadFailed(false);
     if (mode !== "load") return;
-    listModuleTemplates({ moduleKey }).then((rows) => setTemplates(rows || []));
+    loadRows();
   }, [open, mode, moduleKey]);
 
   const save = async () => {
@@ -55,7 +94,12 @@ export default function ModuleTemplateDialog({
       });
       setName("");
       saveAttemptRef.current = { signature: "", key: "" };
+      setError(null);
       onClose();
+    } catch (e) {
+      // The dialog stays open and honest — a swallowed rejection here meant a
+      // silent save failure with no visible state anywhere.
+      setError(e?.message || "Template could not be saved.");
     } finally {
       setBusy(false);
     }
@@ -66,8 +110,21 @@ export default function ModuleTemplateDialog({
     try {
       await deleteModuleTemplate(t.id, `${title} template`);
       setTemplates((prev) => prev.filter((x) => x.id !== t.id));
-    } catch {
-      // leave the template in the list when the delete fails
+      setError(null);
+    } catch (e) {
+      // The row honestly stays in the list — and the failure is now visible
+      // instead of an empty-catch no-op.
+      setError(e?.message || "Template could not be deleted.");
+    }
+  };
+
+  const apply = (t) => {
+    try {
+      onApply(t.project_data || {});
+      setError(null);
+      onClose();
+    } catch (e) {
+      setError(e?.message || "Template could not be applied.");
     }
   };
 
@@ -79,6 +136,12 @@ export default function ModuleTemplateDialog({
             {mode === "save" ? "Save as Template" : `${title} Templates`}
           </DialogTitle>
         </DialogHeader>
+
+        {error ? (
+          <div role="alert" className="text-[12px] text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5">
+            {error}
+          </div>
+        ) : null}
 
         {mode === "save" ? (
           <div className="space-y-3">
@@ -105,6 +168,19 @@ export default function ModuleTemplateDialog({
               </button>
             </div>
           </div>
+        ) : loading ? (
+          <p className="text-[12px] text-gray-500 py-4">Loading…</p>
+        ) : loadFailed ? (
+          <div className="py-4 space-y-2">
+            <p className="text-[12px] text-gray-500">Templates could not be loaded.</p>
+            <button
+              type="button"
+              onClick={loadRows}
+              className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
+            >
+              Retry
+            </button>
+          </div>
         ) : templates.length === 0 ? (
           <p className="text-[12px] text-gray-500 py-4">No {title.toLowerCase()} templates saved yet.</p>
         ) : (
@@ -119,10 +195,7 @@ export default function ModuleTemplateDialog({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    onApply(t.project_data || {});
-                    onClose();
-                  }}
+                  onClick={() => apply(t)}
                   className="h-[26px] px-3 rounded-sm bg-white border border-gray-300 text-[11px] font-semibold text-gray-700"
                 >
                   Apply
