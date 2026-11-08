@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
-import { ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -131,6 +131,20 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
   const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
+  // Collapsed-by-default completed lines; expanded by default for active work.
+  const expandKey = `permitline_expanded_${lineItem.id}`;
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem(expandKey);
+      if (saved != null) return saved === "1";
+    } catch {}
+    return !isPermitLineEffectivelyComplete(lineItem);
+  });
+  const toggleExpanded = () => setExpanded(v => {
+    const n = !v;
+    try { localStorage.setItem(expandKey, n ? "1" : "0"); } catch {}
+    return n;
+  });
   const headerScrollRef = useRef(null);
   const dataScrollRef = useRef(null);
   const linkOfficeTriggerRef = useRef(null);
@@ -242,13 +256,43 @@ export default function PermitSpreadsheetRow({
       className={`group/line px-3 py-2 transition-colors ${isCompleted ? 'opacity-60 bg-gray-50/40' : 'hover:bg-gray-50/40'}`}
       style={followupStyle}
     >
+      {!expanded ? (() => {
+        const filledSteps = steps.filter(s => s.type === 'checkbox' ? s.checked : String(s.value || '').trim()).length;
+        return (
+          <button type="button" onClick={toggleExpanded} aria-expanded={false}
+            className="flex w-full items-center gap-2 text-left py-0.5">
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="flex items-center gap-1 flex-wrap flex-shrink-0">
+              {expectedReplyOverdue && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-amber-100 text-amber-800 border border-amber-400">PAST DUE</span>}
+              {permitExpired && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-red-50 text-red-800 border border-red-400">RENEWAL</span>}
+              {officeTypes.slice(0, 3).map((t, i) => {
+                const st = getTypeStyle(t);
+                return <span key={i} className="text-[9px] font-bold px-1.5 py-px rounded-full" style={{ backgroundColor: st.bg, color: st.text, border: `1px solid ${st.border}` }}>{t}</span>;
+              })}
+            </span>
+            <span className="truncate font-medium text-[12px] text-gray-800 flex-1">{localityLabel}</span>
+            <span className="text-[10px] text-gray-500 flex-shrink-0">{filledSteps}/{steps.length} steps</span>
+            {lineItem.next_followup_date && !isCompleted && (
+              <span className="text-[10px] text-amber-700 flex-shrink-0">follow-up {lineItem.next_followup_date.slice(5)}</span>
+            )}
+            {lineItem.assigned_to && <span className="text-[10px] text-gray-400 flex-shrink-0 truncate max-w-[100px]">{lineItem.assigned_to}</span>}
+            {lineItem.permit_number && <span className="text-[10px] font-semibold text-emerald-700 flex-shrink-0">#{lineItem.permit_number}</span>}
+          </button>
+        );
+      })() : (
+      <>
       {/* MICRO HEADER — office-type badges + column labels */}
       <div
         className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:gap-x-3"
         style={{ fontSize: '12px' }}
       >
         {/* Office type badges (possibly multiple) */}
-        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
+        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
+          <button type="button" onClick={toggleExpanded} aria-expanded={true}
+            className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 -ml-1"
+            title="Collapse this line">
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
           {expectedReplyOverdue && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }} title="The office's stated reply date has passed — time to call them.">PAST DUE</span>
           )}
@@ -627,6 +671,8 @@ export default function PermitSpreadsheetRow({
         isRegistered={isRegistered}
         today={today}
       />
+      </>
+      )}
 
       <AlertDialog open={linkOfficeOpen} onOpenChange={open => {
         if (linkSaving) return;
