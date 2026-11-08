@@ -118,7 +118,7 @@ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
     unassigned: !authoredOverride(item.custom_forming_rate)
       ? "select a forming catalog material or record a custom forming rate"
       : null,
-    priceBasis: row => (!authoredOverride(item.custom_forming_rate) ? "cost_per_unit" : null),
+    priceBasis: () => (!authoredOverride(item.custom_forming_rate) ? "cost_per_unit" : null),
   });
   // Versioned items price steel through their explicit reinforcement_material
   // basis — a catalog basis needs exactly one current rebar-typed row; the
