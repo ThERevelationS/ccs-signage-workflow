@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { money } from "./foundationCalc";
+import { money, calcSignageCabinetPricing } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { foundationWallBomRows } from "./wallCalculator";
+import { landscapeSummary } from "./landscapeMaterials";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
@@ -21,8 +22,12 @@ export default function FoundationBOM({
   itemPricing = EMPTY_ITEMS,
   polePricing = EMPTY_ITEMS,
   wallPricing = EMPTY_ITEMS,
+  cabinets = EMPTY_ITEMS,
+  landscape,
+  landscapePricing,
   pricingUnavailable = false,
 }) {
+  const cabinetRows = useMemo(() => calcSignageCabinetPricing(cabinets), [cabinets]);
   const rows = useMemo(() => {
     const out = [];
     // rawQty is the real numeric quantity; displayQty is the formatted label.
@@ -134,8 +139,55 @@ export default function FoundationBOM({
 
     (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
 
+    // Signage cabinets — a priced row lists at the acknowledged unit cost ×
+    // quantity; a held row lists its saved state like the blocked foundation
+    // items above (never a silently repriced $0 line).
+    cabinetRows.forEach((row, index) => {
+      const cabinet = cabinets[index] || {};
+      const label = cabinet.description || `Signage cabinet ${index + 1}`;
+      if (row.available === false) {
+        const recordedQty = Number(cabinet.quantity);
+        out.push({
+          material: `${label} (saved)`,
+          quantity: Number.isFinite(recordedQty) ? qty(recordedQty, "pcs") : "Not saved",
+          cost: "Not saved",
+          saved: true,
+        });
+        return;
+      }
+      const quantity = cabinet.quantity === undefined || cabinet.quantity === null || cabinet.quantity === ""
+        ? 1
+        : Number(cabinet.quantity);
+      add(label, qty(quantity, "pcs"), row.cost, quantity);
+    });
+
+    // Landscape / site materials — a fully priced grid lists one row per
+    // material; a held grid keeps the acknowledged section total as a single
+    // saved row, exactly like the saved concrete-delivery row above.
+    if (landscapePricing && landscapePricing.available === false) {
+      out.push({
+        material: "Site landscaping (saved)",
+        quantity: "—",
+        cost: hasFoundationCostSnapshot(totals.total_landscape_cost) ? totals.total_landscape_cost : "Not saved",
+        saved: true,
+      });
+    } else {
+      landscapeSummary(landscape).lines.forEach((line) => {
+        if (line.cost === null || line.sqft === null) {
+          out.push({
+            material: `Site — ${line.label} (saved)`,
+            quantity: Number.isFinite(line.sqft) ? qty(line.sqft, "sq ft") : qty(line.cells, "cells"),
+            cost: "Not saved",
+            saved: true,
+          });
+          return;
+        }
+        add(`Site — ${line.label}`, qty(line.sqft, "sq ft"), line.cost, line.sqft);
+      });
+    }
+
     return out;
-  }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing, wallPricing]);
+  }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing, wallPricing, cabinets, cabinetRows, landscape, landscapePricing]);
 
   const materialTotal = rows.every(r => hasFoundationCostSnapshot(r.cost)) ? rows.reduce((sum, row) => sum + row.cost, 0) : null;
 
@@ -147,6 +199,8 @@ export default function FoundationBOM({
           <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable — saved quantities may be outdated.</p>
           {itemPricing.filter(p => p && p.available === false)
             .concat(polePricing.filter(p => p && p.available === false))
+            .concat(cabinetRows.filter(p => p && p.available === false))
+            .concat(landscapePricing && landscapePricing.available === false ? [landscapePricing] : [])
             .flatMap((p, k) =>
             (p.issues || []).map((i, j) => <p key={`${k}-${j}`} className="text-[10px] text-amber-700">{i.message}</p>)
           )}
