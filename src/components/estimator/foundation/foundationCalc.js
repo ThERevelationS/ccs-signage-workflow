@@ -95,25 +95,18 @@ const equipmentComponentId = (entry) => {
   return equipmentAssignedId(id) ? id : null;
 };
 
-// Catalog/customer price basis: finite, nonnegative — an explicit 0 is a
-// legitimate free rental or delivery rate.
-const equipmentPriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
-
-// Rental duration, custom quantity, and attachment counts multiply a period
-// rate — they must be finite positive. A recorded 0 is not a legitimate
-// duration: it bills nothing, and the ported `|| 1` silently repriced it to a
-// single period, so the draft is held for review instead of guessed.
-const equipmentPositiveNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-};
+// Inventory normalization boundary (CMP-A08): the canonical price/dimension
+// kernels and the row canonicalizer live in masterInventory/inventoryNormalization.
+// equipmentPriceNumber IS the catalog/customer price basis (finite,
+// nonnegative — an explicit 0 is a legitimate free rental or delivery rate).
+// equipmentPositiveNumber is the duration/quantity basis — finite positive: a
+// recorded 0 duration bills nothing and the ported `|| 1` silently repriced it
+// to a single period, so the draft is held for review instead of guessed.
+import {
+  inventoryNonnegativeNumber as equipmentPriceNumber,
+  inventoryPositiveNumber as equipmentPositiveNumber,
+  normalizeFoundationInventoryRows,
+} from "@/components/masterInventory/inventoryNormalization";
 
 // Resolves every value the ported rental math consumes on a normalized
 // calculation copy — authored entries and inventory rows are never mutated.
@@ -363,7 +356,13 @@ function savedConcreteDelivery(project) {
   };
 }
 
-export function calcProject(project, inventory, settings = {}, options = {}) {
+export function calcProject(project, rawInventory, settings = {}, options = {}) {
+  // THE inventory ingress boundary (CMP-A08): every row the calculators touch
+  // is canonicalized once here — legacy field names (brick_*, forming) become
+  // their canonical spellings and legacy inch-denominated pole stock lengths
+  // convert into the canonical feet field. Authored rows are never mutated;
+  // the normalized copies feed every downstream calculator and integrity scan.
+  const inventory = normalizeFoundationInventoryRows(rawInventory);
   const explicitSnapshot = Object.prototype.hasOwnProperty.call(options, "savedProject");
   const savedProject = !explicitSnapshot ? project
     : project.id !== undefined && project.id !== null && project.id !== "" && options.savedProject?.id === project.id
