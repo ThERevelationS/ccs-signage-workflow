@@ -55,7 +55,6 @@ export default function PermitClientGroup({
   today,
   sharedOfficeCount = 0,
   onSearchLocality,
-  onBuildPlan,
   queueState,
   expanded: controlledExpanded,
   onExpandedChange
@@ -66,6 +65,7 @@ export default function PermitClientGroup({
   });
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [wizardStep, setWizardStep] = useState(3);
   // Collapse/expand all lines — rows persist their own expanded state in
   // localStorage, so this stamps every line's key and remounts the list.
   const [compactNonce, setCompactNonce] = useState(0);
@@ -76,7 +76,7 @@ export default function PermitClientGroup({
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
-  const [removeOfficeOpen, setRemoveOfficeOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState(null);
   // "Mark all submitted" asks with a styled dialog — never window.confirm.
   const [markSentAsk, setMarkSentAsk] = useState(null);
   const expanded = controlledExpanded ?? internalExpanded;
@@ -90,6 +90,15 @@ export default function PermitClientGroup({
   // locality, which is what "remove the office from this job" means.
   const lineLocalityIds = [...new Set(group.lines.map(li => String(li.locality_id || '')).filter(Boolean))];
   const appliedLocality = lineLocalityIds.length === 1 ? (localities || []).find(l => l.id === lineLocalityIds[0]) : null;
+  const removeLocalityTargets = lineLocalityIds.map(id => {
+    const lines = group.lines.filter(line => String(line.locality_id || "") === id);
+    const locality = (localities || []).find(item => String(item.id) === id);
+    return {
+      id,
+      name: locality?.name || lines.find(line => line.locality_name)?.locality_name || "this jurisdiction",
+      count: lines.length,
+    };
+  });
   const pendingLocalityName = String(wo?.pending_permit_locality_name || '').trim();
   const pendingLocalityId = String(wo?.pending_permit_locality_id || '').trim();
   // Live pending-apply status — a static chip says nothing, so poll the
@@ -275,15 +284,12 @@ export default function PermitClientGroup({
               Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
             </button>
           )}
-          {isRegistered && wo && onBuildPlan && (
+          {isRegistered && wo && hasLines && (
             <button
               type="button"
               className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
               title="Build an AI permit plan for this job from its town's checked rules"
-              onClick={() => {
-                const loc = localities?.find(l => l.id === (group.lines || []).find(li => li?.locality_id)?.locality_id) || null;
-                onBuildPlan(wo, loc);
-              }}
+              onClick={() => { setWizardStep(2); setShowSetupWizard(true); }}
             >AI plan</button>
           )}
           {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
@@ -467,8 +473,20 @@ export default function PermitClientGroup({
           {authorityCoverage.map(({ locality_id }) => {
             const loc = localities?.find((l) => l.id === locality_id);
             return (loc?.offices || []).map((o) => (
-              <div key={`${locality_id}-${o.id || o.name}`} className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-amber-950">
+              <div
+                key={`${locality_id}-${o.id || o.name}`}
+                className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-amber-950 ${
+                  group.lines.some(line => String(line.locality_id || "") === String(locality_id || "")
+                    && String(line.locality_office_id || "") === String(o.id || "")) ? "" : "opacity-60"
+                }`}
+              >
                 <span className="font-semibold">{o.name || "Office"}</span>
+                {group.lines.some(line => String(line.locality_id || "") === String(locality_id || "")
+                  && String(line.locality_office_id || "") === String(o.id || "")) ? (
+                  <span className="rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-700">tracked</span>
+                ) : (
+                  <span className="text-[10px] text-gray-500">no permit line</span>
+                )}
                 <span
                   className="text-[9px]"
                   title={o.authority_verification_status === 'staff_verified' ? 'Verified by our team' : o.authority_verification_status ? `Status: ${String(o.authority_verification_status).replaceAll('_', ' ')}` : 'Not verified yet'}
@@ -529,22 +547,18 @@ export default function PermitClientGroup({
               </span>
             </div>
           )}
-          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowSetupWizard(true)}>Edit permit setup…</Button>
+          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>{setWizardStep(3);setShowSetupWizard(true);}}>Edit permit setup…</Button>
             {group.lines.length > 2 && (
               <>
                 <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
                 <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
               </>
             )}
-            {appliedLocality && onRemoveLocality && (
-
-              <Button type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={()=>setRemoveOfficeOpen(true)}>
-
-                <Trash2 className="w-3 h-3" /> Remove {appliedLocality.name}
-
+            {onRemoveLocality && removeLocalityTargets.map(target => (
+              <Button key={target.id} type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={() => setRemoveTarget(target)}>
+                <Trash2 className="w-3 h-3" /> Remove {target.name}
               </Button>
-
-            )}
+            ))}
 
             {(() => {
 
@@ -579,7 +593,7 @@ export default function PermitClientGroup({
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
               <Button
-                onClick={() => setShowSetupWizard(true)}
+                onClick={() => { setWizardStep(0); setShowSetupWizard(true); }}
                 disabled={!isRegistered}
                 size="sm"
                 className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
@@ -695,16 +709,20 @@ export default function PermitClientGroup({
         <PermitSetupWizard
           isOpen={showSetupWizard}
           onClose={() => setShowSetupWizard(false)}
+          initialStep={wizardStep}
           workOrder={wo}
           existingLines={group.lines}
           localities={localities}
           onApply={(localityId, opts) => {
-            onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
+            return onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
           }}
           onPendingApply={(localityId, opts) => {
-            onQueueLocalityApply?.(group.work_order_id, localityId, opts);
+            return onQueueLocalityApply?.(group.work_order_id, localityId, opts);
           }}
           onRemoveLocality={onRemoveLocality ? (localityId) => onRemoveLocality(group.work_order_id, localityId) : null}
+          onDeleteLines={async ids => {
+            for (const id of ids) await onDeleteLine?.(id);
+          }}
         />
       )}
 
@@ -736,21 +754,25 @@ export default function PermitClientGroup({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={removeOfficeOpen} onOpenChange={setRemoveOfficeOpen}>
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {appliedLocality?.name || 'this office'} from this job?</AlertDialogTitle>
+            <AlertDialogTitle>Remove {removeTarget?.name || 'this jurisdiction'} from this job?</AlertDialogTitle>
             <AlertDialogDescription>
-              This deletes {group.lines.length} permit line{group.lines.length === 1 ? '' : 's'} linked to {appliedLocality?.name || 'this office'} on this job only — the office record itself stays saved, so searching the address again will find it if it is still the right one.
+              This deletes {removeTarget?.count || 0} permit line{removeTarget?.count === 1 ? '' : 's'} linked to {removeTarget?.name || 'this jurisdiction'} on this job only — the office record itself stays saved, so searching the address again will find it if it is still the right one.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep office</AlertDialogCancel>
+            <AlertDialogCancel>Keep jurisdiction</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
-              onClick={() => { setRemoveOfficeOpen(false); appliedLocality && onRemoveLocality(group.work_order_id, appliedLocality.id); }}
+              onClick={() => {
+                const target = removeTarget;
+                setRemoveTarget(null);
+                if (target?.id) onRemoveLocality(group.work_order_id, target.id);
+              }}
             >
-              Remove office
+              Remove jurisdiction
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
