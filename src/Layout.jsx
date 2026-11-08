@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef, Fragment } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -1458,68 +1458,78 @@ function LayoutContent({ children }) {
             >
               <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                 <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
-                  {(provided) => (
+                  {(provided, dropSnapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
                       {topEntries.map((entry, index) => {
+                        // Placeholder at the source slot keeps the lifted
+                        // item's gap so targets don't slide mid-drag.
+                        const dndId = entry.type === "folder" ? `sfolder:${entry.id}` : `side-${entry.url}`;
+                        const holder = dropSnapshot.draggingFromThisWith === dndId ? provided.placeholder : null;
                         if (entry.type === "folder") {
                           const folder = entry.folder;
                           return (
-                            <Draggable key={`sfolder:${folder.id}`} draggableId={`sfolder:${folder.id}`} index={index}>
-                              {(dragProvided) => (
-                                <div
-                                  ref={dragProvided.innerRef}
-                                  {...dragProvided.draggableProps}
-                                  {...dragProvided.dragHandleProps}
-                                  style={dragProvided.draggableProps.style}
-                                >
-                                  <SidebarNavGroup
-                                    label={folder.name}
-                                    items={folderItems(folder)}
-                                    collapsed={!!collapsedGroups[folder.id] || isShortShell}
-                                    onToggle={() => toggleNavGroup(folder.id)}
-                                    compactView={compactView}
-                                    activePath={location.pathname}
-                                    isInSplitUrl={isInSplitView}
-                                    onNavigate={handleNavClick}
-                                    accent={folder.color}
-                                    stylePreset={folder.style}
-                                    onContextMenuGroup={({ x, y }) =>
-                                      setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
-                                    onContextMenuItem={(item, { x, y }) =>
-                                      setNavMenu({ x, y, kind: "page", url: item.url })}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
+                            <Fragment key={dndId}>
+                              <Draggable draggableId={dndId} index={index}>
+                                {(dragProvided) => (
+                                  <div
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    {...dragProvided.dragHandleProps}
+                                    style={dragProvided.draggableProps.style}
+                                  >
+                                    <SidebarNavGroup
+                                      label={folder.name}
+                                      items={folderItems(folder)}
+                                      collapsed={!!collapsedGroups[folder.id] || isShortShell}
+                                      onToggle={() => toggleNavGroup(folder.id)}
+                                      compactView={compactView}
+                                      activePath={location.pathname}
+                                      isInSplitUrl={isInSplitView}
+                                      onNavigate={handleNavClick}
+                                      accent={folder.color}
+                                      stylePreset={folder.style}
+                                      onContextMenuGroup={({ x, y }) =>
+                                        setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                      onContextMenuItem={(item, { x, y }) =>
+                                        setNavMenu({ x, y, kind: "page", url: item.url })}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                              {holder}
+                            </Fragment>
                           );
                         }
                         const item = barItemByUrl.get(entry.url);
                         if (!item) return null;
                         return (
-                          <Draggable key={item.url} draggableId={`side-${item.url}`} index={index}>
-                            {(dragProvided) => (
-                              <NavPageLink
-                                item={item}
-                                variant="side"
-                                compactView={compactView}
-                                isActive={location.pathname === item.url}
-                                isInSplit={isInSplitView(item)}
-                                onNavigate={(event) => handleNavClick(event, item)}
-                                onContextMenuItem={(itm, { x, y }) =>
-                                  setNavMenu({ x, y, kind: "page", url: itm.url })}
-                                dragRef={dragProvided.innerRef}
-                                dragProps={dragProvided.draggableProps}
-                                dragHandleProps={dragProvided.dragHandleProps}
-                              />
-                            )}
-                          </Draggable>
+                          <Fragment key={dndId}>
+                            <Draggable draggableId={dndId} index={index}>
+                              {(dragProvided) => (
+                                <NavPageLink
+                                  item={item}
+                                  variant="side"
+                                  compactView={compactView}
+                                  isActive={location.pathname === item.url}
+                                  isInSplit={isInSplitView(item)}
+                                  onNavigate={(event) => handleNavClick(event, item)}
+                                  onContextMenuItem={(itm, { x, y }) =>
+                                    setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                  dragRef={dragProvided.innerRef}
+                                  dragProps={dragProvided.draggableProps}
+                                  dragHandleProps={dragProvided.dragHandleProps}
+                                />
+                              )}
+                            </Draggable>
+                            {holder}
+                          </Fragment>
                         );
                       })}
-                      {provided.placeholder}
+                      {!dropSnapshot.draggingFromThisWith && provided.placeholder}
                     </div>
                   )}
                 </Droppable>
@@ -1651,70 +1661,83 @@ function LayoutContent({ children }) {
                 >
                   <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                     <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
-                      {(provided) => (
+                      {(provided, dropSnapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
                           {topEntries.map((entry, index) => {
+                            // The placeholder is rendered at the SOURCE slot so
+                            // the lifted item's space is held — in a wrapping
+                            // flex bar, letting the gap collapse reflows every
+                            // row and slides drop targets out from under the
+                            // pointer mid-drag.
+                            const dndId = entry.type === "folder" ? folderToken(entry.id) : `top-${entry.url}`;
+                            const holder = dropSnapshot.draggingFromThisWith === dndId ? provided.placeholder : null;
                             if (entry.type === "folder") {
                               const folder = entry.folder;
                               const FolderIcon = folderIconFor(folder.icon);
                               return (
-                                <Draggable key={folderToken(folder.id)} draggableId={folderToken(folder.id)} index={index}>
-                                  {(dragProvided) => (
-                                    <div
-                                      ref={dragProvided.innerRef}
-                                      {...dragProvided.draggableProps}
-                                      {...dragProvided.dragHandleProps}
-                                      style={dragProvided.draggableProps.style}
-                                      className="rounded-lg"
-                                    >
-                                      <NavFlyoutMenu
-                                        label={folder.name}
-                                        icon={FolderIcon}
-                                        accent={folder.color}
-                                        stylePreset={folder.style}
-                                        folderId={folder.id}
-                                        items={folderItems(folder)}
-                                        compactView={compactView}
-                                        activePath={location.pathname}
-                                        isInSplitUrl={isInSplitView}
-                                        onNavigate={handleNavClick}
-                                        onContextMenuPill={({ x, y }) =>
-                                          setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
-                                        onContextMenuItem={(item, { x, y }) =>
-                                          setNavMenu({ x, y, kind: "page", url: item.url })}
-                                      />
-                                    </div>
-                                  )}
-                                </Draggable>
+                                <Fragment key={dndId}>
+                                  <Draggable draggableId={dndId} index={index}>
+                                    {(dragProvided) => (
+                                      <div
+                                        ref={dragProvided.innerRef}
+                                        {...dragProvided.draggableProps}
+                                        {...dragProvided.dragHandleProps}
+                                        style={dragProvided.draggableProps.style}
+                                        className="rounded-lg"
+                                      >
+                                        <NavFlyoutMenu
+                                          label={folder.name}
+                                          icon={FolderIcon}
+                                          accent={folder.color}
+                                          stylePreset={folder.style}
+                                          folderId={folder.id}
+                                          items={folderItems(folder)}
+                                          compactView={compactView}
+                                          activePath={location.pathname}
+                                          isInSplitUrl={isInSplitView}
+                                          onNavigate={handleNavClick}
+                                          onContextMenuPill={({ x, y }) =>
+                                            setNavMenu({ x, y, kind: "folder", folderId: folder.id })}
+                                          onContextMenuItem={(item, { x, y }) =>
+                                            setNavMenu({ x, y, kind: "page", url: item.url })}
+                                        />
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                  {holder}
+                                </Fragment>
                               );
                             }
                             const item = barItemByUrl.get(entry.url);
                             if (!item) return null;
                             return (
-                              <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
-                                {(dragProvided) => (
-                                  <NavPageLink
-                                    item={item}
-                                    variant="top"
-                                    compactView={compactView}
-                                    isActive={location.pathname === item.url}
-                                    isInSplit={isInSplitView(item)}
-                                    onNavigate={(event) => handleNavClick(event, item)}
-                                    onContextMenuItem={(itm, { x, y }) =>
-                                      setNavMenu({ x, y, kind: "page", url: itm.url })}
-                                    dragRef={dragProvided.innerRef}
-                                    dragProps={dragProvided.draggableProps}
-                                    dragHandleProps={dragProvided.dragHandleProps}
-                                  />
-                                )}
-                              </Draggable>
+                              <Fragment key={dndId}>
+                                <Draggable draggableId={dndId} index={index}>
+                                  {(dragProvided) => (
+                                    <NavPageLink
+                                      item={item}
+                                      variant="top"
+                                      compactView={compactView}
+                                      isActive={location.pathname === item.url}
+                                      isInSplit={isInSplitView(item)}
+                                      onNavigate={(event) => handleNavClick(event, item)}
+                                      onContextMenuItem={(itm, { x, y }) =>
+                                        setNavMenu({ x, y, kind: "page", url: itm.url })}
+                                      dragRef={dragProvided.innerRef}
+                                      dragProps={dragProvided.draggableProps}
+                                      dragHandleProps={dragProvided.dragHandleProps}
+                                    />
+                                  )}
+                                </Draggable>
+                                {holder}
+                              </Fragment>
                             );
                           })}
-                          {provided.placeholder}
+                          {!dropSnapshot.draggingFromThisWith && provided.placeholder}
                         </div>
                       )}
                     </Droppable>
