@@ -394,7 +394,7 @@ function LayoutContent({ children }) {
   // never disturbed; styles are restored verbatim on release.
   useEffect(() => {
     const FROZEN = "ccs-nav-frozen";
-    const freezeAll = (root) => {
+    const freezeAll = (root, dragEl) => {
       for (const dropEl of root.querySelectorAll("[data-rfd-droppable-id]")) {
         if (dropEl.__ccsFrozen) continue;
         dropEl.__ccsFrozen = true;
@@ -403,21 +403,32 @@ function LayoutContent({ children }) {
         // reflows its siblings, so measuring lazily corrupts later offsets.
         const els = [...dropEl.querySelectorAll("[data-rfd-draggable-id]")];
         const rects = els.map((el) => el.getBoundingClientRect());
-        dropEl.__ccsSavedStyle = { position: dropEl.style.position, height: dropEl.style.height };
+        dropEl.__ccsSavedStyle = {
+          position: dropEl.style.position, height: dropEl.style.height,
+          width: dropEl.style.width, flexShrink: dropEl.style.flexShrink,
+        };
         dropEl.classList.add(FROZEN);
         dropEl.style.position = "relative";
+        // Pin BOTH dims — once the children leave flow the container would
+        // otherwise collapse to 0x0 and stop being a hit-testable drop zone.
         dropEl.style.height = `${rect.height}px`;
+        dropEl.style.width = `${rect.width}px`;
+        dropEl.style.flexShrink = "0";
         els.forEach((el, i) => {
           const r = rects[i];
           el.__ccsSavedStyle = {
             position: el.style.position, left: el.style.left,
             top: el.style.top, margin: el.style.margin, zIndex: el.style.zIndex,
+            width: el.style.width, height: el.style.height,
           };
           el.style.position = "absolute";
           el.style.left = `${r.left - rect.left}px`;
           el.style.top = `${r.top - rect.top}px`;
+          el.style.width = `${r.width}px`;
+          el.style.height = `${r.height}px`;
           el.style.margin = "0";
-          el.style.zIndex = "1";
+          // The drag source becomes the fixed ghost — keep it above siblings.
+          el.style.zIndex = el === dragEl ? "5000" : "1";
         });
       }
     };
@@ -436,7 +447,7 @@ function LayoutContent({ children }) {
       const dragEl = event.target.closest?.("[data-rfd-draggable-id]");
       if (!dragEl) return;
       const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
-      if (scope) freezeAll(scope);
+      if (scope) freezeAll(scope, dragEl);
     };
     const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
     document.addEventListener("pointerdown", onPointerDown, true);
