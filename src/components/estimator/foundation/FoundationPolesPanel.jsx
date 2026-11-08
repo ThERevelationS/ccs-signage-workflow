@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { inventoryDraftInput } from "@/components/masterInventory/inventoryNormalization";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 
-const heightInput = (value) => value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
+// Blank-preserving project-entry draft, delegated to the boundary (CMP-A08).
+const heightInput = inventoryDraftInput;
 
 export default function FoundationPolesPanel({ poles = [], options = [], items = [], onChange, polePricing = [] }) {
   const patchPole = (index, changes) =>
