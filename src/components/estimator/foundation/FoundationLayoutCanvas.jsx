@@ -16,14 +16,34 @@ import {
   resolveSceneDragTarget,
   keyboardNudge,
   nudgePatch,
+  sceneEditFromDrag,
+  sceneEditFromNudge,
+  sceneEditCoalesceKey,
 } from "./foundationSceneInput";
+import {
+  createSceneHistory,
+  rowsWithPatch,
+  sceneLayoutAnchor,
+} from "./foundationSceneHistory";
 
-export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveItem }) {
+export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveItem, sceneHistory = null }) {
   const boxRef = useRef(null);
   const [zoom, setZoom] = useState(1);
   const dragRef = useRef(null);
   const [preview, setPreview] = useState(null); // {key,x,z} transient only
   const editable = typeof onMoveItem === "function";
+
+  // O-040 history seam — an internal store keeps the component
+  // self-contained; a mounted editor passes its own via `sceneHistory` for
+  // the page's undo UI (see foundationSceneHistory mount notes).
+  const internalHistoryRef = useRef(null);
+  if (!internalHistoryRef.current) internalHistoryRef.current = createSceneHistory();
+  const history = sceneHistory || internalHistoryRef.current;
+
+  // Geometry-CAS reconciliation — every items change that did NOT come
+  // through this canvas's recorded strokes detaches the undo chain, so undo
+  // can never resurrect stale geometry over an external write.
+  useEffect(() => { history.observe(sceneLayoutAnchor(items)); }, [history, items]);
 
   const pctW = (inches) => `${(inches / FOUNDATION_LAYOUT_WIDTH_INCHES) * 100}%`;
   const pctD = (inches) => `${(inches / FOUNDATION_LAYOUT_DEPTH_INCHES) * 100}%`;
@@ -94,7 +114,24 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
     const target = resolveSceneDragTarget(d, items);
     if (!target) return;
     if (typeof onMoveItem !== "function") return;
-    onMoveItem(target.index, patch);
+    // O-040: the whole gesture — begin, every preview move, commit — records
+    // as ONE history command carrying the pre-stroke corner as its inverse
+    // patch. Anchors are computed as "the scene with only this row's
+    // geometry swapped", so an interleaved write to a different row is
+    // preserved inside the entry instead of detaching it.
+    const edit = sceneEditFromDrag(d, patch);
+    const applied = onMoveItem(target.index, patch);
+    if (applied === false) return; // refused commit — nothing landed to undo
+    if (edit) {
+      history.recordEdit({
+        ...edit,
+        target: { key: d.key, index: target.index },
+        label: `Move Foundation ${target.index + 1}`,
+        coalesceKey: sceneEditCoalesceKey(edit),
+        beforeAnchor: sceneLayoutAnchor(rowsWithPatch(items, target.index, edit.before)),
+        afterAnchor: sceneLayoutAnchor(rowsWithPatch(items, target.index, patch)),
+      });
+    }
   };
 
   const onKeyDown = (e, item, index) => {
@@ -107,7 +144,23 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
     const pos = layoutPositionInches(item);
     if (!fp || !pos.valid) return;
     e.preventDefault();
-    onMoveItem(index, nudgePatch(pos, delta));
+    // O-040: consecutive nudges on the same row coalesce into ONE undo
+    // command inside the store's burst window — a held arrow key is one
+    // stroke, not N history entries.
+    const patch = nudgePatch(pos, delta);
+    const applied = onMoveItem(index, patch);
+    if (applied === false) return; // refused commit — nothing landed to undo
+    const edit = sceneEditFromNudge(layoutItemKey(item, index), pos, patch);
+    if (edit) {
+      history.recordEdit({
+        ...edit,
+        target: { key: layoutItemKey(item, index), index },
+        label: `Move Foundation ${index + 1}`,
+        coalesceKey: sceneEditCoalesceKey(edit),
+        beforeAnchor: sceneLayoutAnchor(rowsWithPatch(items, index, edit.before)),
+        afterAnchor: sceneLayoutAnchor(rowsWithPatch(items, index, patch)),
+      });
+    }
   };
 
   const invalidNotes = items.map((item, index) => ({ item, index }))
