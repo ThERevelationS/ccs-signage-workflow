@@ -37,6 +37,7 @@ import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomer
 import { hasFoundationCostSnapshot } from "@/components/estimator/foundation/foundationCatalogIntegrity";
 import { calcProject, money, captureConcreteDeliverySnapshot } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
+import { normalizeFoundationInventoryRows } from "@/components/masterInventory/inventoryNormalization";
 import { recordBuilderSave, foundationRecordSavedTotal } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject, sourcePatchMatches } from "@/components/estimator/builder/sourceProjectPersistence";
@@ -270,7 +271,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         } else {
           setRecoveryRequired(false);
         }
-        setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+        // Canonicalize once at state ingress (CMP-A08): every downstream read —
+        // catalog memo, tab props, BOM, and calcProject — sees canonical rows.
+        setInventory(normalizeFoundationInventoryRows([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]));
         setSettings(
           Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
         );
@@ -321,7 +324,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       ]);
       if (!isCurrentFlight(flight)) return; // stale reply: never install into a newer context
       bumpEdit();
-      setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+      setInventory(normalizeFoundationInventoryRows([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]));
       setSettings(Object.fromEntries((settingRows || []).map((r) => [r.setting_name, r.setting_value])));
       setAutoSave(false);
       setDirty(true);
