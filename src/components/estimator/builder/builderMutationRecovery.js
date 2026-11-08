@@ -459,3 +459,20 @@ export async function resumeBuilderMutation({
     line: completedLine,
   };
 }
+/**
+ * Copy-time guard (CMP-A12 / O-012): a line's durable recovery marker names
+ * the estimate_id that owns its pending operation. Copying such a line into a
+ * different estimate — merge, duplicate, or split — would transplant an
+ * unresumable marker: the estimate gate would treat the foreign key as a live
+ * pending operation (blocking the target's Product/Part mutations up to its
+ * stale TTL) while the marker's own estimate_id can never validate against
+ * the copied record, leaving the section's Builder Product permanently unable
+ * to reconcile. Refuse the copy up front so the operator can resume the
+ * pending operation on the source estimate first.
+ */
+export function assertNoPendingLinesForCopy(lines = [], action = "copying sections") {
+  const line = (lines || []).find((item) => pendingBuilderMutation(item));
+  if (!line) return;
+  const name = line.client_product_name || line.project_name || "A selected section";
+  throw new Error(`"${name}" has a Builder mutation still being recovered. Resume it on this estimate before ${action}.`);
+}
