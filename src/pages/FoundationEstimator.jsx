@@ -45,7 +45,7 @@ import { loadFoundationBuilderRecovery, verifyFoundationRecoverySource } from "@
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";
 import { createFoundationDraftStore } from "@/components/estimator/foundation/foundationDraftRecovery";
 import { useAuth } from "@/components/auth/EmailGate";
-import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt } from "@/components/estimator/foundation/foundationSyncRecovery";
+import { createFoundationSyncAttempt, foundationSyncRecoveryState, assertFoundationBuilderAcknowledgment, validateFoundationSyncAttempt, resolveFoundationSyncReceiptForSave } from "@/components/estimator/foundation/foundationSyncRecovery";
 import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from "@/components/estimator/foundation/foundationAssemblyModel";
 import { prepareFoundationTemplatePatch } from "@/components/estimator/foundation/foundationTemplateModel";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -734,13 +734,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           }
         }
         {
-          const prior = captured.project.builder_sync_attempt;
-          if (prior != null) {
-            const ok = validateFoundationSyncAttempt(prior)
-              && prior.source_project_id === captured.project.id
-              && (!!captured.estimateId && prior.estimate_id === captured.estimateId);
-            if (!ok) throw new Error("An unrecognised Builder sync receipt blocks saving. Reload and retry.");
-          }
+          // A persisted receipt naming another estimate context stays
+          // authoritative while that estimate can still be read; when the named
+          // estimate is definitively gone the orphaned receipt is retired with
+          // this save instead of blocking the standalone editor forever.
+          const receipt = await resolveFoundationSyncReceiptForSave({
+            project: captured.project,
+            estimateId: captured.estimateId,
+            getEstimate: (id) => staffEntities.AllInOneEstimate.get(id),
+          });
+          if (!receipt.ok) throw new Error(receipt.error);
+          captured.clearStaleSyncReceipt = receipt.clearStaleReceipt === true;
         }
         if (captured.estimateId) {
           captured.syncAttempt = createFoundationSyncAttempt({
@@ -756,7 +760,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           entity: staffEntities.FoundationProject,
           sourceId: saveContext.sourceId,
           expectedUpdatedAt,
-          data: { ...captured.basePayload, customer_pricing: customerPricing, ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : {}) },
+          data: { ...captured.basePayload, customer_pricing: customerPricing, ...(captured.syncAttempt ? { builder_sync_attempt: captured.syncAttempt } : captured.clearStaleSyncReceipt ? { builder_sync_attempt: null } : {}) },
           estimateId: captured.estimateId,
           label: "Foundation project",
         });
