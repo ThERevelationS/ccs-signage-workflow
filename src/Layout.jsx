@@ -390,23 +390,65 @@ function LayoutContent({ children }) {
   // flex-wrap flow → the bar reflows chaotically and drop targets slide out
   // from under the pointer ("can't get pages into folders"). Absolute-pinning
   // every nav draggable at its current spot keeps all targets dead still for
-  // the whole drag. Pure DOM — no React state — so the drag lifecycle is
-  // never disturbed; styles are restored verbatim on release.
+  // the whole drag; ancestor boxes are fixed-positioned too, so a collapsing
+  // grid/flex parent can't drag the frozen region to new coordinates. Pure
+  // DOM — no React state — so the drag lifecycle is never disturbed; styles
+  // are restored verbatim on release.
   useEffect(() => {
     const FROZEN = "ccs-nav-frozen";
+    const POS_PROPS = ["position", "left", "top", "right", "bottom", "width", "height",
+      "minWidth", "minHeight", "margin", "zIndex", "flexShrink", "justifySelf", "alignSelf"];
+    const saveStyle = (el) => {
+      const saved = {};
+      for (const k of POS_PROPS) saved[k] = el.style[k];
+      return saved;
+    };
     const freezeAll = (root, dragEl) => {
       for (const dropEl of root.querySelectorAll("[data-rfd-droppable-id]")) {
         if (dropEl.__ccsFrozen) continue;
         dropEl.__ccsFrozen = true;
+        // Measure EVERYTHING before mutating — each style change can reflow
+        // siblings, so lazy measurement would corrupt the offsets.
         const rect = dropEl.getBoundingClientRect();
-        // Measure EVERYTHING first — setting position:absolute on one element
-        // reflows its siblings, so measuring lazily corrupts later offsets.
         const els = [...dropEl.querySelectorAll("[data-rfd-draggable-id]")];
         const rects = els.map((el) => el.getBoundingClientRect());
-        dropEl.__ccsSavedStyle = {
-          position: dropEl.style.position, height: dropEl.style.height,
-          width: dropEl.style.width, flexShrink: dropEl.style.flexShrink,
-        };
+        // Ancestor chain up to the nearest already-fixed/sticky element (or
+        // <body>): those boxes must not relayout under the frozen region.
+        const anchors = [];
+        let p = dropEl.parentElement;
+        while (p && p !== document.body) {
+          const cs = getComputedStyle(p);
+          const r = p.getBoundingClientRect();
+          anchors.push([p, r, cs.position]);
+          if (cs.position === "fixed" || cs.position === "sticky") break;
+          p = p.parentElement;
+        }
+        // --- apply pass ---
+        for (const [a, r, pos] of anchors) {
+          a.__ccsSavedStyle = saveStyle(a);
+          a.__ccsPinned = true;
+          if (pos === "fixed" || pos === "sticky") {
+            a.style.width = `${r.width}px`;
+            a.style.height = `${r.height}px`;
+            a.style.minWidth = `${r.width}px`;
+            a.style.minHeight = `${r.height}px`;
+            continue;
+          }
+          a.style.position = "fixed";
+          a.style.margin = "0";
+          a.style.left = "0px";
+          a.style.top = "0px";
+          // Correct for whichever containing block the fixed box resolved to.
+          const r2 = a.getBoundingClientRect();
+          const cs2 = getComputedStyle(a);
+          a.style.left = `${parseFloat(cs2.left) + (r.left - r2.left)}px`;
+          a.style.top = `${parseFloat(cs2.top) + (r.top - r2.top)}px`;
+          a.style.width = `${r.width}px`;
+          a.style.height = `${r.height}px`;
+          a.style.zIndex = "60";
+        }
+        dropEl.__ccsAnchors = anchors.map(([a]) => a);
+        dropEl.__ccsSavedStyle = saveStyle(dropEl);
         dropEl.classList.add(FROZEN);
         dropEl.style.position = "relative";
         // Pin BOTH dims — once the children leave flow the container would
@@ -416,11 +458,7 @@ function LayoutContent({ children }) {
         dropEl.style.flexShrink = "0";
         els.forEach((el, i) => {
           const r = rects[i];
-          el.__ccsSavedStyle = {
-            position: el.style.position, left: el.style.left,
-            top: el.style.top, margin: el.style.margin, zIndex: el.style.zIndex,
-            width: el.style.width, height: el.style.height,
-          };
+          el.__ccsSavedStyle = saveStyle(el);
           el.style.position = "absolute";
           el.style.left = `${r.left - rect.left}px`;
           el.style.top = `${r.top - rect.top}px`;
@@ -440,6 +478,12 @@ function LayoutContent({ children }) {
         for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
           if (el.__ccsSavedStyle) { Object.assign(el.style, el.__ccsSavedStyle); el.__ccsSavedStyle = null; }
         }
+        for (const a of dropEl.__ccsAnchors || []) {
+          if (a.__ccsSavedStyle) Object.assign(a.style, a.__ccsSavedStyle);
+          a.__ccsSavedStyle = null;
+          a.__ccsPinned = false;
+        }
+        dropEl.__ccsAnchors = null;
       }
     };
     const onPointerDown = (event) => {
