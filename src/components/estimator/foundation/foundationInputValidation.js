@@ -1,4 +1,5 @@
 import { landscapeInputIssues } from "./landscapeMaterials";
+import { calculateFoundationReinforcementModel } from "./foundationReinforcementModel";
 
 // Inventory normalization boundary (CMP-A08): the canonical numeric kernels
 // live in masterInventory/inventoryNormalization. inputNumber is the finite
@@ -70,7 +71,31 @@ export function foundationItemInputIssues(item, index = 0) {
       add("dimensions", "foundation_volume_out_of_range", "dimensions and quantity cannot produce a finite positive volume in the supported calculation range.");
     }
   }
-  if (record.include_rebar) {
+  // Versioned reinforcement dispatch (CMP-B): items carrying
+  // reinforcement_calculation_version are priced by the versioned model —
+  // absent/1 keeps the legacy checks below untouched, an unsupported version
+  // is held rather than silently recalculated as legacy, and version 2
+  // reports its explicit design's own errors instead of the legacy rebar
+  // fields it does not consume. Consumed overrides and the recorded
+  // excavation method above still apply on every version.
+  const version = record.reinforcement_calculation_version;
+  if (version != null && version !== 1 && version !== 2) {
+    add("reinforcement_calculation_version", "foundation_reinforcement_version_unsupported",
+      "the active reinforcement calculation version is unsupported. Reload before changing prices.");
+    return issues;
+  }
+  if (version === 2) {
+    if (record.include_rebar != null && typeof record.include_rebar !== "boolean") {
+      add("include_rebar", "foundation_reinforcement_enabled_invalid", "reinforcement must be explicitly enabled or disabled.");
+      return issues;
+    }
+    if (!issues.length) {
+      const model = calculateFoundationReinforcementModel(record, record.reinforcement_design, { geometryLimit: 0 });
+      for (const issue of model.issues.filter(value => value.severity === "error")) {
+        add(`reinforcement_design.${issue.field}`, issue.code, issue.message);
+      }
+    }
+  } else if (record.include_rebar) {
     const optional = (field, code, label, valid) => {
       const value = record[field];
       if (value !== undefined && value !== null && !valid(value)) add(field, code, label);
