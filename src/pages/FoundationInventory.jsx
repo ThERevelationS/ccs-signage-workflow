@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,11 @@ const FoundationInventoryEntity = staffEntities.FoundationInventory;
 // canonicalWallMaterialSubtype (CMP-D03) classifies the recorded subtype so
 // poured-concrete rows display/edit on the volume basis even when the stored
 // spelling is an alias ("poured concrete", "cast_in_place").
-import { inventoryNumberInput as catalogNumberInput, canonicalWallMaterialSubtype } from "@/components/masterInventory/inventoryNormalization";
+// groupInventoryBySupplier (CMP-A08 tail) renders the explicit supply
+// grouping: catalog lists split into per-supplier sections keyed on the
+// canonical supplier_key (case/spacing-insensitive), with unrecorded
+// suppliers held last as "No supplier recorded" — never silently merged.
+import { inventoryNumberInput as catalogNumberInput, canonicalWallMaterialSubtype, groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
 
 // `list` field drafts (O-021 / CMP-B07): rebar_support_compatible_bar_sizes is
 // a stored string array edited as a comma-separated text draft. listFieldDraft
@@ -68,6 +72,11 @@ const TAB_CONFIGS = {
     label: 'Bagged Concrete',
     types: ['bagged_concrete'],
     defaultType: 'bagged_concrete',
+    // CMP-A08 tail: the concrete supply split is explicit in the catalog UX —
+    // ready-mix supplier services live under Master Inventory → Labor &
+    // Services (service_category "concrete_service", grouped by vendor_key);
+    // bagged products stay here and group by their supplier field below.
+    intro: 'Ready-mix supplier services are managed under Master Inventory → Labor & Services. Bagged products below group by supplier.',
     fields: [
       { key: 'material_name', label: 'Material Name *', type: 'text', required: true },
       { key: 'material_description', label: 'Description', type: 'text' },
@@ -159,7 +168,11 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
   const defaults = { material_type: config.defaultType };
   config.fields.forEach(f => {
     if (f.default !== undefined) defaults[f.key] = f.default;
-    else if (f.type === 'number') defaults[f.key] = 0;
+    // CMP-A08 tail: a number field with no declared default starts null —
+    // "not cataloged" — never a minted 0 that would persist a fabricated
+    // free price/dimension the admin never typed. Explicit 0 typed into the
+    // input still saves as a real authored zero via catalogNumberInput.
+    else if (f.type === 'number') defaults[f.key] = null;
     else if (f.type === 'select') defaults[f.key] = f.optional ? null : (f.options?.[0]?.value || '');
     else defaults[f.key] = '';
   });
@@ -258,10 +271,15 @@ function GenericItemForm({ tabKey, item, onSave, onCancel }) {
 
 // ─── Wall Material Form ────────────────────────────────────────────────────
 function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
+  // CMP-A08 tail: numeric fields start null (blank = "not cataloged", never
+  // a minted price/dimension persisting on save). Subtype/color/texture keep
+  // authored visual defaults; standard unit dimensions only fill when the
+  // admin explicitly picks a subtype preset below — an authored choice, not
+  // a form-open mint.
   const [form, setForm] = useState({
     material_name: '', material_type: isFillMaterial ? 'fill_material' : 'wall_material', wall_material_subtype: 'brick',
-    wall_unit_length_inches: 8, wall_unit_width_inches: 4, wall_unit_height_inches: 2.25,
-    wall_color: '#b5451b', wall_texture: 'rough', cost_per_unit: 0.75, supplier: '', notes: '',
+    wall_unit_length_inches: null, wall_unit_width_inches: null, wall_unit_height_inches: null,
+    wall_color: '#b5451b', wall_texture: 'rough', cost_per_unit: null, supplier: '', notes: '',
     ...item,
   });
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -360,7 +378,10 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">{config.label} items used for cost estimation in foundation projects.</p>
+        <div>
+          <p className="text-sm text-slate-600">{config.label} items used for cost estimation in foundation projects.</p>
+          {config.intro && <p className="text-xs text-slate-500 mt-0.5">{config.intro}</p>}
+        </div>
         {isAdmin && <Button size="sm" onClick={onAdd}><Plus className="w-4 h-4 mr-1" /> Add {config.label}</Button>}
       </div>
       {items.length === 0 ? (
@@ -372,8 +393,16 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {items.map(item => (
+        <div className="space-y-4">
+          {groupInventoryBySupplier(items).map(group => (
+            <div key={group.key ?? '__unassigned__'} className="space-y-2">
+              {/* CMP-A08 tail: explicit supply grouping — rows split by their
+                  canonical supplier key; unrecorded suppliers stay visible
+                  last instead of silently merging into another vendor. */}
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 pb-1">
+                {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+              </div>
+              {group.rows.map(item => (
             <Card key={item.id} className="hover:shadow-sm transition-shadow border-blue-200 shadow-sm overflow-hidden mb-3">
               <CardContent className="py-3 px-4 flex items-start justify-between gap-3 bg-blue-50/30">
                 <div className="flex-1 min-w-0">
@@ -403,6 +432,8 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                 )}
               </CardContent>
             </Card>
+              ))}
+            </div>
           ))}
         </div>
       )}
@@ -618,7 +649,14 @@ export default function FoundationInventoryPage({ embedded = false }) {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {wallMaterials.map(m => (
+                {groupInventoryBySupplier(wallMaterials).map(group => (
+                  <Fragment key={group.key ?? '__unassigned__'}>
+                    {/* CMP-A08 tail: explicit supply grouping by canonical
+                        supplier key; unrecorded suppliers stay visible last. */}
+                    <div className="col-span-full text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-orange-200 pb-1">
+                      {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+                    </div>
+                    {group.rows.map(m => (
                   <Card key={m.id} className="hover:shadow-md transition-shadow border-orange-200 shadow-sm overflow-hidden">
                     <CardHeader className="py-3 px-4 bg-orange-50/50 border-b border-orange-100">
                       <div className="flex items-center justify-between">
@@ -645,6 +683,8 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
                   </Card>
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}
@@ -670,7 +710,12 @@ export default function FoundationInventoryPage({ embedded = false }) {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {fillMaterials.map(m => (
+                {groupInventoryBySupplier(fillMaterials).map(group => (
+                  <Fragment key={group.key ?? '__unassigned__'}>
+                    <div className="col-span-full text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-indigo-200 pb-1">
+                      {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+                    </div>
+                    {group.rows.map(m => (
                   <Card key={m.id} className="hover:shadow-md transition-shadow border-indigo-200 shadow-sm overflow-hidden">
                     <CardHeader className="py-3 px-4 bg-indigo-50/50 border-b border-indigo-100">
                       <div className="flex items-center justify-between">
@@ -697,6 +742,8 @@ export default function FoundationInventoryPage({ embedded = false }) {
                       {m.supplier && <div>Supplier: {m.supplier}</div>}
                     </CardContent>
                   </Card>
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}
