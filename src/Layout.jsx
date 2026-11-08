@@ -386,6 +386,70 @@ function LayoutContent({ children }) {
   }, []);
   const openPageEditor = useCallback((url) => setNavEditor({ mode: "page", url }), []);
 
+  // Freeze nav layout on any potential drag press. A lifting page leaves the
+  // flex-wrap flow → the bar reflows chaotically and drop targets slide out
+  // from under the pointer ("can't get pages into folders"). Absolute-pinning
+  // every nav draggable at its current spot keeps all targets dead still for
+  // the whole drag. Pure DOM — no React state — so the drag lifecycle is
+  // never disturbed; styles are restored verbatim on release.
+  useEffect(() => {
+    const FROZEN = "ccs-nav-frozen";
+    const freezeAll = (root) => {
+      for (const dropEl of root.querySelectorAll("[data-rfd-droppable-id]")) {
+        if (dropEl.__ccsFrozen) continue;
+        dropEl.__ccsFrozen = true;
+        const rect = dropEl.getBoundingClientRect();
+        dropEl.__ccsSavedStyle = { position: dropEl.style.position, height: dropEl.style.height };
+        dropEl.classList.add(FROZEN);
+        dropEl.style.position = "relative";
+        dropEl.style.height = `${rect.height}px`;
+        for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
+          const r = el.getBoundingClientRect();
+          el.__ccsSavedStyle = {
+            position: el.style.position, left: el.style.left,
+            top: el.style.top, margin: el.style.margin, zIndex: el.style.zIndex,
+          };
+          el.style.position = "absolute";
+          el.style.left = `${r.left - rect.left}px`;
+          el.style.top = `${r.top - rect.top}px`;
+          el.style.margin = "0";
+          el.style.zIndex = "1";
+        }
+      }
+    };
+    const unfreezeAll = () => {
+      for (const dropEl of document.querySelectorAll(`.${FROZEN}`)) {
+        dropEl.__ccsFrozen = false;
+        dropEl.classList.remove(FROZEN);
+        if (dropEl.__ccsSavedStyle) Object.assign(dropEl.style, dropEl.__ccsSavedStyle);
+        for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
+          if (el.__ccsSavedStyle) { Object.assign(el.style, el.__ccsSavedStyle); el.__ccsSavedStyle = null; }
+        }
+      }
+    };
+    const onPointerDown = (event) => {
+      if (event.button === 2) return; // right-click opens context menus, not drags
+      const dragEl = event.target.closest?.("[data-rfd-draggable-id]");
+      if (!dragEl) return;
+      const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
+      if (scope) freezeAll(scope);
+    };
+    const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointerup", unfreezeAll, true);
+    document.addEventListener("pointercancel", unfreezeAll, true);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("blur", unfreezeAll);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointerup", unfreezeAll, true);
+      document.removeEventListener("pointercancel", unfreezeAll, true);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("blur", unfreezeAll);
+      unfreezeAll();
+    };
+  }, []);
+
   // Server-side order sync (other devices / settings reset) re-reads the
   // bridged localStorage copy and repaints the bars.
   useEffect(() => {
@@ -1023,6 +1087,13 @@ function LayoutContent({ children }) {
           filter: brightness(0.96);
         }
 
+        /* While a nav drag is frozen (absolute-pinned), the library's
+           flow-position placeholder would render at the container origin —
+           hide it; combine + folder-list targets give the feedback. */
+        .ccs-nav-frozen [data-rfd-placeholder-context-id] {
+          display: none !important;
+        }
+
         .ccs-focus-pause-glass {
           --glass-accent-rgb: 167 139 250;
           display: grid !important;
@@ -1458,17 +1529,14 @@ function LayoutContent({ children }) {
             >
               <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                 <Droppable droppableId="page-nav-side" direction="vertical" isCombineEnabled>
-                  {(provided, dropSnapshot) => (
+                  {(provided) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
                       {topEntries.map((entry, index) => {
-                        // Placeholder at the source slot keeps the lifted
-                        // item's gap so targets don't slide mid-drag.
                         const dndId = entry.type === "folder" ? `sfolder:${entry.id}` : `side-${entry.url}`;
-                        const holder = dropSnapshot.draggingFromThisWith === dndId ? provided.placeholder : null;
                         if (entry.type === "folder") {
                           const folder = entry.folder;
                           return (
@@ -1500,7 +1568,6 @@ function LayoutContent({ children }) {
                                   </div>
                                 )}
                               </Draggable>
-                              {holder}
                             </Fragment>
                           );
                         }
@@ -1525,11 +1592,10 @@ function LayoutContent({ children }) {
                                 />
                               )}
                             </Draggable>
-                            {holder}
                           </Fragment>
                         );
                       })}
-                      {!dropSnapshot.draggingFromThisWith && provided.placeholder}
+                      {provided.placeholder}
                     </div>
                   )}
                 </Droppable>
@@ -1661,20 +1727,14 @@ function LayoutContent({ children }) {
                 >
                   <DragDropContext onDragEnd={handleNavReorder} onDragStart={handleNavDragStart}>
                     <Droppable droppableId="page-nav-top" direction="horizontal" isCombineEnabled>
-                      {(provided, dropSnapshot) => (
+                      {(provided) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
                           {topEntries.map((entry, index) => {
-                            // The placeholder is rendered at the SOURCE slot so
-                            // the lifted item's space is held — in a wrapping
-                            // flex bar, letting the gap collapse reflows every
-                            // row and slides drop targets out from under the
-                            // pointer mid-drag.
                             const dndId = entry.type === "folder" ? folderToken(entry.id) : `top-${entry.url}`;
-                            const holder = dropSnapshot.draggingFromThisWith === dndId ? provided.placeholder : null;
                             if (entry.type === "folder") {
                               const folder = entry.folder;
                               const FolderIcon = folderIconFor(folder.icon);
@@ -1708,7 +1768,6 @@ function LayoutContent({ children }) {
                                       </div>
                                     )}
                                   </Draggable>
-                                  {holder}
                                 </Fragment>
                               );
                             }
@@ -1733,11 +1792,10 @@ function LayoutContent({ children }) {
                                     />
                                   )}
                                 </Draggable>
-                                {holder}
                               </Fragment>
                             );
                           })}
-                          {!dropSnapshot.draggingFromThisWith && provided.placeholder}
+                          {provided.placeholder}
                         </div>
                       )}
                     </Droppable>
