@@ -77,6 +77,19 @@ export default function CustomerPricingPanel({ cost, project, onChange }) {
           <span>Gross margin</span>
           <span>{margin.toFixed(1)}%</span>
         </div>
+        {/* O-096: when the applied tier is the live sell, the acknowledged
+            margin pair comes straight from the customer_pricing snapshot
+            fields (total vs raw_subtotal) — never recomputed from the manual
+            baseline it shadows. */}
+        {tierShadowsBaseline && Number.isFinite(Number(project.customer_pricing?.raw_subtotal)) && (
+          <div className="flex justify-between text-blue-700">
+            <span>Tier {project.customer_pricing?.tier_number} snapshot margin (acknowledged)</span>
+            <span>
+              {money(tierTotal - Number(project.customer_pricing.raw_subtotal))}
+              {tierTotal > 0 ? ` · ${(((tierTotal - Number(project.customer_pricing.raw_subtotal)) / tierTotal) * 100).toFixed(1)}%` : ""}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-[14px] font-bold text-gray-900 pt-1">
           <span>Customer price</span>
           <span className="text-red-700">{money(price)}</span>
