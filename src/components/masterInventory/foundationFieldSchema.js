@@ -18,7 +18,11 @@ export const MATERIAL_TYPES = [
 const COMMON = [
   { key: "material_name", label: "Name", type: "text" },
   { key: "material_description", label: "Description", type: "text" },
-  { key: "supplier", label: "Supplier", type: "text" },
+  // CMP-A08 tail: `supplier` is the authored field behind the explicit supply
+  // grouping in the catalog UX — rows section by inventorySupplierKey(supplier)
+  // (trim + lowercase + separator-collapse), so keep spellings consistent;
+  // a blank supplier leaves the row ungrouped ("No supplier recorded").
+  { key: "supplier", label: "Supplier (groups rows)", type: "text" },
   { key: "unit", label: "Unit", type: "text" },
   { key: "cost_per_unit", label: "Cost per unit", type: "number" },
 ];
