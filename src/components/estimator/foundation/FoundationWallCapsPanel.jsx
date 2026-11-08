@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { FoundationDimensionInput } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import { foundationWallCapCatalogIssues, wallCapInputNumber, wallCapCutLengthValue } from "./wallCapCalculator";
+
+// O-093 (CMP-H02): the cut-length field takes feet/inches entry through the
+// shared dimension field — same verbatim-draft contract as the CMP-A08
+// boundary it replaces, canonical inches stored, plain-language label + help +
+// suggested-format placeholder from the field meta map (never stored defaults).
+const capDimMeta = (field) => foundationDimensionFieldMeta("wallCap", field);
 
 export default function FoundationWallCapsPanel({ caps = [], walls = [], options = [], onChange }) {
   const patchCap = (index, changes) =>
@@ -145,22 +152,17 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   ))}
                 </select>
               </label>
-              <label className="text-xs text-gray-500">
-                Cut length (in)
-                <Input
-                  type="number"
-                  step="any"
-                  value={wallCapInputNumber(wallCapCutLengthValue(cap)) === null ? "" : wallCapCutLengthValue(cap)}
-                  aria-label={`Cap ${index + 1} cut length (inches)`}
-                  aria-invalid={geometryIssues(index).some((i) => i.field === "length_inches") || undefined}
-                  aria-describedby={geometryIssues(index).length ? `wall-cap-${index}-geometry` : undefined}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const parsed = wallCapInputNumber(raw);
-                    patchCap(index, { length_inches: parsed === null ? raw : parsed });
-                  }}
-                />
-              </label>
+              <FoundationDimensionInput
+                {...capDimMeta("length_inches")}
+                // Stored value drives display: canonical inches render as
+                // ft/in; a verbatim malformed draft echoes back for repair
+                // (the prior display blanked it while diagnostics flagged it).
+                value={wallCapCutLengthValue(cap)}
+                onCommit={(v) => patchCap(index, { length_inches: v })}
+                ariaLabel={`Cap ${index + 1} cut length (inches)`}
+                invalid={geometryIssues(index).some((i) => i.field === "length_inches") || undefined}
+                describedBy={geometryIssues(index).length ? `wall-cap-${index}-geometry` : undefined}
+              />
             </div>
             {geometryIssues(index).length > 0 && (
               <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
