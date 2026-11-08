@@ -1,5 +1,7 @@
 // Pure geometry model for the foundation layout canvas. No pricing.
 
+import { planViewFromElementRect, screenToPlan } from "./foundationSceneTransforms";
+
 export const FOUNDATION_LAYOUT_WIDTH_INCHES = 480; // 40 ft across
 export const FOUNDATION_LAYOUT_DEPTH_INCHES = 320; // 26 ft 8 in deep (3:2)
 
@@ -13,15 +15,15 @@ const finiteNumber = (v) => {
 };
 
 // rect is the already-zoomed element rect — never rescale by zoom again.
+// Delegates to the shared scene transform (O-038): the element rect IS the
+// view (plan extent stretched onto it per axis), so every pointer path that
+// used to re-derive this math now goes through one implementation.
 export function layoutPointInches(clientX, clientY, rect) {
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
-  if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top)
-    || !Number.isFinite(rect.width) || !Number.isFinite(rect.height)) return null;
-  if (rect.width <= 0 || rect.height <= 0) return null;
-  return {
-    x_inches: ((clientX - rect.left) * FOUNDATION_LAYOUT_WIDTH_INCHES) / rect.width,
-    z_inches: ((clientY - rect.top) * FOUNDATION_LAYOUT_DEPTH_INCHES) / rect.height,
-  };
+  const view = planViewFromElementRect(rect, {
+    width: FOUNDATION_LAYOUT_WIDTH_INCHES,
+    depth: FOUNDATION_LAYOUT_DEPTH_INCHES,
+  });
+  return screenToPlan(view, clientX, clientY);
 }
 
 export function foundationLayoutFootprint(item) {
