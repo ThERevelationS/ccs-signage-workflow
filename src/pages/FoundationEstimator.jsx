@@ -617,6 +617,133 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
   };
 
+  // Draft↔saved merge-conflict resolutions (CMP-A04 tail). Each choice routes
+  // through syncConflict.choose — the dialog closes only on a true return, so
+  // a resolution never silently half-applies.
+  const conflictDraftFields = (draft) => {
+    const out = {};
+    const src = draft && typeof draft === "object" ? draft : {};
+    for (const field of FOUNDATION_DRAFT_FIELDS) if (Object.hasOwn(src, field)) out[field] = src[field];
+    return out;
+  };
+  const adoptFreshSavedForConflict = async () => {
+    // Re-read the saved record at click time and normalize it exactly like the
+    // load path — adopting anything else would land the editor on a stale or
+    // differently-shaped base.
+    let saved = null;
+    try { saved = await staffEntities.FoundationProject.get(id); } catch { saved = null; }
+    if (!saved || saved.id !== id || typeof saved.updated_date !== "string" || !saved.updated_date) return null;
+    let normalizedSaved;
+    try {
+      normalizedSaved = normalizeFoundationAssembly({
+        ...saved,
+        excavation_method: saved.excavation_method || "hand_dig",
+        project_concrete_type: saved.project_concrete_type || "4000_ae",
+        project_concrete_admixtures: saved.project_concrete_admixtures || [],
+        items: saved.items || [],
+        walls: saved.walls || [],
+        poles: saved.poles || [],
+        wall_caps: saved.wall_caps || [],
+        signage_cabinets: saved.signage_cabinets || [],
+        landscape: saved.landscape || { cell_size_inches: 12, cells: {} },
+        selected_equipment: saved.selected_equipment || [],
+      }, { createId: (kind) => newCreationRequestKey(`foundation_${kind}`) }).project;
+    } catch { return null; }
+    return { saved, normalizedSaved };
+  };
+  const handleConflictKeepDraft = () => syncConflict.choose(async () => {
+    const c = syncConflict.conflict;
+    const session = draftSessionRef.current;
+    if (!c?.draft || session.store !== draftStore) return false;
+    if (c.kind === "draft_vs_saved") {
+      // Same guarded path as restoreBrowserDraft: the stored draft must still
+      // be the offered revision before it overlays the open editor.
+      const latest = draftStore.read();
+      if (latest.status !== "found") return false;
+      if (draftVisible?.revision && latest.revision !== draftVisible.revision) {
+        session.revision = latest.revision;
+        setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt, conflict: true });
+        return false;
+      }
+      session.revision = latest.revision;
+      setAutoSave(false);
+      return commit(() => latest.draft, { restoreDraft: true });
+    }
+    // save_conflict: the saved record moved under unsent edits. Adopt the fresh
+    // record as the acknowledged base, then overlay the draft fields through
+    // one undoable commit — the next save lands on that revision.
+    const adopted = await adoptFreshSavedForConflict();
+    if (!adopted) return false;
+    const stored = draftStore.read();
+    if (stored.status === "found" || stored.status === "invalid") draftStore.clear(stored.revision);
+    session.revision = null;
+    session.pending = false;
+    acknowledgedVersionRef.current = { sourceId: id, updated_date: adopted.saved.updated_date, ownerId, sourceSnapshot: adopted.normalizedSaved };
+    setAutoSave(false);
+    return commit(() => ({ ...adopted.normalizedSaved, ...conflictDraftFields(c.draft) }), { restoreDraft: true });
+  });
+  const handleConflictKeepSaved = () => syncConflict.choose(async () => {
+    const c = syncConflict.conflict;
+    const session = draftSessionRef.current;
+    if (!c || session.store !== draftStore) return false;
+    if (c.kind === "draft_vs_saved") {
+      // Explicit discard — same CAS clear as discardBrowserDraft (the dialog is
+      // the explicit choice; no second confirm).
+      const cleared = draftStore.clear(draftVisible?.revision ?? session.revision ?? null);
+      if (cleared.status !== "removed") {
+        const latest = draftStore.read();
+        if (latest.status === "found") setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt, conflict: true });
+        else if (latest.status !== "unavailable") session.revision = latest.revision ?? null;
+        return false;
+      }
+      session.revision = null;
+      session.pending = false;
+      setDraftOffer(null);
+      // Keep unsent in-memory edits backed up — same net as discardBrowserDraft.
+      if (dirty) persistBrowserDraft(projectRef.current ?? project);
+      return true;
+    }
+    // save_conflict: drop unsent edits — clear any stored draft, then reload
+    // the newer saved record so the editor lands clean on that revision.
+    const stored = draftStore.read();
+    if (stored.status === "found" || stored.status === "invalid") draftStore.clear(stored.revision);
+    session.revision = null;
+    session.pending = false;
+    setDraftOffer(null);
+    setReloadRevision((r) => r + 1);
+    return true;
+  });
+  const handleConflictKeepBoth = () => syncConflict.choose(async () => {
+    const c = syncConflict.conflict;
+    const session = draftSessionRef.current;
+    if (!c?.draft || session.store !== draftStore) return false;
+    // Re-anchor the same draft content to the CURRENT saved revision through
+    // the store CAS write — nothing is dropped; the re-anchored draft stays
+    // an ordinary restorable offer.
+    const baseRev = c.summary?.savedUpdatedAt ?? acknowledgedVersionRef.current?.updated_date ?? null;
+    const rebase = foundationDraftRebaseProject({ draft: c.draft, sourceId: id });
+    if (!rebase || !baseRev) return false;
+    const stored = draftStore.read();
+    if (stored.status === "unavailable") return false;
+    const expectedRevision = stored.status === "found" || stored.status === "invalid" ? stored.revision ?? null : null;
+    const w = draftStore.write({ project: rebase, baseUpdatedAt: baseRev, token: newCreationRequestKey("foundation_draft"), savedAt: new Date().toISOString(), expectedRevision });
+    if (w.status !== "stored") {
+      const after = draftStore.read();
+      if (after.status === "found") { session.revision = after.revision; setDraftOffer({ store: draftStore, revision: after.revision, draft: after.draft, savedAt: after.savedAt, baseUpdatedAt: after.baseUpdatedAt, conflict: true }); }
+      return false;
+    }
+    session.revision = w.revision;
+    if (c.kind === "save_conflict") {
+      // Reload drops the editor onto the newer saved record; the re-anchored
+      // draft offer resurfaces through the normal load read.
+      setReloadRevision((r) => r + 1);
+    } else {
+      session.pending = true;
+      setDraftOffer({ store: draftStore, revision: w.revision, draft: w.draft, savedAt: new Date().toISOString(), baseUpdatedAt: baseRev });
+    }
+    return true;
+  });
+
   // Held extras: when a recorded cabinet row or the landscape grid cannot be
   // repriced the calc keeps the acknowledged project totals (or null), never a
   // silently guessed amount. Null propagation keeps the section total honest —
