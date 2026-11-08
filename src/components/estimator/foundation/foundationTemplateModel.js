@@ -22,6 +22,13 @@ import { normalizeFoundationAssembly, cloneFoundationComponents } from "./founda
 //     snapshot whenever customer_pricing.applied === true.
 //   * User-authored rate inputs match the draft-recovery/payload field set so
 //     an applied template reproduces the same cost math.
+//   * ai_engineering_data carries the review verbatim EXCEPT apply-time
+//     provenance stamping (see stampTemplateAppliedAiData): its source_key
+//     identifies the design the AI analyzed — the template SOURCE project's
+//     design — so on any other project the review surface detects the key
+//     mismatch and shows its stale banner. The key is kept (it is the true
+//     reference to the analyzed design) and the record gains explicit
+//     provenance fields marking the note as template-carried.
 //   * pricing_engine is excluded: it is external per-project engine context
 //     (customer-tier config opt-in), never page-authored, and must not
 //     transplant one project's engine settings onto another. Totals,
@@ -87,6 +94,36 @@ const sanitizeTemplateCustomerPricing = (v) => {
   return { applied: true, tier_number: v.tier_number };
 };
 
+// ai_engineering_data: the review's source_key identifies the design the AI
+// analyzed — the template SOURCE project's design, not the apply target's.
+// The carried key can never match the target's live design key (it embeds the
+// source project's id/updated_date), so the review surface marks the note
+// stale ("Design changed since this note") exactly like a review whose own
+// design moved on. source_key stays verbatim — it is the true reference to
+// the analyzed design — and the record gains explicit provenance so a
+// template-carried note is distinguishable from a review that went stale on
+// its own project: origin_source_key preserves the analyzed-design key,
+// template_applied flags the carry, template_applied_at records when the note
+// was carried onto this project. Non-record values fail closed, same as
+// customer_pricing. On chained templates (a project that received a template
+// apply is itself saved as a template) the earliest origin_source_key is
+// preserved — it still names the design actually reviewed.
+const stampTemplateAppliedAiData = (v, { appliedAt } = {}) => {
+  if (v === undefined) return v;
+  if (v === null) return null;
+  if (!isRecord(v)) throw new Error("Foundation template ai_engineering_data must be a record.");
+  const out = deepClone(v);
+  if (out.origin_source_key === undefined) {
+    out.origin_source_key = typeof out.source_key === "string" && out.source_key ? out.source_key : null;
+  }
+  out.template_applied = true;
+  out.template_applied_at =
+    typeof appliedAt === "string" && Number.isFinite(Date.parse(appliedAt))
+      ? appliedAt
+      : new Date().toISOString();
+  return out;
+};
+
 // Snapshot the allowed design fields of a project for template storage.
 // Validates supplied assembly arrays; preserves values verbatim otherwise.
 export function createFoundationTemplateSnapshot(project, { createId } = {}) {
@@ -117,7 +154,7 @@ export function createFoundationTemplateSnapshot(project, { createId } = {}) {
 // Build the commit patch for applying a stored template: only supplied
 // assembly arrays are cloned with fresh IDs; omitted keys are absent so the
 // target's existing fields are preserved.
-export function prepareFoundationTemplatePatch(data, { createId } = {}) {
+export function prepareFoundationTemplatePatch(data, { createId, appliedAt } = {}) {
   checkTemplateRecord(data, "data");
   if (typeof createId !== "function") throw new Error("Foundation template apply requires a createId factory.");
   const provided = {};
@@ -128,6 +165,9 @@ export function prepareFoundationTemplatePatch(data, { createId } = {}) {
   // stored before this normalization or authored outside the snapshot path.
   if (provided.customer_pricing !== undefined) {
     provided.customer_pricing = sanitizeTemplateCustomerPricing(provided.customer_pricing);
+  }
+  if (provided.ai_engineering_data !== undefined) {
+    provided.ai_engineering_data = stampTemplateAppliedAiData(provided.ai_engineering_data, { appliedAt });
   }
   const arrays = {};
   for (const k of ASSEMBLY_ARRAYS) if (provided[k] !== undefined) arrays[k] = provided[k];
