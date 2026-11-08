@@ -572,15 +572,21 @@ export default function Permitting() {
         sort: "created_date",
         label: `Permit lines for ${wo.title || wo.client_name || wo.id}`,
       });
-      if (existingLines.length > 0) {
-        for (const existingLine of existingLines) lineItemBaselinesRef.current.set(existingLine.id, existingLine);
-        setLineItems(prev => {
-          const byId = new Map(prev.map(line => [line.id, line]));
-          existingLines.forEach(line => byId.set(line.id, line));
-          return [...byId.values()];
-        });
+      for (const existingLine of existingLines) lineItemBaselinesRef.current.set(existingLine.id, existingLine);
+      setLineItems(prev => {
+        const byId = new Map(prev.map(line => [line.id, line]));
+        existingLines.forEach(line => byId.set(line.id, line));
+        return [...byId.values()];
+      });
+      const sameLocality = existingLines.filter(line => String(line.locality_id || "") === String(locality.id));
+      if (!opts.add_missing_only && sameLocality.length > 0) {
         setPermitLineEditError("Permit lines already exist for this Work Order, likely from another session or an earlier partial create. The existing lines were loaded instead of creating duplicates.");
         return;
+      }
+      if (opts.add_missing_only) {
+        const existingOfficeIds = new Set(sameLocality.map(line => String(line.locality_office_id || "").trim()));
+        officesToCreate = officesToCreate.filter(office => !existingOfficeIds.has(String(office.office_id || "").trim()));
+        if (!officesToCreate.length) return;
       }
 
       // Lines created before the jurisdiction's sign + zoning offices are
@@ -1281,10 +1287,10 @@ export default function Permitting() {
                 <summary className="min-h-11 inline-flex items-center gap-1 rounded-md border px-3 text-sm cursor-pointer select-none hover:bg-gray-50">Need help?</summary>
                 <div className="absolute right-0 z-50 mt-1 w-72 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-lg space-y-2">
                   <p className="font-semibold">How permitting works here</p>
-                  <p>1. Open a job card → press <strong>Choose jurisdiction…</strong></p>
-                  <p>2. Enter the job's street address — we identify the governing jurisdiction.</p>
-                  <p>3. Check the offices listed (sign, zoning, electrical) — verified means our team checked them.</p>
-                  <p>4. Press <strong>Use this jurisdiction</strong> — the permit lines appear on the job.</p>
+                  <p>1. Open a job card → <strong>New permit setup…</strong></p>
+                  <p>2. Confirm the job-site address — we find the governing jurisdiction (counties, cities, villages and townships stay separate even when names match).</p>
+                  <p>3. Check the jurisdiction and tick the offices that need a permit line — verified means our team confirmed the office.</p>
+                  <p>4. Optionally build an AI plan, then <strong>Create lines</strong>. Use <strong>Edit permit setup…</strong> on the job card to change offices later.</p>
                   <p className="text-gray-500">Nothing gets sent anywhere — this only links the permit office to the job.</p>
                 </div>
               </details>
