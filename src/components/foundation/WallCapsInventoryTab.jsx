@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,18 +28,23 @@ const PRESET_COLORS = [
 // clears to null ("not cataloged" — never a silent free price), a numeric
 // draft coerces to Number, anything else stays verbatim so availability
 // validation reports it instead of a NaN or minted 0 leaking into records.
-import { inventoryNumberInput as catalogNumberInput } from "@/components/masterInventory/inventoryNormalization";
+// groupInventoryBySupplier (CMP-A08 tail) renders the explicit supply
+// grouping — caps section by canonical supplier key, unrecorded last.
+import { inventoryNumberInput as catalogNumberInput, groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
 
 function CapForm({ item, onSave, onCancel }) {
+  // CMP-A08 tail: every numeric field opens null — a blank spec/price is
+  // "not cataloged", never a minted 48-inch/$35 cap persisting on save.
+  // Profile/color/cuttable keep authored visual defaults (non-numeric).
   const [form, setForm] = useState({
     material_name: '',
     material_type: 'wall_cap',
-    cap_stock_length_inches: 48,
-    cap_width_inches: 8,
-    cap_height_inches: 2,
+    cap_stock_length_inches: null,
+    cap_width_inches: null,
+    cap_height_inches: null,
     cap_profile: 'flat',
     cap_color: '#9ca3af',
-    cap_stock_price: 35,
+    cap_stock_price: null,
     is_cuttable: true,
     supplier: '',
     notes: '',
@@ -214,7 +219,14 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {caps.map(cap => (
+          {groupInventoryBySupplier(caps).map(group => (
+            <Fragment key={group.key ?? '__unassigned__'}>
+              {/* CMP-A08 tail: explicit supply grouping by canonical supplier
+                  key; unrecorded suppliers stay visible last. */}
+              <div className="col-span-full text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-stone-200 pb-1">
+                {group.label ? <>Supplier: <span className="text-slate-700 normal-case">{group.label}</span></> : 'No supplier recorded'}
+              </div>
+              {group.rows.map(cap => (
             <Card key={cap.id} className="hover:shadow-md transition-shadow border-stone-200 shadow-sm overflow-hidden">
               <CardHeader className="py-3 px-4 bg-stone-50/70 border-b border-stone-100">
                 <div className="flex items-center justify-between">
@@ -242,6 +254,8 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
                 {cap.supplier && <div>Supplier: {cap.supplier}</div>}
               </CardContent>
             </Card>
+              ))}
+            </Fragment>
           ))}
         </div>
       )}
