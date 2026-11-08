@@ -5,6 +5,8 @@ export const FOUNDATION_DRAFT_FIELDS = [
   "items", "walls", "poles", "wall_caps", "signage_cabinets", "selected_equipment", "landscape",
   "project_concrete_type", "project_concrete_admixtures", "excavation_method", "selected_concrete_id",
   "ai_engineering_recommendation", "ai_engineering_data",
+  // O-104/O-105 — design-basis + site/hazard capture blocks.
+  "design_basis", "site_hazard",
   // Customer Pricing tab surface — markup %, manual price override, and the
   // applied-tier record (applied/tier_number). Persisted by payload(); restored
   // verbatim through the assembly normalizer's passthrough.
