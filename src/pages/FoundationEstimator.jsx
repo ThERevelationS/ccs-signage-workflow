@@ -599,6 +599,43 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     commit((prev) => ({ items: prev.items.filter((_, i) => i !== index) }));
   };
 
+  // O-034 scene delete — the canvas reports Delete/Backspace as a
+  // delete-request carrying resolved selection entries (id/kind/collection/
+  // live index) and never mutates business data. Whole-row deletions route
+  // through the same commit channel as removeItem and the panel onChange
+  // patches (CAS guards, normalize, draft backup all stay in force); entry
+  // indexes address the live project arrays the canvas is fed. Sub-object
+  // entries (wall-segment, pole-sign) are intentionally not routed yet —
+  // the CMP-C03 panel wiring owns sub-row semantics (MOUNT-ANCHORS.md).
+  const deleteSceneSelection = (entries) => {
+    const FIELD_OF_COLLECTION = {
+      items: "items", walls: "walls", poles: "poles",
+      wall_caps: "wall_caps", signage_cabinets: "signage_cabinets",
+    };
+    const rows = (Array.isArray(entries) ? entries : []).filter(
+      (e) => e && FIELD_OF_COLLECTION[e.collection]
+        && e.kind !== "wall-segment" && e.kind !== "pole-sign"
+        && Number.isInteger(e.index) && e.index >= 0,
+    );
+    if (!rows.length) return;
+    const drop = {};
+    for (const e of rows) {
+      const field = FIELD_OF_COLLECTION[e.collection];
+      (drop[field] = drop[field] || new Set()).add(e.index);
+    }
+    const label = rows.length === 1
+      ? `"${rows[0].label || `${rows[0].collection} row`}"`
+      : `${rows.length} selected objects`;
+    if (!window.confirm(`Delete ${label}? Dependent placements are retained for review.`)) return;
+    commit((prev) => {
+      const changes = {};
+      for (const [field, idx] of Object.entries(drop)) {
+        changes[field] = (Array.isArray(prev[field]) ? prev[field] : []).filter((_, i) => !idx.has(i));
+      }
+      return changes;
+    });
+  };
+
   const duplicateItem = (index) =>
     commit((prev) => {
       const items = [...prev.items];
