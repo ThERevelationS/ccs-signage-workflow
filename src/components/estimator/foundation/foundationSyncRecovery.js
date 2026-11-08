@@ -112,4 +112,3 @@ export async function resolveFoundationSyncReceiptForSave({ project, estimateId,
   }
   return { ok: true, clearStaleReceipt: true };
 }
-
