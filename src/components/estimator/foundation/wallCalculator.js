@@ -7,7 +7,16 @@
 // acknowledged snapshot amounts and reported instead of silently repricing to
 // $0 or producing negative/NaN quantities.
 
-const wallSettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
+// Inventory normalization boundary (CMP-A08): the canonical settings pick,
+// price/dimension kernels and their setting compositions live in
+// masterInventory/inventoryNormalization.
+import {
+  inventorySettingValue as wallSettingValue,
+  inventoryNonnegativeNumber as wallPriceNumber,
+  inventoryPositiveNumber as wallDimensionNumber,
+  inventorySettingNumber as wallSettingNumber,
+  inventoryPositiveSettingNumber as wallPositiveSettingNumber,
+} from "@/components/masterInventory/inventoryNormalization";
 
 export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includeInternalWall, wallHeightInches, internalWallHeightInches, mortarGapInches, internalMortarGapInches, settings }) {
   if (!wallShape || !wallMaterial || !wallShape.segments) return null;
@@ -130,25 +139,10 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
 const assignedId = value => (typeof value === "string" && value.trim() !== "")
   || (typeof value === "number" && Number.isFinite(value));
 
-function wallPriceNumber(value) {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-}
-
-function wallDimensionNumber(value) {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-}
-
 // Missing/blank settings fall back to the module default; present values must be
 // finite nonnegative numbers (explicit 0 honored — a genuinely free rate).
-const wallSettingNumber = (value, fallback) => wallPriceNumber(wallSettingValue(value, fallback));
-// Rates that are meaningless at zero (production speed) must be finite positive.
-const wallPositiveSettingNumber = (value, fallback) => wallDimensionNumber(wallSettingValue(value, fallback));
+// wallSettingNumber / wallPositiveSettingNumber are boundary aliases (rates
+// that are meaningless at zero — production speed — must be finite positive).
 
 // Blank/absent mortar gaps keep the ported 3/8" default; a recorded gap must be
 // finite nonnegative — explicit 0 is a legitimate stack-bond joint.
