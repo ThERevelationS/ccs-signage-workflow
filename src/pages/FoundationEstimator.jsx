@@ -137,6 +137,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const sceneHistory = sceneHistoryRef.current;
   // Re-render on history mutations so the undo UI state stays live.
   useSyncExternalStore(sceneHistory.subscribe, () => sceneHistory.stateVersion);
+  // O-034 scene selection — object tree / properties / breadcrumb sync
+  // store (foundationSceneSelection.js — see MOUNT-ANCHORS.md). Same mount
+  // shape as sceneHistory: the page owns one instance the canvas drives,
+  // and this subscription keeps selection mutations render-live for the
+  // CMP-C03 panels that consume it.
+  const sceneSelectionRef = useRef(null);
+  if (!sceneSelectionRef.current) sceneSelectionRef.current = createSceneSelection();
+  const sceneSelection = sceneSelectionRef.current;
+  useSyncExternalStore(sceneSelection.subscribe, () => sceneSelection.stateVersion);
   const [saveError, setSaveError] = useState("");
   const [reloadRevision, setReloadRevision] = useState(0);
   const [linkedEstimate, setLinkedEstimate] = useState(null);
