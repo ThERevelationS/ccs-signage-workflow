@@ -200,10 +200,38 @@ export async function listClipboardItems() {
     .sort((a, b) => new Date(b.copied_at || b.created_date || 0) - new Date(a.copied_at || a.created_date || 0));
 }
 
+// Mirrors the canonical not-found detection in builderEntityPersistence
+// (isEntityNotFoundError): a genuinely-missing record is "already gone" while
+// every other fetch failure stays an error so the clipboard never drops a
+// live row. All message fields are scanned (not just the first) so a generic
+// top-level message cannot hide a nested "not found" detail.
+const isNotFound = (e) => {
+  const status = Number(e?.status || e?.response?.status || e?.response?.statusCode || e?.data?.status || 0);
+  if (status === 404) return true;
+  const message = [
+    e?.message,
+    e?.response?.data?.message,
+    e?.response?.data?.error,
+    e?.data?.message,
+    e?.data?.error,
+  ].map((v) => String(v || "").toLowerCase()).join(" ");
+  return message.includes("not found") || message.includes("does not exist");
+};
+
 export async function removeClipboardItem(id) {
   const itemId = String(id || "").trim();
   if (!itemId) return;
-  const current = await staffEntities.EstimateClipboardItem.get(itemId).catch(() => null);
+  let current;
+  try {
+    current = await staffEntities.EstimateClipboardItem.get(itemId);
+  } catch (e) {
+    // Only a definitive not-found is "already gone". A transient read error
+    // (500/429/timeout) must rethrow — the caller only filters the row out of
+    // the list after a confirmed removal, so it can never stale-remove a row
+    // that still exists.
+    if (isNotFound(e)) return;
+    throw e;
+  }
   if (!current) return;
   await deleteEntityIfUnchanged({
     entity: staffEntities.EstimateClipboardItem,
