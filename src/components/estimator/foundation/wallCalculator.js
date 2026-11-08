@@ -9,35 +9,60 @@
 
 // Inventory normalization boundary (CMP-A08): the canonical settings pick,
 // price/dimension kernels and their setting compositions live in
-// masterInventory/inventoryNormalization.
+// masterInventory/inventoryNormalization. CMP-D03 adds the canonical wall
+// material subtype classifier — brick/CMU/stone are unit masonry priced by
+// unit count, `concrete` is poured concrete priced by placed volume (CY).
 import {
   inventorySettingValue as wallSettingValue,
   inventoryNonnegativeNumber as wallPriceNumber,
   inventoryPositiveNumber as wallDimensionNumber,
   inventorySettingNumber as wallSettingNumber,
   inventoryPositiveSettingNumber as wallPositiveSettingNumber,
+  canonicalWallMaterialSubtype,
+  wallMaterialSubtypeRecorded,
 } from "@/components/masterInventory/inventoryNormalization";
+
+// 36³ in³ per cubic yard — the poured-concrete wall quantity conversion.
+const CUBIC_INCHES_PER_CUBIC_YARD = 46656;
+
+// Recorded `unit` spellings accepted as the cubic-yard cost basis on a
+// poured-concrete catalog row. A blank unit keeps the catalog's implicit
+// $/CY basis; any OTHER recorded unit is an unresolved price-basis ambiguity
+// the check reports rather than guessing (never silently repriced wrong).
+const POURED_CONCRETE_UNIT_BASIS = new Set([
+  "cy", "cyd", "cy_d", "yd", "yd3", "cu_yd", "cubic_yard", "cubic_yards", "yard", "yards",
+]);
 
 export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includeInternalWall, wallHeightInches, internalWallHeightInches, mortarGapInches, internalMortarGapInches, settings }) {
   if (!wallShape || !wallMaterial || !wallShape.segments) return null;
 
-  const isConcrete = wallMaterial.wall_material_subtype === 'concrete';
+  // CMP-D03: the canonical subtype picks the quantity method. Unit masonry
+  // (brick / cinderblock / stone) counts units from cataloged unit dimensions;
+  // `concrete` is poured — its material quantity is the placed volume in
+  // cubic yards (outline perimeter x wall height x cataloged wall thickness),
+  // with no courses, mortar joints, or per-unit production-hours basis.
+  const isConcrete = canonicalWallMaterialSubtype(wallMaterial.wall_material_subtype) === 'concrete';
   const unitL = wallMaterial.wall_unit_length_inches || 8;
   const unitW = wallMaterial.wall_unit_width_inches || 4;
   const unitH = wallMaterial.wall_unit_height_inches || 2.25;
   const mortar = isConcrete ? 0 : mortarGapInches;
   const courseH = unitH + mortar;
-  const numCourses = wallHeightInches / courseH;
+  const numCourses = isConcrete ? 0 : wallHeightInches / courseH;
   const brickPitch = unitL + (isConcrete ? 0 : mortar);
 
   const totalLinearInches = wallShape.segments.reduce((s, seg) => s + seg.length, 0);
 
-  const numCoursesRounded = Math.ceil(numCourses);
   let totalBricks = 0;
-  wallShape.segments.forEach(seg => {
-    const bricksThisCourse = Math.ceil(seg.length / brickPitch);
-    totalBricks += bricksThisCourse * numCoursesRounded;
-  });
+  if (isConcrete) {
+    // Poured concrete — distinct quantity method: volume of the placed wall.
+    totalBricks = (totalLinearInches * wallHeightInches * unitW) / CUBIC_INCHES_PER_CUBIC_YARD;
+  } else {
+    const numCoursesRounded = Math.ceil(numCourses);
+    wallShape.segments.forEach(seg => {
+      const bricksThisCourse = Math.ceil(seg.length / brickPitch);
+      totalBricks += bricksThisCourse * numCoursesRounded;
+    });
+  }
 
   const finalBricks = wallMaterial.custom_outer_material_qty !== undefined && wallMaterial.custom_outer_material_qty !== null ? wallMaterial.custom_outer_material_qty : totalBricks;
   const materialCost = finalBricks * (wallMaterial.custom_cost_per_unit !== undefined && wallMaterial.custom_cost_per_unit !== null ? wallMaterial.custom_cost_per_unit : (wallMaterial.cost_per_unit || 0));
@@ -63,7 +88,10 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     laborCost = minCharge;
   }
 
-  const laborHours = finalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
+  // Poured work is priced by wall-face area (laborCost) — there is no
+  // per-unit production-hours basis to divide by, so hours stay 0 rather than
+  // minting a fictitious bricks-per-hour figure on a CY quantity.
+  const laborHours = isConcrete ? 0 : finalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
 
   // --- Internal Wall Calculation ---
   let internalTotalBricks = 0;
@@ -72,9 +100,10 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
   let internalLaborCost = 0;
   let internalLaborHours = 0;
   let internalTotalLinearInches = 0;
+  let intIsConcrete = false;
 
   if (includeInternalWall && internalMaterial) {
-    const intIsConcrete = internalMaterial.wall_material_subtype === 'concrete';
+    intIsConcrete = canonicalWallMaterialSubtype(internalMaterial.wall_material_subtype) === 'concrete';
     const intUnitL = internalMaterial.wall_unit_length_inches || 8;
     const intUnitW = internalMaterial.wall_unit_width_inches || 4;
     const intUnitH = internalMaterial.wall_unit_height_inches || 2.25;
@@ -90,8 +119,14 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
       const innerSegLength = Math.max(0, seg.length - lengthReduction);
       internalTotalLinearInches += innerSegLength;
 
-      const bricksThisCourse = Math.ceil(innerSegLength / intBrickPitch);
-      internalTotalBricks += bricksThisCourse * intNumCourses;
+      // Poured internal fill prices by placed volume too — same CY method as
+      // the outer wall; unit masonry keeps the per-course unit count.
+      if (intIsConcrete) {
+        internalTotalBricks += (innerSegLength * internalWallHeightInches * intUnitW) / CUBIC_INCHES_PER_CUBIC_YARD;
+      } else {
+        const bricksThisCourse = Math.ceil(innerSegLength / intBrickPitch);
+        internalTotalBricks += bricksThisCourse * intNumCourses;
+      }
     });
 
     const finalInternalBricks = wall.custom_internal_material_qty !== undefined && wall.custom_internal_material_qty !== null ? wall.custom_internal_material_qty : internalTotalBricks;
@@ -111,7 +146,8 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
 
     const internalLaborRatePerSqFt = wall.custom_internal_labor_rate !== undefined && wall.custom_internal_labor_rate !== null ? wall.custom_internal_labor_rate : parseFloat(wallSettingValue(settings?.wall_labor_rate, 45));
     internalLaborCost = intSurfaceAreaSqFtSingleSide * internalLaborRatePerSqFt;
-    internalLaborHours = finalInternalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
+    internalLaborHours = intIsConcrete ? 0
+      : finalInternalBricks / (parseFloat(wallSettingValue(settings?.wall_labor_bricks_per_hour, 50)));
   }
 
   return {
@@ -129,7 +165,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     numCourses,
     internalTotalBricks,
     internalMaterialCost,
-    internalMortarBags: includeInternalWall && internalMaterial && internalMaterial.wall_material_subtype !== 'concrete' ? Math.ceil(((internalTotalLinearInches * internalWallHeightInches) / 144) * 2 / 30) : 0,
+    internalMortarBags: includeInternalWall && internalMaterial && !intIsConcrete ? Math.ceil(((internalTotalLinearInches * internalWallHeightInches) / 144) * 2 / 30) : 0,
     internalMortarCost,
     internalLaborCost,
     internalLaborHours
@@ -296,12 +332,46 @@ function wallPricing(wall, inventory = [], index = 0, settings = {}) {
     if (wallPriceNumber(price) === null) {
       add("wall_material_price_unavailable", "record a finite, nonnegative material unit price before repricing");
     }
+    // CMP-D03: the recorded subtype picks the quantity method. Absent or blank
+    // keeps the legacy unit-masonry default (brick_stone rows never carried a
+    // subtype); a recorded-but-unrecognized subtype is held — pouring concrete
+    // spelled off-enum must never silently price as mortared unit masonry, and
+    // an unknown material family must never be guessed concrete either.
+    const subtype = canonicalWallMaterialSubtype(material.wall_material_subtype);
+    if (wallMaterialSubtypeRecorded(material.wall_material_subtype) && subtype === null) {
+      add("wall_material_subtype_unavailable",
+        "record a supported wall material subtype (brick, cinderblock / CMU, stone, or poured concrete) before repricing");
+      return null;
+    }
+    const pouredConcrete = subtype === "concrete";
+    // A poured row's cost basis is $/CY. A blank unit keeps that basis; any
+    // OTHER recorded unit is a real price-basis ambiguity — hold it rather
+    // than multiply cubic yards by a per-each price.
+    if (pouredConcrete) {
+      const recordedUnit = material.unit;
+      const unitRecorded = recordedUnit !== undefined && recordedUnit !== null
+        && (typeof recordedUnit !== "string" || recordedUnit.trim() !== "");
+      if (unitRecorded) {
+        const unitKey = typeof recordedUnit === "string"
+          ? recordedUnit.trim().toLowerCase().replace(/[\s\-_.]+/g, "_").replace(/^_+|_+$/g, "")
+          : String(recordedUnit);
+        if (!POURED_CONCRETE_UNIT_BASIS.has(unitKey)) {
+          add("wall_material_unit_mismatch",
+            "poured concrete is priced per cubic yard — record the unit as CY (or clear it) so the cost basis is unambiguous before repricing");
+        }
+      }
+    }
     const normalizedMaterial = { ...material };
-    for (const [key, label] of [
-      ["wall_unit_length_inches", "unit length"],
-      ["wall_unit_width_inches", "unit width"],
-      ["wall_unit_height_inches", "unit height"],
-    ]) {
+    // The canonical subtype spelling rides the calculation copy so the
+    // strict `=== 'concrete'` reads below stay exact even when this row was
+    // classified from a recorded alias ("poured concrete", "cmu").
+    if (subtype !== null) normalizedMaterial.wall_material_subtype = subtype;
+    // Poured concrete has no unit length/height — a wall's face dimensions
+    // come from the authored outline and height; the only cataloged
+    // dimension is the wall thickness it is poured to (unit width field).
+    for (const [key, label] of (pouredConcrete
+      ? [["wall_unit_width_inches", "wall thickness"]]
+      : [["wall_unit_length_inches", "unit length"], ["wall_unit_width_inches", "unit width"], ["wall_unit_height_inches", "unit height"]])) {
       const dimension = wallDimensionNumber(material[key]);
       if (dimension === null) {
         add(key + "_unavailable", `record a positive, finite ${label} in inches before repricing`);
@@ -357,7 +427,12 @@ function wallPricing(wall, inventory = [], index = 0, settings = {}) {
     overrideCheck(wallMaterial, WALL_OUTER_OVERRIDE_FIELDS, "wall", wall?.materialId);
     settingCheck("wall_labor_rate", "wall labor rate");
     settingCheck("wall_minimum_charge", "wall minimum labor charge");
-    settingCheck("wall_labor_bricks_per_hour", "wall production rate", true);
+    // The production-rate setting is only consumed by unit-masonry paths — a
+    // poured wall has no per-unit hours basis, so a malformed setting must not
+    // hold a poured wall it cannot affect (unit fill still consumes it).
+    if (!outerConcrete || (internalMaterial && !intConcrete)) {
+      settingCheck("wall_labor_bricks_per_hour", "wall production rate", true);
+    }
     if (!outerConcrete) {
       mortarGapInches = wallMortarGapNumber(wall?.mortarGapInches);
       if (mortarGapInches === null) {
@@ -399,8 +474,12 @@ export function foundationWallCatalogIssues(walls = [], inventory = [], settings
 export function foundationWallBomRows(walls = [], inventory = [], wallPricing) {
   const out = [];
   const known = value => typeof value === "number" && Number.isFinite(value);
-  const quantity = value => known(value)
-    ? `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} units` : "Not saved";
+  // CMP-D03: the material quantity is labeled in its recorded basis — the
+  // snapshot's materialQuantityUnit ("cy" placed volume on poured rows vs the
+  // unit-masonry count). Snapshots pre-dating the flag keep the legacy
+  // "units" vocabulary — the acknowledged number is never re-labeled.
+  const quantity = (value, unit = "units") => known(value)
+    ? `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}` : "Not saved";
   const amount = value => known(value) ? value : "Not saved";
   const used = (qty, cost) => (known(qty) && qty > 0) || (known(cost) && cost !== 0);
   walls.forEach((wall, index) => {
@@ -413,7 +492,7 @@ export function foundationWallBomRows(walls = [], inventory = [], wallPricing) {
     const add = (material, qty, cost) => out.push({ material, quantity: qty, cost: amount(cost), saved });
     if (saved || used(costs.totalBricks, costs.materialCost)) {
       add(saved ? `${label} — saved outer material` : `${label} — ${nameOf(wall.materialId)}`,
-        quantity(costs.totalBricks), costs.materialCost);
+        quantity(costs.totalBricks, costs.materialQuantityUnit === "cy" ? "CY" : "units"), costs.materialCost);
     }
     if (known(costs.mortarCost) && costs.mortarCost !== 0) {
       add(`${label} — ${saved ? "saved mortar" : "mortar"}`, "—", costs.mortarCost);
@@ -421,7 +500,7 @@ export function foundationWallBomRows(walls = [], inventory = [], wallPricing) {
     const internalUsed = used(costs.internalTotalBricks, costs.internalMaterialCost);
     if ((saved && wall.includeInternalWall) || internalUsed) {
       add(saved ? `${label} — saved internal material` : `${label} — ${nameOf(wall.internalMaterialId)} (internal)`,
-        quantity(costs.internalTotalBricks), costs.internalMaterialCost);
+        quantity(costs.internalTotalBricks, costs.internalMaterialQuantityUnit === "cy" ? "CY" : "units"), costs.internalMaterialCost);
     }
     if (known(costs.internalMortarCost) && costs.internalMortarCost !== 0) {
       add(`${label} — ${saved ? "saved internal mortar" : "internal mortar"}`, "—", costs.internalMortarCost);
@@ -495,6 +574,13 @@ export function calcWalls(project, inventory, settings = {}, options = {}) {
           internalMortarCost: costs.internalMortarCost ?? 0,
           internalLaborCost: costs.internalLaborCost ?? 0,
           internalLaborHours: costs.internalLaborHours ?? 0,
+          // CMP-D03: poured-concrete walls carry the quantity basis on the
+          // snapshot ("cy" placed volume, vs the unit-masonry count) so saved
+          // rows, BOM and Builder parts can label the quantity honestly. Unit
+          // masonry is untouched — no extra keys on unchanged paths.
+          ...(wallMaterial?.wall_material_subtype === "concrete" ? { materialQuantityUnit: "cy" } : {}),
+          ...(wall.includeInternalWall && internalMaterial?.wall_material_subtype === "concrete"
+            ? { internalMaterialQuantityUnit: "cy" } : {}),
         },
       };
     }),
