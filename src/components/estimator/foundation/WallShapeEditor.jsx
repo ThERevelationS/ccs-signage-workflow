@@ -3,6 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Undo2, Trash2, Square } from "lucide-react";
 import { foundationWallOutlineBasis, foundationWallRectangle, foundationWallSegments } from "./wallCalculator";
+import { formatFoundationDimension, foundationDimensionInputIssue, parseFoundationDimension } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
+
+// O-093 (CMP-H02): rectangle outline entry takes feet/inches text — the rect
+// draft stays raw local state (same as before); parsing happens at validation/
+// apply time so a malformed draft disables Apply and shows the syntax hint
+// instead of silently coercing. Labels/help/placeholders come from the field
+// meta map (display text only — never stored defaults).
+const rectLMeta = foundationDimensionFieldMeta("wallOutline", "rect_length");
+const rectWMeta = foundationDimensionFieldMeta("wallOutline", "rect_width");
 
 // Wall footprint in inches. Shape (matches SignEstimate Pro):
 //   { points: [{x, z}], closed: bool, segments: [{ length }] }
@@ -26,7 +36,11 @@ export default function WallShapeEditor({ shape, onChange }) {
   const basis = foundationWallOutlineBasis(shape);
   const points = basis.points;
   const closed = basis.closed;
-  const [rect, setRect] = useState({ l: 96, w: 48 });
+  // Draft defaults display in the same ft/in form the parser accepts (8'×4').
+  const [rect, setRect] = useState(() => ({
+    l: formatFoundationDimension(96),
+    w: formatFoundationDimension(48),
+  }));
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const gridId = `wallGrid-${uid}`;
   const rectLId = `rectL-${uid}`;
@@ -51,9 +65,15 @@ export default function WallShapeEditor({ shape, onChange }) {
     if (next) onChange(next);
   };
 
-  const rectShape = foundationWallRectangle(rect.l, rect.w);
-  const rectLBad = foundationWallRectangle(rect.l, 1) === null;
-  const rectWBad = foundationWallRectangle(1, rect.w) === null;
+  // ft/in aware: parse the raw drafts first; validity is the parse plus the
+  // canonical-inch rectangle check (positive finite inches — unchanged rule).
+  const rectL = parseFoundationDimension(rect.l);
+  const rectW = parseFoundationDimension(rect.w);
+  const rectShape = rectL.ok && rectW.ok ? foundationWallRectangle(rectL.inches, rectW.inches) : null;
+  const rectLBad = !rectL.ok || foundationWallRectangle(rectL.inches, 1) === null;
+  const rectWBad = !rectW.ok || foundationWallRectangle(1, rectW.inches) === null;
+  const rectLHint = rect.l !== "" && !rectL.ok ? foundationDimensionInputIssue(rect.l) : null;
+  const rectWHint = rect.w !== "" && !rectW.ok ? foundationDimensionInputIssue(rect.w) : null;
   const setRectangle = () => {
     if (!rectShape) return;
     onChange({ ...shapeRecord(shape), ...rectShape });
@@ -74,30 +94,46 @@ export default function WallShapeEditor({ shape, onChange }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-xs text-gray-500">
-          Rect L (in)
+          {rectLMeta?.label ?? "Rect L (in)"}
           <Input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="text"
             className="w-24"
             value={rect.l}
             id={rectLId}
+            placeholder={rectLMeta?.placeholder}
+            title={rectLMeta?.help}
+            aria-label="Rectangle outline length (inches)"
             aria-invalid={rectLBad || undefined}
             aria-describedby={rectLBad ? rectErrId : undefined}
             onChange={(e) => setRect({ ...rect, l: e.target.value })}
           />
+          {rectLHint && (
+            <span role="status" className="block text-[10px] text-amber-700 mt-0.5">
+              {rectLHint}
+            </span>
+          )}
         </label>
         <label className="text-xs text-gray-500">
-          Rect W (in)
+          {rectWMeta?.label ?? "Rect W (in)"}
           <Input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="text"
             className="w-24"
             value={rect.w}
             id={rectWId}
+            placeholder={rectWMeta?.placeholder}
+            title={rectWMeta?.help}
+            aria-label="Rectangle outline width (inches)"
             aria-invalid={rectWBad || undefined}
             aria-describedby={rectWBad ? rectErrId : undefined}
             onChange={(e) => setRect({ ...rect, w: e.target.value })}
           />
+          {rectWHint && (
+            <span role="status" className="block text-[10px] text-amber-700 mt-0.5">
+              {rectWHint}
+            </span>
+          )}
         </label>
         <Button variant="outline" size="sm" onClick={setRectangle} disabled={!rectShape}
           aria-describedby={!rectShape ? rectErrId : undefined}>
