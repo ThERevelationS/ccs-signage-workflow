@@ -70,9 +70,12 @@ function normalizeRow(row, source) {
       equipment_type: row.equipment_type || "",
       ownership: row.ownership || "rented",
       is_primary_owned: row.is_primary_owned ?? false,
-      cost_per_day: row.cost_per_day || 0,
-      cost_per_week: row.cost_per_week || 0,
-      cost_per_month: row.cost_per_month || 0,
+      // CMP-A08 tail: rental costs pass through ?? null — an authored explicit
+      // 0 stays 0 (a real free rate), an unrecorded cost stays null ("not
+      // cataloged") rather than minting a display/stored zero.
+      cost_per_day: row.cost_per_day ?? null,
+      cost_per_week: row.cost_per_week ?? null,
+      cost_per_month: row.cost_per_month ?? null,
       show_in_channel_letters: row.show_in_channel_letters ?? true,
       show_in_foundation: row.show_in_foundation ?? false,
       show_in_sign_maintenance: row.show_in_sign_maintenance ?? false,
@@ -90,9 +93,9 @@ function normalizeRow(row, source) {
     kind,
     equipment_type: row.equipment_type || "",
     ownership: row.ownership || "rented",
-    cost_per_day: row.cost_per_day || 0,
-    cost_per_week: row.cost_per_week || 0,
-    cost_per_month: row.cost_per_month || 0,
+    cost_per_day: row.cost_per_day ?? null,
+    cost_per_week: row.cost_per_week ?? null,
+    cost_per_month: row.cost_per_month ?? null,
     show_in_channel_letters: row.show_in_channel_letters ?? false,
     show_in_foundation: row.show_in_foundation ?? true,
     show_in_sign_maintenance: row.show_in_sign_maintenance ?? false,
@@ -268,7 +271,11 @@ export default function MasterEquipmentTab({ isAdmin }) {
           equipment_type: "boom_lift",
           pricing_mode: "per_day",
           ownership,
-          cost_per_day: 0, cost_per_week: 0, cost_per_month: 0, delivery_pickup_cost: 0,
+          // CMP-A08 tail: cost fields open null ("not cataloged") rather than
+          // minted 0s that would persist a fabricated free rental rate the
+          // admin never typed; an explicit 0 typed into the form still saves
+          // as a real authored zero.
+          cost_per_day: null, cost_per_week: null, cost_per_month: null, delivery_pickup_cost: null,
           show_in_channel_letters: true, show_in_foundation: false, show_in_sign_maintenance: false,
         },
       });
@@ -286,11 +293,11 @@ export default function MasterEquipmentTab({ isAdmin }) {
           activeKind === "attachment" ? "attachment" :
           activeKind === "sub_attachment" ? "sub_attachment" : "excavation_equipment",
         material_name: "",
-        cost_per_day: 0, cost_per_week: 0, cost_per_month: 0, pickup_delivery_cost: 0,
+        cost_per_day: null, cost_per_week: null, cost_per_month: null, pickup_delivery_cost: null,
         ownership,
         compatible_attachment_ids: [], compatible_sub_attachment_ids: [],
         show_in_channel_letters: false, show_in_foundation: true, show_in_sign_maintenance: false,
-        sort_order: 0,
+        sort_order: null,
       },
     });
     setShowForm(true);
@@ -442,9 +449,12 @@ function EquipmentList({ rows, attachments = [], subAttachments = [], equipment 
                   <span className="text-emerald-700 font-medium">Owned — no rental cost</span>
                 ) : (
                   <>
-                    <span>Day: <strong>${row.cost_per_day}</strong></span>
-                    <span>Wk: <strong>${row.cost_per_week}</strong></span>
-                    <span>Mo: <strong>${row.cost_per_month}</strong></span>
+                    {/* Authored prices render as dollars — including an
+                        explicit $0; unpriced stays "Not priced" (never a
+                        minted display zero). */}
+                    <span>Day: <strong>{Number.isFinite(parseFloat(row.cost_per_day)) ? `$${row.cost_per_day}` : (row.cost_per_day ?? "Not priced")}</strong></span>
+                    <span>Wk: <strong>{Number.isFinite(parseFloat(row.cost_per_week)) ? `$${row.cost_per_week}` : (row.cost_per_week ?? "Not priced")}</strong></span>
+                    <span>Mo: <strong>{Number.isFinite(parseFloat(row.cost_per_month)) ? `$${row.cost_per_month}` : (row.cost_per_month ?? "Not priced")}</strong></span>
                   </>
                 )}
               </div>
@@ -522,6 +532,10 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
   const kind   = normalized.kind;
 
   // Build initial form from underlying row + visibility flags.
+  // CMP-A08 tail: every numeric catalog field opens null when the row carries
+  // no recorded value — an absent price/dimension is "not cataloged", never a
+  // minted 0 that would persist a fabricated free rate on save. An authored
+  // explicit 0 still initializes to 0 and round-trips as a real authored zero.
   const initial = useMemo(() => {
     if (source === "channel_letter_equipment") {
       const r = normalized.raw || {};
@@ -531,20 +545,20 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         equipment_type: r.equipment_type || "boom_lift",
         pricing_mode: r.pricing_mode || "per_day",
         ownership: r.ownership || ownership,
-        cost_per_day: r.cost_per_day || 0,
-        cost_per_week: r.cost_per_week || 0,
-        cost_per_month: r.cost_per_month || 0,
-        cost_flat: r.cost_flat || 0,
-        delivery_pickup_cost: r.delivery_pickup_cost || 0,
-        max_height_feet: r.max_height_feet || 0,
+        cost_per_day: r.cost_per_day ?? null,
+        cost_per_week: r.cost_per_week ?? null,
+        cost_per_month: r.cost_per_month ?? null,
+        cost_flat: r.cost_flat ?? null,
+        delivery_pickup_cost: r.delivery_pickup_cost ?? null,
+        max_height_feet: r.max_height_feet ?? null,
         vertical_reach_safety_margin_feet: r.vertical_reach_safety_margin_feet ?? 2,
         is_default_for_height: !!r.is_default_for_height,
-        default_height_min_feet: r.default_height_min_feet || 0,
-        default_height_max_feet: r.default_height_max_feet || 0,
+        default_height_min_feet: r.default_height_min_feet ?? null,
+        default_height_max_feet: r.default_height_max_feet ?? null,
         is_primary_owned: !!r.is_primary_owned,
-        mpg: r.mpg || 0,
+        mpg: r.mpg ?? null,
         fuel_type: r.fuel_type || "na",
-        idle_running_cost_per_hour: r.idle_running_cost_per_hour || 0,
+        idle_running_cost_per_hour: r.idle_running_cost_per_hour ?? null,
         rental_company: r.rental_company || "",
         notes: r.notes || "",
         show_in_channel_letters: r.show_in_channel_letters ?? true,
@@ -560,14 +574,14 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       equipment_type: r.equipment_type || "",
       supports_attachments: r.supports_attachments ?? true,
       ownership: r.ownership || ownership,
-      cost_per_day: r.cost_per_day || 0,
-      cost_per_week: r.cost_per_week || 0,
-      cost_per_month: r.cost_per_month || 0,
-      pickup_delivery_cost: r.pickup_delivery_cost || 0,
+      cost_per_day: r.cost_per_day ?? null,
+      cost_per_week: r.cost_per_week ?? null,
+      cost_per_month: r.cost_per_month ?? null,
+      pickup_delivery_cost: r.pickup_delivery_cost ?? null,
       rental_company: r.rental_company || "",
-      mpg: r.mpg || 0,
+      mpg: r.mpg ?? null,
       fuel_type: r.fuel_type || "na",
-      idle_running_cost_per_hour: r.idle_running_cost_per_hour || 0,
+      idle_running_cost_per_hour: r.idle_running_cost_per_hour ?? null,
       compatible_attachment_ids: r.compatible_attachment_ids || [],
       compatible_sub_attachment_ids: r.compatible_sub_attachment_ids || [],
       allow_multiple: !!r.allow_multiple,
@@ -855,16 +869,17 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
     const next = yes ? "foundation_equipment" : "channel_letter_equipment";
     if (next === source) return;
     normalized._source = next;
-    // Preserve common values across the swap
+    // Preserve common values across the swap — ?? null keeps an authored 0
+    // verbatim while an unrecorded draft stays "not cataloged" (never minted).
     const carry = {
       ownership: form.ownership || ownership,
-      cost_per_day: form.cost_per_day || 0,
-      cost_per_week: form.cost_per_week || 0,
-      cost_per_month: form.cost_per_month || 0,
+      cost_per_day: form.cost_per_day ?? null,
+      cost_per_week: form.cost_per_week ?? null,
+      cost_per_month: form.cost_per_month ?? null,
       notes: form.notes || "",
-      mpg: form.mpg || 0,
+      mpg: form.mpg ?? null,
       fuel_type: form.fuel_type || "na",
-      idle_running_cost_per_hour: form.idle_running_cost_per_hour || 0,
+      idle_running_cost_per_hour: form.idle_running_cost_per_hour ?? null,
       show_in_channel_letters: form.show_in_channel_letters,
       show_in_foundation: form.show_in_foundation,
       show_in_sign_maintenance: form.show_in_sign_maintenance,
@@ -876,9 +891,9 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
             equipment_name: name,
             equipment_type: equipmentType || "boom_lift",
             pricing_mode: "per_day",
-            cost_flat: 0,
-            delivery_pickup_cost: form.pickup_delivery_cost || 0,
-            max_height_feet: 0,
+            cost_flat: null,
+            delivery_pickup_cost: form.pickup_delivery_cost ?? null,
+            max_height_feet: null,
             rental_company: "",
             ...carry,
           }
@@ -887,7 +902,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
             material_type: "excavation_equipment",
             equipment_type: equipmentType || "boom_lift",
             supports_attachments: true,
-            pickup_delivery_cost: form.delivery_pickup_cost || 0,
+            pickup_delivery_cost: form.delivery_pickup_cost ?? null,
             compatible_attachment_ids: [],
             compatible_sub_attachment_ids: [],
             allow_multiple: false,
@@ -951,7 +966,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         {source === "channel_letter_equipment" && (
           <div>
             <Label className="text-xs">Max Height (ft)</Label>
-            <Input type="number" className="h-8" value={form.max_height_feet || 0} onChange={(e) => set("max_height_feet", parseFloat(e.target.value) || 0)} />
+            <Input type="number" className="h-8" value={form.max_height_feet ?? ""} onChange={(e) => set("max_height_feet", inventoryNumberInput(e.target.value))} />
           </div>
         )}
       </div>
@@ -963,7 +978,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Safety Margin (ft)</Label>
-              <Input type="number" className="h-8" value={form.vertical_reach_safety_margin_feet ?? 2} onChange={(e) => set("vertical_reach_safety_margin_feet", parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form.vertical_reach_safety_margin_feet ?? 2} onChange={(e) => set("vertical_reach_safety_margin_feet", inventoryNumberInput(e.target.value))} />
             </div>
           </div>
           {isOwned && (
@@ -982,11 +997,11 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
             <div className="grid grid-cols-2 gap-3 pl-1">
               <div>
                 <Label className="text-xs">Min Height (ft)</Label>
-                <Input type="number" className="h-8" value={form.default_height_min_feet || 0} onChange={(e) => set("default_height_min_feet", parseFloat(e.target.value) || 0)} />
+                <Input type="number" className="h-8" value={form.default_height_min_feet ?? ""} onChange={(e) => set("default_height_min_feet", inventoryNumberInput(e.target.value))} />
               </div>
               <div>
                 <Label className="text-xs">Max Height (ft)</Label>
-                <Input type="number" className="h-8" value={form.default_height_max_feet || 0} onChange={(e) => set("default_height_max_feet", parseFloat(e.target.value) || 0)} />
+                <Input type="number" className="h-8" value={form.default_height_max_feet ?? ""} onChange={(e) => set("default_height_max_feet", inventoryNumberInput(e.target.value))} />
               </div>
             </div>
           )}
@@ -1039,7 +1054,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label className="text-xs">MPG (driving)</Label>
-              <Input type="number" className="h-8" value={form.mpg || 0} onChange={(e) => set("mpg", parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form.mpg ?? ""} onChange={(e) => set("mpg", inventoryNumberInput(e.target.value))} />
             </div>
             <div>
               <Label className="text-xs">Fuel Type</Label>
@@ -1054,7 +1069,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
             </div>
             <div>
               <Label className="text-xs">Idle Cost ($/hr)</Label>
-              <Input type="number" className="h-8" value={form.idle_running_cost_per_hour || 0} onChange={(e) => set("idle_running_cost_per_hour", parseFloat(e.target.value) || 0)} />
+              <Input type="number" className="h-8" value={form.idle_running_cost_per_hour ?? ""} onChange={(e) => set("idle_running_cost_per_hour", inventoryNumberInput(e.target.value))} />
             </div>
           </div>
         </div>
