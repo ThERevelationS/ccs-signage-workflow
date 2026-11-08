@@ -126,6 +126,35 @@
             "type": "boolean",
             "default": false
           },
+          "reinforcement_calculation_version": {
+            "type": "integer",
+            "description": "Absent or 1 uses legacy reinforcement; 2 uses the explicitly accepted preliminary model. Unsupported versions must not fall back to legacy pricing."
+          },
+          "reinforcement_design": {
+            "type": "object",
+            "description": "Accepted versioned raw reinforcement geometry. Not engineering approval, structural capacity or a stock purchasing schedule.",
+            "additionalProperties": true
+          },
+          "reinforcement_material": {
+            "type": "object",
+            "description": "Explicit stable catalog identity or authored manual per-foot material basis for the accepted reinforcement design.",
+            "additionalProperties": true
+          },
+          "reinforcement_proposal": {
+            "type": "object",
+            "description": "Unapplied versioned editor draft, including incomplete raw text. Never authoritative for live pricing or downstream material handoff.",
+            "additionalProperties": true
+          },
+          "reinforcement_cost_snapshot": {
+            "type": "object",
+            "description": "Latest deterministic version-2 steel quantities, material/labor amounts and basis. Builder frozen pricing is separate; engineering and procurement approval remain false.",
+            "additionalProperties": true
+          },
+          "reinforcement_acceptance": {
+            "type": "object",
+            "description": "Historical local model-acceptance receipt with origin actor, source, component, revision, timestamp and warnings. Audit metadata only, never authorization or engineering approval.",
+            "additionalProperties": true
+          },
           "include_forming": {
             "type": "boolean",
             "default": true
@@ -227,6 +256,30 @@
           },
           "rebar_cost": {
             "type": "number"
+          },
+          "rebar_material_cost": {
+            "type": "number",
+            "description": "Calculated version-2 steel material cost, separate from reinforcement labor."
+          },
+          "rebar_labor_cost": {
+            "type": "number",
+            "description": "Calculated version-2 reinforcement labor cost."
+          },
+          "rebar_labor_hours": {
+            "type": "number",
+            "description": "Recorded version-2 reinforcement labor hours; absent is unknown, not zero."
+          },
+          "rebar_geometry_feet": {
+            "type": "number",
+            "description": "Physical modeled steel footage, distinct from the priced rebar_feet override."
+          },
+          "rebar_geometry_weight_lbs": {
+            "type": "number",
+            "description": "Physical modeled steel weight, distinct from the priced rebar_weight_lbs."
+          },
+          "rebar_connection_count": {
+            "type": "integer",
+            "description": "Modeled reinforcement connections, independent of an aggregate priced-footage override."
           },
           "excavation_cost": {
             "type": "number"
