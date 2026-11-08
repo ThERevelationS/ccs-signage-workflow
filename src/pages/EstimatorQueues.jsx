@@ -6,10 +6,11 @@ import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from "@
 import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, softDeleteEstimateFromLoadedSnapshot, expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
-import { ensureEstimateLifecycleRevision, getOpenEstimateRevision } from "@/components/estimator/estimateRevisionService";
+import { ensureEstimateLifecycleRevision } from "@/components/estimator/estimateRevisionService";
 import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStatuses } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchEstimateQueueBundle, loadFullEstimateRow } from "@/components/queues/queueFeedClient";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
@@ -368,9 +369,20 @@ export default function EstimatorQueues() {
 
   const handlePermanentDelete = async (e) => {
     if (trashBusyId) return;
-    const acceptances = await staffEntities.EstimateAcceptance
-      .filter({ estimate_id: e.id }, "-created_date", 5)
-      .catch(() => []);
+    // The linked-records warning read must fail CLOSED: a transient failure
+    // resolving to "no acceptances" would skip the only warning on an
+    // irreversible delete. Block the delete and say why instead.
+    let acceptances;
+    try {
+      acceptances = await staffEntities.EstimateAcceptance
+        .filter({ estimate_id: e.id }, "-created_date", 5);
+    } catch (err) {
+      setTrashError(
+        "Linked records could not be verified, so the estimate was not permanently deleted. Try again." +
+        (err?.message ? ` (${err.message})` : "")
+      );
+      return;
+    }
     const linked = [];
     if (e.work_order_id) linked.push("a linked Work Order");
     if (Array.isArray(acceptances) && acceptances.length) {
@@ -488,7 +500,19 @@ export default function EstimatorQueues() {
     setTrashBusyId(e.id);
     setTrashError("");
     try {
-      const openRevision = await getOpenEstimateRevision(e.id);
+      // The open-revision trash guard must fail CLOSED. getOpenEstimateRevision
+      // swallows read errors into null (a detection-probe posture for its
+      // advisory callers), which would let an estimate with an open revision
+      // be trashed on a transient failure. This identical bounded read
+      // rethrows, so the catch below reports "not moved" instead of silently
+      // skipping the guard.
+      const openRevision = (await loadAllEntityRows({
+        entity: base44.entities.EstimateRevision,
+        query: { estimate_id: e.id, revision_status: "open" },
+        sort: "-revision_number",
+        limit: 50,
+        label: "Open estimate revision",
+      }) || [])[0] || null;
       if (openRevision?.id) {
         setTrashError("This estimate has an open revision — save it from Estimate Detail before moving it to Trash.");
         return;
