@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { money } from "./foundationCalc";
+import { foundationHasEnginePricing } from "./foundationSellPricing";
 
 export default function CustomerPricingPanel({ cost, project, onChange }) {
   const markup = project.customer_markup_percent || 0;
@@ -7,6 +8,20 @@ export default function CustomerPricingPanel({ cost, project, onChange }) {
   const marked = cost * (1 + markup / 100);
   const price = override > 0 ? override : marked;
   const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
+
+  // Sell-side precedence (CMP-A10; mirrors sourceProjectEconomics' foundation
+  // branch in customerPricing.js): explicit pricing-engine config resolves
+  // the live customer price first; absent engine config an applied Markup
+  // Tier snapshot (customer_pricing.applied === true with a numeric total)
+  // replaces it wholesale; otherwise the manual baseline below wins —
+  // customer_price_override > 0 beats cost x (1 + markup %). `price` here is
+  // therefore the MANUAL baseline: honest whenever neither upstream layer is
+  // engaged, advisory-shadowed otherwise.
+  const enginePriced = foundationHasEnginePricing(project);
+  const tierTotal = project.customer_pricing?.applied === true && Number.isFinite(Number(project.customer_pricing?.total))
+    ? Number(project.customer_pricing.total)
+    : null;
+  const tierShadowsBaseline = !enginePriced && tierTotal !== null && Math.abs(tierTotal - price) > 0.005;
 
   return (
     <div className="max-w-xl bg-white rounded-sm border border-gray-200 p-4 space-y-3">
@@ -16,6 +31,17 @@ export default function CustomerPricingPanel({ cost, project, onChange }) {
           Internal cost stays private — the customer price below is what flows to the estimate presentation.
         </p>
       </div>
+
+      {enginePriced && (
+        <p role="status" className="rounded-sm border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-800">
+          Pricing-engine configuration on this project resolves the live customer price (precedence: pricing engine → applied tier → price override → markup %). The manual markup/override below still applies to components without engine config.
+        </p>
+      )}
+      {tierShadowsBaseline && (
+        <p role="status" className="rounded-sm border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-800">
+          Applied Tier {project.customer_pricing?.tier_number} pricing ({money(tierTotal)}) is the live customer price — the markup/override below is stored but not used while a tier is applied. Editing either field switches this section back to manual pricing.
+        </p>
+      )}
 
       <div className="flex justify-between text-[12px] text-gray-600">
         <span>Internal section cost</span>
