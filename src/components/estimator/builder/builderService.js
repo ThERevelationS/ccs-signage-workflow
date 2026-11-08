@@ -65,9 +65,16 @@ export function sourceProjectTotal(line, record) {
   }
 
   if (line?.module_key === "foundation") {
+    // The persisted split fields are the authoritative cost partition on a
+    // FoundationProject row; grand_total is never persisted by the Builder, so
+    // any present grand_total is foreign-authored (or null, which num() would
+    // coerce to a poisoned $0). Trust the persisted partition first and fall
+    // back to grand_total only when no split field carries a number at all.
+    const split = foundationSplitFieldTotal(record);
+    if (split !== null) return split;
     const direct = num(record.grand_total, NaN);
     if (Number.isFinite(direct)) return direct;
-    return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
+    return 0;
   }
 
   return num(record.total_cost, num(line?.total_snapshot));
@@ -94,6 +101,17 @@ export const FOUNDATION_RECORD_TOTAL_FIELDS = [
   "total_landscape_cost",
 ];
 
+// Null when no split-total field carries a finite number; otherwise the sum of
+// the 12 persisted fields with absent fields counting as $0. Shared by
+// sourceProjectTotal's foundation branch and foundationRecordSavedTotal so the
+// acknowledged-cost comparator and the live-cost path can never disagree about
+// which fields form the authoritative partition.
+export function foundationSplitFieldTotal(record) {
+  if (!record || typeof record !== "object") return null;
+  if (!FOUNDATION_RECORD_TOTAL_FIELDS.some((key) => Number.isFinite(Number(record[key])))) return null;
+  return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
+}
+
 // The acknowledged section total persisted on a FoundationProject record —
 // the same split-field sum the linked estimate stores as live_total_snapshot
 // at each Builder save (manual add-on Product parts live only on the estimate
@@ -102,10 +120,11 @@ export const FOUNDATION_RECORD_TOTAL_FIELDS = [
 // fields count as $0, matching sourceProjectTotal's foundation branch.
 export function foundationRecordSavedTotal(record) {
   if (!record || typeof record !== "object") return null;
+  const split = foundationSplitFieldTotal(record);
+  if (split !== null) return split;
   const direct = num(record.grand_total, NaN);
   if (Number.isFinite(direct)) return direct;
-  if (!FOUNDATION_RECORD_TOTAL_FIELDS.some((key) => Number.isFinite(Number(record[key])))) return null;
-  return FOUNDATION_RECORD_TOTAL_FIELDS.reduce((sum, key) => sum + num(record[key]), 0);
+  return null;
 }
 
 async function findBuilderProduct(line, estimateId) {
@@ -587,12 +606,21 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified before synchronizing this Builder save.");
   // Source-only hints omit the Builder ID; two absent IDs are not an identity.
-  const currentLine = (estimate.line_items || []).find(
+  const matchedLine = (estimate.line_items || []).find(
     (item) => item.module_key === line.module_key && (
       (line.builder_product_id && item.builder_product_id === line.builder_product_id)
       || (line.project_id && item.project_id === line.project_id)
     )
-  ) || line;
+  );
+  if (!matchedLine) {
+    // A hint that resolves to no estimate line means the Product was removed
+    // from the estimate between load and save. Falling back to the bare hint
+    // would mint an orphan BuilderProduct whose estimate_line_id never lands
+    // in line_items, then report an endless partial sync — fail closed so the
+    // caller can report the removal instead.
+    throw new Error("This Product is no longer part of the estimate. The Builder source was saved, but its estimate section was removed — reload the estimate before retrying.");
+  }
+  const currentLine = matchedLine;
 
   const existingPending = pendingBuilderMutation(currentLine);
   if (expectedPendingKey !== undefined && existingPending?.key !== expectedPendingKey) {
