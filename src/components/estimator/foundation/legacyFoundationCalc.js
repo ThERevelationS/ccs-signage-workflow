@@ -19,28 +19,29 @@
  * small-load bracket, or a zero-yard delivery never triggers a hold.
  */
 
-// Supplier catalog price basis: a recorded finite, nonnegative price — an
-// explicit 0 is a legitimate free price. Missing, malformed, negative, or
-// non-finite catalog values are unavailable, never guessed.
-const supplierPriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string"
-    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
-};
+// All inventory normalization — price/dimension kernels, settings picks, and
+// the concrete-supplier field-name adapter — converges on the single boundary
+// module (CMP-A08). `supplierPriceNumber` keeps its local name for the ported
+// reads below; it IS the canonical catalog price basis.
+import {
+  inventoryNonnegativeNumber as supplierPriceNumber,
+  inventorySettingNumber as foundationSettingNumber,
+  inventorySettingValue,
+} from "@/components/masterInventory/inventoryNormalization";
 
-// Settings basis: a missing/blank Settings row keeps the ported module
-// default — the same `value === 0 ? 0 : value || fallback` pick the ported
-// getSetting applies — while a recorded value must be a finite, nonnegative
-// number. An explicit 0 is a legitimate free rate, multiplier, or time for
-// every read that only multiplies a cost component — the one read that also
-// divides (main labor backing out finishing hours) is flagged positive-only
-// at the consumption mirror below. The ported `parseFloat(settings[key] || def)`
-// partial-parsed "12abc" to 12 and returned NaN for "abc", and the `num()`
-// rollups then laundered NaN into finite-wrong persisted totals — a malformed
-// recorded setting now reports and holds the item instead.
-const foundationSettingNumber = (value, fallback) =>
-  supplierPriceNumber(value === 0 ? 0 : value || fallback);
+export { normalizeConcreteSupplier } from "@/components/masterInventory/inventoryNormalization";
+
+// Settings basis (inventorySettingNumber): a missing/blank Settings row keeps
+// the ported module default — the same `value === 0 ? 0 : value || fallback`
+// pick the ported getSetting applies — while a recorded value must be a
+// finite, nonnegative number. An explicit 0 is a legitimate free rate,
+// multiplier, or time for every read that only multiplies a cost component —
+// the one read that also divides (main labor backing out finishing hours) is
+// flagged positive-only at the consumption mirror below. The ported
+// `parseFloat(settings[key] || def)` partial-parsed "12abc" to 12 and returned
+// NaN for "abc", and the `num()` rollups then laundered NaN into finite-wrong
+// persisted totals — a malformed recorded setting now reports and holds the
+// item instead.
 
 // Settings the ported calcItemCost consumes, mirrored key-by-key — only the
 // keys an item's recorded configuration actually reads are checked, each with
@@ -145,44 +146,16 @@ export const getFuelSurcharge = (invItem) => {
   return supplierPriceNumber(invItem?.fuel_surcharge);
 };
 
-/** Normalize a LaborServiceInventory concrete supplier into the shape this math expects.
- *  Supplier-catalog price fields keep null for "not authored" — the ported
- *  `|| 0` laundered a missing catalog price into a fabricated free price. */
-export const normalizeConcreteSupplier = (row) => ({
-  id: row.id,
-  material_name: row.service_name,
-  material_description: row.description || "",
-  material_type: "concrete_service",
-  supplier: row.vendor_name || row.service_name,
-  cost_per_unit: row.default_rate || 0,
-  unit: "cy",
-  minimum_order_yards: row.minimum_order_yards || 0,
-  below_minimum_cost_per_cy: row.below_minimum_cost_per_cy || 0,
-  minimum_cost: row.minimum_charge || 0,
-  mix_3500_price: row.mix_3500_price ?? null,
-  mix_4000_price: row.mix_4000_price ?? null,
-  mix_4500_price: row.mix_4500_price ?? null,
-  mix_5000_price: row.mix_5000_price ?? null,
-  mix_fast_set_price: row.mix_fast_set_price ?? null,
-  admix_calcium_chloride_price: row.admix_calcium_chloride_price ?? null,
-  admix_set_retarding_price: row.admix_set_retarding_price ?? null,
-  admix_water_reducing_price: row.admix_water_reducing_price ?? null,
-  admix_fibers_price: row.admix_fibers_price ?? null,
-  admix_winter_service_price: row.admix_winter_service_price ?? null,
-  small_load_fee_1_1_75: row.small_load_fee_1_1_75 ?? null,
-  small_load_fee_2_2_75: row.small_load_fee_2_2_75 ?? null,
-  small_load_fee_3_3_75: row.small_load_fee_3_3_75 ?? null,
-  small_load_fee_4_4_25: row.small_load_fee_4_4_25 ?? null,
-  small_load_fee_4_5_4_75: row.small_load_fee_4_5_4_75 ?? null,
-  fuel_surcharge: row.fuel_surcharge ?? null,
-  show_in_foundation: row.show_in_foundation !== false,
-  _source: "labor_services",
-});
+// `normalizeConcreteSupplier` (LaborServiceInventory → FoundationInventory
+// shape) lives on the normalization boundary and is re-exported above so
+// existing import paths keep working.
 
 export const calcItemCost = (item, inventory = [], settings = {}) => {
-  // Explicit-0-respecting setting pick (same semantics as pole/wallSettingValue):
-  // a recorded 0 rate is legitimate; absent/blank keeps the ported default.
-  const getSetting = (key, def) => parseFloat(settings[key] === 0 ? 0 : settings[key] || def);
+  // Explicit-0-respecting setting pick (the boundary's inventorySettingValue —
+  // same semantics as pole/wallSettingValue): a recorded 0 rate is legitimate;
+  // absent/blank keeps the ported default. The strict settings gate above
+  // guarantees what reaches parseFloat here is already valid.
+  const getSetting = (key, def) => parseFloat(inventorySettingValue(settings[key], def));
 
   const selectedConcrete = inventory.find(c => c.id === item.selected_concrete_id);
   const conc_cost = item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== undefined
