@@ -20,6 +20,7 @@ import { resolveFoundationEquipment } from "./foundationEquipmentBindings";
 import { foundationItemInputIssues, foundationProjectInputIssues, signageCabinetInputIssues } from "./foundationInputValidation";
 import { foundationConstructionWarnings } from "./foundationConstructionChecks";
 import { landscapeSummary } from "./landscapeMaterials";
+import { calculateFoundationReinforcementItemProjection } from "./foundationReinforcementItemProjection";
 
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
@@ -31,7 +32,74 @@ const ITEM_SNAPSHOT_FIELDS = [
   "forming_cost", "forming_qty", "pouring_cost", "finishing_cost", "finishing_hours", "item_total_cost",
 ];
 
+const REINFORCEMENT_SNAPSHOT_FIELDS = [
+  "rebar_material_cost", "rebar_labor_cost", "rebar_labor_hours",
+  "rebar_geometry_feet", "rebar_geometry_weight_lbs", "rebar_connection_count",
+];
+
+// Versioned reinforcement dispatch (CMP-B): an item carrying
+// reinforcement_calculation_version prices steel through the explicit
+// versioned geometry/basis projection — never through the ported legacy
+// formula. Items without the marker return null here and take the unchanged
+// legacy path byte-for-byte. An unsupported version is held rather than
+// silently recalculated as legacy: foundationItemInputIssues already reports
+// foundation_reinforcement_version_unsupported for it (input channel), so the
+// gate below keeps the acknowledged amounts the same way every other held
+// item does. The versioned branch plugs into the same contracts as the
+// legacy path: input, Settings and catalog availability gate the projection;
+// an unavailable or not-ready projection keeps the component's acknowledged
+// snapshot and reports blockers that itemPricing/availability/delivery
+// already honor.
+function calculateVersionedItem(item, project, inventory, settings, savedItem) {
+  const version = item.reinforcement_calculation_version;
+  if (version == null || version === 1) return null;
+  const effectiveItem = { ...item, excavation_method: item.excavation_method || project?.excavation_method };
+  const inputIssues = foundationItemInputIssues(effectiveItem);
+  const catalogIssues = foundationItemCatalogIssues(item, inventory);
+  const settingIssues = foundationItemSettingIssues(effectiveItem, settings);
+  const projection = inputIssues.length || catalogIssues.length || settingIssues.length ? null
+    : calculateFoundationReinforcementItemProjection({
+      item, design: item.reinforcement_design, material: item.reinforcement_material,
+      inventory, settings, excavationMethod: project?.excavation_method,
+      quantityOverride: item.custom_rebar_qty ?? null, rateOverride: item.custom_rebar_cost_per_ft ?? null,
+    });
+  if (projection?.canApplyToEstimate && projection.itemCost) {
+    const reinforcement = projection.reinforcement;
+    return {
+      cost: {
+        ...projection.itemCost,
+        reinforcement_cost_snapshot: item.include_rebar ? {
+          version: 1, calculation_version: 2, engineering_approved: false,
+          amounts: structuredClone(reinforcement.steel.amounts),
+          material: structuredClone(reinforcement.materialSnapshot),
+          basis: structuredClone(reinforcement.basis),
+          rate_sources: structuredClone(reinforcement.rateSources),
+        } : undefined,
+      },
+      issues: [],
+    };
+  }
+  const blockers = projection?.issues.filter(issue => issue.severity === "error") || [];
+  if (projection && !blockers.length) blockers.push({
+    field: "reinforcement_design", code: "foundation_reinforcement_not_ready",
+    message: "Reinforcement support, weight, connection or pricing prerequisites remain unresolved; saved amounts are shown and saving is paused.",
+  });
+  return {
+    cost: {
+      quantity: item.quantity,
+      ...Object.fromEntries([...ITEM_SNAPSHOT_FIELDS, ...REINFORCEMENT_SNAPSHOT_FIELDS].map(key => [
+        key, hasFoundationCostSnapshot(savedItem?.[key]) ? savedItem[key] : undefined,
+      ])),
+      reinforcement_cost_snapshot: savedItem?.reinforcement_cost_snapshot == null
+        ? undefined : structuredClone(savedItem.reinforcement_cost_snapshot),
+    },
+    issues: blockers,
+  };
+}
+
 export function calcItem(item, project, inventory, settings = {}, savedItem = item) {
+  const versioned = calculateVersionedItem(item, project, inventory, settings, savedItem);
+  if (versioned) return versioned.cost;
   // Items without their own excavation method fall back to the project
   // default — the effective record is what the ported math prices, so its
   // method (not just the authored one) must pass the enum check.
@@ -396,6 +464,22 @@ export function calcProject(project, rawInventory, settings = {}, options = {}) 
       { ...item, excavation_method: item.excavation_method || project.excavation_method }, settings, index)),
   ];
   const inputIssues = foundationProjectInputIssues(project);
+  // Versioned reinforcement dispatch — one projection pass per item; items
+  // without the version marker return null and keep the unchanged legacy
+  // path. Versioned blockers join the shared input-issue channel so
+  // itemPricing availability, the coupled delivery hold and saved-snapshot
+  // totals behave exactly like every other held item.
+  const versioned = sourceItems.map((item, index) => {
+    const savedItem = !explicitSnapshot ? item
+      : item.component_id && currentIds.get(item.component_id) === 1 ? savedItems.get(item.component_id) || null : null;
+    const result = calculateVersionedItem(item, project, inventory, settings, savedItem);
+    for (const issue of result?.issues || []) inputIssues.push({
+      kind: "foundation", index, componentId: item.component_id ?? null,
+      field: issue.field, code: issue.code, severity: "error",
+      message: `Foundation ${index + 1}: ${issue.message}`,
+    });
+    return result;
+  });
   const cabinetCalc = calcSignageCabinetPricing(project.signage_cabinets);
   const signageCabinetPricing = cabinetCalc.map((row) => ({ available: row.available, issues: row.issues }));
   const landscapeCalc = landscapeSummary(project.landscape);
@@ -408,10 +492,10 @@ export function calcProject(project, rawInventory, settings = {}, options = {}) 
     ];
     return { available: issues.length === 0, issues };
   });
-  const items = sourceItems.map((item) => {
+  const items = sourceItems.map((item, index) => {
     const savedItem = !explicitSnapshot ? item
       : item.component_id && currentIds.get(item.component_id) === 1 ? savedItems.get(item.component_id) || null : null;
-    return { ...item, ...calcItem(item, project, inventory, settings, savedItem) };
+    return { ...item, ...(versioned[index]?.cost || calcItem(item, project, inventory, settings, savedItem)) };
   });
   const equipment = equipmentCalc.map(row => row.pricedEntry);
   // An incomplete item has saved quantities, so its coupled order must not be
@@ -422,6 +506,9 @@ export function calcProject(project, rawInventory, settings = {}, options = {}) 
     { ...project, settings },
     (project.items || []).map((i) => ({
       ...i,
+      // Versioned items price steel outside the ported legacy formula — the
+      // delivery volume scan must not read their rebar through that lens.
+      ...(i.reinforcement_calculation_version === 2 ? { include_rebar: false } : {}),
       excavation_method: i.excavation_method || project.excavation_method,
     })),
     inventory
