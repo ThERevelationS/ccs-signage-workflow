@@ -3,8 +3,9 @@
 // Merges supply items from two underlying entities:
 //   - ChannelLetterInstallInventory (channel-letter install / maintenance supplies)
 //   - FoundationInventory rows that are NOT equipment/attachment/sub_attachment
-//     (i.e. concrete_service, bagged_concrete, rebar, forming_material, pole,
-//      brick_stone, fill_material, wall_material, wall_cap)
+//     (i.e. concrete_service, bagged_concrete, rebar, rebar_support,
+//      forming_material, pole, brick_stone, fill_material, wall_material,
+//      wall_cap)
 //
 // Each row gets cross-estimator visibility toggles.
 // The Add form lets the user choose which storage entity + which type the new
@@ -31,8 +32,9 @@ const ChannelLetterInstallInventoryEntity = staffEntities.ChannelLetterInstallIn
 const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 const FOUNDATION_SUPPLY_TYPES = [
-  "concrete_service", "bagged_concrete", "rebar", "forming_material",
-  "pole", "brick_stone", "fill_material", "wall_material", "wall_cap",
+  "concrete_service", "bagged_concrete", "rebar", "rebar_support",
+  "forming_material", "pole", "brick_stone", "fill_material", "wall_material",
+  "wall_cap",
 ];
 
 const FOUNDATION_TYPE_OPTIONS = FOUNDATION_SUPPLY_TYPES.map((t) => ({
@@ -496,7 +498,12 @@ function passThroughFoundation(raw) {
     "fill_material_subtype", "wall_material_subtype",
     "wall_unit_length_inches", "wall_unit_width_inches", "wall_unit_height_inches", "wall_color", "wall_texture",
     "cap_stock_length_inches", "cap_width_inches", "cap_height_inches", "cap_profile", "cap_color", "cap_stock_price", "is_cuttable",
-    "rebar_size", "minimum_order_yards", "below_minimum_cost_per_cy", "minimum_cost",
+    "rebar_size", "rebar_support_kind", "rebar_support_height_inches",
+    "rebar_support_height_min_inches", "rebar_support_height_max_inches",
+    "rebar_support_footprint_length_inches", "rebar_support_footprint_width_inches",
+    "rebar_support_material", "rebar_support_pack_size",
+    "rebar_support_compatible_bar_sizes", "rebar_support_placement_notes",
+    "minimum_order_yards", "below_minimum_cost_per_cy", "minimum_cost",
     "mix_3500_price", "mix_4000_price", "mix_4500_price", "mix_5000_price", "mix_fast_set_price",
     "admix_calcium_chloride_price", "admix_set_retarding_price", "admix_water_reducing_price", "admix_fibers_price", "admix_winter_service_price",
     "small_load_fee_1_1_75", "small_load_fee_2_2_75", "small_load_fee_3_3_75", "small_load_fee_4_4_25", "small_load_fee_4_5_4_75",
