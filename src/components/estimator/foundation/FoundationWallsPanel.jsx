@@ -159,7 +159,15 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
-        <div>Units: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.totalBricks) ? Math.round(c.totalBricks) : "Not saved"}</span></div>
+        {/* CMP-D03: the snapshot carries its quantity basis — poured concrete
+            reads placed volume in CY (never "Units"), unit masonry keeps the
+            unit count. Held rows keep whatever basis the acknowledged
+            snapshot recorded. */}
+        {c.materialQuantityUnit === "cy" ? (
+          <div>CY: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.totalBricks) ? c.totalBricks.toFixed(2) : "Not saved"}</span></div>
+        ) : (
+          <div>Units: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.totalBricks) ? Math.round(c.totalBricks) : "Not saved"}</span></div>
+        )}
         <div>Courses: <span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(c.numCourses) ? Math.ceil(c.numCourses) : "Not saved"}</span></div>
         <div>Material: <span className="font-semibold text-gray-900">{amt(c.materialCost)}</span></div>
         <div>Mortar: <span className="font-semibold text-gray-900">{amt(c.mortarCost)}</span></div>
