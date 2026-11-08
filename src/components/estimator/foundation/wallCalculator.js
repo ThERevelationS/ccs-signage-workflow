@@ -21,6 +21,13 @@ import {
   canonicalWallMaterialSubtype,
   wallMaterialSubtypeRecorded,
 } from "@/components/masterInventory/inventoryNormalization";
+// O-009 tail: catalog lifecycle classification is the single contract — a
+// resolved-but-inactive/deleted wall material flags catalog_item_inactive /
+// catalog_item_deleted instead of silently repricing (the acknowledged
+// snapshot holds through the unchanged issues channel). The integrity module
+// imports foundationWallCatalogIssues back from this file — both directions
+// are call-time function declarations, so the import cycle is eval-safe.
+import { foundationCatalogRowAvailability } from "./foundationCatalogIntegrity";
 
 // 36³ in³ per cubic yard — the poured-concrete wall quantity conversion.
 const CUBIC_INCHES_PER_CUBIC_YARD = 46656;
@@ -323,6 +330,17 @@ function wallPricing(wall, inventory = [], index = 0, settings = {}) {
     const material = matches[0];
     if (!["brick_stone", "wall_material"].includes(material.material_type)) {
       add("catalog_item_type_mismatch", "selected catalog material is not a wall material");
+      return null;
+    }
+    // O-009 tail: existence -> type -> lifecycle -> consumed basis, the item
+    // scan's precedence. A resolved-but-inactive/deleted row priced silently
+    // before; flagging here holds the wall on its acknowledged snapshot.
+    const availability = foundationCatalogRowAvailability(material);
+    if (availability !== "active") {
+      add(availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
+        availability === "deleted"
+          ? "selected catalog material is marked deleted — pick a replacement"
+          : "selected catalog material is inactive — reactivate it or pick a replacement");
       return null;
     }
     const override = kind === "wall"
