@@ -141,6 +141,65 @@ const LAYER_ROWS = [
   ["caps", "Wall caps"], ["cabinets", "Cabinets"],
 ];
 
+// O-032 elevation parity — a side profile beside the plan: each item's
+// depth drops from its grade line at the same measured x position, each
+// pole rises by its authored height above the same grade. Everything is
+// drawn from saved inches — no derived/estimated placement.
+const ELEV_DEPTH_IN = 96; // profile window: 8 ft of vertical space
+const ElevationStrip = ({ items, poles, selIds, widthIn, onSelect }) => {
+  const itemsDrawn = (items || []).map((item, i) => ({
+    item, i,
+    key: layoutItemKey(item, i),
+    x: Number(item.x_inches) || 0,
+    w: Number(item.length_inches ?? item.diameter) || 0,
+    depth: Number(item.depth_inches) || 0,
+    off: Number(item.grade_offset_inches) || 0,
+  })).filter((d) => d.w > 0 || d.depth > 0);
+  const polesDrawn = (poles || []).map((pole, i) => ({
+    pole, i,
+    key: layoutItemKey(pole, i),
+    x: Number(pole.x_inches) || 0,
+    h: Number(pole.height_inches) || 0,
+    embed: Number(pole.embedment_inches ?? pole.y_offset_inches) || 0,
+  }));
+  if (!itemsDrawn.length && !polesDrawn.length) return null;
+  const maxDepth = Math.max(24, ...itemsDrawn.map((d) => d.depth - Math.min(0, d.off)), ...polesDrawn.map((p) => p.embed));
+  const maxUp = Math.max(24, ...polesDrawn.map((p) => p.h + Math.max(0, 0)), ...itemsDrawn.map((d) => Math.max(0, d.off)));
+  const H = ELEV_DEPTH_IN;
+  const gradeY = (maxUp / (maxUp + maxDepth)) * H;
+  const scaleY = H / (maxUp + maxDepth);
+  const scaleX = (v) => (v / (widthIn || 480)) * 100;
+  return (
+    <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" className="mt-1 h-16 w-full rounded-sm border border-gray-200 bg-gray-50" data-elevation-strip="true">
+      <line x1="0" y1={gradeY} x2="100" y2={gradeY} stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" vectorEffect="non-scaling-stroke" />
+      {itemsDrawn.map((d) => (
+        <rect
+          key={d.key}
+          data-elev-item={d.key}
+          x={scaleX(d.x)} y={gradeY - d.off * scaleY}
+          width={Math.max(0.5, scaleX(d.w))} height={d.depth * scaleY}
+          fill={selIds.has(`item:component:${d.item.component_id}`) || selIds.has(`item:${d.key}`) ? "rgba(2,132,199,0.35)" : "rgba(245,158,11,0.25)"}
+          stroke={selIds.has(`item:component:${d.item.component_id}`) || selIds.has(`item:${d.key}`) ? "#0284c7" : "#f59e0b"}
+          strokeWidth="1" vectorEffect="non-scaling-stroke"
+          onClick={() => onSelect?.(`item:component:${d.item.component_id}`)}
+          style={{ cursor: onSelect ? "pointer" : "default" }}
+        />
+      ))}
+      {polesDrawn.map((p) => (
+        <line
+          key={p.key}
+          data-elev-pole={p.key}
+          x1={scaleX(p.x)} y1={gradeY + p.embed * scaleY} x2={scaleX(p.x)} y2={gradeY - p.h * scaleY}
+          stroke={selIds.has(`pole:component:${p.pole.component_id}`) || selIds.has(`pole:${p.key}`) ? "#0284c7" : "#475569"}
+          strokeWidth="2" vectorEffect="non-scaling-stroke"
+          onClick={() => onSelect?.(`pole:component:${p.pole.component_id}`)}
+          style={{ cursor: onSelect ? "pointer" : "default" }}
+        />
+      ))}
+    </svg>
+  );
+};
+
 export default function FoundationLayoutCanvas({
   items = [],
   poles = [],
@@ -1185,6 +1244,16 @@ export default function FoundationLayoutCanvas({
           })}
         </div>
       </div>
+
+      {/* O-032 — side-elevation companion to the plan: same measured x,
+          authored depth below / pole height above a shared grade line. */}
+      <ElevationStrip
+        items={items}
+        poles={poles}
+        selIds={selIds}
+        widthIn={FOUNDATION_LAYOUT_WIDTH_INCHES}
+        onSelect={(id) => selection.select(id)}
+      />
 
       {breadcrumb.length > 0 && (
         <div data-breadcrumb="true" className="mt-1.5 text-[10px] text-gray-500" aria-label="Selection path">
