@@ -1,6 +1,6 @@
-// O-099 (CMP-H08) — saved-vs-live revision comparison. Pure model: takes the
+// O-099 (CMP-H08) -- saved-vs-live revision comparison. Pure model: takes the
 // last-saved normalized project and the live project, returns honest diff
-// rows — added/removed/changed per collection plus pricing + review-state
+// rows -- added/removed/changed per collection plus pricing + review-state
 // deltas. Everything renders what it can prove; a missing saved value is
 // "not saved", never a guessed baseline.
 
@@ -39,7 +39,7 @@ const fmt = (v) => {
   if (v === true) return "yes";
   if (v === false) return "no";
   if (typeof v === "number") return Number.isFinite(v) ? String(v) : "invalid";
-  if (typeof v === "string") return v.length > 24 ? `${v.slice(0, 21)}…` : v;
+  if (typeof v === "string") return v.length > 24 ? `${v.slice(0, 21)}...` : v;
   return "recorded";
 };
 const sameVal = (a, b) => {
@@ -60,7 +60,7 @@ const diffRows = (savedRows, liveRows, fields, labelFor) => {
     }
     for (const [field, fname] of fields) {
       if (!sameVal(sRow?.[field], liveHit.row?.[field])) {
-        out.push({ change: "changed", label: labelFor(liveHit.row, liveHit.index), detail: `${fname}: ${fmt(sRow?.[field])} → ${fmt(liveHit.row?.[field])}` });
+        out.push({ change: "changed", label: labelFor(liveHit.row, liveHit.index), detail: `${fname}: ${fmt(sRow?.[field])} -> ${fmt(liveHit.row?.[field])}` });
       }
     }
   }
@@ -79,7 +79,7 @@ const cabLabel = (c, i) => `Cabinet ${i + 1}`;
 export function diffFoundationProjects(saved, live) {
   const rows = [];
   if (!isObj(saved)) {
-    return [{ change: "unavailable", label: "Saved baseline", detail: "no saved project snapshot is recorded for this session — comparison unavailable." }];
+    return [{ change: "unavailable", label: "Saved baseline", detail: "no saved project snapshot is recorded for this session -- comparison unavailable." }];
   }
   if (!isObj(live)) return rows;
 
@@ -93,18 +93,18 @@ export function diffFoundationProjects(saved, live) {
 
   pushAll("pricing", PRICE_FIELDS
     .filter(([f]) => !sameVal(saved[f], live[f]))
-    .map(([f, name]) => ({ change: "changed", label: "Customer pricing", detail: `${name}: ${fmt(saved[f])} → ${fmt(live[f])}` })));
+    .map(([f, name]) => ({ change: "changed", label: "Customer pricing", detail: `${name}: ${fmt(saved[f])} -> ${fmt(live[f])}` })));
 
-  // Review state — reinforcement acceptance flags ride the saved snapshot.
+  // Review state -- reinforcement acceptance flags ride the saved snapshot.
   ["engineering_approved", "procurement_ready"].forEach((f) => {
     if (!sameVal(saved[f], live[f])) {
-      rows.push({ section: "review", change: "changed", label: "Review state", detail: `${f}: ${fmt(saved[f])} → ${fmt(live[f])}` });
+      rows.push({ section: "review", change: "changed", label: "Review state", detail: `${f}: ${fmt(saved[f])} -> ${fmt(live[f])}` });
     }
   });
 
   const land = (p) => Object.keys(p?.landscape?.cells || {}).length;
   if (land(saved) !== land(live)) {
-    rows.push({ section: "landscape", change: "changed", label: "Landscape", detail: `painted cells: ${land(saved)} → ${land(live)}` });
+    rows.push({ section: "landscape", change: "changed", label: "Landscape", detail: `painted cells: ${land(saved)} -> ${land(live)}` });
   }
 
   return rows;
