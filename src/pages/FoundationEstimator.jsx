@@ -21,6 +21,7 @@ import FoundationEquipmentTab from "@/components/estimator/foundation/Foundation
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
+import { diffFoundationProjects, summarizeFoundationDiff } from "@/components/estimator/foundation/foundationRevisionDiff";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
 import FoundationPolesPanel from "@/components/estimator/foundation/FoundationPolesPanel";
@@ -334,6 +335,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const savedSourceProject = acknowledgedVersionRef.current?.sourceId === project?.id && acknowledgedVersionRef.current?.ownerId === ownerId
     ? acknowledgedVersionRef.current?.sourceSnapshot ?? null : null;
+  // O-099 — saved-vs-live revision comparison; the saved baseline is the
+  // acknowledged snapshot, never a guessed earlier state.
+  const diffRows = useMemo(
+    () => (savedSourceProject && project ? diffFoundationProjects(savedSourceProject, project) : []),
+    [savedSourceProject, project]
+  );
+  const diffCounts = useMemo(() => summarizeFoundationDiff(diffRows), [diffRows]);
   const calc = useMemo(
     () => (project ? calcProject(project, inventory, settings, { savedProject: savedSourceProject }) : null),
     [project, inventory, settings, savedSourceProject]
@@ -1736,6 +1744,26 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   >
                     Manage foundation catalog â†’
                   </Link>
+                  {diffRows.length > 0 && (
+                    <details className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
+                      <summary className="cursor-pointer select-none text-[11px] font-semibold text-amber-800">
+                        {diffCounts.added + diffCounts.removed + diffCounts.changed} change{diffCounts.added + diffCounts.removed + diffCounts.changed === 1 ? "" : "s"} vs saved
+                        <span className="ml-2 font-normal text-amber-700">
+                          {diffCounts.added ? `${diffCounts.added} added ` : ""}{diffCounts.removed ? `${diffCounts.removed} removed ` : ""}{diffCounts.changed ? `${diffCounts.changed} changed` : ""}
+                        </span>
+                      </summary>
+                      <ul className="mt-2 space-y-0.5 text-[11px] text-amber-900">
+                        {diffRows.slice(0, 40).map((r, i) => (
+                          <li key={`${r.section}:${r.label}:${i}`}>
+                            <span className="font-medium capitalize">{r.change}</span>
+                            <span className="text-amber-700"> · {r.label}</span>
+                            {r.detail ? <span className="text-amber-800"> — {r.detail}</span> : null}
+                          </li>
+                        ))}
+                        {diffRows.length > 40 && <li className="text-amber-700">…{diffRows.length - 40} more</li>}
+                      </ul>
+                    </details>
+                  )}
                 </div>
               </TabsContent>
 
