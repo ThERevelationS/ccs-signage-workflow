@@ -13,7 +13,7 @@ const MAX_POLE_MESHES = 64;
 const MAX_WALL_SEGMENTS = 96;
 const MAX_MOUNTED_MESHES = 64;
 
-function buildScene(scene, project, solid, showGround, highlight, exploded) {
+function buildScene(scene, project, solid, showGround, highlight, exploded, showRebar = true) {
   const group = new THREE.Group();
 
   const concreteMat = solid
@@ -86,7 +86,7 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
       group.add(mesh);
 
       const rebar = rebarByKey?.get(`${itemIndex}:${i}`);
-      if (rebar) {
+      if (rebar && showRebar) {
         try { mesh.add(createFoundationReinforcement3DGroup(rebar.prims)); }
         catch { /* unsupported roles refuse to draw; the concrete still renders. */ }
       }
@@ -304,6 +304,9 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   // O-037 below-grade cutaway — flips the clip to keep only the buried
   // portion (y <= 0), independent of the elevation-section height.
   const [sectionBelow, setSectionBelow] = useState(false);
+  // O-037 reinforcement-inspection — gates the concrete-local steel/supports
+  // group without touching the concrete render.
+  const [showRebar, setShowRebar] = useState(true);
   const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
   const disposeObject = (root) => {
@@ -477,10 +480,10 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       st.scene.remove(st.modelGroup);
       disposeObject(st.modelGroup);
     }
-    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds), exploded);
+    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds), exploded, showRebar);
     st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
-  }, [project, solid, showGround, visible, highlightKey, exploded]);
+  }, [project, solid, showGround, visible, highlightKey, exploded, showRebar]);
 
   // Section clip plane — a global renderer plane keeps everything below the
   // chosen elevation (negative inches = below grade); no geometry is edited.
@@ -544,6 +547,7 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             <ToolBtn onClick={() => setExploded((v) => !v)} active={exploded}>Exploded</ToolBtn>
             <ToolBtn onClick={() => setSection((v) => (v === null ? -6 : null))} active={section !== null}>Section</ToolBtn>
             <ToolBtn onClick={() => setSectionBelow((v) => !v)} active={sectionBelow} title="Show only below-grade geometry">Below</ToolBtn>
+            <ToolBtn onClick={() => setShowRebar((v) => !v)} active={!showRebar} title="Toggle reinforcement steel/supports">Rebar</ToolBtn>
             {section !== null && (
               <span className="flex items-center gap-1 text-[11px] text-gray-600">
                 <input
