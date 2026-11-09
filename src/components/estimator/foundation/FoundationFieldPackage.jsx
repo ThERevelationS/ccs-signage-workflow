@@ -147,7 +147,7 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
                     <Td mono>{dim(p.embedment_inches ?? p.y_offset_inches)}</Td>
                     <Td>{p.pole_shape || "round"}</Td>
                     <Td mono>{`${dim(p.x_inches)}, ${dim(p.z_inches)}`}</Td>
-                    <Td mono>{signs.length === 0 ? "-" : `${signs.length}${all ? ` · ${money(costs.reduce((a, b) => a + b, 0))}` : ""}`}</Td>
+                    <Td mono>{signs.length === 0 ? "-" : `${signs.length}${all ? ` - ${money(costs.reduce((a, b) => a + b, 0))}` : ""}`}</Td>
                   </tr>
                 );
               })}
