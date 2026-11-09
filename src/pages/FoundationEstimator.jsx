@@ -32,7 +32,7 @@ import FoundationTemplateDialog from "@/components/estimator/foundation/Foundati
 import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
 import { createSceneHistory, sceneLayoutAnchor } from "@/components/estimator/foundation/foundationSceneHistory";
-import { createSceneSelection } from "@/components/estimator/foundation/foundationSceneSelection";
+import { createSceneSelection, parseSceneNodeId } from "@/components/estimator/foundation/foundationSceneSelection";
 import { duplicateFoundationAssembly } from "@/components/estimator/foundation/foundationDuplicateMirror";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
@@ -147,6 +147,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   if (!sceneSelectionRef.current) sceneSelectionRef.current = createSceneSelection();
   const sceneSelection = sceneSelectionRef.current;
   useSyncExternalStore(sceneSelection.subscribe, () => sceneSelection.stateVersion);
+  // O-034 — selected component ids feed the 3D preview's highlight seam.
+  const highlightComponentIds = sceneSelection.getState().ids
+    .map((id) => parseSceneNodeId(id)?.componentId)
+    .filter(Boolean);
   const [saveError, setSaveError] = useState("");
   const [reloadRevision, setReloadRevision] = useState(0);
   const [linkedEstimate, setLinkedEstimate] = useState(null);
@@ -1781,7 +1785,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             {inputBlocked ? (
               <div className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-800">3D preview hidden until the highlighted design inputs are corrected.</div>
             ) : (
-              <Foundation3DPreview project={project} />
+              <Foundation3DPreview project={project} highlightComponentIds={highlightComponentIds} />
             )}
           </div>
         </div>
