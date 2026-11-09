@@ -91,6 +91,7 @@ export function resolveFoundationReinforcementBasis({
     labor_rate_per_hour: setting("foundation_main_labor_rate", 60),
     labor_hours_per_ft: setting("foundation_rebar_time_linear_ft", 0.02),
     labor_hours_per_connection: setting("foundation_rebar_time_cross_section", 0.05),
+    labor_hours_per_support: setting("foundation_rebar_support_time_each", 0.05),
   };
   return {
     basis, issues, rateSources,
