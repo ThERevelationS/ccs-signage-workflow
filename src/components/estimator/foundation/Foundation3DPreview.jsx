@@ -3,6 +3,10 @@ import * as THREE from "three";
 import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
 
 const IN = 1 / 12; // inches -> feet units
+// O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
+// quantity can never exhaust the GL budget (clipping never changes modeled data).
+const MAX_ITEM_MESHES = 128;
+const MAX_POLE_MESHES = 64;
 
 function buildScene(scene, project, solid, showGround, highlight) {
   const group = new THREE.Group();
@@ -32,7 +36,7 @@ function buildScene(scene, project, solid, showGround, highlight) {
   let cursorX = 0;
   const items = project.items || [];
   items.forEach((item) => {
-    const qty = Math.max(1, Number(item.quantity) || 1);
+    const qty = Math.min(MAX_ITEM_MESHES, Math.max(1, Number(item.quantity) || 1));
     const depth = (Number(item.depth_inches) || 0) * IN;
     for (let i = 0; i < qty; i++) {
       let mesh;
@@ -65,7 +69,7 @@ function buildScene(scene, project, solid, showGround, highlight) {
     }
   });
 
-  (project.poles || []).forEach((p) => {
+  (project.poles || []).slice(0, MAX_POLE_MESHES).forEach((p) => {
     // CMP-E02: distinct quantities â€” the pole top sits at base offset plus
     // height above grade; embedment extends BELOW grade (canonical
     // embedment_inches; the legacy y_offset_inches spelling carries the same
