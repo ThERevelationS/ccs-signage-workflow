@@ -9,6 +9,8 @@ const IN = 1 / 12; // inches -> feet units
 // quantity can never exhaust the GL budget (clipping never changes modeled data).
 const MAX_ITEM_MESHES = 128;
 const MAX_POLE_MESHES = 64;
+const MAX_WALL_SEGMENTS = 96;
+const MAX_MOUNTED_MESHES = 64;
 
 function buildScene(scene, project, solid, showGround, highlight, exploded) {
   const group = new THREE.Group();
@@ -37,6 +39,9 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
 
   let cursorX = 0;
   const items = project.items || [];
+  // Rendered positions of each item's first mesh copy — mount children
+  // (foundation-mounted cabinets) follow the drawn copy, not authored coords.
+  const itemFirstPos = new Map();
   // O-033 reinforcement steel — the preview3d model emits concrete-local steel
   // primitives for v2 items; each instance's group parents to that item's
   // concrete mesh so position/rotation/quantity copies stay exact. The model
@@ -75,6 +80,7 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
       const offset = (Number(item.grade_offset_inches) || 0) * IN;
       mesh.position.set(cursorX + footprint / 2, -depth / 2 + offset, 0);
       mesh.rotation.y = ((Number(item.rotation_degrees) || 0) * Math.PI) / 180;
+      if (!itemFirstPos.has(itemIndex)) itemFirstPos.set(itemIndex, { x: mesh.position.x, z: mesh.position.z });
       tag(mesh, item.component_id, "item");
       group.add(mesh);
 
@@ -122,6 +128,93 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
     );
     tag(pole, p.component_id, "pole");
     group.add(pole);
+  });
+
+  // O-033 walls/caps/cabinets — walls extrude their authored shape.points
+  // polyline (inches, same plan convention as poles); caps render along the
+  // wall segment they mount to; cabinets mount at their pole or the item's
+  // drawn copy. Unresolved mounts draw nothing — the scene stays honest.
+  const wallMat = solid
+    ? new THREE.MeshStandardMaterial({ color: 0x9a5b3f, roughness: 0.85 })
+    : new THREE.MeshBasicMaterial({ color: 0x7c2d12, wireframe: true });
+  const capMat = solid
+    ? new THREE.MeshStandardMaterial({ color: 0xb8b0a4, roughness: 0.8 })
+    : new THREE.MeshBasicMaterial({ color: 0x57534e, wireframe: true });
+  const cabMat = solid
+    ? new THREE.MeshStandardMaterial({ color: 0x3f4a5a, roughness: 0.5, metalness: 0.3 })
+    : new THREE.MeshBasicMaterial({ color: 0x1f2937, wireframe: true });
+
+  const walls = project.walls || [];
+  let segCount = 0, mountCount = 0;
+  const segSpan = (wall, si) => {
+    const pts = wall?.shape?.points;
+    if (!Array.isArray(pts) || pts.length < 2) return null;
+    const closed = wall.shape.closed === true && pts.length >= 3;
+    if (si >= pts.length || (!closed && si >= pts.length - 1)) return null;
+    const a = pts[si], b = pts[(si + 1) % pts.length];
+    const ax = Number(a?.x), az = Number(a?.z), bx = Number(b?.x), bz = Number(b?.z);
+    if (![ax, az, bx, bz].every(Number.isFinite)) return null;
+    return { ax, az, bx, bz, len: Math.hypot(bx - ax, bz - az) };
+  };
+  walls.forEach((wall) => {
+    const segs = wall?.shape?.segments || [];
+    const height = (Number(wall?.heightInches) || 24) * IN;
+    const thick = (Number(wall?.thicknessInches) || 8) * IN;
+    segs.forEach((_, si) => {
+      if (segCount >= MAX_WALL_SEGMENTS) return;
+      const s = segSpan(wall, si);
+      if (!s || s.len <= 0) return;
+      segCount++;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(s.len * IN, height, thick), wallMat);
+      m.position.set(((s.ax + s.bx) / 2) * IN, height / 2, ((s.az + s.bz) / 2) * IN);
+      m.rotation.y = -Math.atan2(s.bz - s.az, s.bx - s.ax);
+      tag(m, wall?.shape?.segments?.[si]?.component_id ?? wall?.component_id, "wall");
+      group.add(m);
+    });
+  });
+  (project.wall_caps || []).forEach((cap) => {
+    if (mountCount >= MAX_MOUNTED_MESHES) return;
+    const wall = walls.find((w) => w?.component_id === cap?.wall_component_id);
+    if (!wall) return;
+    const segs = wall?.shape?.segments || [];
+    let si = segs.findIndex((s) => s?.component_id === cap?.segment_component_id);
+    if (si < 0) si = Number.isInteger(cap?.segment_index) ? cap.segment_index : -1;
+    const s = si >= 0 ? segSpan(wall, si) : null;
+    if (!s || s.len <= 0) return;
+    mountCount++;
+    const height = (Number(wall?.heightInches) || 24) * IN;
+    const capH = (Number(cap?.height_inches) || 3) * IN;
+    const capLen = (Number(cap?.length_inches ?? cap?.cut_length_inches) || s.len) * IN;
+    const thick = ((Number(wall?.thicknessInches) || 8) + 2) * IN;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(capLen, capH, thick), capMat);
+    m.position.set(((s.ax + s.bx) / 2) * IN, height + capH / 2, ((s.az + s.bz) / 2) * IN);
+    m.rotation.y = -Math.atan2(s.bz - s.az, s.bx - s.ax);
+    tag(m, cap?.component_id, "wall-cap");
+    group.add(m);
+  });
+  (project.signage_cabinets || []).forEach((cab) => {
+    if (mountCount >= MAX_MOUNTED_MESHES) return;
+    const w = (Number(cab?.width_inches) || 0) * IN;
+    const h = (Number(cab?.height_inches) || 0) * IN;
+    const d = (Number(cab?.depth_inches) || 0) * IN;
+    if (!(w > 0 && h > 0 && d > 0)) return;
+    let px = null, pz = null;
+    if (cab?.mount === "pole") {
+      const pole = (project.poles || []).find((p) => p?.component_id === cab?.pole_component_id);
+      if (!pole) return;
+      px = (Number(pole.x_inches) || 0) * IN; pz = (Number(pole.z_inches) || 0) * IN;
+    } else if (cab?.mount === "foundation") {
+      const fi = (items || []).findIndex((it) => it?.component_id === cab?.foundation_component_id);
+      const pos = fi >= 0 ? itemFirstPos.get(fi) : null;
+      if (!pos) return;
+      px = pos.x; pz = pos.z;
+    } else return;
+    mountCount++;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cabMat);
+    const mh = (Number(cab?.mount_height_inches) || 0) * IN;
+    m.position.set(px, mh + h / 2, pz);
+    tag(m, cab?.component_id, "cabinet");
+    group.add(m);
   });
 
   if (showGround) {
