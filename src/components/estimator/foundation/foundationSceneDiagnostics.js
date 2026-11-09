@@ -202,6 +202,38 @@ export function foundationSceneDiagnostics(scene) {
     }
   }
 
+  // -- pole signs + cabinets: same-pole vertical collisions (O-042) ------
+  // Signs live inside pole.signs[]; cabinets mount onto a pole's component
+  // id. On one pole, any two objects whose mount-height-to-top spans
+  // overlap collide physically.
+  poles.forEach((pole, i) => {
+    const poleId = pole?.component_id;
+    const occupants = [];
+    (pole.signs || []).forEach((s, si) => {
+      const mh = Number(s?.mount_height_inches), h = Number(s?.height_inches);
+      if (Number.isFinite(mh) && Number.isFinite(h) && h > 0) {
+        occupants.push({ label: `sign ${si + 1}`, span: [mh, mh + h], id: poleId ? sceneNodeId.pole(layoutItemKey(pole, i)) : null });
+      }
+    });
+    cabinets.forEach((cab, ci) => {
+      if (cab?.mount !== "pole" || cab?.pole_component_id !== poleId) return;
+      const mh = Number(cab?.mount_height_inches), h = Number(cab?.height_inches);
+      if (Number.isFinite(mh) && Number.isFinite(h) && h > 0) {
+        occupants.push({ label: `cabinet ${ci + 1}`, span: [mh, mh + h], id: poleId ? sceneNodeId.cabinet(layoutItemKey(cab, ci)) : null });
+      }
+    });
+    for (let a = 0; a < occupants.length; a += 1) {
+      for (let b = a + 1; b < occupants.length; b += 1) {
+        const [sa, sb] = [occupants[a].span, occupants[b].span];
+        if (sa[0] < sb[1] && sb[0] < sa[1]) {
+          push("warning", "sign-collision",
+            `Pole ${i + 1}: ${occupants[a].label} and ${occupants[b].label} overlap vertically (${Math.round(sa[0])}-${Math.round(sa[1])} vs ${Math.round(sb[0])}-${Math.round(sb[1])} in) -- raise one or resize.`,
+            [occupants[a].id, occupants[b].id]);
+        }
+      }
+    }
+  });
+
   // -- walls: unsupported spans (O-048) ---------------------------------
   // A segment is "supported" when its midpoint lands inside an item
   // footprint. Walls bound to a foundation test only that footing;
