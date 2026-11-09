@@ -37,7 +37,9 @@ export function WorkspacePreferencesProvider({ children }) {
     loadedForRef.current = email;
     const local = localLoadPrefs(email);
     if (local?.prefs) { setPrefs(migratePrefs(local.prefs)); setProfiles(Array.isArray(local.profiles) ? local.profiles : []); }
-    (async () => {
+    // localStorage already seeded the UI — the server hydrate can afford to
+    // land a few seconds late, outside the mount-burst invoke window.
+    const hydrateTimer = setTimeout(() => (async () => {
       try {
         const res = await base44.functions.invoke("workspacePrefsAction", { action: "prefs_get", session_token: sessionToken() });
         const serverPrefs = res?.data?.prefs ?? res?.prefs ?? null;
@@ -62,7 +64,8 @@ export function WorkspacePreferencesProvider({ children }) {
       } finally {
         setLoaded(true);
       }
-    })();
+    })(), 3000 + Math.floor(Math.random() * 2000));
+    return () => clearTimeout(hydrateTimer);
   }, [currentUser, email]);
 
   // Side effects: theme class, density attr, font scale, accent, motion.
