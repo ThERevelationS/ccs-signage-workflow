@@ -199,6 +199,24 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       placeholder: "8' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
+    depth_inches: Object.freeze({
+      label: "D (in)",
+      help: "Sign face depth (thickness) in plan view.",
+      placeholder: "8\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    horizontal_offset_inches: Object.freeze({
+      label: "Offset (in)",
+      help: "Horizontal offset from the pole center in plan view (+ = one side, - = other).",
+      placeholder: "0\"",
+      unit: "inches", ftIn: true, signed: true,
+    }),
+    orientation: Object.freeze({
+      label: "Orient (deg)",
+      help: "Sign face rotation on the pole (0 = facing the plan's +x direction).",
+      placeholder: "0",
+      unit: "degrees", ftIn: false, signed: true,
+    }),
   }),
   // Signage cabinets (SignageCabinetsPanel).
   cabinet: Object.freeze({
