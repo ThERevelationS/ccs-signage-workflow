@@ -12,6 +12,9 @@ import { createBuilderPartWithRecovery } from "./builderPartPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { calcSignageCabinetPricing } from "../foundation/foundationCalc";
 import { landscapeSummary } from "../foundation/landscapeMaterials";
+import { foundationReinforcementPartDescriptors } from "../foundation/foundationReinforcementPartDescriptors";
+import { resolveFoundationReinforcementBasis } from "../foundation/foundationReinforcementBasis";
+import { captureFoundationReinforcementFrozenPricing, preserveFoundationReinforcementFrozenPricing } from "../foundation/foundationReinforcementFrozenPricing";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -2060,6 +2063,17 @@ function extractFoundation(project, catalogs) {
     }
 
     if (item.include_rebar) {
+      if (item.reinforcement_calculation_version === 2) {
+        // Versioned reinforcement hands off ONLY from the already-fresh
+        // validated snapshot — supports included — never a guessed descriptor.
+        parts.push(...foundationReinforcementPartDescriptors({ item, itemIndex: index }));
+      } else {
+        const selector = item.reinforcement_calculation_version;
+        if (selector !== undefined && selector !== null && selector !== 1) {
+          const err = new Error("Foundation reinforcement version is unsupported.");
+          err.code = "FOUNDATION_REINFORCEMENT_VERSION_UNSUPPORTED";
+          throw err;
+        }
       const size = item.foundation_type === "pillar" ? (item.pillar_rebar_size || "#4") : (item.rebar_size || "#4");
       const rebarRow = catalogs.FoundationInventory?.rows.find(
         (row) => row.material_type === "rebar" && row.rebar_size === size
@@ -2097,6 +2111,7 @@ function extractFoundation(project, catalogs) {
           builderData: item,
           calculation: { total_rebar_cost: totalRebarCost, material_cost: rebarMaterialCost, labor_cost: rebarLaborCost },
         }));
+      }
       }
     }
 
@@ -3024,7 +3039,51 @@ function _extractBuilderPartsComputed(moduleKey, project, catalogs = {}, options
   }
 }
 
+const FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN = { version: 1, state: "unrecorded" };
+
+const isPendingFoundationReinforcementRemoval = (part) =>
+  isFoundationReinforcementV2Descriptor(part) &&
+  part.builder_sync_state === "linked" &&
+  part.builder_data?.[PENDING_REMOVAL_KEY] === true &&
+  part.current_unit_cost === 0 &&
+  part.current_extended_cost === 0;
+
+const isFoundationReinforcementV2Descriptor = (d) =>
+  d?.pricing_basis_snapshot?.pricing_mode === "foundation_reinforcement_v2" &&
+  d?.pricing_basis_snapshot?.reinforcement?.version === 1 &&
+  d?.pricing_basis_snapshot?.reinforcement?.calculation_version === 2;
+
+// Check the selected catalog basis only; this is not geometry or settings validation.
+function foundationReinforcementCatalogBasisIsCurrent(descriptor, row) {
+  const saved = descriptor.pricing_basis_snapshot?.reinforcement?.material;
+  if (!saved || saved.kind !== "catalog" ||
+      typeof saved.inventory_updated_date !== "string" || !saved.inventory_updated_date.trim() ||
+      !row || row.id !== descriptor.inventory_item_id) return false;
+  const resolution = resolveFoundationReinforcementBasis({
+    material: descriptor.builder_data?.reinforcement_material,
+    inventory: [row],
+    settings: {},
+    quantityOverride: descriptor.builder_data?.custom_rebar_qty ?? null,
+    rateOverride: descriptor.builder_data?.custom_rebar_cost_per_ft ?? null,
+  });
+  if (resolution.issues.length) return false;
+  const current = resolution.materialSnapshot;
+  return [
+    "kind", "inventory_id", "inventory_updated_date", "pricing_unit", "original_unit",
+    "bar_diameter_inches", "weight_lb_per_ft", "cost_per_ft", "rate_source",
+  ].every(field => saved[field] === current[field]);
+}
+
 function effectiveCurrentUnitCost(descriptor, row) {
+  if (isFoundationReinforcementV2Descriptor(descriptor)) {
+    const value = descriptor.unit_cost;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      const err = new Error("Reinforcement v2 unit cost must be a finite non-negative number.");
+      err.code = "FOUNDATION_REINFORCEMENT_HANDOFF_INVALID";
+      throw err;
+    }
+    return value;
+  }
   if (Number.isFinite(Number(descriptor.unit_cost)) && Number(descriptor.unit_cost) !== 0) {
     return Number(descriptor.unit_cost);
   }
@@ -3066,6 +3125,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   let removedPartCount = 0;
   let writesPerformed = 0;
   let recalcRequired = false;
+  let staleV2CatalogSeen = false;
   const recalcPartNames = [];
   const partWritePlan = [];
   const syncNow = () => planTimestamp || nowIso();
@@ -3129,6 +3189,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   for (let index = 0; index < descriptors.length; index += 1) {
     const descriptor = descriptors[index];
     seen.add(descriptor.part_key);
+    const isV2 = isFoundationReinforcementV2Descriptor(descriptor);
     const old = byKey.get(descriptor.part_key);
     const resolvedEntity = findEntity(catalogs, descriptor.inventory_item_id, descriptor.inventory_entity);
 
@@ -3159,23 +3220,45 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const currentRow = findRow(catalogs, resolvedEntity, descriptor.inventory_item_id);
     const currentName = rowName(resolvedEntity, currentRow) || descriptor.part_name;
     const oldFrozenName = old?.inventory_item_name || rowName(old?.inventory_entity, old?.frozen_inventory_snapshot) || descriptor.part_name;
-    const candidate = !currentRow && oldFrozenName
+    const candidate = isV2 && !descriptor.inventory_item_id
+      ? null
+      : !currentRow && oldFrozenName
       ? findNameCandidate(catalogs, old?.inventory_entity || resolvedEntity, oldFrozenName)
       : null;
-    const hasInventoryLink = !!descriptor.inventory_item_id || !!old?.inventory_item_id || !!old?.original_inventory_item_id;
+    const hasInventoryLink = isV2
+      ? !!descriptor.inventory_item_id
+      : !!descriptor.inventory_item_id || !!old?.inventory_item_id || !!old?.original_inventory_item_id;
     const detached = hasInventoryLink && !currentRow;
     const currentPricing = pricingSnapshot(currentRow);
     const frozenPricing = pricingSnapshot(old?.frozen_inventory_snapshot);
-    const linkChanged = !!old && !!descriptor.inventory_item_id && descriptor.inventory_item_id !== (old.inventory_item_id || old.original_inventory_item_id);
+    const linkChanged = isV2
+      ? !!old && (descriptor.inventory_item_id !== (old.inventory_item_id || "") || descriptor.inventory_entity !== (old.inventory_entity || ""))
+      : !!old && !!descriptor.inventory_item_id && descriptor.inventory_item_id !== (old.inventory_item_id || old.original_inventory_item_id);
+    const catalogBasisCurrent = isV2
+      ? (!hasInventoryLink || (!!currentRow && foundationReinforcementCatalogBasisIsCurrent(descriptor, currentRow)))
+      : null;
+    const staleV2Catalog = isV2 && hasInventoryLink && !!currentRow && !catalogBasisCurrent;
     const pricingChanged = !!old && !!currentRow && !same(currentPricing, frozenPricing);
     const changed = linkChanged || pricingChanged;
     const currentUnitCost = effectiveCurrentUnitCost(descriptor, currentRow);
     const currentExtended = num(descriptor.extended_cost);
     const timestamp = syncNow();
 
+    if (staleV2Catalog && (acceptPrices || builderProduct.price_state === "unchecked")) {
+      const err = new Error("Current reinforcement catalog basis could not be verified. Reopen and save Foundation before accepting Update Price.");
+      err.code = "FOUNDATION_REINFORCEMENT_RECALC_REQUIRED";
+      throw err;
+    }
+
     const lastBuilderCalculatedPricing = old?.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {};
     const builderAlreadyCalculatedCurrentPricing = !!old && same(currentPricing, lastBuilderCalculatedPricing);
-    if (
+    if (isV2) {
+      if (staleV2Catalog) {
+        recalcRequired = true;
+        staleV2CatalogSeen = true;
+        recalcPartNames.push(currentName || descriptor.part_name);
+      }
+    } else if (
       pricingChanged &&
       !legacyMode &&
       builderProduct.price_state !== "unchecked" &&
@@ -3233,7 +3316,15 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         pricing_basis_snapshot: {
           ...descriptor.pricing_basis_snapshot,
           inventory_pricing: currentPricing,
-          ...(builderRecalculated ? { builder_calculated_inventory_pricing: currentPricing } : {}),
+          ...(isV2
+            ? {
+                reinforcement_catalog_basis_current: catalogBasisCurrent,
+                builder_calculated_inventory_pricing: catalogBasisCurrent ? currentPricing : {},
+                reinforcement_frozen_pricing: (acceptPrices || (establishBaseline && !legacyMode))
+                  ? captureFoundationReinforcementFrozenPricing({ ...descriptor, current_unit_cost: currentUnitCost, current_extended_cost: currentExtended })
+                  : { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN },
+              }
+            : (builderRecalculated ? { builder_calculated_inventory_pricing: currentPricing } : {})),
         },
         quantity: descriptor.quantity,
         unit: descriptor.unit,
@@ -3254,7 +3345,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         last_price_check_at: timestamp,
         last_price_update_at: acceptPrices ? timestamp : "",
         manual_cost_override: !hasInventoryLink,
-        manual_cost: !hasInventoryLink ? descriptor.extended_cost : undefined,
+        manual_cost: !hasInventoryLink ? (isV2 ? descriptor.unit_cost : descriptor.extended_cost) : undefined,
         is_active: true,
         notes: legacyMode
           ? "Backfilled from an existing Builder Product. Saved estimator costs remain authoritative; catalog snapshot is compatibility context."
@@ -3283,7 +3374,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       part_subtype: descriptor.part_subtype,
       source_module_key: builderProduct.module_key,
       source_path: descriptor.source_path,
-      inventory_entity: resolvedEntity || old.inventory_entity,
+      inventory_entity: isV2 ? descriptor.inventory_entity : resolvedEntity || old.inventory_entity,
       inventory_item_id: descriptor.inventory_item_id,
       inventory_item_name: currentName || old.inventory_item_name,
       inventory_link_state: linkState,
@@ -3295,9 +3386,17 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       pricing_basis_snapshot: {
         ...descriptor.pricing_basis_snapshot,
         inventory_pricing: currentPricing,
-        builder_calculated_inventory_pricing: builderRecalculated
-          ? currentPricing
-          : old.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {},
+        ...(isV2
+          ? {
+              reinforcement_catalog_basis_current: catalogBasisCurrent,
+              builder_calculated_inventory_pricing: catalogBasisCurrent ? currentPricing : {},
+              reinforcement_frozen_pricing: shouldAccept
+                ? captureFoundationReinforcementFrozenPricing({ ...descriptor, current_unit_cost: currentUnitCost, current_extended_cost: currentExtended })
+                : preserveFoundationReinforcementFrozenPricing(old),
+            }
+          : { builder_calculated_inventory_pricing: builderRecalculated
+              ? currentPricing
+              : old.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {} }),
       },
       quantity: descriptor.quantity,
       unit: descriptor.unit,
@@ -3307,13 +3406,14 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       price_delta: currentExtended - frozenExtended,
       price_delta_percent: frozenExtended ? ((currentExtended - frozenExtended) / frozenExtended) * 100 : 0,
       is_active: true,
+      ...(isV2 ? { manual_cost_override: !hasInventoryLink, ...(!hasInventoryLink ? { manual_cost: descriptor.unit_cost } : {}) } : {}),
     };
 
     if (shouldAccept) {
-      patch.frozen_inventory_snapshot = currentRow || old.frozen_inventory_snapshot || {};
+      patch.frozen_inventory_snapshot = isV2 && !hasInventoryLink ? {} : currentRow || old.frozen_inventory_snapshot || {};
       patch.frozen_unit_cost = frozenUnit;
       patch.frozen_extended_cost = frozenExtended;
-      patch.inventory_updated_date_snapshot = currentRow?.updated_date || old.inventory_updated_date_snapshot || "";
+      patch.inventory_updated_date_snapshot = isV2 && !hasInventoryLink ? "" : currentRow?.updated_date || old.inventory_updated_date_snapshot || "";
       patch.last_price_update_at = timestamp;
     }
 
@@ -3484,7 +3584,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     writesPerformed,
     recalcRequired,
     recalcReason: recalcRequired
-      ? `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
+      ? staleV2CatalogSeen
+        ? "Current reinforcement catalog basis could not be verified. Reopen and save Foundation before accepting Update Price."
+        : `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
       : "",
     usesDirectLiveReprice: directLiveReprice && !legacyMode,
     currentPartsTotal,
@@ -3613,8 +3715,9 @@ export async function acceptBuilderPartPrices(builderProductId, {
   }
   const activeParts = parts.filter((row) => row.is_active !== false);
   const detachedParts = activeParts.filter((part) =>
-    part.builder_sync_state === "detached_override" ||
-    ["detached", "reattach_available"].includes(part.inventory_link_state)
+    !isPendingFoundationReinforcementRemoval(part) &&
+    (part.builder_sync_state === "detached_override" ||
+    ["detached", "reattach_available"].includes(part.inventory_link_state))
   );
 
   // All-or-nothing guard: do not mutate even one Part while any linked Part is
@@ -3634,10 +3737,13 @@ export async function acceptBuilderPartPrices(builderProductId, {
     };
   }
 
-  const staleCatalogParts = !builder || DIRECT_LIVE_REPRICE_MODULES.has(builder.module_key) || builder.price_state === "unchecked"
+  const staleCatalogParts = !builder || DIRECT_LIVE_REPRICE_MODULES.has(builder.module_key)
     ? []
     : activeParts.filter((part) => {
         if (["manual", "manual_addon", "detached_override"].includes(part.builder_sync_state)) return false;
+        if (isPendingFoundationReinforcementRemoval(part)) return false;
+        if (isFoundationReinforcementV2Descriptor(part) && part.inventory_item_id && part.pricing_basis_snapshot?.reinforcement_catalog_basis_current !== true) return true;
+        if (builder.price_state === "unchecked") return false;
         const currentPricing = pricingSnapshot(part.current_inventory_snapshot);
         const frozenPricing = pricingSnapshot(part.frozen_inventory_snapshot);
         if (same(currentPricing, frozenPricing)) return false;
@@ -3670,10 +3776,17 @@ export async function acceptBuilderPartPrices(builderProductId, {
   let activePartCount = 0;
 
   for (const part of activeParts) {
+    const pendingRemoval = !!part.builder_data?.[PENDING_REMOVAL_KEY];
+    const linkedV2 = isFoundationReinforcementV2Descriptor(part) && part.builder_sync_state === "linked";
+    const nextV2Context = linkedV2
+      ? (pendingRemoval ? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN } : captureFoundationReinforcementFrozenPricing(part))
+      : null;
+    const contextChanged = linkedV2 &&
+      !same(part.pricing_basis_snapshot?.reinforcement_frozen_pricing ?? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN }, nextV2Context);
     const wasChanged = part.price_state === "changed" ||
+      contextChanged ||
       Math.abs(num(part.current_extended_cost) - num(part.frozen_extended_cost)) > 0.005 ||
       !same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot));
-    const pendingRemoval = !!part.builder_data?.[PENDING_REMOVAL_KEY];
     if (wasChanged) {
       changedParts.push({
         part_id: part.id,
@@ -3687,6 +3800,10 @@ export async function acceptBuilderPartPrices(builderProductId, {
         new_extended_cost: num(part.current_extended_cost),
         previous_inventory_snapshot: part.frozen_inventory_snapshot || {},
         new_inventory_snapshot: part.current_inventory_snapshot || {},
+        ...(linkedV2 ? {
+          previous_reinforcement_frozen_pricing: structuredClone(part.pricing_basis_snapshot?.reinforcement_frozen_pricing ?? { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN }),
+          new_reinforcement_frozen_pricing: structuredClone(nextV2Context),
+        } : {}),
         action: pendingRemoval
           ? "remove"
           : Math.abs(num(part.frozen_extended_cost)) <= 0.005 && Math.abs(num(part.current_extended_cost)) > 0.005
@@ -3710,6 +3827,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
         builder_data: acceptedBuilderData,
         is_active: !pendingRemoval,
         last_price_update_at: timestamp,
+        ...(linkedV2 ? { pricing_basis_snapshot: { ...(part.pricing_basis_snapshot || {}), reinforcement_frozen_pricing: nextV2Context } } : {}),
       },
     });
     if (!pendingRemoval) activePartCount += 1;
@@ -3856,6 +3974,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     reattach_candidate_name: part.inventory_item_name || part.part_name || "",
     price_state: "detached",
     last_price_check_at: timestamp,
+    ...(isFoundationReinforcementV2Descriptor(part) ? { pricing_basis_snapshot: { ...(part.pricing_basis_snapshot || {}), reinforcement_frozen_pricing: { ...FOUNDATION_REINFORCEMENT_FROZEN_UNKNOWN } } } : {}),
     notes: `${part.notes ? `${part.notes}\n` : ""}Detached from Builder for independent override. Frozen pricing retained.`,
   };
   const changedParts = [{
