@@ -112,8 +112,14 @@ N-table reads-per-invoke with a single maintained snapshot read.
 - [ ] Mount bootstrap: consolidate the 16-24 mount calls into the existing
       `entities:` batch + a single "app bootstrap" payload (session verify +
       prefs + counts + feed head) — one invoke instead of a burst.
-- [ ] Confirm every ambient poll sits behind the ~75s `enabled` gate
+- [~] Confirm every ambient poll sits behind the ~75s `enabled` gate
       (AttentionBell, SyncConflictAlert done — sweep for stragglers).
+      Partial: `TrainingSection` bootstrap and `SmartsheetSyncWidget` first
+      read now defer ~4-7s w/ jitter past the mount burst (invoke-cap wave
+      observed on preview mount: boardFeed/staffDataRead/timeClockAction/
+      manageTraining/notificationAction/opportunityWorkspaceAction all at
+      t=0). Mount-time page reads (queueFeed/staffDataRead/boardFeed) still
+      fire at t=0 — those ARE the page data, only consolidation fixes them.
 - [ ] Idle-tab full suspension: tabs hidden >10min stop ALL ambient work
       (partial coverage exists via `pauseWhenHidden` — extend to everything
       that isn't user-visible).
