@@ -7984,7 +7984,7 @@ Deno.serve(async (req) => {
       if (String(row.updated_date || '') !== expected) {
         return Response.json({ success: false, retry_same_request: false, error: 'The entry changed since it was loaded. Reload and retry.' }, { status: 409 });
       }
-      const updated = await entryEntity.update(entryId, { archived_admin: true, archived_admin_reason: reason, archived_admin_by: actorEmail, archived_admin_at: new Date().toISOString() });
+      const updated = await entryEntity.update(entryId, { archived_admin: true, archive_reason: reason, archived_by: actorEmail, archived_at: new Date().toISOString() });
       await auditEntity.create({
         action: 'admin_archive_entry', request_id: requestId, time_entry_id: entryId,
         user_email: row.user_email || '', actor_email: actorEmail,
