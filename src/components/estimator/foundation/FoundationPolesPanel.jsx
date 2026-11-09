@@ -317,6 +317,16 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         ariaLabel={`Pole ${index + 1} sign ${si + 1} mount height (inches)`}
                       />
                       <label className="text-[10px] text-gray-500">
+                        Weight (lb)
+                        <input
+                          type="number" min="0" step="0.1"
+                          value={s.weight_lbs ?? ""}
+                          onChange={(e) => patchSign({ weight_lbs: e.target.value === "" ? undefined : Number(e.target.value) })}
+                          className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} weight (lbs)`}
+                        />
+                      </label>
+                      <label className="text-[10px] text-gray-500">
                         Faces
                         <select
                           value={Number(s.face_count) || 1}
