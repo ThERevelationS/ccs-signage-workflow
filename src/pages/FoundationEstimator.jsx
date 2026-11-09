@@ -1560,11 +1560,21 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         />
 
         {showHelp && (
-          <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 mb-3 text-[12px] text-blue-900">
-            Add each footing or pillar under <b>Foundation</b>, then place poles, masonry walls and caps
-            in the other tabs. Concrete, rebar, excavation and labor rates come from your settings and
-            supplier inventory. The 3D preview on the right updates as you type â€” left drag orbits,
-            right drag pans, scroll zooms. Save & Exit pushes the total back to the combined estimate.
+          <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 mb-3 text-[12px] text-blue-900 space-y-2">
+            <p>
+              Add each footing or pillar under <b>Foundation</b>, then place poles, masonry walls and caps
+              in the other tabs. Concrete, rebar, excavation and labor rates come from your settings and
+              supplier inventory. Save & Exit pushes the total back to the combined estimate.
+            </p>
+            <ol className="list-decimal pl-5 space-y-0.5 text-blue-900/90">
+              <li><b>Foundations</b> - add items, enter dimensions as feet/inches (4&apos; 0&quot;) or plain inches; malformed entries keep your draft and show a hint.</li>
+              <li><b>Walls &amp; Poles</b> - draw wall outlines (rectangle, L, U or click-to-place), set a Foundation per wall, snap poles onto a footing.</li>
+              <li><b>Wall Caps</b> - use Cap wall / Cap all walls for one row per segment; over-stock cuts split at the stock length.</li>
+              <li><b>Signage &amp; Landscape</b> - mount cabinets on poles or foundations; paint landscape cells (Fill floods a region, strokes undo as one).</li>
+              <li><b>Canvas tools</b> - click objects to select (tree + breadcrumb on the left), Mount to reparent, Diagnostics for clashes/unsupported spans, Layers to hide/lock/isolate, Fit zooms to selection.</li>
+              <li><b>3D preview</b> - left drag orbits, right drag pans, scroll zooms; Exploded spreads the rebar, Section cuts at an elevation.</li>
+              <li><b>Cost Summary + BOM</b> - check the changes-vs-saved list, then the field/production package on the BOM tab prints a labeled sheet.</li>
+            </ol>
           </div>
         )}
 
