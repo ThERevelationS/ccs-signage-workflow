@@ -27,6 +27,46 @@ const DimField = ({ field, value, onCommit }) => (
   />
 );
 
+// O-093 dimensional diagram — a labeled plan + depth section beside the
+// inputs: spread footing shows L×W rectangle, pillar shows Ø circle; the
+// depth arrow carries the grade-offset line so +above/−below reads visually.
+// Rendered for numeric dims; malformed drafts still parse to a shape or the
+// diagram stays empty (honest — it never draws guessed dimensions).
+const DiagramDim = ({ x, y, label, value }) => (
+  <text x={x} y={y} textAnchor="middle" fontSize="8" fill="#6b7280">{label} {value}</text>
+);
+const DimensionDiagram = ({ item }) => {
+  const isPillar = item.foundation_type === "pillar";
+  const l = Number(item.length_inches), w = Number(item.width_inches);
+  const d = Number(item.depth_inches), dia = Number(item.diameter);
+  const off = Number(item.grade_offset_inches) || 0;
+  const planOk = isPillar ? Number.isFinite(dia) && dia > 0 : Number.isFinite(l) && l > 0 && Number.isFinite(w) && w > 0;
+  if (!planOk && !(Number.isFinite(d) && d > 0)) return null;
+  const fti = (v) => `${Math.floor(v / 12)}' ${Math.round(v % 12)}"`;
+  return (
+    <svg viewBox="0 0 180 110" className="w-full h-24 rounded-sm bg-gray-50 border border-gray-100" aria-hidden="true">
+      {/* plan view, left half */}
+      <text x="45" y="10" textAnchor="middle" fontSize="7" fill="#9ca3af">plan</text>
+      {isPillar
+        ? planOk && <circle cx="45" cy="52" r={Math.min(30, Math.max(14, dia / 4))} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="3 2" />
+        : planOk && <rect x={45 - Math.min(32, Math.max(16, l / 4)) / 2} y={52 - Math.min(22, Math.max(12, w / 4)) / 2} width={Math.min(32, Math.max(16, l / 4))} height={Math.min(22, Math.max(12, w / 4))} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="3 2" />}
+      {planOk && <DiagramDim x="45" y="52" label="" value={isPillar ? `Ø ${fti(dia)}` : `${fti(l)} × ${fti(w)}`} />}
+      {/* section view, right half */}
+      <text x="128" y="10" textAnchor="middle" fontSize="7" fill="#9ca3af">section</text>
+      <line x1="88" y1={52 - off / 8} x2="168" y2={52 - off / 8} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 2" />
+      <text x="166" y={50 - off / 8} textAnchor="end" fontSize="6.5" fill="#94a3b8">grade</text>
+      {Number.isFinite(d) && d > 0 && (
+        <>
+          <rect x="103" y={52 - off / 8} width="50" height={Math.min(44, Math.max(14, d / 3))} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+          <line x1="98" y1={52 - off / 8} x2="98" y2={52 - off / 8 + Math.min(44, Math.max(14, d / 3))} stroke="#6b7280" strokeWidth="1" />
+          <DiagramDim x="128" y={52 - off / 8 + Math.min(44, Math.max(14, d / 3)) / 2 + 3} label="" value={`D ${fti(d)}`} />
+        </>
+      )}
+      {off !== 0 && <DiagramDim x="128" y="98" label="offset" value={`${off > 0 ? "+" : ""}${off}"`} />}
+    </svg>
+  );
+};
+
 const Check = ({ label, checked, onChange }) => (
   <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
     <input type="checkbox" checked={!!checked} onChange={(e) => onChange(e.target.checked)} />
@@ -153,6 +193,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         )}
         <DimField field="depth_inches" value={item.depth_inches} onCommit={(v) => set({ depth_inches: v })} />
         <DimField field="grade_offset_inches" value={item.grade_offset_inches} onCommit={(v) => set({ grade_offset_inches: v })} />
+        <div className="col-span-2 sm:col-span-4">
+          <DimensionDiagram item={item} />
+        </div>
         <Field
           label="Rotation (Â°)"
           type="number"
