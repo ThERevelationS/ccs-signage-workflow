@@ -12,7 +12,7 @@
     },
     "county_name": {
       "type": "string",
-      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field \u0097 same-name localities in different counties are different jurisdictions and must never merge."
+      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field \u2014 same-name localities in different counties are different jurisdictions and must never merge."
     },
     "jurisdiction_type": {
       "type": "string",
