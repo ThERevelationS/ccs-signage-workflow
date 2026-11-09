@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
   LANDSCAPE_MATERIALS,
@@ -33,6 +33,10 @@ export default function LandscapeDesigner({ landscape, onChange }) {
   // O-071 (CMP-F04): bucket-fill mode — a click floods the contiguous region
   // of the same material (empty cells count as one region); dirt erases it.
   const [fillMode, setFillMode] = useState(false);
+  // O-071 stroke-level undo — a drag paints into a ref and commits ONE
+  // onChange on release, so page-level undo reverts the whole stroke.
+  const strokeRef = useRef(null);
+  const [strokeCells, setStrokeCells] = useState(null);
   // Focused-edit draft for the cell size â€” while focused the user edits raw
   // text (partial ft/in never snaps); on blur the stored canonical inches
   // (or a verbatim malformed draft) displays again.
@@ -45,13 +49,22 @@ export default function LandscapeDesigner({ landscape, onChange }) {
 
   const paint = (x, y) => {
     const key = `${x},${y}`;
-    const next = { ...cells };
-    if (brush === "dirt") delete next[key];
-    else next[key] = brush;
-    // Preserve the authored cell size verbatim â€” never mint a guessed 12 over
-    // a missing value; an absent/malformed size stays flagged until recorded.
-    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
+    const base = strokeRef.current ?? (strokeRef.current = { ...cells });
+    if (brush === "dirt") delete base[key];
+    else base[key] = brush;
+    setStrokeCells({ ...base });
   };
+
+  const endStroke = () => {
+    setPainting(false);
+    if (!strokeRef.current) return;
+    // Preserve the authored cell size verbatim — never mint a guessed 12 over
+    // a missing value; an absent/malformed size stays flagged until recorded.
+    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: strokeRef.current });
+    strokeRef.current = null;
+    setStrokeCells(null);
+  };
+  const viewCells = strokeCells || cells;
 
   const flood = (x, y) => {
     const target = cells[`${x},${y}`] || "";
@@ -160,7 +173,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
 
         <div
           className="flex-1 overflow-auto rounded-sm border border-gray-300 bg-[#a1866f] p-1 select-none"
-          onMouseLeave={() => setPainting(false)}
+          onMouseLeave={endStroke}
         >
           <div
             className="grid gap-px"
@@ -168,7 +181,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           >
             {Array.from({ length: GRID_ROWS }).map((_, y) =>
               Array.from({ length: GRID_COLS }).map((__, x) => {
-                const key = cells[`${x},${y}`];
+                const key = viewCells[`${x},${y}`];
                 const mat = key ? materialByKey(key) : null;
                 return (
                   <div
@@ -179,7 +192,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                       paint(x, y);
                     }}
                     onMouseEnter={() => painting && !fillMode && paint(x, y)}
-                    onMouseUp={() => setPainting(false)}
+                    onMouseUp={endStroke}
                     className="aspect-square cursor-crosshair"
                     style={{ background: mat ? mat.color : "rgba(0,0,0,0.06)" }}
                   />
