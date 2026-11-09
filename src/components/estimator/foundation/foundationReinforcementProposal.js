@@ -17,6 +17,8 @@ const DERIVED_ITEM_FIELDS = new Set([
   "forming_cost", "forming_qty", "pouring_cost", "finishing_cost", "finishing_hours", "item_total_cost",
   "rebar_material_cost", "rebar_labor_cost", "rebar_labor_hours", "rebar_geometry_feet",
   "rebar_geometry_weight_lbs", "rebar_connection_count", "reinforcement_cost_snapshot", "reinforcement_proposal",
+  "support_count", "support_purchased_units", "support_packs", "support_material_cost",
+  "support_labor_cost", "support_labor_hours", "support_cost",
 ]);
 const DERIVED_PROJECT_FIELDS = new Set([
   "grand_total", "total_concrete_cost", "total_rebar_cost", "total_excavation_cost", "total_labor_cost",
@@ -99,6 +101,7 @@ export function createFoundationReinforcementProposal({
   }
   const comparisons = {
     steel: compare(amount(current, "rebar_cost"), amount(projection.itemCost, "rebar_cost")),
+    supports: compare(amount(current, "support_cost"), amount(projection.itemCost, "support_cost")),
     item: compare(amount(current, "item_total_cost"), amount(projection.itemCost, "item_total_cost")),
     savedSteel: amount(savedItem, "rebar_cost"), savedItem: amount(savedItem, "item_total_cost"),
     currentProvenance, savedProvenance: "Acknowledged saved source; not a customer selling price",
@@ -161,6 +164,7 @@ export function acceptFoundationReinforcementProposal({ proposal, requestedId, a
         material: structuredClone(projection.reinforcement.materialSnapshot),
         basis: structuredClone(projection.reinforcement.basis),
         rate_sources: structuredClone(projection.reinforcement.rateSources),
+        supports: structuredClone(projection.reinforcement.supports),
       },
       reinforcement_acceptance: {
         version: 1, proposal_id: requestedId, accepted_at: acceptedAt,
