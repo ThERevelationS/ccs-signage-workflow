@@ -3,12 +3,15 @@ import ReinforcementDraftList, { newRowId } from "./ReinforcementDraftList";
 
 const SUPPORT_MODES = [
   { id: "unconfigured", label: "Unconfigured" },
+  { id: "auto", label: "Auto" },
+  { id: "manual", label: "Manual" },
   { id: "off", label: "Off" },
 ];
 
 const asObj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : null);
+const asList = (v) => (Array.isArray(v) ? v : []);
 
-export default function ReinforcementDraftGeometry({ draft, item, disabled, onChange }) {
+export default function ReinforcementDraftGeometry({ draft, item, supportCatalog, disabled, onChange }) {
   const design = asObj(draft?.design);
   if (!design) {
     return <div className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[12px] text-amber-800">Design draft malformed; repair required.</div>;
@@ -16,6 +19,10 @@ export default function ReinforcementDraftGeometry({ draft, item, disabled, onCh
   const isPillar = item?.foundation_type === "pillar";
   const cover = asObj(design.cover_inches) ?? {};
   const supports = asObj(design.supports) ?? { mode: "unconfigured", reason: "" };
+  const supportRows = asList(supportCatalog).filter(r => r && typeof r === "object" && r.material_type === "rebar_support");
+  const supportOptions = supportRows
+    .filter(r => typeof r.id === "string" && r.id)
+    .map(r => ({ id: r.id, label: `${r.material_name || "Rebar support"}${r.rebar_support_height_inches != null ? ` (${r.rebar_support_height_inches} in)` : ""}` }));
   const spread = asObj(design.spread) ?? { mats: [], inter_mat_ties: [] };
   const pillar = asObj(design.pillar) ?? { hoops: [], longitudinal: {} };
   const lon = asObj(pillar.longitudinal) ?? {};
@@ -35,7 +42,7 @@ export default function ReinforcementDraftGeometry({ draft, item, disabled, onCh
   const tieFromTo = () => [{ id: "", label: "-" }, ...matOptions];
   const replacements = [
     { key: "cover_inches", value: design.cover_inches, initial: { side: "", top: "", bottom: "" } },
-    { key: "supports", value: design.supports, initial: { mode: "unconfigured", reason: "" } },
+    { key: "supports", value: design.supports, initial: { mode: "unconfigured", reason: "", spacing_inches: "", catalog_id: "", mats: [], placements: [] } },
     isPillar
       ? { key: "pillar", value: design.pillar, initial: { hoops: [], longitudinal: {} } }
       : { key: "spread", value: design.spread, initial: { mats: [], inter_mat_ties: [] } },
@@ -75,6 +82,68 @@ export default function ReinforcementDraftGeometry({ draft, item, disabled, onCh
             )}
           </select>
         </label>
+        {supports.mode === "auto" && (
+          <div className="mt-1 space-y-1">
+            {isPillar ? (
+              <p className="text-[11px] text-amber-700">Auto support placement is unavailable for pillar cages; use Manual or explain Off.</p>
+            ) : (
+              <ReinforcementDraftField label="Max support spacing (in)" value={supports.spacing_inches} inputMode="decimal" disabled={disabled} onChange={(v) => setSupports({ spacing_inches: v })} />
+            )}
+          </div>
+        )}
+        {(supports.mode === "auto" || supports.mode === "manual") && (
+          <div className="mt-1">
+            <label className="block">
+              <span className="text-[12px] text-gray-600">Support catalog pin (optional)</span>
+              <select aria-label="Support catalog" value={typeof supports.catalog_id === "string" ? supports.catalog_id : ""} disabled={disabled} onChange={(e) => setSupports({ catalog_id: e.target.value })} className="mt-0.5 block max-w-full rounded-sm border border-gray-300 px-1.5 py-1 text-[13px] disabled:bg-gray-50">
+                <option value="">Auto-select (no pin)</option>
+                {supportOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+            </label>
+            {supports.catalog_id && !supportRows.some(r => r.id === supports.catalog_id) && (
+              <p className="mt-0.5 text-[11px] text-amber-700">Pinned support ID is not in the current catalog — pricing will report it unresolved.</p>
+            )}
+            {!supportRows.length && (
+              <p className="mt-0.5 text-[11px] text-amber-700">No rebar_support catalog rows loaded; compatible-pick pricing will stay unresolved.</p>
+            )}
+          </div>
+        )}
+        {supports.mode === "manual" && (
+          <div className="mt-1 space-y-2">
+            <ReinforcementDraftList
+              title="Support counts per mat"
+              listKey="support-mats"
+              rows={supports.mats}
+              maxRows={256}
+              disabled={disabled}
+              onReplaceList={() => setSupports({ mats: [] })}
+              fields={[
+                { key: "mat_id", label: "Target", options: isPillar ? [{ id: "cage", label: "Pillar cage" }] : [{ id: "", label: "-" }, ...matOptions] },
+                { key: "count", label: "Count", inputMode: "numeric" },
+              ]}
+              onAdd={() => setSupports({ mats: [...asList(supports.mats), { mat_id: isPillar ? "cage" : "", count: "" }] })}
+              onDelete={(i) => setSupports({ mats: asList(supports.mats).filter((_, j) => j !== i) })}
+              onFieldChange={(i, k, v) => { const n = [...asList(supports.mats)]; n[i] = { ...n[i], [k]: v }; setSupports({ mats: n }); }}
+            />
+            <ReinforcementDraftList
+              title="Explicit support placements"
+              listKey="support-placements"
+              rows={supports.placements}
+              maxRows={4096}
+              disabled={disabled}
+              onReplaceList={() => setSupports({ placements: [] })}
+              fields={[
+                { key: "mat_id", label: "Target", options: isPillar ? [{ id: "cage", label: "Pillar cage" }] : [{ id: "", label: "-" }, ...matOptions] },
+                { key: "x_inches", label: "X (in)" },
+                { key: "z_inches", label: "Z (in)" },
+              ]}
+              onAdd={() => setSupports({ placements: [...asList(supports.placements), { mat_id: isPillar ? "cage" : "", x_inches: "", z_inches: "" }] })}
+              onDelete={(i) => setSupports({ placements: asList(supports.placements).filter((_, j) => j !== i) })}
+              onFieldChange={(i, k, v) => { const n = [...asList(supports.placements)]; n[i] = { ...n[i], [k]: v }; setSupports({ placements: n }); }}
+            />
+            <p className="text-[11px] text-gray-500">A mat may be covered by a count or by explicit placements, not both. Uncovered mats warn instead of guessing.</p>
+          </div>
+        )}
         {supports.mode === "off" && (
           <ReinforcementDraftField label="Reason" value={supports.reason} inputMode="text" disabled={disabled} onChange={(v) => setSupports({ reason: v })} />
         )}
