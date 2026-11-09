@@ -77,6 +77,7 @@ function calculateVersionedItem(item, project, inventory, settings, savedItem) {
           basis: structuredClone(reinforcement.basis),
           rate_sources: structuredClone(reinforcement.rateSources),
           supports: structuredClone(reinforcement.supports),
+          cut_schedule: structuredClone(reinforcement.cutSchedule),
         } : undefined,
       },
       issues: [],
