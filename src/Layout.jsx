@@ -497,14 +497,22 @@ function LayoutContent({ children }) {
       const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
       if (scope) freezeAll(scope, dragEl);
     };
+    // Track the pointer during drags so handleNavReorder can hit-test the
+    // folder pills' painted boxes directly — the pill the pointer is actually
+    // over is the user's intent, regardless of the library's displaced model.
+    const onPointerMove = (event) => {
+      window.__ccsNavPointer = { x: event.clientX, y: event.clientY };
+    };
     const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
     document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointermove", onPointerMove, true);
     document.addEventListener("pointerup", unfreezeAll, true);
     document.addEventListener("pointercancel", unfreezeAll, true);
     document.addEventListener("keydown", onKeyDown);
     window.addEventListener("blur", unfreezeAll);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointermove", onPointerMove, true);
       document.removeEventListener("pointerup", unfreezeAll, true);
       document.removeEventListener("pointercancel", unfreezeAll, true);
       document.removeEventListener("keydown", onKeyDown);
@@ -537,6 +545,27 @@ function LayoutContent({ children }) {
     const { source, destination, draggableId, combine } = result;
     navDragFlag(false);
     const state = navState();
+
+    // WYSIWYG folder drop: if the pointer is visually over a folder pill at
+    // release, that pill is the intent — regardless of which displaced model
+    // box the library's combine math picked. Folder drags can't nest (their
+    // url resolves null and falls through to the reorder path).
+    const pt = window.__ccsNavPointer;
+    if (pt) {
+      for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+        const id = el.getAttribute("data-rfd-draggable-id");
+        if (!(isFolderToken(id) || id?.startsWith("sfolder:"))) continue;
+        const r = el.getBoundingClientRect();
+        if (pt.x < r.left || pt.x > r.right || pt.y < r.top || pt.y > r.bottom) continue;
+        const folderId = isFolderToken(id) ? tokenFolderId(id) : id.slice("sfolder:".length);
+        const url = pageUrlFromDraggable(draggableId);
+        if (url && folderId) {
+          const next = movePageToFolder(state, url, folderId);
+          persistNavState(mergeHiddenTail(next.order), next.folders);
+          return;
+        }
+      }
+    }
 
     // Combine drop: a page released on a folder pill/group header joins that
     // folder (bar droppables run isCombineEnabled). Non-folder combines are
