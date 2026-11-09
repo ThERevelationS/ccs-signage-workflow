@@ -112,6 +112,13 @@ N-table reads-per-invoke with a single maintained snapshot read.
 - [ ] Mount bootstrap: consolidate the 16-24 mount calls into the existing
       `entities:` batch + a single "app bootstrap" payload (session verify +
       prefs + counts + feed head) — one invoke instead of a burst.
+- [x] Read-lane audit 2026-11-09 (PUBLISHED): every frontend-invoked gateway
+      classified. `queueFeed` (pure feed, no actions) added to unconditional
+      reads; `manageSops` (bootstrap/list/get/ack_report) and `manageTraining`
+      (bootstrap/report) added per-action — all three previously rode the
+      unthrottled write lane (no pool, no dedupe, no 429 retry) and were the
+      top 429s in the observed mount wave. Bootstrap TTLs 15s added. Remaining
+      unclassified fns are write/admin surfaces or low-frequency page calls.
 - [~] Confirm every ambient poll sits behind the ~75s `enabled` gate
       (AttentionBell, SyncConflictAlert done — sweep for stragglers).
       Partial: `TrainingSection` bootstrap and `SmartsheetSyncWidget` first
