@@ -81,6 +81,7 @@ import {
   isFolderToken,
   movePageToFolder,
   movePageToTop,
+  navDragStyle,
   newFolderId,
   patchFolder as navPatchFolder,
   removeUrlEverywhere,
@@ -493,6 +494,7 @@ function LayoutContent({ children }) {
     const onPointerDown = (event) => {
       if (event.button === 2) return; // right-click opens context menus, not drags
       window.__ccsNavDropFolder = "";
+      window.__ccsNavDropPage = "";
       const dragEl = event.target.closest?.("[data-rfd-draggable-id]");
       if (!dragEl) return;
       const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
@@ -505,17 +507,22 @@ function LayoutContent({ children }) {
     // library's combine math picked.
     const onPointerUp = (event) => {
       window.__ccsNavDropFolder = "";
+      window.__ccsNavDropPage = "";
       if (window.__ccsNavDragging) {
+        let page = "";
         for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
           const id = el.getAttribute("data-rfd-draggable-id");
-          if (!(isFolderToken(id) || id?.startsWith("sfolder:"))) continue;
           const r = el.getBoundingClientRect();
           if (event.clientX < r.left || event.clientX > r.right ||
               event.clientY < r.top || event.clientY > r.bottom) continue;
-          window.__ccsNavDropFolder = isFolderToken(id)
-            ? tokenFolderId(id) : id.slice("sfolder:".length);
-          break;
+          if (isFolderToken(id) || id?.startsWith("sfolder:")) {
+            window.__ccsNavDropFolder = isFolderToken(id)
+              ? tokenFolderId(id) : id.slice("sfolder:".length);
+            break;
+          }
+          if (!page && (id?.startsWith("top-") || id?.startsWith("side-"))) page = id;
         }
+        window.__ccsNavDropPage = page;
       }
       unfreezeAll();
     };
@@ -578,11 +585,18 @@ function LayoutContent({ children }) {
       }
     }
 
+    // WYSIWYG page drop: the pill the pointer was over won above; a page the
+    // pointer was over is the insert target — same semantics as a page combine
+    // ("drop at that position"). Falls back to the library's combine/dest.
+    const dropPage = window.__ccsNavDropPage;
+    window.__ccsNavDropPage = "";
+    const effCombine = dropPage ? { draggableId: dropPage } : combine;
+
     // Combine drop: a page released on a folder pill/group header joins that
     // folder (bar droppables run isCombineEnabled). Non-folder combines are
-    // page-on-page — ignored so reorder-by-position stays the only page op.
-    if (combine) {
-      const target = String(combine.draggableId || "");
+    // page-on-page — treated as "insert at that target's position".
+    if (effCombine) {
+      const target = String(effCombine.draggableId || "");
       const folderId = isFolderToken(target) ? tokenFolderId(target)
         : target.startsWith("sfolder:") ? target.slice("sfolder:".length) : null;
       const url = pageUrlFromDraggable(draggableId);
@@ -1645,12 +1659,12 @@ function LayoutContent({ children }) {
                           return (
                             <Fragment key={dndId}>
                               <Draggable draggableId={dndId} index={index}>
-                                {(dragProvided) => (
+                                {(dragProvided, dragSnapshot) => (
                                   <div
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
                                     {...dragProvided.dragHandleProps}
-                                    style={dragProvided.draggableProps.style}
+                                    style={navDragStyle(dragProvided.draggableProps.style, dragSnapshot.isDragging)}
                                   >
                                     <SidebarNavGroup
                                       label={folder.name}
@@ -1679,7 +1693,7 @@ function LayoutContent({ children }) {
                         return (
                           <Fragment key={dndId}>
                             <Draggable draggableId={dndId} index={index}>
-                              {(dragProvided) => (
+                              {(dragProvided, dragSnapshot) => (
                                 <NavPageLink
                                   item={item}
                                   variant="side"
@@ -1691,6 +1705,7 @@ function LayoutContent({ children }) {
                                     setNavMenu({ x, y, kind: "page", url: itm.url })}
                                   dragRef={dragProvided.innerRef}
                                   dragProps={dragProvided.draggableProps}
+                                  dragSnapshot={dragSnapshot}
                                   dragHandleProps={dragProvided.dragHandleProps}
                                 />
                               )}
@@ -1844,12 +1859,12 @@ function LayoutContent({ children }) {
                               return (
                                 <Fragment key={dndId}>
                                   <Draggable draggableId={dndId} index={index}>
-                                    {(dragProvided) => (
+                                    {(dragProvided, dragSnapshot) => (
                                       <div
                                         ref={dragProvided.innerRef}
                                         {...dragProvided.draggableProps}
                                         {...dragProvided.dragHandleProps}
-                                        style={dragProvided.draggableProps.style}
+                                        style={navDragStyle(dragProvided.draggableProps.style, dragSnapshot.isDragging)}
                                         className="rounded-lg"
                                       >
                                         <NavFlyoutMenu
@@ -1879,7 +1894,7 @@ function LayoutContent({ children }) {
                             return (
                               <Fragment key={dndId}>
                                 <Draggable draggableId={dndId} index={index}>
-                                  {(dragProvided) => (
+                                  {(dragProvided, dragSnapshot) => (
                                     <NavPageLink
                                       item={item}
                                       variant="top"
@@ -1891,6 +1906,7 @@ function LayoutContent({ children }) {
                                         setNavMenu({ x, y, kind: "page", url: itm.url })}
                                       dragRef={dragProvided.innerRef}
                                       dragProps={dragProvided.draggableProps}
+                                      dragSnapshot={dragSnapshot}
                                       dragHandleProps={dragProvided.dragHandleProps}
                                     />
                                   )}
