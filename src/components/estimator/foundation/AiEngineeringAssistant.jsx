@@ -90,8 +90,8 @@ export default function AiEngineeringAssistant({ project, onResult }) {
           disabled={running || !prepared || typeof onResult !== "function"}
           className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm bg-violet-600 text-white text-[12px] font-semibold hover:bg-violet-700 disabled:opacity-60 flex-shrink-0"
         >
-          {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
-          {running ? "Reviewing…" : "Review Foundation Inputs"}
+          {running ? <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
+          {running ? "Reviewingâ€¦" : "Review Foundation Inputs"}
         </button>
       </div>
 
