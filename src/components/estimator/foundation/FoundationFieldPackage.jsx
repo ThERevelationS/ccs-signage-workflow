@@ -134,17 +134,23 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
       {poles.length > 0 && (
         <Section title={`Poles (${poles.length})`}>
           <table className="w-full">
-            <thead><tr><Th>Pole</Th><Th>Height</Th><Th>Embed</Th><Th>Shape</Th><Th>Plan (x, z)</Th></tr></thead>
+            <thead><tr><Th>Pole</Th><Th>Height</Th><Th>Embed</Th><Th>Shape</Th><Th>Plan (x, z)</Th><Th>Signs</Th></tr></thead>
             <tbody>
-              {poles.map((p, i) => (
-                <tr key={p.component_id || i} className="border-t border-gray-100">
-                  <Td>{`Pole ${i + 1}`}</Td>
-                  <Td mono>{dim(p.height_inches)}</Td>
-                  <Td mono>{dim(p.embedment_inches ?? p.y_offset_inches)}</Td>
-                  <Td>{p.pole_shape || "round"}</Td>
-                  <Td mono>{`${dim(p.x_inches)}, ${dim(p.z_inches)}`}</Td>
-                </tr>
-              ))}
+              {poles.map((p, i) => {
+                const signs = p.signs || [];
+                const costs = signs.map((s) => Number(s?.unit_cost));
+                const all = signs.length > 0 && costs.every((c) => Number.isFinite(c) && c >= 0);
+                return (
+                  <tr key={p.component_id || i} className="border-t border-gray-100">
+                    <Td>{`Pole ${i + 1}`}</Td>
+                    <Td mono>{dim(p.height_inches)}</Td>
+                    <Td mono>{dim(p.embedment_inches ?? p.y_offset_inches)}</Td>
+                    <Td>{p.pole_shape || "round"}</Td>
+                    <Td mono>{`${dim(p.x_inches)}, ${dim(p.z_inches)}`}</Td>
+                    <Td mono>{signs.length === 0 ? "-" : `${signs.length}${all ? ` · ${money(costs.reduce((a, b) => a + b, 0))}` : ""}`}</Td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </Section>
