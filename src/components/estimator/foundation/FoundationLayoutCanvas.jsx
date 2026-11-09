@@ -1376,6 +1376,29 @@ export default function FoundationLayoutCanvas({
             <input type="checkbox" checked={transparentConcrete} onChange={(e) => setTransparentConcrete(e.target.checked)} />
             Transparent concrete
           </label>
+          <div className="mt-1 flex gap-1 border-t border-gray-200 px-1 pt-1">
+            <button
+              type="button"
+              data-layer-op="isolate"
+              disabled={selState.count < 1}
+              title="Show only the kinds in the current selection"
+              onClick={() => setLayers(() => {
+                const only = new Set(selState.ids.map((id) => KIND_LAYER[parseSceneNodeId(id)?.kind]).filter(Boolean));
+                return { items: only.has("items"), poles: only.has("poles"), walls: only.has("walls"), caps: only.has("caps"), cabinets: only.has("cabinets") };
+              })}
+              className={`px-1.5 py-0.5 rounded-sm border ${selState.count >= 1 ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+            >
+              Isolate sel
+            </button>
+            <button
+              type="button"
+              data-layer-op="show-all"
+              onClick={() => setLayers({ items: true, poles: true, walls: true, caps: true, cabinets: true })}
+              className="px-1.5 py-0.5 rounded-sm border border-gray-300 hover:bg-gray-50 text-gray-700"
+            >
+              Show all
+            </button>
+          </div>
         </div>
       )}
       {treeOpen && sceneTree && (
