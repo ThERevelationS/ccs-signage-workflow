@@ -127,9 +127,14 @@ N-table reads-per-invoke with a single maintained snapshot read.
       manageTraining/notificationAction/opportunityWorkspaceAction all at
       t=0). Mount-time page reads (queueFeed/staffDataRead/boardFeed) still
       fire at t=0 — those ARE the page data, only consolidation fixes them.
-- [ ] Idle-tab full suspension: tabs hidden >10min stop ALL ambient work
+- [x] Idle-tab full suspension: tabs hidden >10min stop ALL ambient work
       (partial coverage exists via `pauseWhenHidden` — extend to everything
-      that isn't user-visible).
+      that isn't user-visible). **Verified done 2026-11-09: `usePolling`'s
+      `isHidden()` check skips every network tick in hidden tabs (default
+      `pauseWhenHidden: true`), and the only raw `setInterval` that touches
+      the network (SmartsheetSyncWidget) also guards `document.hidden`.
+      Remaining unguarded intervals are UI-only ticks (timers, progress
+      bars, countdowns) — zero entity spend.**
 
 ## WS-4 — Fleet isolation & budget ceiling (storm source)
 
