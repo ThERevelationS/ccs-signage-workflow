@@ -4,7 +4,9 @@ const whole = value => nonnegative(value) && Number.isSafeInteger(value);
 const STEEL_ROLES = Object.freeze(["horizontal", "longitudinal", "hoop", "inter_mat_tie"]);
 
 // Internal steel cost only. Call with a freshly calculated model, never stored calculated metadata.
-export function priceFoundationReinforcementModel(model, basis = {}) {
+// `supportsResolution` is the fresh support-economics result for modeled supports;
+// steel amounts here stay steel-only — support money is added exactly once downstream.
+export function priceFoundationReinforcementModel(model, basis = {}, supportsResolution = null) {
   const issues = [];
   const issue = (field, code, message, severity = "error") => issues.push({ field, code, message, severity });
   const unavailable = () => ({
@@ -100,8 +102,10 @@ export function priceFoundationReinforcementModel(model, basis = {}) {
   if (override != null && !close(pricedFeet, feet)) issue("quantity_override_ft", "reinforcement_priced_quantity_differs",
     "The explicit aggregate priced quantity differs from geometric steel; it was not scaled again by foundation quantity.", "warning");
   if (weight == null) issue("weight_lb_per_ft", "reinforcement_weight_unknown", "Steel weight is unknown, not zero; BOM/handoff compatibility still requires resolution.", "warning");
-  const supportsReady = model.supports?.status === "off_explained" && model.supports.count === 0
-    && typeof model.supports.reason === "string" && Boolean(model.supports.reason.trim());
+  const supportsReady = model.supports?.status === "not_required"
+    || (model.supports?.status === "off_explained" && model.supports.count === 0
+      && typeof model.supports.reason === "string" && Boolean(model.supports.reason.trim()))
+    || (model.supports?.status === "modeled" && supportsResolution?.status === "resolved");
   if (!supportsReady) issue("supports", "reinforcement_support_cost_unknown", "Support quantities/costs are unresolved; steel-only pricing cannot replace the estimate.", "warning");
   const connectionUnverified = model.issues?.some(i =>
     ["reinforcement_connection_unverified", "reinforcement_tie_path_only"].includes(i.code));
