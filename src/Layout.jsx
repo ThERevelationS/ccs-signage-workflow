@@ -397,7 +397,8 @@ function LayoutContent({ children }) {
   useEffect(() => {
     const FROZEN = "ccs-nav-frozen";
     const POS_PROPS = ["position", "left", "top", "right", "bottom", "width", "height",
-      "minWidth", "minHeight", "margin", "zIndex", "flexShrink", "justifySelf", "alignSelf"];
+      "minWidth", "minHeight", "margin", "zIndex", "flexShrink", "justifySelf", "alignSelf",
+      "boxSizing"];
     const saveStyle = (el) => {
       const saved = {};
       for (const k of POS_PROPS) saved[k] = el.style[k];
@@ -453,6 +454,8 @@ function LayoutContent({ children }) {
         dropEl.style.position = "relative";
         // Pin BOTH dims — once the children leave flow the container would
         // otherwise collapse to 0x0 and stop being a hit-testable drop zone.
+        // border-box so px pins match the measured border-box exactly.
+        dropEl.style.boxSizing = "border-box";
         dropEl.style.height = `${rect.height}px`;
         dropEl.style.width = `${rect.width}px`;
         dropEl.style.flexShrink = "0";
@@ -462,6 +465,7 @@ function LayoutContent({ children }) {
           el.style.position = "absolute";
           el.style.left = `${r.left - rect.left}px`;
           el.style.top = `${r.top - rect.top}px`;
+          el.style.boxSizing = "border-box";
           el.style.width = `${r.width}px`;
           el.style.height = `${r.height}px`;
           el.style.margin = "0";
