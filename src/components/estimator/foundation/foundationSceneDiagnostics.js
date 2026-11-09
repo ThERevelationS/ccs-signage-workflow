@@ -121,6 +121,20 @@ export function foundationSceneDiagnostics(scene) {
         `Pole ${i + 1} sits inside ${inside.length} overlapping foundations -- mount it to pick one.`,
         [poleId, ...inside.map((r) => sceneNodeId.item(layoutItemKey(r.item, r.index)))]);
     }
+    // O-065 impossible-fit: a pole-mounted sign whose top (mount height +
+    // face height) rises past the pole top can't physically fit -- flag it
+    // rather than render a floating box. Pole top = base offset + height.
+    const poleTop = (Number(pole.base_offset_inches) || 0) + (Number(pole.height_inches) || 0);
+    if (poleTop > 0) {
+      (pole.signs || []).forEach((s, si) => {
+        const mh = Number(s?.mount_height_inches), sh = Number(s?.height_inches);
+        if (Number.isFinite(mh) && Number.isFinite(sh) && mh + sh > poleTop + 0.5) {
+          push("warning", "impossible-fit",
+            `Pole ${i + 1} sign ${si + 1} rises to ${Math.round(mh + sh)}in but the pole tops out at ${Math.round(poleTop)}in -- lower the mount height or shorten the sign.`,
+            [poleId]);
+        }
+      });
+    }
   });
 
   // -- caps + cabinets: mount references must resolve -------------------
