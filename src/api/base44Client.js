@@ -84,7 +84,7 @@ const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
 const SALESFILTER_READ_ACTIONS = new Set(['preferences_get', 'default_sort_get', 'roster']);
 
 function isReadFunctionInvocation(fnName, payload) {
-  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
   if (fnName === 'timeClockAction') return TIMECLOCK_READ_ACTIONS.has(payload?.action);
   if (fnName === 'notificationAction') return NOTIFICATION_READ_ACTIONS.has(payload?.action);
   if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
