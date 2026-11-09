@@ -179,6 +179,27 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       unit: "inches", ftIn: true, signed: false,
     }),
   }),
+  // Pole-mounted signs (FoundationPolesPanel sign sub-list).
+  sign: Object.freeze({
+    width_inches: Object.freeze({
+      label: "W (in)",
+      help: "Sign face width across the pole.",
+      placeholder: "4' 0\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    height_inches: Object.freeze({
+      label: "H (in)",
+      help: "Sign face height.",
+      placeholder: "2' 0\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    mount_height_inches: Object.freeze({
+      label: "Mount ht (in)",
+      help: "Height from grade up to the sign's mounting point.",
+      placeholder: "8' 0\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+  }),
   // Signage cabinets (SignageCabinetsPanel).
   cabinet: Object.freeze({
     width_inches: Object.freeze({
