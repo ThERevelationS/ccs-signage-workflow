@@ -32,6 +32,7 @@ import {
   isClickRelease,
   sceneNodeId,
   parseSceneNodeId,
+  nodeBreadcrumb,
 } from "./foundationSceneSelection";
 import {
   planReparentSelection,
@@ -184,6 +185,11 @@ export default function FoundationLayoutCanvas({
   const reparentTargets = reparentOpen && reparentPrimaryId
     ? reparentTargetsFor(scene, reparentPrimaryId)
     : null;
+
+  // O-034 breadcrumb — the primary selection's root→node trail through
+  // mounts (e.g. Wall 1 › Segment 2 › Cap 1). Shown for any selection,
+  // read-only canvases included — the toolbar stays edit-gated.
+  const breadcrumb = selState.primaryId ? nodeBreadcrumb(scene, selState.primaryId) : [];
 
   // Click candidates + marquee run alongside the drag seam: a press records
   // its down point + topmost hit; release travel (< 5px) decides click vs
@@ -1103,6 +1109,19 @@ export default function FoundationLayoutCanvas({
           })}
         </div>
       </div>
+
+      {breadcrumb.length > 0 && (
+        <div data-breadcrumb="true" className="mt-1.5 text-[10px] text-gray-500" aria-label="Selection path">
+          {breadcrumb.map((crumb, i) => (
+            <span key={crumb.id}>
+              {i > 0 && <span className="mx-1 text-gray-300" aria-hidden="true">›</span>}
+              <span className={crumb.id === selState.primaryId ? "font-semibold text-gray-700" : ""}>
+                {crumb.label ?? crumb.id}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
 
       {selState.count >= 1 && editable && (
         <div data-editops-toolbar="true" className="flex flex-wrap items-center gap-1 mt-2 text-[10px]">
