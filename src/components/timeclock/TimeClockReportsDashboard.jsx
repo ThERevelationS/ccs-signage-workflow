@@ -205,7 +205,7 @@ export default function TimeClockReportsDashboard() {
     // Daily hours trend
     const dailyHours = {};
     filteredEntries.forEach(entry => {
-      const day = format(parseISO(entry.clock_in), "yyyy-MM-dd");
+      const day = String(entry.work_day_anchor_date || "").trim() || format(parseISO(entry.clock_in), "yyyy-MM-dd");
       if (!dailyHours[day]) dailyHours[day] = 0;
       dailyHours[day] += entry.total_hours || 0;
     });
