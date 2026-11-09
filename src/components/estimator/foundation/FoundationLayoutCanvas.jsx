@@ -43,6 +43,10 @@ import {
   mountLinkDescriptors,
 } from "./foundationReparentModel";
 import {
+  foundationSceneDiagnostics,
+  diagnosticTarget,
+} from "./foundationSceneDiagnostics";
+import {
   beginItemResize,
   resizeItemFromHandle,
   beginItemRotate,
@@ -239,6 +243,17 @@ export default function FoundationLayoutCanvas({
     return next;
   });
   const visibleMountLinks = mountLinks.filter((l) => layers[KIND_LAYER[l.childKind]] !== false);
+
+  // O-042 diagnostics — pure conflict/clearance findings over the live
+  // scene; clicking a finding selects + focuses the object it names.
+  const [diagOpen, setDiagOpen] = useState(false);
+  const diagnostics = diagOpen ? foundationSceneDiagnostics(scene) : null;
+  const diagClick = (finding) => {
+    const id = diagnosticTarget(scene, finding);
+    if (!id) return;
+    selection.select(id);
+    focusNode(id);
+  };
 
   // O-034 object tree — the scene tree the selection model already
   // builds (roots → children by mount), rendered as a collapsible list.
@@ -1210,6 +1225,37 @@ export default function FoundationLayoutCanvas({
       >
         {layersOpen ? "▾" : "▸"} Layers
       </button>
+      <button
+        type="button"
+        data-diag-toggle="true"
+        onClick={() => setDiagOpen((v) => !v)}
+        className="mt-1.5 ml-3 text-[10px] text-gray-400 hover:text-gray-600"
+      >
+        {diagOpen ? "▾" : "▸"} Diagnostics
+      </button>
+      {diagOpen && (
+        <div data-diag-panel="true" className="mt-0.5 max-h-36 overflow-auto rounded-sm border border-gray-200 bg-gray-50 p-1 text-[10px]">
+          {(!diagnostics || diagnostics.length === 0) && (
+            <p className="px-1 py-1 text-gray-400">No conflicts detected.</p>
+          )}
+          {(diagnostics || []).map((f, i) => (
+            <button
+              key={i}
+              type="button"
+              data-diag-severity={f.severity}
+              onClick={() => diagClick(f)}
+              title={diagnosticTarget(scene, f) ? "Click to select the object" : undefined}
+              className={`block w-full rounded-sm px-1 py-0.5 text-left ${
+                f.severity === "error" ? "text-red-700 hover:bg-red-50"
+                : f.severity === "warning" ? "text-amber-700 hover:bg-amber-50"
+                : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {f.message}
+            </button>
+          ))}
+        </div>
+      )}
       {layersOpen && (
         <div data-layers-panel="true" className="mt-0.5 rounded-sm border border-gray-200 bg-gray-50 p-1.5 text-[10px]">
           {LAYER_ROWS.map(([key, label]) => (
