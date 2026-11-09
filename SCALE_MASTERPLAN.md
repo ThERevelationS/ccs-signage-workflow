@@ -52,6 +52,10 @@ Sustained interactive budget available for staff: ≥100 calls/60s at all times.
 - [x] Baseline recorded 2026-11-07: **N=10 → 78/120 calls 429'd, p50 1.7s,
       p95 3.9s, p99 5.2s** — the shared bucket saturates even at 10 sessions
       (fleet night-budget 80/min was also spending during the run).
+- [x] Post-memo re-run 2026-11-09: **429s 78→18, p50 1.7s→239ms, p95 3.9s→1.76s.
+      Live-verified: 12 concurrent status_lite → 2 entity reads.**
+      NOTE: the api/apps/functions route serves the DEPLOYED build (not just
+      published) — all function-side memos are live for real users already.
 
 ## WS-1 — In-function memo layer (biggest single win for read scale)
 
@@ -68,6 +72,13 @@ entity cost.
       (`TIME_CLOCK_READS`); frontend `timeClockReadCache` sends `bypass: true`
       on reads within 10s of a write so post-write reads always refetch —
       closes the mid-mutation re-cache race.
+- [x] Extended (2026-11-09): `status` ensureState+recovery chain memoized 3s
+      (`tcstate`, read-only + non-bypass only — mutations get fresh state);
+      status advisory summaries memoized 15s (`tcreview`: unresolved punch
+      review, corrected shift review, work-day prompt); `manageTraining`
+      bootstrap reads memoized (mine 10s, items/assignments 15s, roster 60s,
+      settings 60s). **Remaining spend: `status` full payload ~9 reads —
+      mutable punch state, bounded by WS-2.**
 - [ ] Guard: NEVER memo actions whose response can differ by caller on the same
       payload (scope key already includes session token where relevant — verify).
 - [ ] Honest limit: cold isolates still read; burst absorption only. This is
