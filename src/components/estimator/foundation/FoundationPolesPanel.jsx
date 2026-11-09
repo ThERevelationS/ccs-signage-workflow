@@ -348,6 +348,17 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
                         </select>
                       </label>
+                      <label className="text-[10px] text-gray-500">
+                        Artwork
+                        <input
+                          type="text"
+                          value={s.artwork_url ?? ""}
+                          placeholder="image URL or file ref"
+                          onChange={(e) => patchSign({ artwork_url: e.target.value === "" ? undefined : e.target.value })}
+                          className="block w-32 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px] font-mono"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} artwork URL`}
+                        />
+                      </label>
                       <button
                         type="button"
                         onClick={() => patchPole(index, { signs: (pole.signs || []).filter((_, j) => j !== si) })}
