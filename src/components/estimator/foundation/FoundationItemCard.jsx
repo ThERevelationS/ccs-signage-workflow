@@ -3,6 +3,8 @@ import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { inventoryNumberInput } from "@/components/masterInventory/inventoryNormalization";
+import { FoundationDimensionInput } from "./foundationFtInEntry";
+import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 
 const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
 const num2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : "Not saved");
@@ -12,6 +14,17 @@ const Field = ({ label, ...props }) => (
     {label}
     <Input {...props} />
   </label>
+);
+
+// O-093 — dimension fields share the panels' ft/in widget + one metadata
+// source (plain-language label/help/placeholder/unit/signed). Malformed
+// drafts stay verbatim + hinted, never silently coerced.
+const DimField = ({ field, value, onCommit }) => (
+  <FoundationDimensionInput
+    {...foundationDimensionFieldMeta("foundation", field)}
+    value={value ?? ""}
+    onCommit={onCommit}
+  />
 );
 
 const Check = ({ label, checked, onChange }) => (
@@ -52,11 +65,11 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   // Blank clears the override (null); a malformed draft is preserved verbatim so
   // the item validation reports it instead of a NaN leaking into saved costs.
-  // Delegates to the boundary's catalog draft (CMP-A08) — identical contract,
+  // Delegates to the boundary's catalog draft (CMP-A08) â€” identical contract,
   // plus whitespace-only drafts clear to null instead of minting Number(" ")=0.
   const nullSet = (key) => (e) => set({ [key]: inventoryNumberInput(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
-  // Versioned items price steel from the accepted reinforcement design — the
+  // Versioned items price steel from the accepted reinforcement design â€” the
   // legacy implicit fields below do not apply to them and stay hidden.
   const legacyReinforcement = item.reinforcement_calculation_version == null || item.reinforcement_calculation_version === 1;
   const unavailable = pricing?.available === false;
@@ -131,22 +144,17 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
         <Field label="Quantity" type="number" value={item.quantity ?? 1} onChange={numSet("quantity")} />
         {isPillar ? (
-          <Field label="Diameter (in)" type="number" value={item.diameter ?? 0} onChange={numSet("diameter")} />
+          <DimField field="diameter" value={item.diameter} onCommit={(v) => set({ diameter: v })} />
         ) : (
           <>
-            <Field label="Length (in)" type="number" value={item.length_inches ?? 0} onChange={numSet("length_inches")} />
-            <Field label="Width (in)" type="number" value={item.width_inches ?? 0} onChange={numSet("width_inches")} />
+            <DimField field="length_inches" value={item.length_inches} onCommit={(v) => set({ length_inches: v })} />
+            <DimField field="width_inches" value={item.width_inches} onCommit={(v) => set({ width_inches: v })} />
           </>
         )}
-        <Field label="Depth (in)" type="number" value={item.depth_inches ?? 0} onChange={numSet("depth_inches")} />
+        <DimField field="depth_inches" value={item.depth_inches} onCommit={(v) => set({ depth_inches: v })} />
+        <DimField field="grade_offset_inches" value={item.grade_offset_inches} onCommit={(v) => set({ grade_offset_inches: v })} />
         <Field
-          label="Grade offset (in)"
-          type="number"
-          value={item.grade_offset_inches ?? 0}
-          onChange={numSet("grade_offset_inches")}
-        />
-        <Field
-          label="Rotation (°)"
+          label="Rotation (Â°)"
           type="number"
           value={item.rotation_degrees ?? 0}
           onChange={numSet("rotation_degrees")}
@@ -266,8 +274,8 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             </>
           )}
           <div className="col-span-2 sm:col-span-4 text-xs text-gray-500">
-            {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft ·{" "}
-            {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs ·{" "}
+            {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft Â·{" "}
+            {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs Â·{" "}
             {amt(item.rebar_cost)}
           </div>
         </div>
@@ -279,7 +287,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             <>Version 2 reinforcement uses the accepted design. Edit geometry and pricing through the controlled proposal below.{" "}
               <span className="font-semibold text-gray-800">Physical {num2(item.rebar_geometry_feet)} ft / priced {num2(item.rebar_feet)} ft - {amt(item.rebar_cost)}</span>
               {Number.isFinite(item.support_count) && item.support_count > 0 && (
-                <> · Supports: {item.support_count} required{Number.isFinite(item.support_purchased_units) && item.support_purchased_units !== item.support_count ? ` / ${item.support_purchased_units} purchased` : ""} - {amt(item.support_cost)}</>
+                <> Â· Supports: {item.support_count} required{Number.isFinite(item.support_purchased_units) && item.support_purchased_units !== item.support_count ? ` / ${item.support_purchased_units} purchased` : ""} - {amt(item.support_cost)}</>
               )}</>
           ) : (
             <>Unsupported reinforcement version. Reload before changing reinforcement pricing.</>
@@ -291,7 +299,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
       <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
         <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Excavation</div>
         <div className="text-[11px] text-amber-900">
-          Volume: ~{Number.isFinite(item.excavation_volume_cy) ? item.excavation_volume_cy.toFixed(2) : "Not saved"} CY · Cost: {amt(item.excavation_cost)}
+          Volume: ~{Number.isFinite(item.excavation_volume_cy) ? item.excavation_volume_cy.toFixed(2) : "Not saved"} CY Â· Cost: {amt(item.excavation_cost)}
         </div>
       </div>
 
