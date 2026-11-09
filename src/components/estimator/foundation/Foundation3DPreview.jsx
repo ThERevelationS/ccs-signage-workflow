@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
+import { buildFoundationReinforcementPreview3D } from "./foundationReinforcementPreview3D.js";
+import { createFoundationReinforcement3DGroup } from "./foundationReinforcementThreePreview.js";
 
 const IN = 1 / 12; // inches -> feet units
 // O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
@@ -35,7 +37,21 @@ function buildScene(scene, project, solid, showGround, highlight) {
 
   let cursorX = 0;
   const items = project.items || [];
-  items.forEach((item) => {
+  // O-033 reinforcement steel — the preview3d model emits concrete-local steel
+  // primitives for v2 items; each instance's group parents to that item's
+  // concrete mesh so position/rotation/quantity copies stay exact. The model
+  // caps steel at 2048 primitives and refuses unsupported roles itself.
+  let rebarByKey = null;
+  if (items.some((it) => it?.reinforcement_calculation_version === 2)) {
+    const rebarPreview = buildFoundationReinforcementPreview3D(project, { placementMode: "inspection" });
+    const errs = (rebarPreview?.issues || []).filter((i) => i.severity === "error");
+    if (errs.length) console.warn("Foundation3DPreview reinforcement:", errs.map((i) => i.message).join(" | "));
+    rebarByKey = new Map();
+    for (const inst of rebarPreview?.instances || []) {
+      if (inst?.steel?.length) rebarByKey.set(`${inst.index}:${inst.instanceIndex}`, inst);
+    }
+  }
+  items.forEach((item, itemIndex) => {
     const qty = Math.min(MAX_ITEM_MESHES, Math.max(1, Number(item.quantity) || 1));
     const depth = (Number(item.depth_inches) || 0) * IN;
     for (let i = 0; i < qty; i++) {
@@ -56,6 +72,12 @@ function buildScene(scene, project, solid, showGround, highlight) {
       mesh.rotation.y = ((Number(item.rotation_degrees) || 0) * Math.PI) / 180;
       tag(mesh, item.component_id, "item");
       group.add(mesh);
+
+      const rebar = rebarByKey?.get(`${itemIndex}:${i}`);
+      if (rebar) {
+        try { mesh.add(createFoundationReinforcement3DGroup(rebar.steel)); }
+        catch { /* unsupported roles refuse to draw; the concrete still renders. */ }
+      }
 
       if (item.selected_pole_id || item.pole_total_height_inches) {
         const h = (Number(item.pole_total_height_inches) || 96) * IN;
