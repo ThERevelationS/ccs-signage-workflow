@@ -33,6 +33,7 @@ import {
   sceneNodeId,
   parseSceneNodeId,
   nodeBreadcrumb,
+  buildSceneTree,
 } from "./foundationSceneSelection";
 import {
   planReparentSelection,
@@ -190,6 +191,12 @@ export default function FoundationLayoutCanvas({
   // mounts (e.g. Wall 1 › Segment 2 › Cap 1). Shown for any selection,
   // read-only canvases included — the toolbar stays edit-gated.
   const breadcrumb = selState.primaryId ? nodeBreadcrumb(scene, selState.primaryId) : [];
+
+  // O-034 object tree — the scene tree the selection model already
+  // builds (roots → children by mount), rendered as a collapsible list.
+  // Rows click-select through the store so tree/canvas stay in sync.
+  const [treeOpen, setTreeOpen] = useState(false);
+  const sceneTree = treeOpen ? buildSceneTree(scene) : null;
 
   // Click candidates + marquee run alongside the drag seam: a press records
   // its down point + topmost hit; release travel (< 5px) decides click vs
@@ -1120,6 +1127,38 @@ export default function FoundationLayoutCanvas({
               </span>
             </span>
           ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        data-tree-toggle="true"
+        onClick={() => setTreeOpen((v) => !v)}
+        className="mt-1.5 text-[10px] text-gray-400 hover:text-gray-600"
+      >
+        {treeOpen ? "▾" : "▸"} Objects
+      </button>
+      {treeOpen && sceneTree && (
+        <div data-object-tree="true" className="mt-0.5 max-h-44 overflow-auto rounded-sm border border-gray-200 bg-gray-50 p-1 text-[10px]">
+          {sceneTree.order.map((id) => {
+            const n = sceneTree.nodes.get(id);
+            if (!n) return null;
+            const sel = selIds.has(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                data-tree-node={id}
+                data-selected={sel ? "true" : undefined}
+                onClick={() => selection.select(id)}
+                className={`block w-full truncate rounded-sm px-1 py-0.5 text-left ${sel ? "bg-sky-100 text-sky-800 font-semibold" : "text-gray-600 hover:bg-gray-100"}`}
+                style={{ paddingLeft: `${4 + (n.depth || 0) * 12}px` }}
+                title={n.label ?? id}
+              >
+                {n.label ?? id}
+              </button>
+            );
+          })}
         </div>
       )}
 
