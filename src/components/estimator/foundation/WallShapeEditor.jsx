@@ -113,6 +113,22 @@ export default function WallShapeEditor({ shape, onChange }) {
     onChange({ ...shapeRecord(shape), ...rectShape });
   };
 
+  // O-044 (CMP-D01): L/U monument presets — same rect drafts, canonical
+  // closed outlines built from the parsed inches (never stored defaults).
+  const presetOutline = (kind) => {
+    if (!rectL.ok || !rectW.ok) return;
+    const l = rectL.inches, w = rectW.inches;
+    const hl = l / 2, hw = w / 2;
+    const shapes = {
+      l: [{ x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: hw }, { x: hl, z: hw }, { x: hl, z: w }, { x: 0, z: w }],
+      u: [{ x: 0, z: w }, { x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: w }, { x: l - hl, z: w }, { x: l - hl, z: hw }, { x: hl, z: hw }, { x: hl, z: w }],
+    };
+    const pts = shapes[kind];
+    if (!pts) return;
+    const next = emitShape(shape, pts, true);
+    if (next) onChange(next);
+  };
+
   const segments = Array.isArray(shape?.segments) ? shape.segments : [];
   const hasSegmentLengths = segments.length > 0;
   const legacyOnly = !basis.hasRecordedPoints && hasSegmentLengths;
@@ -172,6 +188,12 @@ export default function WallShapeEditor({ shape, onChange }) {
         <Button variant="outline" size="sm" onClick={setRectangle} disabled={!rectShape}
           aria-describedby={!rectShape ? rectErrId : undefined}>
           <Square className="w-4 h-4" aria-hidden="true" /> Use rectangle
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => presetOutline("l")} disabled={!rectShape}>
+          L shape
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => presetOutline("u")} disabled={!rectShape}>
+          U shape
         </Button>
         {!rectShape && (
           <span role="status" id={rectErrId} className="text-xs text-amber-600">
