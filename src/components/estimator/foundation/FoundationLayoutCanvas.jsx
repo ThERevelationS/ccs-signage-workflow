@@ -185,9 +185,20 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
       key: layoutItemKey(cab, i),
     };
   }).filter((d) => d && d.w > 0 && d.h > 0);
-  if (!itemsDrawn.length && !polesDrawn.length && !cabsDrawn.length) return null;
+  // Pole signs — a sign mounts at its pole's plan x, rising mount_height;
+  // authored dims only (unresolved heights/widths draw nothing).
+  const signsDrawn = [];
+  (poles || []).forEach((pole, i) => {
+    const x = Number(pole.x_inches) || 0;
+    (pole.signs || []).forEach((s, si) => {
+      const w = Number(s?.width_inches), h = Number(s?.height_inches), mh = Number(s?.mount_height_inches) || 0;
+      if (!(w > 0) || !(h > 0)) return;
+      signsDrawn.push({ s, si, poleIndex: i, x, mh, w, h, key: `${layoutItemKey(pole, i)}-sign-${si}` });
+    });
+  });
+  if (!itemsDrawn.length && !polesDrawn.length && !cabsDrawn.length && !signsDrawn.length) return null;
   const maxDepth = Math.max(24, ...itemsDrawn.map((d) => d.depth - Math.min(0, d.off)), ...polesDrawn.map((p) => p.embed));
-  const maxUp = Math.max(24, ...polesDrawn.map((p) => p.h + Math.max(0, 0)), ...itemsDrawn.map((d) => Math.max(0, d.off)), ...cabsDrawn.map((c) => c.mh + c.h));
+  const maxUp = Math.max(24, ...polesDrawn.map((p) => p.h + Math.max(0, 0)), ...itemsDrawn.map((d) => Math.max(0, d.off)), ...cabsDrawn.map((c) => c.mh + c.h), ...signsDrawn.map((s) => s.mh + s.h));
   const H = ELEV_DEPTH_IN;
   const gradeY = (maxUp / (maxUp + maxDepth)) * H;
   const scaleY = H / (maxUp + maxDepth);
@@ -231,6 +242,18 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
           strokeWidth="1" vectorEffect="non-scaling-stroke"
           onClick={() => onSelect?.(`cabinet:component:${d.cab.component_id}`)}
           style={{ cursor: onSelect ? "pointer" : "default" }}
+        />
+      ))}
+      {signsDrawn.map((d) => (
+        <rect
+          key={d.key}
+          data-elev-sign={d.key}
+          x={scaleX(d.x) - Math.max(0.3, scaleX(d.w)) / 2}
+          y={gradeY - (d.mh + d.h) * scaleY}
+          width={Math.max(0.3, scaleX(d.w))} height={d.h * scaleY}
+          fill="rgba(59,130,246,0.3)"
+          stroke="#2563eb"
+          strokeWidth="1" vectorEffect="non-scaling-stroke"
         />
       ))}
     </svg>
