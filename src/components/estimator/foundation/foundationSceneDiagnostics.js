@@ -159,6 +159,16 @@ export function foundationSceneDiagnostics(scene) {
     } else if (!parent?.componentId) {
       push("error", "unmounted-cabinet", `Cabinet ${i + 1} isn't mounted to a pole or foundation -- remount it.`, [cabId]);
     }
+    // O-062 engineering-review: a cabinet on a pole that is itself unmounted
+    // has no modeled footing in its load path -- surface it for review
+    // rather than assume the mount is supported.
+    else if (parent?.componentId && cab?.mount === "pole") {
+      const poleRow = (poles || []).find((p) => p?.component_id === cab?.pole_component_id);
+      const poleParent = poleRow ? reparentParentOf(scene, "pole", poleRow) : null;
+      if (!poleParent?.componentId) {
+        push("warning", "engineering-review", `Cabinet ${i + 1} hangs on a pole with no foundation mount -- the load path needs engineering review.`, [cabId]);
+      }
+    }
   });
 
   // -- cabinets: same-mount vertical collisions (O-065) ------------------
