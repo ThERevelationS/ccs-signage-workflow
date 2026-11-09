@@ -15,22 +15,25 @@ import {
 } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 
-// O-093 (CMP-H02): the cell size takes feet/inches entry — same verbatim-draft
+// O-093 (CMP-H02): the cell size takes feet/inches entry â€” same verbatim-draft
 // contract as the landscapeInputValue it replaces (blank stays, malformed
 // stores verbatim for diagnostics), canonical inches stored. The cell size is
-// never defaulted here — the ported `|| 12` minted a guess on a missing value;
+// never defaulted here â€” the ported `|| 12` minted a guess on a missing value;
 // the meta placeholder below is display text only, never a stored value.
 const cellMeta = foundationDimensionFieldMeta("landscape", "cell_size_inches");
 
 const sqftLabel = (l) =>
   Number.isFinite(l.sqft) ? `${l.sqft.toFixed(0)} sq ft`
-    : `${l.cells} cell${l.cells === 1 ? "" : "s"} — area unavailable`;
+    : `${l.cells} cell${l.cells === 1 ? "" : "s"} â€” area unavailable`;
 const costLabel = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 
 export default function LandscapeDesigner({ landscape, onChange }) {
   const [brush, setBrush] = useState("grass");
   const [painting, setPainting] = useState(false);
-  // Focused-edit draft for the cell size — while focused the user edits raw
+  // O-071 (CMP-F04): bucket-fill mode — a click floods the contiguous region
+  // of the same material (empty cells count as one region); dirt erases it.
+  const [fillMode, setFillMode] = useState(false);
+  // Focused-edit draft for the cell size â€” while focused the user edits raw
   // text (partial ft/in never snaps); on blur the stored canonical inches
   // (or a verbatim malformed draft) displays again.
   const [cellDraft, setCellDraft] = useState(null);
@@ -45,8 +48,28 @@ export default function LandscapeDesigner({ landscape, onChange }) {
     const next = { ...cells };
     if (brush === "dirt") delete next[key];
     else next[key] = brush;
-    // Preserve the authored cell size verbatim — never mint a guessed 12 over
+    // Preserve the authored cell size verbatim â€” never mint a guessed 12 over
     // a missing value; an absent/malformed size stays flagged until recorded.
+    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
+  };
+
+  const flood = (x, y) => {
+    const target = cells[`${x},${y}`] || "";
+    if (target === (brush === "dirt" ? "" : brush)) return; // already the brush value
+    const region = [];
+    const seen = new Set([`${x},${y}`]);
+    const queue = [[x, y]];
+    while (queue.length) {
+      const [cx, cy] = queue.shift();
+      region.push(`${cx},${cy}`);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = cx + dx, ny = cy + dy, k = `${nx},${ny}`;
+        if (nx < 0 || ny < 0 || nx >= GRID_COLS || ny >= GRID_ROWS || seen.has(k)) continue;
+        if ((cells[k] || "") === target) { seen.add(k); queue.push([nx, ny]); }
+      }
+    }
+    const next = { ...cells };
+    region.forEach((k) => { if (brush === "dirt") delete next[k]; else next[k] = brush; });
     onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
   };
 
@@ -91,6 +114,15 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               </span>
             )}
           </label>
+          <button type="button"
+            onClick={() => setFillMode((v) => !v)}
+            aria-pressed={fillMode}
+            className={`h-[26px] px-2 flex items-center gap-1 rounded-sm border text-[11px] ${
+              fillMode ? "border-red-400 bg-red-50 text-red-700 font-medium" : "border-gray-300 text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Fill
+          </button>
           <button type="button"
             onClick={() => {
               if (!window.confirm("Clear all landscaping from the canvas?")) return;
@@ -142,10 +174,11 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   <div
                     key={`${x},${y}`}
                     onMouseDown={() => {
+                      if (fillMode) { flood(x, y); return; }
                       setPainting(true);
                       paint(x, y);
                     }}
-                    onMouseEnter={() => painting && paint(x, y)}
+                    onMouseEnter={() => painting && !fillMode && paint(x, y)}
                     onMouseUp={() => setPainting(false)}
                     className="aspect-square cursor-crosshair"
                     style={{ background: mat ? mat.color : "rgba(0,0,0,0.06)" }}
