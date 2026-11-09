@@ -146,7 +146,7 @@ const LAYER_ROWS = [
 // pole rises by its authored height above the same grade. Everything is
 // drawn from saved inches — no derived/estimated placement.
 const ELEV_DEPTH_IN = 96; // profile window: 8 ft of vertical space
-const ElevationStrip = ({ items, poles, selIds, widthIn, onSelect }) => {
+const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect }) => {
   const itemsDrawn = (items || []).map((item, i) => ({
     item, i,
     key: layoutItemKey(item, i),
@@ -162,9 +162,31 @@ const ElevationStrip = ({ items, poles, selIds, widthIn, onSelect }) => {
     h: Number(pole.height_inches) || 0,
     embed: Number(pole.embedment_inches ?? pole.y_offset_inches) || 0,
   }));
-  if (!itemsDrawn.length && !polesDrawn.length) return null;
+  // O-067 — cabinets sit at their mount's plan x (pole center or item
+  // footprint center) rising by mount_height; unresolved mounts draw nothing.
+  const itemById = new Map((items || []).map((it, i) => [it?.component_id, { it, i }]));
+  const poleById = new Map((poles || []).map((p, i) => [p?.component_id, { p, i }]));
+  const cabsDrawn = (cabinets || []).map((cab, i) => {
+    let x = null;
+    if (cab?.mount === "pole") {
+      const rec = poleById.get(cab?.pole_component_id);
+      if (rec) x = Number(rec.p.x_inches) || 0;
+    } else if (cab?.mount === "foundation") {
+      const rec = itemById.get(cab?.foundation_component_id);
+      if (rec) x = (Number(rec.it.x_inches) || 0) + (Number(rec.it.length_inches ?? rec.it.diameter) || 0) / 2;
+    }
+    if (x === null) return null;
+    return {
+      cab, i, x,
+      mh: Number(cab.mount_height_inches) || 0,
+      w: Number(cab.width_inches) || 0,
+      h: Number(cab.height_inches) || 0,
+      key: layoutItemKey(cab, i),
+    };
+  }).filter((d) => d && d.w > 0 && d.h > 0);
+  if (!itemsDrawn.length && !polesDrawn.length && !cabsDrawn.length) return null;
   const maxDepth = Math.max(24, ...itemsDrawn.map((d) => d.depth - Math.min(0, d.off)), ...polesDrawn.map((p) => p.embed));
-  const maxUp = Math.max(24, ...polesDrawn.map((p) => p.h + Math.max(0, 0)), ...itemsDrawn.map((d) => Math.max(0, d.off)));
+  const maxUp = Math.max(24, ...polesDrawn.map((p) => p.h + Math.max(0, 0)), ...itemsDrawn.map((d) => Math.max(0, d.off)), ...cabsDrawn.map((c) => c.mh + c.h));
   const H = ELEV_DEPTH_IN;
   const gradeY = (maxUp / (maxUp + maxDepth)) * H;
   const scaleY = H / (maxUp + maxDepth);
@@ -193,6 +215,20 @@ const ElevationStrip = ({ items, poles, selIds, widthIn, onSelect }) => {
           stroke={selIds.has(`pole:component:${p.pole.component_id}`) || selIds.has(`pole:${p.key}`) ? "#0284c7" : "#475569"}
           strokeWidth="2" vectorEffect="non-scaling-stroke"
           onClick={() => onSelect?.(`pole:component:${p.pole.component_id}`)}
+          style={{ cursor: onSelect ? "pointer" : "default" }}
+        />
+      ))}
+      {cabsDrawn.map((d) => (
+        <rect
+          key={d.key}
+          data-elev-cabinet={d.key}
+          x={scaleX(d.x) - Math.max(0.3, scaleX(d.w)) / 2}
+          y={gradeY - (d.mh + d.h) * scaleY}
+          width={Math.max(0.3, scaleX(d.w))} height={d.h * scaleY}
+          fill={selIds.has(`cabinet:component:${d.cab.component_id}`) ? "rgba(2,132,199,0.35)" : "rgba(71,85,105,0.3)"}
+          stroke={selIds.has(`cabinet:component:${d.cab.component_id}`) ? "#0284c7" : "#475569"}
+          strokeWidth="1" vectorEffect="non-scaling-stroke"
+          onClick={() => onSelect?.(`cabinet:component:${d.cab.component_id}`)}
           style={{ cursor: onSelect ? "pointer" : "default" }}
         />
       ))}
@@ -1278,6 +1314,7 @@ export default function FoundationLayoutCanvas({
       <ElevationStrip
         items={items}
         poles={poles}
+        cabinets={signageCabinets}
         selIds={selIds}
         widthIn={FOUNDATION_LAYOUT_WIDTH_INCHES}
         onSelect={(id) => selection.select(id)}
