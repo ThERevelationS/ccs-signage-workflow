@@ -115,6 +115,29 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
     });
   });
 
+  // O-052 (CMP-D09): explicit split of an over-stock cut into two pieces on
+  // the same segment — the remainder piece keeps position + mount so nothing
+  // is silently resized. Full-stock billing still applies per piece (O-053).
+  const splitCap = (index) => {
+    const cap = caps[index];
+    const inv = options.find((o) => o.id === cap?.cap_inventory_id);
+    const stock = wallCapInputNumber(inv?.cap_stock_length_inches);
+    const cut = wallCapInputNumber(wallCapCutLengthValue(cap));
+    if (!cap || stock === null || stock <= 0 || cut === null || cut <= stock) return;
+    const pos = wallCapInputNumber(cap.position_along_segment_inches) ?? 0;
+    const next = [...caps];
+    next.splice(index, 1,
+      { ...cap, length_inches: stock },
+      {
+        ...cap,
+        id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        component_id: undefined,
+        length_inches: cut - stock,
+        position_along_segment_inches: pos + stock,
+      });
+    onChange(next);
+  };
+
   const capIssues = foundationWallCapCatalogIssues(caps, options);
   const unavailableCaps = new Set(capIssues.filter(issue => issue.code !== "wall_cap_cost_total_invalid").map(issue => issue.index));
   const geometryIssues = (index) => capIssues.filter(issue => issue.index === index && ["length_inches", "cap_stock_length_inches"].includes(issue.field));
@@ -295,6 +318,11 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 {geometryIssues(index).map((issue) => (
                   <p key={issue.code}>{issue.message}</p>
                 ))}
+                {geometryIssues(index).some((i) => i.code === "wall_cap_cut_exceeds_stock") && (
+                  <Button variant="outline" size="sm" className="mt-1" onClick={() => splitCap(index)}>
+                    Split at stock length
+                  </Button>
+                )}
               </div>
             )}
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mt-2 text-xs text-gray-600">
