@@ -3459,6 +3459,9 @@ Deno.serve(async (req) => {
     if (!TIME_CLOCK_READS.has(action)) {
       bust('tclite', String(target.id || target.email || 'unknown'));
       bust('tcstate', String(target.id || target.email || 'unknown'));
+      bust('tcreview', `upr:${String(target.id || target.email || 'unknown')}`);
+      bust('tcreview', `csr:${String(target.id || target.email || 'unknown')}`);
+      bust('tcreview', `wdp:${String(target.id || target.email || 'unknown')}`);
       bust('tccorr', String(target.email || 'unknown'));
       bust('tccorr', 'admin');
       bust('tcadmin');
@@ -3920,20 +3923,24 @@ Deno.serve(async (req) => {
       const isManagerSession = actor.role === 'admin';
       // Independent reads run together — this is the hottest action in the app
       // and each sequential entity call costs a full service round trip.
+      const memoKey = String(target.id || target.email || 'unknown');
+      const bypass = body?.bypass === true;
       const [unresolvedPunchReview, correctedShiftReview, promptActiveEntryRow] = await Promise.all([
-        isManagerSession ? unresolvedPunchReviewSummary({
+        isManagerSession ? memo('tcreview', `upr:${memoKey}`, 15000, () => unresolvedPunchReviewSummary({
           entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
-        }) : Promise.resolve(null),
-        isManagerSession ? correctedShiftReviewSummary({
+        }), { bypass }) : Promise.resolve(null),
+        isManagerSession ? memo('tcreview', `csr:${memoKey}`, 15000, () => correctedShiftReviewSummary({
           entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
-        }) : Promise.resolve(null),
+        }), { bypass }) : Promise.resolve(null),
         state.status === 'clocked_in' && state.active_entry_id
           ? entryEntity.get(state.active_entry_id).catch(() => null)
           : Promise.resolve(null),
       ]);
       let promptActiveEntry: any = promptActiveEntryRow;
       if (promptActiveEntry?.status !== 'clocked_in' || asEmail(promptActiveEntry?.user_email) !== target.email) promptActiveEntry = null;
-      const workDayPrompt = await workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now(), activeEntry: promptActiveEntry });
+      const workDayPrompt = await memo('tcreview', `wdp:${memoKey}`, 15000,
+        () => workDayPromptSummary({ entryEntity, userEmail: target.email, nowMs: Date.now(), activeEntry: promptActiveEntry }),
+        { bypass });
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
         ...(correctedShiftReview ? { pending_shift_review: correctedShiftReview } : {}),
