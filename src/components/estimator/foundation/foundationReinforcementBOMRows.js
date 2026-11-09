@@ -50,6 +50,7 @@ export function foundationReinforcementBOMRows(item, { saved = false } = {}) {
     note: `${provenance}Internal reinforcement labor cost, separate from steel material. ${review}`,
   }];
   rows.push(...supportBOMRows(item, label, provenance, review, saved));
+  rows.push(...stockBOMRows(item, label, provenance, review, saved));
   return rows;
 }
 
@@ -103,6 +104,52 @@ function supportBOMRows(item, label, provenance, review, saved) {
     basisUnavailable: false,
     support: true,
     note: `${provenance}Internal support installation labor, separate from support material. ${review}`,
+  });
+  return rows;
+}
+
+// Rebar cut/stock schedule (O-029): one informational row per stock length in
+// the FFD plan plus a cut/waste summary. Steel is priced per linear foot on the
+// material row above — these rows carry $0 intentionally, so the listed-cost
+// subtotal never double counts and never withholds over a quantity-only plan.
+// An unresolved or unrecorded plan surfaces the gap honestly.
+function stockBOMRows(item, label, provenance, review, saved) {
+  if (item.include_rebar === false) return [];
+  const schedule = item.reinforcement_cost_snapshot?.cut_schedule;
+  if (!schedule) {
+    return saved ? [{
+      material: `${label} - rebar cut/stock schedule (not recorded)`,
+      quantity: "Not recorded", cost: 0,
+      saved: true, reinforcement: true, basisUnavailable: true, stock: true,
+      note: `${provenance}This acknowledged item predates cut/stock scheduling; the plan was not recorded. Steel cost is unaffected. ${review}`,
+    }] : [];
+  }
+  if (schedule.status !== "resolved" || !schedule.stock) {
+    const reason = schedule.status === "unresolved"
+      ? "stock lengths are unconfigured or a cut exceeds the configured stock"
+      : `status ${text(schedule.status) || "unknown"}`;
+    return [{
+      material: `${label} - rebar stock (plan unresolved)`,
+      quantity: `${quantity(schedule.piece_count_total)} pieces scheduled`,
+      cost: 0, saved, reinforcement: true, basisUnavailable: true, stock: true,
+      note: `${provenance}Rebar stock plan is unresolved (${reason}); ${quantity(schedule.cut_lines?.length)} authored cut lines stand. Steel cost is unaffected — verify stock lengths on the catalog row. ${review}`,
+    }];
+  }
+  const barSize = text(schedule.bar_size);
+  const barLabel = barSize ? ` ${barSize}` : "";
+  const totals = schedule.stock.totals || {};
+  const rows = (schedule.stock.groups || []).flatMap(group =>
+    (group.by_length || []).map(entry => ({
+      material: `${label} - rebar stock${barLabel} ${entry.stock_length_inches} in (x${entry.stock_count})`,
+      quantity: `${quantity(entry.stock_count)} × ${quantity(entry.stock_length_inches)} in stock`,
+      cost: 0, saved, reinforcement: true, basisUnavailable: false, stock: true,
+      note: `${provenance}Cut plan: ${quantity(entry.pieces_per_stock?.reduce((s, n) => s + n, 0))} pieces on ${entry.stock_count} × ${entry.stock_length_inches}-in stock, ${quantity(entry.offcut_inches)} in offcut (${quantity(entry.waste_pct)}%). ${review}`,
+    })));
+  rows.push({
+    material: `${label} - rebar cut/waste summary${barLabel}`,
+    quantity: `${quantity(totals.total_linear_inches_required / 12)} LF required / ${quantity(totals.stock_linear_inches_purchased / 12)} LF stock`,
+    cost: 0, saved, reinforcement: true, basisUnavailable: false, stock: true,
+    note: `${provenance}${quantity(schedule.piece_count_total)} pieces on ${quantity(totals.stock_count_total)} stock pieces; ${quantity(totals.waste_inches)} in offcut (${quantity(totals.waste_pct)}% of purchased). First-fit-decreasing packing — not an optimized purchasing plan. ${review}`,
   });
   return rows;
 }
