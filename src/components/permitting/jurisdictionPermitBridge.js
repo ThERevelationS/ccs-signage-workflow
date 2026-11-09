@@ -178,17 +178,45 @@ export function jurisdictionToPermitLocality(jurisdiction) {
   // Only potentially-applicable roles are claimed — research returns all
   // seven roles including 'unknown'/'not_applicable_candidate' entries, and
   // claiming those puts unprovable (or contradicted) roles on the office.
+  // Office names extracted from pages are often nav/footer noise ("Career
+  // Opportunities Building Inspector", "Income Taxes Law Department"). A name
+  // must match the ROLE's domain vocabulary or it's discarded and the role
+  // materializes under a synthesized "<Jurisdiction> <role> office" name —
+  // better an honest role-honest stub than a wrong-provider office (the
+  // verifier renames stubs to real providers on promote anyway).
+  const ROLE_VOCAB = {
+    sign_permit: /sign|permit|building|zoning|develop|inspect/i,
+    zoning: /zoning|planning|develop|community/i,
+    building: /build|construct|code|develop|inspect/i,
+    electrical: /electric|inspect|build|code/i,
+    electrical_permit: /electric|inspect|build|code/i,
+    electrical_inspection: /electric|inspect|build|code/i,
+    right_of_way: /works|engineer|street|road|right|service|transport|utility/i,
+    historic_review: /historic|landmark|conservation|preservation|appropriateness/i,
+    planning: /plan|develop|community|zoning/i,
+    transportation: /transport|traffic|engineer|works/i,
+    other: /./,
+  };
   const byOffice = new Map();
   for (const r of roles) {
-    const officeName = cleanText(r?.office_name) || cleanText(r?.label);
-    if (!officeName) continue;
     if (r?.applicability && !/potentially_applicable|applicable|confirmed/i.test(String(r.applicability))) continue;
+    let officeName = cleanText(r?.office_name) || cleanText(r?.label);
+    const vocab = ROLE_VOCAB[r?.role] || ROLE_VOCAB.other;
+    if (officeName && !vocab.test(officeName)) officeName = ""; // wrong-domain extraction — don't materialize it
+    if (!officeName) officeName = `${name} ${ROLE_TYPE_LABEL[r?.role] || "Permitting"} office`;
     const key = officeName.toLowerCase();
-    const entry = byOffice.get(key) || { name: officeName, roles: [], source: "", quotes: [], notes: [], contact: {} };
+    const entry = byOffice.get(key) || { name: officeName, roles: [], source: "", quotes: [], notes: [], contact: {}, fields: {} };
     if (r?.role && !entry.roles.includes(r.role)) entry.roles.push(r.role);
     if (!entry.source) entry.source = cleanText(r?.official_source_url);
     if (r?.responsibility_quote) entry.quotes.push(String(r.responsibility_quote).slice(0, 300));
     if (r?.notes) entry.notes.push(String(r.notes).slice(0, 200));
+    if (r?.service_area && !entry.fields.service_area) entry.fields.service_area = cleanText(r.service_area);
+    // MP-8.1 — WS-3 harvest rides research_fields through to office records:
+    // fees, forms, submission methods, review time, staff, hours, required docs.
+    const rf = r?.research_fields || {};
+    for (const k of ['fee_text', 'submission', 'review_time', 'contact_person', 'hours', 'required_documents', 'field_confidence', 'application_form_url', 'application_form_name', 'meeting_schedule', 'installer_registration', 'inspection_contact', 'permit_expiry']) {
+      if (rf[k] && !entry.fields[k]) entry.fields[k] = rf[k];
+    }
     const rc = r?.contact_info || {};
     if (!entry.contact.phone) entry.contact.phone = realContact(rc.phone);
     if (!entry.contact.email) entry.contact.email = realContact(rc.email);
@@ -200,6 +228,7 @@ export function jurisdictionToPermitLocality(jurisdiction) {
   if (byOffice.size) {
     offices = [...byOffice.values()].map((o, i) => ({
       id: `scan-${id}-office-${i}`,
+      canonical_provider_id: `${String(state || '').toLowerCase() || 'xx'}::${o.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
       name: o.name,
       office_type: ROLE_TYPE_LABEL[o.roles[0]] || "Permitting",
       office_types: o.roles.map((r) => ROLE_TYPE_LABEL[r] || r),
@@ -207,6 +236,26 @@ export function jurisdictionToPermitLocality(jurisdiction) {
       contact_email: o.contact.email || realContact(contact.email),
       contact_website: o.source || profileSite,
       contact_address: o.contact.address || realContact(contact.address),
+      hours: o.fields.hours || "",
+      application_form_url: o.fields.application_form_url || "",
+      application_form_name: o.fields.application_form_name || "",
+      fee_schedule_text: o.fields.fee_text || "",
+      submission_methods: o.fields.submission ? [String(o.fields.submission).slice(0, 160)] : [],
+      typical_review_time: o.fields.review_time || "",
+      contact_person: o.fields.contact_person || "",
+      required_documents: o.fields.required_documents ? [String(o.fields.required_documents)] : [],
+      meeting_schedule_text: o.fields.meeting_schedule || "",
+      inspection_contact: o.fields.inspection_contact || "",
+      permit_expiry_text: o.fields.permit_expiry || "",
+      installer_registration_required: !!o.fields.installer_registration || undefined,
+      // MP-10.5 — overlay flags derivable from the role set itself.
+      overlay_flags: [
+        ...(/historic/i.test(o.fields.meeting_schedule || '') || o.roles.includes('historic_review') ? ['historic_district'] : []),
+        ...(o.roles.includes('right_of_way') ? ['row_permit_possible'] : []),
+      ],
+      field_confidence: o.fields.field_confidence || "",
+      service_area: o.fields.service_area || "",
+      data_as_of: new Date().toISOString(),
       contact_notes: [
         ...o.quotes.slice(0, 2),
         ...o.notes.slice(0, 2),
