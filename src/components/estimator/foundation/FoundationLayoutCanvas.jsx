@@ -1033,11 +1033,26 @@ export default function FoundationLayoutCanvas({
           <span className="w-10 text-center">{Math.round(zoom * 100)}%</span>
           <button
             type="button"
-            onClick={() => setZoom((z) => Math.min(2, +(z + 0.25).toFixed(2)))}
+            onClick={() => setZoom((z) => Math.min(6, +(z + 0.25).toFixed(2)))}
             aria-label="Zoom layout in"
             className="w-6 h-6 flex items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-50"
           >
             <ZoomIn className="w-3 h-3" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            data-op="fit-selection"
+            disabled={!primaryItemRow}
+            title="Zoom so the selected foundation fills the plan"
+            onClick={() => {
+              const fp = primaryItemRow?.item && foundationLayoutFootprint(primaryItemRow.item);
+              if (!fp) return;
+              const frac = fp.width / FOUNDATION_LAYOUT_WIDTH_INCHES;
+              if (frac > 0) setZoom(Math.min(6, Math.max(0.5, +(1 / frac).toFixed(2))));
+            }}
+            className={`h-6 px-2 rounded-sm border text-[11px] ${primaryItemRow ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Fit
           </button>
         </div>
       </div>
@@ -1063,6 +1078,19 @@ export default function FoundationLayoutCanvas({
             backgroundSize: "8.333% 12.5%",
           }}
         >
+          {/* O-037 scale labels — feet marks along the top edge, pinned to
+              plan coordinates so they track zoom like the grid does. */}
+          <div aria-hidden="true" data-scale-ruler="true" className="absolute left-0 right-0 top-0 h-4" style={{ pointerEvents: "none" }}>
+            {[0, 120, 240, 360, 480].map((inches) => (
+              <span
+                key={inches}
+                className="absolute text-[9px] text-gray-400"
+                style={{ left: pctW(inches), transform: "translateX(-50%)" }}
+              >
+                {inches / 12}&apos;
+              </span>
+            ))}
+          </div>
           {/* O-036 mount chrome — one dashed tether + handle badge per live
               mount (pole→item, cap→wall/segment, cabinet→pole|item).
               Detached, dangling and unresolved mounts emit nothing: there
