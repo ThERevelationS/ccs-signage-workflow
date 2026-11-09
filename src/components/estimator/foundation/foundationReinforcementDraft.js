@@ -14,7 +14,10 @@ export function createFoundationReinforcementDraft(item = {}) {
   const design = accepted && isRecord(item.reinforcement_design) ? structuredClone(item.reinforcement_design) : {
     version: 2, bar_diameter_inches: "",
     cover_inches: { side: "", top: "", bottom: "" },
-    supports: { mode: "unconfigured", reason: "" },
+    supports: {
+      mode: "unconfigured", reason: "", spacing_inches: "", catalog_id: "",
+      mats: [], placements: [],
+    },
     spread: { mats: [], inter_mat_ties: [] },
     pillar: { hoops: [], longitudinal: { count: "", radius_inches: "", bottom_end_inches: "", top_end_inches: "" } },
   };
@@ -57,7 +60,17 @@ export function prepareFoundationReinforcementDraft(draft) {
   const design = {
     version: scalar(raw.version), bar_diameter_inches: numeric(raw.bar_diameter_inches),
     cover_inches: numbers(raw.cover_inches, ["side", "top", "bottom"]),
-    supports: { mode: scalar(raw.supports?.mode), reason: scalar(raw.supports?.reason) },
+    supports: {
+      mode: scalar(raw.supports?.mode), reason: scalar(raw.supports?.reason),
+      spacing_inches: numeric(raw.supports?.spacing_inches),
+      catalog_id: reference(raw.supports?.catalog_id),
+      mats: list(raw.supports?.mats, "design.supports.mats", 256, record => ({
+        mat_id: reference(record.mat_id), count: numeric(record.count),
+      })),
+      placements: list(raw.supports?.placements, "design.supports.placements", 4096, record => ({
+        mat_id: reference(record.mat_id), x_inches: numeric(record.x_inches), z_inches: numeric(record.z_inches),
+      })),
+    },
     spread: {
       mats: list(raw.spread?.mats, "design.spread.mats", 256, record => ({
         id: reference(record.id), ...numbers(record, ["bearing_elevation_inches", "max_spacing_x_inches", "max_spacing_z_inches"]),
