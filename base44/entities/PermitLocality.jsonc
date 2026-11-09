@@ -10,6 +10,22 @@
       "type": "string",
       "description": "State abbreviation"
     },
+    "county_name": {
+      "type": "string",
+      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field \u0097 same-name localities in different counties are different jurisdictions and must never merge."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "enum": [
+        "county",
+        "city",
+        "village",
+        "township",
+        "municipality",
+        "unincorporated_community"
+      ],
+      "description": "Kind of jurisdiction, from the linked JurisdictionProfile.type. Township vs city/village never merge."
+    },
     "zip": {
       "type": "string",
       "description": "ZIP / postal code"
