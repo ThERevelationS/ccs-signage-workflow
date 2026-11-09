@@ -76,14 +76,16 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   }, [compactOrderForm]);
 
   useEffect(() => {
-    loadStatus();
+    // Advisory widget — defer the first read past the mount burst; a running
+    // sync's heartbeat still arrives on the 5s poll once status lands.
+    const first = setTimeout(loadStatus, 4000 + Math.floor(Math.random() * 3000));
     // Running Order syncs publish row-level heartbeat data. Poll quickly enough
     // for that activity to feel live; once idle, back off to a slow check so
     // the widget stops spending the shared rate budget in the background.
     const interval = setInterval(
       () => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); },
       compactOrderForm && status?.status === 'running' ? 5000 : 120000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(first); clearInterval(interval); };
   }, [loadStatus, compactOrderForm, status?.status]);
 
   const lastEventRefreshRef = useRef(0);
