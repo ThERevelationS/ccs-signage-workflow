@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Columns } from "lucide-react";
 import { hexToRgbTuple } from "@/components/layout/navPreferences";
-import { navButtonStyle } from "@/components/layout/navCustomization";
+import { navButtonStyle, navDragStyle } from "@/components/layout/navCustomization";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 
 const abbreviate = (title) => (title.length > 12 ? `${title.slice(0, 11)}…` : title);
@@ -19,6 +19,7 @@ export default function NavPageLink({
   onContextMenuItem,
   dragRef,
   dragProps,
+  dragSnapshot,
   dragHandleProps,
 }) {
   const { prefs } = useWorkspacePreferences();
@@ -76,7 +77,7 @@ export default function NavPageLink({
           : `w-full ${sizing}`
       } ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
       style={{
-        ...(dragProps?.style || {}),
+        ...(navDragStyle(dragProps?.style, dragSnapshot?.isDragging) || {}),
         "--glass-accent-rgb": hexToRgbTuple(item.accent),
         ...(itemStyleLook.style || {}),
       }}
