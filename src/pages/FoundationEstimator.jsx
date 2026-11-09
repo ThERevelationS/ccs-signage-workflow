@@ -21,6 +21,7 @@ import FoundationEquipmentTab from "@/components/estimator/foundation/Foundation
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
+import FoundationFieldPackage from "@/components/estimator/foundation/FoundationFieldPackage";
 import { diffFoundationProjects, summarizeFoundationDiff } from "@/components/estimator/foundation/foundationRevisionDiff";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
@@ -1781,6 +1782,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   cabinets={project.signage_cabinets || []}
                   landscape={project.landscape}
                   landscapePricing={calc.landscapePricing}
+                  pricingUnavailable={pricingBlocked}
+                />
+                <FoundationFieldPackage
+                  project={project}
+                  calc={calc}
+                  revision={acknowledgedVersionRef.current?.updated_date || null}
                   pricingUnavailable={pricingBlocked}
                 />
               </TabsContent>
