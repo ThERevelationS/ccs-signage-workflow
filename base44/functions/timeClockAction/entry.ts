@@ -7980,15 +7980,35 @@ Deno.serve(async (req) => {
       if (!entryId || !expected) return Response.json({ success: false, error: 'entry_id and expected_updated_date are required.' }, { status: 400 });
       const row = await entryEntity.get(entryId).catch(() => null);
       if (!row?.id) return Response.json({ success: false, error: 'TimeEntry not found.' }, { status: 404 });
-      if (row.archived_admin === true) return Response.json({ success: true, entry: row, already_archived: true });
+      const cancelEntryPunchCases = async () => {
+        const openCases = await punchExceptionEntity.filter(
+          { time_entry_id: entryId, status: { $in: ['open', 'pending_manager_review', 'rejected'] } }
+        ).catch(() => []);
+        let cancelled = 0;
+        for (const pc of Array.isArray(openCases) ? openCases : []) {
+          if (!pc?.id) continue;
+          const closed = await punchExceptionEntity.update(pc.id, {
+            status: 'cancelled',
+            resolution_note: `Entry archived by ${actorEmail}: ${String(reason).slice(0, 200)}`,
+            resolution_audit_id: requestId,
+          }).then(() => true).catch(() => false);
+          if (closed) cancelled += 1;
+        }
+        return cancelled;
+      };
+      if (row.archived_admin === true) {
+        const cancelledCatchup = await cancelEntryPunchCases();
+        return Response.json({ success: true, entry: row, already_archived: true, cancelled_punch_cases: cancelledCatchup });
+      }
       if (String(row.updated_date || '') !== expected) {
         return Response.json({ success: false, retry_same_request: false, error: 'The entry changed since it was loaded. Reload and retry.' }, { status: 409 });
       }
       const updated = await entryEntity.update(entryId, { archived_admin: true, archive_reason: reason, archived_by: actorEmail, archived_at: new Date().toISOString() });
+      const cancelledCases = await cancelEntryPunchCases();
       await auditEntity.create({
         action: 'admin_archive_entry', request_id: requestId, time_entry_id: entryId,
         user_email: row.user_email || '', actor_email: actorEmail,
-        details: { reason, expected_updated_date: expected },
+        details: { reason, expected_updated_date: expected, cancelled_punch_cases: cancelledCases },
       }).catch(() => null);
       return Response.json({ success: true, entry: updated });
     }
