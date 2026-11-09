@@ -165,6 +165,7 @@ export function acceptFoundationReinforcementProposal({ proposal, requestedId, a
         basis: structuredClone(projection.reinforcement.basis),
         rate_sources: structuredClone(projection.reinforcement.rateSources),
         supports: structuredClone(projection.reinforcement.supports),
+        cut_schedule: structuredClone(projection.reinforcement.cutSchedule),
       },
       reinforcement_acceptance: {
         version: 1, proposal_id: requestedId, accepted_at: acceptedAt,
