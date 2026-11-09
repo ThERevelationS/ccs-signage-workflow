@@ -327,6 +327,17 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         />
                       </label>
                       <label className="text-[10px] text-gray-500">
+                        Cost $
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={s.unit_cost ?? ""}
+                          placeholder="Not saved"
+                          onChange={(e) => patchSign({ unit_cost: e.target.value === "" ? undefined : Number(e.target.value) })}
+                          className="block w-20 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} unit cost`}
+                        />
+                      </label>
+                      <label className="text-[10px] text-gray-500">
                         Faces
                         <select
                           value={Number(s.face_count) || 1}
@@ -348,6 +359,15 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                     </div>
                   );
                 })}
+                {(pole.signs || []).length > 0 && (() => {
+                  const costs = (pole.signs || []).map((s) => Number(s?.unit_cost));
+                  const all = costs.every((c) => Number.isFinite(c) && c >= 0) && costs.length > 0;
+                  return (
+                    <div className="text-right text-[11px] text-gray-600 mt-1">
+                      Signs total: {all ? <span className="font-semibold text-gray-900">{money(costs.reduce((a, b) => a + b, 0))}</span> : <span className="text-amber-700">Not saved — record a cost on every sign</span>}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
