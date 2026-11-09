@@ -129,6 +129,33 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
     );
     tag(pole, p.component_id, "pole");
     group.add(pole);
+    // O-060 — authored pole.signs render as mounted boxes at the pole's plan
+    // position, risen to mount_height_inches (to the sign's mounting point;
+    // box centers half its height above). face_count rotates duplicates
+    // around the pole axis for multi-face signs.
+    (p.signs || []).forEach((s) => {
+      const sw = (Number(s?.width_inches) || 0) * IN;
+      const sh = (Number(s?.height_inches) || 0) * IN;
+      const sd = (Number(s?.depth_inches) || 0) * IN;
+      if (!(sw > 0 && sh > 0 && sd > 0)) return;
+      const faces = Math.min(4, Math.max(1, Number(s?.face_count) || 1));
+      for (let fi = 0; fi < faces; fi += 1) {
+        const box = new THREE.Mesh(new THREE.BoxGeometry(sw, sh, sd), cabMat);
+        const ang = (Math.PI * 2 * fi) / faces;
+        box.position.set(
+          (Number(p.x_inches) || 0) * IN,
+          (Number(s.mount_height_inches) || 0) * IN + sh / 2,
+          (Number(p.z_inches) || 0) * IN
+        );
+        if (fi) {
+          box.rotation.y = ang;
+          box.position.x += Math.sin(ang) * sd * 0.6;
+          box.position.z += Math.cos(ang) * sd * 0.6;
+        }
+        tag(box, s.component_id, "pole_sign");
+        group.add(box);
+      }
+    });
   });
 
   // O-033 walls/caps/cabinets — walls extrude their authored shape.points
