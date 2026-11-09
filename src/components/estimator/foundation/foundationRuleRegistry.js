@@ -225,11 +225,38 @@ export const FOUNDATION_RULE_SOURCES = deepFreeze({
   },
 });
 
+// O-103 (CMP-I02) -- authority classes separate sources that are NOT
+// interchangeable: adopted local code/amendments, referenced structural
+// standards, engineering guidance, manufacturer instructions, and shop
+// estimating assumptions. A source never silently upgrades class.
+export const FOUNDATION_SOURCE_CLASSES = deepFreeze({
+  local_code: "adopted local code / amendments",
+  structural_standard: "referenced structural standard",
+  engineering_guidance: "engineering guidance",
+  manufacturer_instructions: "manufacturer instructions",
+  shop_assumptions: "shop estimating assumptions",
+});
+const SOURCE_AUTHORITY_CLASS = deepFreeze({
+  "CMP-SUP-001": "manufacturer_instructions", "CMP-SUP-002": "manufacturer_instructions",
+  "CMP-SUP-003": "manufacturer_instructions", "CMP-SUP-004": "manufacturer_instructions",
+  "CMP-SUP-005": "manufacturer_instructions", "CMP-SUP-006": "manufacturer_instructions",
+  "CMP-SUP-007": "manufacturer_instructions", "CMP-SUP-008": "manufacturer_instructions",
+  "CMP-SUP-009": "manufacturer_instructions", "CMP-SUP-010": "manufacturer_instructions",
+  "CMP-SUP-011": "manufacturer_instructions", "CMP-SUP-012": "manufacturer_instructions",
+  "CMP-SUP-013": "structural_standard", "CMP-SUP-014": "structural_standard",
+  "CMP-SUP-015": "structural_standard", "CMP-SUP-016": "local_code",
+  "CMP-SUP-017": "engineering_guidance", "CMP-SUP-018": "engineering_guidance",
+  "CMP-SUP-019": "engineering_guidance", "CMP-SUP-020": "manufacturer_instructions",
+  "CMP-SUP-021": "manufacturer_instructions", "CMP-SUP-022": "manufacturer_instructions",
+  "CMP-SUP-023": "structural_standard", "CMP-SUP-024": "structural_standard",
+});
+
 const src = (register_id, section, verified) => {
   const base = FOUNDATION_RULE_SOURCES[register_id];
   return {
     register_id,
     authority: base.authority,
+    authority_class: SOURCE_AUTHORITY_CLASS[register_id] ?? null,
     title: base.title,
     edition: base.edition ?? null,
     section: section ?? null,
