@@ -316,6 +316,28 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         onCommit={(v) => patchSign({ mount_height_inches: v })}
                         ariaLabel={`Pole ${index + 1} sign ${si + 1} mount height (inches)`}
                       />
+                      <FoundationDimensionInput
+                        {...signDimMeta("depth_inches")}
+                        value={s.depth_inches ?? ""}
+                        onCommit={(v) => patchSign({ depth_inches: v })}
+                        ariaLabel={`Pole ${index + 1} sign ${si + 1} depth (inches)`}
+                      />
+                      <FoundationDimensionInput
+                        {...signDimMeta("horizontal_offset_inches")}
+                        value={s.horizontal_offset_inches ?? ""}
+                        onCommit={(v) => patchSign({ horizontal_offset_inches: v })}
+                        ariaLabel={`Pole ${index + 1} sign ${si + 1} horizontal offset (inches)`}
+                      />
+                      <label className="flex items-center gap-1 text-[10px] text-gray-500 self-end pb-1" title="Mirror a second sign across the pole">
+                        <input
+                          type="checkbox"
+                          checked={s.twin === true}
+                          onChange={(e) => patchSign({ twin: e.target.checked })}
+                          className="h-3.5 w-3.5"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} twin`}
+                        />
+                        Twin
+                      </label>
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
                         <input
