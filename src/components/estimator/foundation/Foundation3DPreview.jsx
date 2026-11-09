@@ -4,7 +4,7 @@ import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
 
 const IN = 1 / 12; // inches -> feet units
 
-function buildScene(scene, project, solid, showGround) {
+function buildScene(scene, project, solid, showGround, highlight) {
   const group = new THREE.Group();
 
   const concreteMat = solid
@@ -13,6 +13,21 @@ function buildScene(scene, project, solid, showGround) {
   const poleMat = solid
     ? new THREE.MeshStandardMaterial({ color: 0x4b5563, metalness: 0.4, roughness: 0.5 })
     : new THREE.MeshBasicMaterial({ color: 0x1f2937, wireframe: true });
+
+  // O-034 highlight sync — meshes carry their component_id; ids in the
+  // `highlight` set swap to the selection material. Shared per-build
+  // highlight mats keep this cheap and dispose with the build cycle.
+  const hlMat = highlight?.size
+    ? (solid
+      ? new THREE.MeshStandardMaterial({ color: 0x2563eb, emissive: 0x1d4ed8, emissiveIntensity: 0.35, roughness: 0.6 })
+      : new THREE.MeshBasicMaterial({ color: 0x2563eb, wireframe: true }))
+    : null;
+  const tag = (mesh, componentId, kind) => {
+    mesh.userData.componentId = componentId ?? null;
+    mesh.userData.kind = kind;
+    if (hlMat && componentId && highlight.has(componentId)) mesh.material = hlMat;
+    return mesh;
+  };
 
   let cursorX = 0;
   const items = project.items || [];
@@ -35,12 +50,14 @@ function buildScene(scene, project, solid, showGround) {
       const offset = (Number(item.grade_offset_inches) || 0) * IN;
       mesh.position.set(cursorX + footprint / 2, -depth / 2 + offset, 0);
       mesh.rotation.y = ((Number(item.rotation_degrees) || 0) * Math.PI) / 180;
+      tag(mesh, item.component_id, "item");
       group.add(mesh);
 
       if (item.selected_pole_id || item.pole_total_height_inches) {
         const h = (Number(item.pole_total_height_inches) || 96) * IN;
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, h, 16), poleMat);
         pole.position.set(mesh.position.x, offset + h / 2, 0);
+        tag(pole, item.selected_pole_id || null, "pole");
         group.add(pole);
       }
 
@@ -49,11 +66,11 @@ function buildScene(scene, project, solid, showGround) {
   });
 
   (project.poles || []).forEach((p) => {
-    // CMP-E02: distinct quantities — the pole top sits at base offset plus
+    // CMP-E02: distinct quantities â€” the pole top sits at base offset plus
     // height above grade; embedment extends BELOW grade (canonical
     // embedment_inches; the legacy y_offset_inches spelling carries the same
     // authored "depth in ground" quantity and is no longer read as an upward
-    // elevation — CMP-AUD07). Cross-section follows the authored/resolved
+    // elevation â€” CMP-AUD07). Cross-section follows the authored/resolved
     // pole_shape; unspecified stays the round default.
     const height = (Number(p.height_inches) || 96) * IN;
     const embed = (Number(p.embedment_inches ?? p.y_offset_inches) || 0) * IN;
@@ -72,6 +89,7 @@ function buildScene(scene, project, solid, showGround) {
       base + (height - embed) / 2,
       (Number(p.z_inches) || 0) * IN
     );
+    tag(pole, p.component_id, "pole");
     group.add(pole);
   });
 
@@ -97,13 +115,14 @@ function buildScene(scene, project, solid, showGround) {
   return group;
 }
 
-export default function Foundation3DPreview({ project }) {
+export default function Foundation3DPreview({ project, highlightComponentIds = [] }) {
   const mountRef = useRef(null);
   const stateRef = useRef({});
   const [solid, setSolid] = useState(true);
   const [showGround, setShowGround] = useState(true);
   const [visible, setVisible] = useState(true);
   const [zoom, setZoom] = useState(100);
+  const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
   useEffect(() => {
     if (!visible || !mountRef.current) return;
@@ -140,7 +159,7 @@ export default function Foundation3DPreview({ project }) {
       camera.lookAt(st.target);
     };
 
-    buildScene(scene, project, solid, showGround);
+    buildScene(scene, project, solid, showGround, new Set(highlightComponentIds));
     applyCamera();
 
     let frame;
@@ -224,7 +243,8 @@ export default function Foundation3DPreview({ project }) {
       renderer.dispose();
       if (el.parentNode === mount) mount.removeChild(el);
     };
-  }, [project, solid, showGround, visible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
+  }, [project, solid, showGround, visible, highlightKey]);
 
   const setView = (v) => stateRef.current.setView?.(v);
 
