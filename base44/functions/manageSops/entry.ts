@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { memo, bust } from '../../shared/invokeMemo.ts';
 
 // Session-authenticated gateway for the SOP module. The Sop entity RLS is
 // backend-only, so every staff-facing read and write flows through here:
@@ -279,13 +280,20 @@ Deno.serve(async (req) => {
     const action = String(body?.action || '').trim();
     const Sop = base44.asServiceRole.entities.Sop;
     const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
-    const { record: settingsRecord, settings } = await loadSettings(GlobalSettings);
+
+    // Reads share the warm caches; any write drops both so the next read —
+    // including this action's own loadSettings below — refetches fresh.
+    const SOP_READS = new Set(['bootstrap', 'list', 'get', 'ack_report']);
+    if (!SOP_READS.has(action)) { bust('sopset'); bust('soplist'); }
+
+    const { record: settingsRecord, settings } = await memo('sopset', 'settings', 60000,
+      () => loadSettings(GlobalSettings), { bypass: body?.bypass === true });
     const canEdit = isEditor(user, settings);
     const isAdmin = user.role === 'admin';
 
     if (action === 'bootstrap') {
       const viewerEmail = String(user.email || '').toLowerCase();
-      const rows = await listAll(Sop);
+      const rows = await memo('soplist', 'all', 15000, () => listAll(Sop), { bypass: body?.bypass === true });
       const sops = rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit, viewerEmail));
       return Response.json({
         settings,
@@ -302,7 +310,7 @@ Deno.serve(async (req) => {
 
     if (action === 'list') {
       const viewerEmail = String(user.email || '').toLowerCase();
-      const rows = await listAll(Sop);
+      const rows = await memo('soplist', 'all', 15000, () => listAll(Sop), { bypass: body?.bypass === true });
       return Response.json({ sops: rows.filter((row: any) => visibleTo(row, canEdit)).map((row: any) => forViewer(row, canEdit, viewerEmail)) });
     }
 
