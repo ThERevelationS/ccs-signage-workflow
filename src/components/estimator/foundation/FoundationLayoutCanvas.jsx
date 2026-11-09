@@ -31,7 +31,14 @@ import {
   beginClickCandidate,
   isClickRelease,
   sceneNodeId,
+  parseSceneNodeId,
 } from "./foundationSceneSelection";
+import {
+  planReparentSelection,
+  reparentTargetsFor,
+  reparentChildSpec,
+  mountLinkDescriptors,
+} from "./foundationReparentModel";
 import {
   beginItemResize,
   resizeItemFromHandle,
@@ -82,6 +89,26 @@ const ALIGN_LABELS = {
   top: "Align top edges", centerZ: "Align vertical centers", bottom: "Align bottom edges",
 };
 const ALIGN_TEXT = { left: "◧", centerX: "↔", right: "◨", top: "⬒", centerZ: "↕", bottom: "⬓" };
+
+// O-036 — honest user-facing text for the model's structured refusals.
+const REPARENT_REASON_TEXT = {
+  "read-only": "The layout is read-only.",
+  "unresolved": "That object could not be resolved.",
+  "locked": "The object is locked.",
+  "kind-not-reparentable": "Only poles, wall caps, and cabinets can be mounted.",
+  "legacy-parent-unresolved": "Its mount is stored in legacy form — save once to normalize before remounting.",
+  "target-not-found": "Mount target not found.",
+  "target-not-addressable": "That target can't hold a mount (no component id — save once to normalize).",
+  "invalid-target-type": "That target can't hold the selected object.",
+  "segment-not-on-wall": "That segment belongs to a different wall.",
+  "cycle": "An object can't be mounted to itself.",
+  "invalid-geometry": "The object's position can't be resolved.",
+  "invalid-target-geometry": "The target's frame can't be resolved.",
+  "invalid-source-geometry": "The current mount's frame can't be resolved.",
+  "empty-selection": "Nothing mountable is selected.",
+  "commit-refused": "The page refused the mount change.",
+  "unavailable": "Mounting needs the multi-object channel.",
+};
 
 export default function FoundationLayoutCanvas({
   items = [],
@@ -138,6 +165,25 @@ export default function FoundationLayoutCanvas({
   useSyncExternalStore(selection.subscribe, () => selection.stateVersion);
   const selState = selection.getState();
   const selIds = new Set(selState.ids);
+
+  // O-036 reparent seam — the mount-handle chrome renders from the pure
+  // descriptor list and the picker plans through the same commitOpPatches
+  // channel every other op uses (one reparent = one undoable stroke).
+  const [reparentOpen, setReparentOpen] = useState(false);
+  const [reparentKeep, setReparentKeep] = useState("world");
+  const [reparentNote, setReparentNote] = useState(null);
+  useEffect(() => { setReparentOpen(false); setReparentNote(null); }, [selState.primaryId, selState.count]);
+  const mountLinks = mountLinkDescriptors(scene);
+  const reparentableIds = selState.ids.filter((id) => reparentChildSpec(parseSceneNodeId(id)?.kind));
+  const reparentPrimaryId = reparentableIds.includes(selState.primaryId)
+    ? selState.primaryId
+    : reparentableIds[reparentableIds.length - 1] ?? null;
+  // keep:"local" only transforms poles (the only child with plan geometry);
+  // the toggle stays honest by appearing only when a pole could move.
+  const reparentLocalEligible = reparentableIds.some((id) => parseSceneNodeId(id)?.kind === "pole");
+  const reparentTargets = reparentOpen && reparentPrimaryId
+    ? reparentTargetsFor(scene, reparentPrimaryId)
+    : null;
 
   // Click candidates + marquee run alongside the drag seam: a press records
   // its down point + topmost hit; release travel (< 5px) decides click vs
@@ -696,6 +742,33 @@ export default function FoundationLayoutCanvas({
     if (plan.status === "ok" && typeof onDuplicateSelection === "function") onDuplicateSelection(plan);
   };
 
+  // O-036 reparent — one plan over the whole selection (the target probes
+  // structurally once; per-child skips land honestly in `skipped`),
+  // committed through commitOpPatches so the reparent is ONE undoable
+  // stroke. Selection is stable across a mount change (node ids carry
+  // component ids), so reconcile() retains it — skipped children stay
+  // selected and the note says exactly what didn't move.
+  const runReparent = (target) => {
+    setReparentNote(null);
+    const result = planReparentSelection(scene, selState.ids, target, { keep: reparentKeep });
+    if (result.status === "noop") { setReparentOpen(false); return result; }
+    if (result.status !== "ok") {
+      setReparentNote(REPARENT_REASON_TEXT[result.reason] ?? `Can't mount there (${result.reason ?? "rejected"}).`);
+      return result;
+    }
+    const applied = commitOpPatches("reparent", "picker", result.patches, { label: result.label });
+    if (applied.status !== "applied") {
+      setReparentNote(REPARENT_REASON_TEXT[applied.status] ?? `Mount not applied (${applied.status}).`);
+      return applied;
+    }
+    if (result.skipped?.length) {
+      const reasons = [...new Set(result.skipped.map((s) => REPARENT_REASON_TEXT[s.reason] ?? s.reason))].join(" ");
+      setReparentNote(`${result.count} remounted; ${result.skipped.length} skipped — ${reasons}`);
+    }
+    setReparentOpen(false);
+    return result;
+  };
+
   // Typed-coordinate commits — a field blur/Enter parses (ft/in via the
   // O-093 boundary for length fields, strict numeric for rotation), the
   // typed op validates atomically, and a landed patch records like any
@@ -769,6 +842,9 @@ export default function FoundationLayoutCanvas({
   const canRotateSel = editable && selectedItemCount >= 1 && (selectedItemCount === 1 || multiChannel);
   const canDuplicate = typeof onDuplicateSelection === "function";
   const canDelete = typeof onDeleteSelection === "function" && selState.count >= 1;
+  // Reparent patches never fit the single-items channel — a mount op
+  // needs the multi channel even for one child.
+  const canReparent = editable && multiChannel && reparentableIds.length >= 1;
 
   const typedField = (field, label, stored, parse, format) => (
     <input
@@ -846,6 +922,50 @@ export default function FoundationLayoutCanvas({
             backgroundSize: "8.333% 12.5%",
           }}
         >
+          {/* O-036 mount chrome — one dashed tether + handle badge per live
+              mount (pole→item, cap→wall/segment, cabinet→pole|item).
+              Detached, dangling and unresolved mounts emit nothing: there
+              is no mount to show. Plan-space overlay under the objects;
+              pointer events never pass through. */}
+          <svg
+            aria-hidden="true"
+            data-mount-links="true"
+            className="absolute inset-0"
+            viewBox={`0 0 ${FOUNDATION_LAYOUT_WIDTH_INCHES} ${FOUNDATION_LAYOUT_DEPTH_INCHES}`}
+            preserveAspectRatio="none"
+            style={{ pointerEvents: "none", zIndex: 1 }}
+          >
+            {mountLinks.map((link) => {
+              const sel = selIds.has(link.childId);
+              const a = link.handlePoint;
+              const b = link.parentPoint;
+              const showLine = a && b && (a.x !== b.x || a.z !== b.z);
+              return (
+                <g key={link.childId} data-mount-link={link.childId} data-mount-kind={link.childKind}>
+                  {showLine && (
+                    <line
+                      x1={a.x} y1={a.z} x2={b.x} y2={b.z}
+                      stroke={sel ? "#0369a1" : "#64748b"}
+                      strokeOpacity={sel ? 0.9 : 0.45}
+                      strokeWidth={sel ? 2 : 1.25}
+                      strokeDasharray="4 3"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  {a && (
+                    <rect
+                      x={a.x - 2.5} y={a.z - 2.5} width={5} height={5}
+                      transform={`rotate(45 ${a.x} ${a.z})`}
+                      fill={sel ? "#0284c7" : "#f8fafc"}
+                      stroke={sel ? "#075985" : "#64748b"}
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </svg>
           {items.map((item, index) => {
             const fp = foundationLayoutFootprint(item);
             const pos = layoutPositionInches(item);
@@ -1060,6 +1180,65 @@ export default function FoundationLayoutCanvas({
           >
             Delete
           </button>
+          {reparentableIds.length >= 1 && (
+            <span className="relative inline-block">
+              <button
+                type="button"
+                data-op="reparent"
+                disabled={!canReparent}
+                title={canReparent
+                  ? "Mount, remount, or detach the selected object"
+                  : "Requires multi-object page channel (O-035 mount)"}
+                onClick={() => { setReparentOpen((v) => !v); setReparentNote(null); }}
+                className={`px-1.5 py-0.5 rounded-sm border ${canReparent ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+              >
+                Mount ▾
+              </button>
+              {reparentOpen && canReparent && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setReparentOpen(false)} />
+                  <div
+                    data-reparent-menu="true"
+                    className="absolute left-0 bottom-full mb-1 z-40 w-56 max-h-60 overflow-auto rounded-sm border border-gray-300 bg-white shadow-lg text-left"
+                  >
+                    {reparentLocalEligible && (
+                      <label className="flex items-center gap-1.5 px-2 py-1.5 border-b border-gray-200 text-gray-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={reparentKeep === "local"}
+                          onChange={(e) => setReparentKeep(e.target.checked ? "local" : "world")}
+                        />
+                        Keep local offset (poles only)
+                      </label>
+                    )}
+                    {(reparentTargets?.targets || []).map((t) => (
+                      <button
+                        key={`${t.kind}:${t.componentId}`}
+                        type="button"
+                        data-reparent-target={t.kind}
+                        disabled={!!t.current}
+                        onClick={() => runReparent(t)}
+                        className={`block w-full px-2 py-1 text-left ${t.current ? "text-sky-700 bg-sky-50" : "text-gray-700 hover:bg-gray-50"}`}
+                      >
+                        {t.label}{t.current ? " — current" : ""}
+                      </button>
+                    ))}
+                    {reparentTargets?.detach && (
+                      <button
+                        type="button"
+                        data-reparent-target="standalone"
+                        disabled={reparentTargets.detached}
+                        onClick={() => runReparent("standalone")}
+                        className={`block w-full px-2 py-1 text-left border-t border-gray-200 ${reparentTargets.detached ? "text-gray-300" : "text-red-700 hover:bg-red-50"}`}
+                      >
+                        Detach (standalone)
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </span>
+          )}
         </div>
       )}
 
@@ -1076,6 +1255,10 @@ export default function FoundationLayoutCanvas({
               </>}
           {typedField("rotation", "Rotation (degrees)", primaryItemRow.item.rotation_degrees ?? 0, rotParse, (v) => String(v ?? 0))}
         </div>
+      )}
+
+      {reparentNote && (
+        <p data-reparent-note="true" className="mt-1 text-[11px] text-amber-700">{reparentNote}</p>
       )}
 
       {invalidNotes.map(({ index }) => (
