@@ -75,6 +75,46 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
     ]);
   };
 
+  // O-051 (CMP-D08): segment coverage / cut list — caps grouped by their
+  // bound segment, sorted by position, each with its cut vs the segment
+  // length plus the uncovered gaps between them. Read-only and honest:
+  // nothing here invents miters, joints, or auto-fits.
+  const cutList = [];
+  walls.forEach((wall, wi) => {
+    (wall?.shape?.segments || []).forEach((sg, si) => {
+      const segLen = wallCapInputNumber(sg?.length);
+      const segCaps = caps
+        .map((c, ci) => ({ c, ci }))
+        .filter(({ c }) => c.segment_component_id && c.segment_component_id === sg?.component_id)
+        .map(({ c, ci }) => {
+          const cut = wallCapInputNumber(wallCapCutLengthValue(c));
+          const pos = wallCapInputNumber(c.position_along_segment_inches);
+          return { ci, cut, pos: pos !== null ? pos : 0 };
+        })
+        .sort((a, b) => a.pos - b.pos);
+      if (!segCaps.length) return;
+      const pieces = [];
+      let cursor = 0;
+      segCaps.forEach(({ ci, cut, pos }) => {
+        const start = Math.max(0, pos);
+        if (segLen !== null && start > cursor) {
+          pieces.push({ gap: start - cursor });
+        }
+        if (cut !== null && cut > 0) {
+          pieces.push({ ci, start, end: start + cut, over: segLen !== null && start + cut > segLen });
+          cursor = Math.max(cursor, start + cut);
+        } else {
+          pieces.push({ ci, start, end: null, uncut: true });
+        }
+      });
+      if (segLen !== null && cursor < segLen) pieces.push({ gap: segLen - cursor });
+      cutList.push({
+        wall: wall?.name || `Wall ${wi + 1}`,
+        seg: si + 1, segLen, pieces,
+      });
+    });
+  });
+
   const capIssues = foundationWallCapCatalogIssues(caps, options);
   const unavailableCaps = new Set(capIssues.filter(issue => issue.code !== "wall_cap_cost_total_invalid").map(issue => issue.index));
   const geometryIssues = (index) => capIssues.filter(issue => issue.index === index && ["length_inches", "cap_stock_length_inches"].includes(issue.field));
@@ -124,6 +164,29 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
           Wall cap catalog unavailable â€” existing rows remain editable; new caps cannot be added.
         </div>
+      )}
+      {cutList.length > 0 && (
+        <details className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          <summary className="text-[11px] font-semibold text-gray-700 cursor-pointer select-none">
+            Cut list — {cutList.reduce((s, r) => s + r.pieces.filter((p) => p.ci !== undefined).length, 0)} piece{cutList.reduce((s, r) => s + r.pieces.filter((p) => p.ci !== undefined).length, 0) === 1 ? "" : "s"} on {cutList.length} segment{cutList.length === 1 ? "" : "s"}
+          </summary>
+          <div className="mt-2 space-y-1.5 text-[11px] text-gray-700">
+            {cutList.map((row) => (
+              <div key={`${row.wall}:${row.seg}`}>
+                <span className="font-medium text-gray-800">{row.wall} · Segment {row.seg}</span>
+                {row.segLen !== null && <span className="text-gray-500"> ({Math.round(row.segLen)} in)</span>}
+                <span className="text-gray-500">
+                  {" — "}
+                  {row.pieces.map((p, pi) => {
+                    if (p.gap !== undefined) return <span key={pi} className="text-amber-700">gap {Math.round(p.gap)}″</span>;
+                    if (p.uncut) return <span key={pi}>cap {p.ci + 1} @ {Math.round(p.start)}″ (no cut length)</span>;
+                    return <span key={pi} className={p.over ? "text-red-600 font-medium" : undefined}>cap {p.ci + 1} @ {Math.round(p.start)}″–{Math.round(p.end)}″{p.over ? " (overruns segment)" : ""}</span>;
+                  }).reduce((acc, el, i) => i === 0 ? [el] : [...acc, ", ", el], [])}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
       {caps.length === 0 ? (
         <div className="text-center py-6 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm">
