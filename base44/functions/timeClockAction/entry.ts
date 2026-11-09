@@ -3650,7 +3650,7 @@ Deno.serve(async (req) => {
       return recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, s, target);
     };
     let state = action === 'status' && body?.bypass !== true
-      ? await memo('tcstate', String(target.id || target.email || 'unknown'), 3000, resolveState)
+      ? await memo('tcstate', String(target.id || target.email || 'unknown'), 10000, resolveState)
       : await resolveState();
 
     if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {
