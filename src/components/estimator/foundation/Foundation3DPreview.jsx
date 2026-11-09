@@ -301,6 +301,9 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   // O-029 section view — inches of elevation at which a horizontal clip plane
   // cuts the scene (negative = below grade). null disables sectioning.
   const [section, setSection] = useState(null);
+  // O-037 below-grade cutaway — flips the clip to keep only the buried
+  // portion (y <= 0), independent of the elevation-section height.
+  const [sectionBelow, setSectionBelow] = useState(false);
   const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
   const disposeObject = (root) => {
@@ -485,11 +488,11 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
     const st = stateRef.current;
     if (!st.renderer) return;
     st.renderer.clippingPlanes = section === null
-      ? []
+      ? (sectionBelow ? [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] : [])
       : [new THREE.Plane(new THREE.Vector3(0, -1, 0), section * IN)];
     st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section]);
+  }, [section, sectionBelow]);
 
   const setView = (v) => stateRef.current.setView?.(v);
 
@@ -540,6 +543,7 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             </ToolBtn>
             <ToolBtn onClick={() => setExploded((v) => !v)} active={exploded}>Exploded</ToolBtn>
             <ToolBtn onClick={() => setSection((v) => (v === null ? -6 : null))} active={section !== null}>Section</ToolBtn>
+            <ToolBtn onClick={() => setSectionBelow((v) => !v)} active={sectionBelow} title="Show only below-grade geometry">Below</ToolBtn>
             {section !== null && (
               <span className="flex items-center gap-1 text-[11px] text-gray-600">
                 <input
