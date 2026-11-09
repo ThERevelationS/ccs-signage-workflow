@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
@@ -7,14 +8,47 @@ import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import { foundationWallCapCatalogIssues, wallCapInputNumber, wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-093 (CMP-H02): the cut-length field takes feet/inches entry through the
-// shared dimension field — same verbatim-draft contract as the CMP-A08
+// shared dimension field â€” same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const capDimMeta = (field) => foundationDimensionFieldMeta("wallCap", field);
 
 export default function FoundationWallCapsPanel({ caps = [], walls = [], options = [], onChange }) {
+  const [capWallId, setCapWallId] = useState("");
   const patchCap = (index, changes) =>
     onChange(caps.map((c, i) => (i === index ? { ...c, ...changes } : c)));
+
+  // O-049 (CMP-D06): cap generation from actual wall geometry — one cap row
+  // per un-capped segment of the chosen wall(s); the segment's own length is
+  // the cut length (over-stock cuts still fail held in wallCapCalculator).
+  const capWalls = (wallIds) => {
+    const inv = options[0];
+    const stockLength = wallCapInputNumber(inv?.cap_stock_length_inches);
+    const capped = new Set(caps.map((c) => c.segment_component_id).filter(Boolean));
+    const made = [];
+    wallIds.forEach((wallId) => {
+      const wi = walls.findIndex((w) => w.component_id === wallId);
+      const wall = walls[wi];
+      (wall?.shape?.segments || []).forEach((sg, si) => {
+        if (sg?.component_id && capped.has(sg.component_id)) return;
+        const len = wallCapInputNumber(sg?.length);
+        made.push({
+          id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          cap_inventory_id: inv?.id || "",
+          wall_component_id: wallId,
+          wall_index: wi < 0 ? undefined : wi,
+          segment_component_id: sg?.component_id || "",
+          segment_index: si,
+          position_along_segment_inches: 0,
+          length_inches: len !== null && len > 0 ? len : stockLength !== null && stockLength > 0 ? stockLength : "",
+          rotation_offset_degrees: 0,
+          lateral_offset_inches: 0,
+        });
+        if (sg?.component_id) capped.add(sg.component_id);
+      });
+    });
+    if (made.length) onChange([...caps, ...made]);
+  };
 
   const removeCap = (index) => {
     if (!window.confirm(`Remove cap ${index + 1}?`)) return;
@@ -52,14 +86,43 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           <h2 className="font-semibold text-gray-900">Wall Caps</h2>
           <p className="text-xs text-gray-500">Full stock price is charged per cut piece.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={addCap} disabled={options.length === 0}>
-          <Plus className="w-4 h-4" aria-hidden="true" /> Cap
-        </Button>
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          <select
+            className="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
+            value={capWallId}
+            aria-label="Wall to cap"
+            onChange={(e) => setCapWallId(e.target.value)}
+          >
+            <option value="">This wall…</option>
+            {walls.map((w, i) => (
+              <option key={w.component_id || i} value={w.component_id || ""}>
+                {w.name || `Wall ${i + 1}`}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="outline" size="sm"
+            disabled={options.length === 0 || !capWallId}
+            onClick={() => capWalls([capWallId])}
+          >
+            Cap wall
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            disabled={options.length === 0 || walls.length === 0}
+            onClick={() => capWalls(walls.map((w) => w.component_id))}
+          >
+            Cap all walls
+          </Button>
+          <Button variant="outline" size="sm" onClick={addCap} disabled={options.length === 0}>
+            <Plus className="w-4 h-4" aria-hidden="true" /> Cap
+          </Button>
+        </div>
       </div>
 
       {options.length === 0 && (
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-          Wall cap catalog unavailable — existing rows remain editable; new caps cannot be added.
+          Wall cap catalog unavailable â€” existing rows remain editable; new caps cannot be added.
         </div>
       )}
       {caps.length === 0 ? (
@@ -82,7 +145,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                     });
                   }}
                 >
-                  <option value="">Select cap…</option>
+                  <option value="">Select capâ€¦</option>
                   {cap.cap_inventory_id && !options.some((o) => o.id === cap.cap_inventory_id) && (
                     <option value={cap.cap_inventory_id} disabled>{`Catalog cap unavailable (${cap.cap_inventory_id})`}</option>
                   )}
@@ -115,7 +178,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 >
                   <option value="">Unassigned</option>
                   {cap.wall_component_id && !walls.some((w) => w.component_id === cap.wall_component_id) && (
-                    <option value={cap.wall_component_id} disabled>{`Missing wall (${String(cap.wall_component_id).slice(0, 18)}…)`}</option>
+                    <option value={cap.wall_component_id} disabled>{`Missing wall (${String(cap.wall_component_id).slice(0, 18)}â€¦)`}</option>
                   )}
                   {walls.map((w, i) => (
                     <option key={w.component_id || i} value={w.component_id || ""}>
@@ -143,7 +206,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 >
                   <option value="">Unassigned</option>
                   {cap.segment_component_id && !(walls.find((w) => w.component_id === cap.wall_component_id)?.shape?.segments || []).some((sg) => sg.component_id === cap.segment_component_id) && (
-                    <option value={cap.segment_component_id} disabled>{`Missing segment (${String(cap.segment_component_id).slice(0, 18)}…)`}</option>
+                    <option value={cap.segment_component_id} disabled>{`Missing segment (${String(cap.segment_component_id).slice(0, 18)}â€¦)`}</option>
                   )}
                   {(walls.find((w) => w.component_id === cap.wall_component_id)?.shape?.segments || []).map((sg, i) => (
                     <option key={sg.component_id || i} value={sg.component_id || ""}>
