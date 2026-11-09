@@ -42,6 +42,7 @@ import {
   reparentChildSpec,
   mountLinkDescriptors,
 } from "./foundationReparentModel";
+import { buildFoundationPlanSvg } from "./foundationPlanExport";
 import {
   foundationSceneDiagnostics,
   diagnosticTarget,
@@ -957,6 +958,21 @@ export default function FoundationLayoutCanvas({
     if (patches.length) commitOpPatches("mirror", "toolbar", patches, { label: `Mirror ${patches.length} object${patches.length === 1 ? "" : "s"}` });
   };
   const canMirrorSel = editable && selState.count > 0 && selState.ids.some((id) => /^(item|pole|wall):/.test(id));
+  // O-043 -- labeled plan export: the pure builder renders the SAME scene
+  // (authored values only, unresolved mounts skipped) into a standalone
+  // SVG document; the download is a Blob -- nothing is sent anywhere.
+  const exportPlan = () => {
+    const svg = buildFoundationPlanSvg(scene, { width: FOUNDATION_LAYOUT_WIDTH_INCHES, depth: FOUNDATION_LAYOUT_DEPTH_INCHES });
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `foundation-plan-${FOUNDATION_LAYOUT_WIDTH_INCHES}x${FOUNDATION_LAYOUT_DEPTH_INCHES}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // O-036 reparent — one plan over the whole selection (the target probes
   // structurally once; per-child skips land honestly in `skipped`),
@@ -1576,6 +1592,15 @@ export default function FoundationLayoutCanvas({
             className={`px-1.5 py-0.5 rounded-sm border ${canMirrorSel ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
           >
             Mirror
+          </button>
+          <button
+            type="button"
+            data-op="export-plan"
+            title="Download a labeled plan drawing (SVG)"
+            onClick={exportPlan}
+            className="px-1.5 py-0.5 rounded-sm border border-gray-300 hover:bg-gray-50 text-gray-700"
+          >
+            Export
           </button>
           <button
             type="button"
