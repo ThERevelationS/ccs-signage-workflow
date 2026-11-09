@@ -155,7 +155,7 @@ function RecipientList({ title, rows, onChange, allowDelay = false }) {
 }
 
 function ReminderBlock({ title, days, onToggle, rows, onRows }) {
-  return <div className="rounded-xl border border-gray-200 p-4 dark:border-slate-800"><div className="text-sm font-semibold text-gray-800 dark:text-slate-200">{title}</div><div className="mt-3 flex flex-wrap gap-1.5">{DAYS.map(day=><button type="button" key={day} type="button" onClick={()=>onToggle(day)} className={`min-h-11 rounded-md border px-3 py-1 text-xs font-medium ${days.includes(day)?"border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300":"border-gray-200 text-gray-500 dark:border-slate-700 dark:text-slate-400"}`}>{DAY_LABELS[day]}</button>)}</div><div className="mt-3"><RecipientList title="Recipients" rows={rows} onChange={onRows}/></div></div>;
+  return <div className="rounded-xl border border-gray-200 p-4 dark:border-slate-800"><div className="text-sm font-semibold text-gray-800 dark:text-slate-200">{title}</div><div className="mt-3 flex flex-wrap gap-1.5">{DAYS.map(day=><button type="button" key={day}  onClick={()=>onToggle(day)} className={`min-h-11 rounded-md border px-3 py-1 text-xs font-medium ${days.includes(day)?"border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300":"border-gray-200 text-gray-500 dark:border-slate-700 dark:text-slate-400"}`}>{DAY_LABELS[day]}</button>)}</div><div className="mt-3"><RecipientList title="Recipients" rows={rows} onChange={onRows}/></div></div>;
 }
 
 function TemplateEditor({ title, subject, body, onSubject, onBody, hint }) {

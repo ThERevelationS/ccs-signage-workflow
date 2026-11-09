@@ -191,7 +191,7 @@ export default function CurrentWorkCard({
       {!selectedWorkOrder && results.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-lg border bg-white divide-y">
           {results.map((wo) => (
-            <button type="button" key={wo.id} type="button" className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
+            <button type="button" key={wo.id}  className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
               <div className="text-sm font-medium flex items-center gap-2"><Briefcase className="w-3.5 h-3.5 text-purple-600" />{wo.client_name || "Client"}</div>
               <div className="text-xs text-gray-500 truncate">{wo.title}</div>
             </button>

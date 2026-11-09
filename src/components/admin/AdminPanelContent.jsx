@@ -62,7 +62,7 @@ export class AdminPanelErrorBoundary extends Component {
                 </p>
                 {this.state.diag && <p className="mt-1 font-mono text-[11px] text-amber-800/80">{this.state.diag}</p>}
               </div>
-              <button type="button" ref={this.retryButtonRef} type="button" onClick={this.retry}
+              <button type="button" ref={this.retryButtonRef}  onClick={this.retry}
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-500 bg-white px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 Retry panel

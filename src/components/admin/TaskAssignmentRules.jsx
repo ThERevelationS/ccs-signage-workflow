@@ -854,7 +854,7 @@ function TaskLoadPanel({ users }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-indigo-900">Task templates:</span>
             {TASK_TEMPLATES.map(tpl => (
-              <button type="button" key={tpl.name} type="button" disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
+              <button type="button" key={tpl.name}  disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
                 className="rounded-full border border-indigo-300 bg-white px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-40">
                 + {tpl.name}
               </button>
