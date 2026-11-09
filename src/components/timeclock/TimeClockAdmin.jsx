@@ -295,7 +295,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
   // Clean shifts (no conflicts, errors, or corrections) approve automatically —
   // one advisory sweep per page mount; flagged shifts always stay for a human.
   useEffect(() => {
-    if (!sessionToken || autoReviewRan.current) return;
+    if (view !== "entries" || !sessionToken || autoReviewRan.current) return;
     autoReviewRan.current = true;
     (async () => {
       try {
@@ -521,7 +521,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     }
     acc[key].hours += entry.total_hours || 0;
     acc[key].entries += 1;
-    const dayKey = safeFormat(entry.clock_in, "yyyy-MM-dd");
+    const dayKey = String(entry.work_day_anchor_date || "").trim() || safeFormat(entry.clock_in, "yyyy-MM-dd");
     if (dayKey !== "-") acc[key].daily[dayKey] = (acc[key].daily[dayKey] || 0) + (entry.total_hours || 0);
     return acc;
   }, {});
@@ -2246,6 +2246,16 @@ export default function TimeClockAdmin({ view = "entries" }) {
                 />
                 <p className="mt-1 text-xs text-gray-500">Required. This reason is stored with the audit record.</p>
               </div>
+
+              {timeEntryError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  <div className="font-medium">Correction not saved</div>
+                  <div className="mt-1 text-xs">{timeEntryError}</div>
+                </div>
+              )}
+              {saveBusy && (
+                <p className="text-xs text-gray-500">Still saving — the server is busy and your correction is being retried. This can take up to a minute.</p>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button
