@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { money, calcSignageCabinetPricing } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { foundationReinforcementBOMRows } from "./foundationReinforcementBOMRows";
 import { foundationWallBomRows } from "./wallCalculator";
 import { landscapeSummary } from "./landscapeMaterials";
 
@@ -55,12 +56,18 @@ export default function FoundationBOM({
     const baggedCost = resolved.reduce((s, i) => s + num(i.concrete_cost), 0);
     if (bags > 0 || baggedCost > 0) add("Bagged concrete", qty(bags, "bags"), baggedCost, bags);
 
-    const rebarFt = resolved.reduce((s, i) => s + num(i.rebar_feet), 0);
-    const rebarLbs = resolved.reduce((s, i) => s + num(i.rebar_weight_lbs), 0);
-    const rebarCost = resolved.reduce((s, i) => s + num(i.rebar_cost), 0);
+    // Version-2 reinforcement (and its supports) lists authored split rows;
+    // legacy items keep the unchanged aggregate row byte-for-byte.
+    const legacyRebar = resolved.filter((item) => item.reinforcement_calculation_version !== 2);
+    const rebarFt = legacyRebar.reduce((s, i) => s + num(i.rebar_feet), 0);
+    const rebarLbs = legacyRebar.reduce((s, i) => s + num(i.rebar_weight_lbs), 0);
+    const rebarCost = legacyRebar.reduce((s, i) => s + num(i.rebar_cost), 0);
     if (rebarFt > 0) {
       add(`Rebar (${qty(rebarLbs, "lbs")})`, qty(rebarFt, "LF"), rebarCost, rebarFt);
     }
+    resolved.filter((item) => item.reinforcement_calculation_version === 2).forEach((item) => {
+      out.push(...foundationReinforcementBOMRows(item));
+    });
 
     const formingQty = resolved.reduce((s, i) => s + num(i.forming_qty), 0);
     const formingCost = resolved.reduce((s, i) => s + num(i.forming_cost), 0);
@@ -76,7 +83,9 @@ export default function FoundationBOM({
           saved: true,
         });
       }
-      if (i.include_rebar) {
+      if (i.reinforcement_calculation_version === 2) {
+        out.push(...foundationReinforcementBOMRows(i, { saved: true }));
+      } else if (i.include_rebar) {
         out.push({
           material: `${label} — rebar`,
           quantity: Number.isFinite(i.rebar_feet) ? qty(i.rebar_feet, "LF") : "Not saved",
@@ -198,11 +207,12 @@ export default function FoundationBOM({
   }, [items, poles, walls, delivery, totals, inventory, itemPricing, polePricing, wallPricing, cabinets, cabinetRows, landscape, landscapePricing]);
 
   const materialTotal = rows.every(r => hasFoundationCostSnapshot(r.cost)) ? rows.reduce((sum, row) => sum + row.cost, 0) : null;
+  const listedPricingUnavailable = pricingUnavailable || rows.some((row) => row.basisUnavailable);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h3 className="font-semibold text-gray-900 mb-3">Bill of Materials</h3>
-      {pricingUnavailable && (
+      {listedPricingUnavailable && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
           <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable — saved quantities may be outdated.</p>
           {itemPricing.filter(p => p && p.available === false)
@@ -229,7 +239,10 @@ export default function FoundationBOM({
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i} className="border-b border-gray-100 last:border-0">
-                  <td className="py-1.5 pr-3 text-gray-800">{r.material}</td>
+                  <td className={`py-1.5 pr-3 text-gray-800${r.note ? " min-w-0 break-words" : ""}`}>
+                    {r.material}
+                    {r.note && <p className="mt-1 text-[11px] leading-snug text-gray-500 break-words">{r.note}</p>}
+                  </td>
                   <td className="py-1.5 pr-3 whitespace-nowrap text-gray-600">{r.quantity}</td>
                   <td className="py-1.5 pl-3 whitespace-nowrap text-right text-gray-900">{hasFoundationCostSnapshot(r.cost) ? money(r.cost) : "Not saved"}</td>
                 </tr>
@@ -238,7 +251,7 @@ export default function FoundationBOM({
           </table>
           <div className="flex justify-between pt-3 mt-1 border-t border-gray-200 font-bold text-gray-900">
             <span>Listed cost subtotal</span>
-            <span>{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : hasFoundationCostSnapshot(materialTotal) ? money(materialTotal) : "Not saved"}</span>
+            <span>{listedPricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : hasFoundationCostSnapshot(materialTotal) ? money(materialTotal) : "Not saved"}</span>
           </div>
         </>
       )}
