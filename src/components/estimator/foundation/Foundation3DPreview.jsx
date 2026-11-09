@@ -122,18 +122,42 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   const [showGround, setShowGround] = useState(true);
   const [visible, setVisible] = useState(true);
   const [zoom, setZoom] = useState(100);
+  const [glFailed, setGlFailed] = useState(false);
   const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
+  const disposeObject = (root) => {
+    const geometries = new Set(), materials = new Set();
+    root.traverse?.((o) => {
+      if (o.geometry) geometries.add(o.geometry);
+      const m = o.material;
+      for (const mat of Array.isArray(m) ? m : m ? [m] : []) materials.add(mat);
+    });
+    geometries.forEach((g) => g.dispose());
+    materials.forEach((m) => m.dispose());
+  };
+
+  // O-041 — ONE renderer/camera/scene for the mount's whole lifetime. The
+  // old code rebuilt the WebGL context on every edit. Rendering is
+  // demand-driven (invalidate() coalesces a rAF — no continuous loop), the
+  // WebGL-creation failure surfaces honestly, and context loss is
+  // prevented/re-rendered on restore.
   useEffect(() => {
     if (!visible || !mountRef.current) return;
     const mount = mountRef.current;
-    const width = mount.clientWidth;
-    const height = mount.clientHeight;
+    const st = stateRef.current;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf9fafb);
+    const width = mount.clientWidth || 1;
+    const height = mount.clientHeight || 1;
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch {
+      setGlFailed(true);
+      return;
+    }
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(width, height);
     mount.appendChild(renderer.domElement);
@@ -143,11 +167,24 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
     dir.position.set(20, 30, 20);
     scene.add(dir);
 
-    const st = stateRef.current;
     st.theta = st.theta ?? Math.PI / 4;
     st.phi = st.phi ?? Math.PI / 3.2;
     st.radius = st.radius ?? 30;
     st.target = st.target || new THREE.Vector3(0, 0, 0);
+    st.scene = scene;
+    st.camera = camera;
+    st.renderer = renderer;
+    st.modelGroup = null;
+
+    let frame = null;
+    const invalidate = () => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        renderer.render(scene, camera);
+      });
+    };
+    st.invalidate = invalidate;
 
     const applyCamera = () => {
       const r = st.radius;
@@ -158,16 +195,8 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       );
       camera.lookAt(st.target);
     };
-
-    buildScene(scene, project, solid, showGround, new Set(highlightComponentIds));
     applyCamera();
-
-    let frame;
-    const render = () => {
-      renderer.render(scene, camera);
-      frame = requestAnimationFrame(render);
-    };
-    render();
+    invalidate();
 
     // --- controls ---
     let dragging = null;
@@ -192,6 +221,7 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
         st.target.y += dy * panScale;
       }
       applyCamera();
+      invalidate();
     };
     const onUp = () => (dragging = null);
     const onWheel = (e) => {
@@ -199,8 +229,11 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       st.radius = Math.min(200, Math.max(3, st.radius * (1 + e.deltaY * 0.001)));
       setZoom(Math.round((30 / st.radius) * 100));
       applyCamera();
+      invalidate();
     };
     const onContext = (e) => e.preventDefault();
+    const onContextLost = (e) => e.preventDefault();
+    const onContextRestored = () => invalidate();
 
     const el = renderer.domElement;
     el.addEventListener("mousedown", onDown);
@@ -208,13 +241,16 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
     window.addEventListener("mouseup", onUp);
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("contextmenu", onContext);
+    el.addEventListener("webglcontextlost", onContextLost);
+    el.addEventListener("webglcontextrestored", onContextRestored);
 
     const onResize = () => {
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
+      const w = mount.clientWidth || 1;
+      const h = mount.clientHeight || 1;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      invalidate();
     };
     window.addEventListener("resize", onResize);
 
@@ -230,19 +266,38 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
         setZoom(100);
       }
       applyCamera();
+      invalidate();
     };
 
     return () => {
-      cancelAnimationFrame(frame);
+      if (frame !== null) cancelAnimationFrame(frame);
       el.removeEventListener("mousedown", onDown);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("contextmenu", onContext);
+      el.removeEventListener("webglcontextlost", onContextLost);
+      el.removeEventListener("webglcontextrestored", onContextRestored);
       window.removeEventListener("resize", onResize);
+      disposeObject(scene);
       renderer.dispose();
       if (el.parentNode === mount) mount.removeChild(el);
+      st.scene = st.camera = st.renderer = st.modelGroup = null;
     };
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Model rebuild — swaps only the model group inside the live scene and
+  // disposes the outgoing group's geometries/materials. Effect order keeps
+  // this after the init effect so st.scene exists on first mount.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!visible || !st.scene || !st.renderer) return;
+    if (st.modelGroup) {
+      st.scene.remove(st.modelGroup);
+      disposeObject(st.modelGroup);
+    }
+    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds));
+    st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
   }, [project, solid, showGround, visible, highlightKey]);
 
@@ -298,7 +353,9 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             </ToolBtn>
           </div>
 
-          <div ref={mountRef} className="w-full h-[420px] rounded-sm overflow-hidden bg-gray-50" />
+          {glFailed
+            ? <div data-gl-failed="true" className="w-full h-[420px] rounded-sm bg-amber-50 border border-amber-200 flex items-center justify-center text-[11px] text-amber-800">3D preview is unavailable in this browser — WebGL could not be initialized.</div>
+            : <div ref={mountRef} className="w-full h-[420px] rounded-sm overflow-hidden bg-gray-50" />}
 
           <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1 px-1">
             <span>Left Click + Drag: Orbit/Rotate</span>
