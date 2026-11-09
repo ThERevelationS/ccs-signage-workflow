@@ -36,7 +36,7 @@ const countyParts = (value) => String(value || "").split("/").map(normalizeCount
 const localityCounty = (locality) => locality?.county_name || locality?.parent_county_name || "";
 const localityTypeLabel = (locality) => String(locality?.jurisdiction_type || "")
   .replaceAll("_", " ")
-  .replace(/\w/g, character => character.toUpperCase());
+  .replace(/\b\w/g, character => character.toUpperCase());
 const localityIdentityKey = (locality) => [
   normalizePlaceName(locality?.name),
   normalizePlaceName(locality?.state),
