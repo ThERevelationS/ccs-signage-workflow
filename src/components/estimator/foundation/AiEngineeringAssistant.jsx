@@ -62,6 +62,18 @@ export default function AiEngineeringAssistant({ project, onResult }) {
     }
   };
 
+  // O-089 — cancel invalidates the in-flight review: bumping tokenRef makes
+  // the pending response hit the stale-token guard, so nothing lands. The
+  // server-side call still completes (InvokeLLM is not abortable) but its
+  // result is discarded. Retry re-runs the same prepared request.
+  const cancel = () => {
+    tokenRef.current += 1;
+    busyRef.current = false;
+    setRunning(false);
+    setError("");
+  };
+  const retry = () => { cancel(); run(); };
+
   const recommendation = typeof project?.ai_engineering_recommendation === "string" ? project.ai_engineering_recommendation : "";
   const meta = project?.ai_engineering_data;
   const samePolicy = meta?.policy_version === FOUNDATION_AI_REVIEW_POLICY && typeof meta?.source_key === "string" && !!meta.source_key;
@@ -93,6 +105,26 @@ export default function AiEngineeringAssistant({ project, onResult }) {
           {running ? <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
           {running ? "Reviewingâ€¦" : "Review Foundation Inputs"}
         </button>
+        {running && (
+          <button
+            type="button"
+            onClick={cancel}
+            className="h-[30px] px-2.5 rounded-sm border border-gray-300 text-gray-600 text-[12px] hover:bg-gray-50"
+            title="Discard the in-flight review"
+          >
+            Cancel
+          </button>
+        )}
+        {error && !running && (
+          <button
+            type="button"
+            onClick={retry}
+            className="h-[30px] px-2.5 rounded-sm border border-gray-300 text-gray-600 text-[12px] hover:bg-gray-50"
+            title="Re-run the review"
+          >
+            Retry
+          </button>
+        )}
       </div>
 
       {(inputError || error) && <div role="alert" className="mt-2 text-[11px] text-red-600">{inputError || error}</div>}
