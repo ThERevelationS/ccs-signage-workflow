@@ -147,6 +147,49 @@ export function foundationSceneDiagnostics(scene) {
     }
   });
 
+  // -- walls: unsupported spans (O-048) ---------------------------------
+  // A segment is "supported" when its midpoint lands inside an item
+  // footprint. Walls bound to a foundation test only that footing;
+  // freestanding walls (no binding) are informational, not errors.
+  walls.forEach((wall, i) => {
+    const pts = wall?.shape?.points;
+    if (!Array.isArray(pts) || pts.length < 2) return;
+    const closed = wall.shape?.closed === true && pts.length >= 3;
+    const n = closed ? pts.length : pts.length - 1;
+    const wallId = sceneNodeId.wall(layoutItemKey(wall, i));
+    const wName = wall?.name || `Wall ${i + 1}`;
+    const fId = wall?.foundation_component_id;
+    const assigned = typeof fId === "string" && fId && !fId.startsWith("unresolved:") ? fId : null;
+    if (typeof fId === "string" && fId.startsWith("unresolved:")) {
+      push("warning", "unsupported-span", `${wName} keeps an unresolved foundation assignment -- reassign it to check support.`, [wallId]);
+      return;
+    }
+    const assignedRect = assigned ? rects.find(({ item }) => item?.component_id === assigned)?.rect : null;
+    let tested = 0, uncovered = 0;
+    for (let si = 0; si < n; si += 1) {
+      const a = pts[si], b = pts[(si + 1) % pts.length];
+      const mx = (Number(a?.x) + Number(b?.x)) / 2;
+      const mz = (Number(a?.z) + Number(b?.z)) / 2;
+      if (!Number.isFinite(mx) || !Number.isFinite(mz)) continue;
+      tested += 1;
+      const covered = assignedRect
+        ? pointInRect(mx, mz, assignedRect)
+        : rects.some(({ rect }) => rect && pointInRect(mx, mz, rect));
+      if (!covered) uncovered += 1;
+    }
+    if (tested === 0) return;
+    if (assigned && !assignedRect) {
+      push("warning", "unsupported-span", `${wName} is bound to a foundation whose placement can't be checked -- verify its footing.`, [wallId]);
+      return;
+    }
+    if (uncovered === tested) {
+      push(assigned ? "warning" : "info", "unsupported-span",
+        `${wName}: no segment has a footing beneath it${assigned ? " (its bound foundation does not cover it)" : " -- assign a foundation or confirm it is freestanding"}.`, [wallId]);
+    } else if (uncovered > 0) {
+      push("warning", "unsupported-span", `${wName}: ${uncovered} of ${tested} segments span beyond any footing.`, [wallId]);
+    }
+  });
+
   const order = { error: 0, warning: 1, info: 2 };
   findings.sort((a, b) => order[a.severity] - order[b.severity]);
   return findings;
