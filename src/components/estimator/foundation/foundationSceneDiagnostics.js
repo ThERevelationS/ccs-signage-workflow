@@ -147,6 +147,37 @@ export function foundationSceneDiagnostics(scene) {
     }
   });
 
+  // -- cabinets: same-mount vertical collisions (O-065) ------------------
+  // Cabinets on the same parent collide when their mount-height-to-top
+  // spans overlap. Positionless parents (unresolved mounts) skip the check.
+  const cabSpan = (cab) => {
+    const mh = Number(cab?.mount_height_inches);
+    const h = Number(cab?.height_inches);
+    if (!Number.isFinite(mh) || !Number.isFinite(h) || h <= 0) return null;
+    return [mh, mh + h];
+  };
+  const byMount = new Map();
+  cabinets.forEach((cab, i) => {
+    const parent = reparentParentOf(scene, "cabinet", cab);
+    if (!parent?.componentId) return;
+    const key = parent.componentId;
+    if (!byMount.has(key)) byMount.set(key, []);
+    byMount.get(key).push({ cab, i });
+  });
+  for (const [parentId, list] of byMount) {
+    for (let a = 0; a < list.length; a += 1) {
+      for (let b = a + 1; b < list.length; b += 1) {
+        const sa = cabSpan(list[a].cab), sb = cabSpan(list[b].cab);
+        if (!sa || !sb) continue;
+        if (sa[0] < sb[1] && sb[0] < sa[1]) {
+          push("warning", "sign-collision",
+            `Cabinets ${list[a].i + 1} and ${list[b].i + 1} on the same mount overlap vertically (${Math.round(sa[0])}-${Math.round(sa[1])} vs ${Math.round(sb[0])}-${Math.round(sb[1])} in) -- raise one or resize.`,
+            [sceneNodeId.cabinet(layoutItemKey(list[a].cab, list[a].i)), sceneNodeId.cabinet(layoutItemKey(list[b].cab, list[b].i))]);
+        }
+      }
+    }
+  }
+
   // -- walls: unsupported spans (O-048) ---------------------------------
   // A segment is "supported" when its midpoint lands inside an item
   // footprint. Walls bound to a foundation test only that footing;
