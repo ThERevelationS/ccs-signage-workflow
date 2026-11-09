@@ -35,6 +35,10 @@ const NOTIFICATION_READ_ACTIONS = new Set([
 const SMARTSHEET_READ_ACTIONS = new Set(['conflict_count']);
 const WORKSPACE_PREFS_READ_ACTIONS = new Set(['prefs_get']);
 const ANNOUNCEMENT_READ_ACTIONS = new Set(['active_feed']);
+// Pure reads on gateways that default to the write lane — without these the
+// /sop and training bootstraps rode the unthrottled lane and 429'd raw.
+const SOP_READ_ACTIONS = new Set(['bootstrap', 'list', 'get', 'ack_report']);
+const TRAINING_READ_ACTIONS = new Set(['bootstrap', 'report']);
 
 // Short-TTL response cache for advisory reads: identical invokes inside the
 // TTL share one response instead of one in-flight call, which collapses the
@@ -53,6 +57,8 @@ const READ_TTL_ACTIONS = new Map([
   ['notificationAction:get_preferences', 15000],
   ['manageAnnouncements:active_feed', 20000],
   ['smartsheetSyncAction:conflict_count', 20000],
+  ['manageTraining:bootstrap', 15000],
+  ['manageSops:bootstrap', 15000],
 ]);
 const READ_RESPONSE_CACHE_MAX = 200;
 const readResponseCache = new Map();
@@ -87,6 +93,8 @@ function isReadFunctionInvocation(fnName, payload) {
   if (fnName === 'opportunityWorkspaceAction') return OPPORTUNITY_READ_ACTIONS.has(payload?.action);
   if (fnName === 'inventoryAction') return INVENTORY_READ_ACTIONS.has(payload?.action);
   if (fnName === 'manageSalesFilters') return SALESFILTER_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'manageSops') return SOP_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'manageTraining') return TRAINING_READ_ACTIONS.has(payload?.action);
   return false;
 }
 
