@@ -277,7 +277,10 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         <p className="mt-3 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-600">
           {item.reinforcement_calculation_version === 2 ? (
             <>Version 2 reinforcement uses the accepted design. Edit geometry and pricing through the controlled proposal below.{" "}
-              <span className="font-semibold text-gray-800">Physical {num2(item.rebar_geometry_feet)} ft / priced {num2(item.rebar_feet)} ft - {amt(item.rebar_cost)}</span></>
+              <span className="font-semibold text-gray-800">Physical {num2(item.rebar_geometry_feet)} ft / priced {num2(item.rebar_feet)} ft - {amt(item.rebar_cost)}</span>
+              {Number.isFinite(item.support_count) && item.support_count > 0 && (
+                <> · Supports: {item.support_count} required{Number.isFinite(item.support_purchased_units) && item.support_purchased_units !== item.support_count ? ` / ${item.support_purchased_units} purchased` : ""} - {amt(item.support_cost)}</>
+              )}</>
           ) : (
             <>Unsupported reinforcement version. Reload before changing reinforcement pricing.</>
           )}
