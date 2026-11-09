@@ -25,6 +25,21 @@ export const LANDSCAPE_MATERIALS = [
 
 export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
 
+// O-073 (CMP-F06) -- decorative, UNPRICED objects painted with a "visual:"
+// prefix. They render on the designer but are excluded from the billed
+// summary and never fabricate a cost; an unknown visual key is flagged like
+// an unknown material.
+export const LANDSCAPE_VISUAL_OBJECTS = [
+  { key: "tree", label: "Tree", color: "#166534" },
+  { key: "shrub", label: "Shrub", color: "#15803d" },
+  { key: "light", label: "Light", color: "#f59e0b" },
+  { key: "boulder", label: "Boulder", color: "#57534e" },
+];
+export const VISUAL_PREFIX = "visual:";
+export const isVisualCellKey = (key) => typeof key === "string" && key.startsWith(VISUAL_PREFIX);
+export const visualObjectByKey = (key) =>
+  isVisualCellKey(key) ? LANDSCAPE_VISUAL_OBJECTS.find((o) => o.key === key.slice(VISUAL_PREFIX.length)) : undefined;
+
 export const GRID_COLS = 24;
 export const GRID_ROWS = 16;
 
@@ -69,6 +84,13 @@ export function landscapeInputIssues(landscape) {
   for (const [, key] of painted) {
     if (reported.has(key)) continue;
     reported.add(key);
+    if (isVisualCellKey(key)) {
+      if (!visualObjectByKey(key)) {
+        add("cells", "landscape_visual_unavailable",
+          `decorative object ${JSON.stringify(key)} is not in the visual catalog -- pick a listed object or erase it before repricing`);
+      }
+      continue;
+    }
     const mat = materialByKey(key);
     if (!mat) {
       add("cells", "landscape_material_unavailable",
@@ -92,7 +114,7 @@ export const landscapeSummary = (landscape) => {
   const counts = {};
   const rows = {};
   Object.values(cells).forEach((key) => {
-    if (!key || key === "dirt") return;
+    if (!key || key === "dirt" || isVisualCellKey(key)) return;
     counts[key] = (counts[key] || 0) + 1;
     if (sqftPerCell !== null) rows[key] = (rows[key] || 0) + sqftPerCell;
   });
