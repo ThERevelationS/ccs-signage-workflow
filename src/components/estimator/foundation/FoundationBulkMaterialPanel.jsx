@@ -1,6 +1,6 @@
-// O-094 (CMP-H03) — bulk material change picker. Applies an authored
+// O-094 (CMP-H03) -- bulk material change picker. Applies an authored
 // material id across the selected target (concrete/forming/walls/caps/poles)
-// via applyFoundationBulkMaterial — replace/all/fill_blank modes, scope to
+// via applyFoundationBulkMaterial -- replace/all/fill_blank modes, scope to
 // the current selection's component ids when provided, unknown targets and
 // price fields are refused by the model itself.
 
