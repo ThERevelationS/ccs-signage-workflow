@@ -22,6 +22,7 @@ import FoundationTotals from "@/components/estimator/foundation/FoundationTotals
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationFieldPackage from "@/components/estimator/foundation/FoundationFieldPackage";
+import FoundationBulkMaterialPanel from "@/components/estimator/foundation/FoundationBulkMaterialPanel";
 import { diffFoundationProjects, summarizeFoundationDiff } from "@/components/estimator/foundation/foundationRevisionDiff";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
@@ -1779,6 +1780,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               </TabsContent>
 
               <TabsContent value="bom">
+                <FoundationBulkMaterialPanel
+                  project={project}
+                  selectedComponentIds={null}
+                  onApply={(patch) => setProject((prev) => (prev ? { ...prev, ...patch } : prev))}
+                />
                 <FoundationBOM
                   items={calc.items}
                   poles={calc.poles}
