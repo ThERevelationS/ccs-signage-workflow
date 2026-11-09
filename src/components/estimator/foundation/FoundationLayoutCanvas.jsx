@@ -1384,6 +1384,25 @@ export default function FoundationLayoutCanvas({
               />
             );
           })}
+          {(poles || []).map((pole) =>
+            (pole.signs || []).map((s, si) => {
+              const w = Number(s?.width_inches), d = Number(s?.depth_inches);
+              if (!(w > 0) || !(d > 0)) return null;
+              return (
+                <div
+                  key={`sign-${pole.component_id || pole.x_inches}-${si}`}
+                  className="absolute border border-blue-600 bg-blue-400/20"
+                  style={{
+                    left: pctW((Number(pole.x_inches) || 0) + (Number(s.horizontal_offset_inches) || 0) - w / 2),
+                    top: pctD((Number(pole.z_inches) || 0) - d / 2),
+                    width: pctW(w), height: pctD(d),
+                    pointerEvents: "none",
+                  }}
+                  title={`Sign ${si + 1} on pole`}
+                />
+              );
+            })
+          )}
         </div>
       </div>
 
