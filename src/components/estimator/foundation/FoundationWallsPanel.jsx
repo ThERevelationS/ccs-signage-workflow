@@ -10,7 +10,7 @@ import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import WallShapeEditor from "./WallShapeEditor";
 
 // O-093 (CMP-H02): linear-dimension fields take feet/inches entry through the
-// shared dimension field — same verbatim-draft contract as the CMP-A08
+// shared dimension field â€” same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const wallDimMeta = (field) => foundationDimensionFieldMeta("wall", field);
@@ -55,7 +55,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
         />
         <FoundationDimensionInput
           {...wallDimMeta("mortarGapInches")}
-          // Display-only fallback: 0.375 shows until a value is recorded —
+          // Display-only fallback: 0.375 shows until a value is recorded â€”
           // nothing is stored by the fallback (explicit-null discipline).
           value={wall.mortarGapInches ?? 0.375}
           onCommit={(v) => set({ mortarGapInches: v })}
@@ -73,7 +73,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
             aria-describedby={describedBy("materialId")}
             onChange={(e) => set({ materialId: e.target.value })}
           >
-            <option value="">Select material…</option>
+            <option value="">Select materialâ€¦</option>
             {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
               <option value={wall.materialId} disabled>{`Catalog material unavailable (${wall.materialId})`}</option>
             )}
@@ -85,6 +85,35 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
           </select>
           {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
             <span className="block text-[10px] text-amber-700 mt-1">Catalog material unavailable; current pricing needs review.</span>
+          )}
+        </label>
+        <label className="text-xs text-gray-500 md:col-span-2">
+          Foundation
+          <select
+            className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+            value={wall.foundation_component_id ?? ""}
+            aria-label="Wall foundation"
+            onChange={(e) => {
+              const id = e.target.value;
+              const i = items.findIndex((it) => it.component_id === id);
+              set({
+                foundation_component_id: id,
+                foundation_index: id === "" || i < 0 ? undefined : i,
+              });
+            }}
+          >
+            <option value="">Freestanding (no foundation)</option>
+            {wall.foundation_component_id && !items.some((it) => it.component_id === wall.foundation_component_id) && (
+              <option value={wall.foundation_component_id} disabled>{`Missing foundation (${String(wall.foundation_component_id).slice(0, 18)}…)`}</option>
+            )}
+            {items.map((it, i) => (
+              <option key={it.component_id || i} value={it.component_id || ""}>
+                {it.name || it.label || `Foundation ${i + 1}`}
+              </option>
+            ))}
+          </select>
+          {wall.foundation_component_id && !items.some((it) => it.component_id === wall.foundation_component_id) && (
+            <span className="block text-[10px] text-amber-700 mt-1">Referenced foundation is not in this section; the wall stays priced until reassigned.</span>
           )}
         </label>
       </div>
@@ -110,7 +139,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
                 aria-describedby={describedBy("internalMaterialId")}
                 onChange={(e) => set({ internalMaterialId: e.target.value })}
               >
-                <option value="">Select material…</option>
+                <option value="">Select materialâ€¦</option>
                 {wall.internalMaterialId && !options.some((o) => o.id === wall.internalMaterialId) && (
                   <option value={wall.internalMaterialId} disabled>{`Catalog material unavailable (${wall.internalMaterialId})`}</option>
                 )}
@@ -126,7 +155,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
             </label>
             <FoundationDimensionInput
               {...wallDimMeta("internalWallHeightInches")}
-              // Display-only fallback: blank follows the outer wall height —
+              // Display-only fallback: blank follows the outer wall height â€”
               // nothing is stored by the fallback (explicit-null discipline).
               value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
               onCommit={(v) => set({ internalWallHeightInches: v })}
@@ -148,7 +177,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
-        {/* CMP-D03: the snapshot carries its quantity basis — poured concrete
+        {/* CMP-D03: the snapshot carries its quantity basis â€” poured concrete
             reads placed volume in CY (never "Units"), unit masonry keeps the
             unit count. Held rows keep whatever basis the acknowledged
             snapshot recorded. */}
@@ -196,7 +225,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
   );
 }
 
-export default function FoundationWallsPanel({ walls = [], options = [], onChange, wallPricing = [] }) {
+export default function FoundationWallsPanel({ walls = [], options = [], onChange, wallPricing = [], items = [] }) {
   const patchWall = (index, changes) =>
     onChange(walls.map((w, i) => (i === index ? { ...w, ...changes } : w)));
 
