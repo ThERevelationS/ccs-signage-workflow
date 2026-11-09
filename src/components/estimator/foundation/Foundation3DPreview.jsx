@@ -307,6 +307,9 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   // O-037 reinforcement-inspection — gates the concrete-local steel/supports
   // group without touching the concrete render.
   const [showRebar, setShowRebar] = useState(true);
+  // O-037 vertical cutaway — a side clip in plan-X inches (null = off); it
+  // composes with the elevation section rather than replacing it.
+  const [cutawayX, setCutawayX] = useState(null);
   const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
   const disposeObject = (root) => {
@@ -490,12 +493,14 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   useEffect(() => {
     const st = stateRef.current;
     if (!st.renderer) return;
-    st.renderer.clippingPlanes = section === null
-      ? (sectionBelow ? [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)] : [])
-      : [new THREE.Plane(new THREE.Vector3(0, -1, 0), section * IN)];
+    const planes = [];
+    if (section !== null) planes.push(new THREE.Plane(new THREE.Vector3(0, -1, 0), section * IN));
+    else if (sectionBelow) planes.push(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
+    if (cutawayX !== null) planes.push(new THREE.Plane(new THREE.Vector3(1, 0, 0), -cutawayX * IN));
+    st.renderer.clippingPlanes = planes;
     st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, sectionBelow]);
+  }, [section, sectionBelow, cutawayX]);
 
   const setView = (v) => stateRef.current.setView?.(v);
 
@@ -548,6 +553,17 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             <ToolBtn onClick={() => setSection((v) => (v === null ? -6 : null))} active={section !== null}>Section</ToolBtn>
             <ToolBtn onClick={() => setSectionBelow((v) => !v)} active={sectionBelow} title="Show only below-grade geometry">Below</ToolBtn>
             <ToolBtn onClick={() => setShowRebar((v) => !v)} active={!showRebar} title="Toggle reinforcement steel/supports">Rebar</ToolBtn>
+            <ToolBtn onClick={() => setCutawayX((v) => (v === null ? 120 : null))} active={cutawayX !== null} title="Cut away everything right of the X position">Cutaway</ToolBtn>
+            {cutawayX !== null && (
+              <span className="flex items-center gap-1 text-[11px] text-gray-600">
+                <input
+                  type="range" min="0" max="480" step="6" value={cutawayX}
+                  onChange={(e) => setCutawayX(Number(e.target.value))}
+                  className="w-24 h-1 accent-blue-600" aria-label="Cutaway X position (inches)"
+                />
+                <span>{cutawayX}&quot;x</span>
+              </span>
+            )}
             {section !== null && (
               <span className="flex items-center gap-1 text-[11px] text-gray-600">
                 <input
