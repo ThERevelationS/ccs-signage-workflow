@@ -1608,6 +1608,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                             onChange={patchItem}
                             onRemove={removeItem}
                             onDuplicate={duplicateItem}
+                            supportCatalog={inventory.filter((row) => row.material_type === "rebar_support")}
                           />
                           <FoundationReinforcementProposalPanel
                             item={item}
