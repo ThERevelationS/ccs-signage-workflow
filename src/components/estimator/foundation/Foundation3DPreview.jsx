@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
 import { buildFoundationReinforcementPreview3D } from "./foundationReinforcementPreview3D.js";
 import { createFoundationReinforcement3DGroup } from "./foundationReinforcementThreePreview.js";
+import { materialByKey } from "./landscapeMaterials.js";
 
 const IN = 1 / 12; // inches -> feet units
 // O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
@@ -215,6 +216,28 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
     m.position.set(px, mh + h / 2, pz);
     tag(m, cab?.component_id, "cabinet");
     group.add(m);
+  });
+
+  // O-033 landscape — painted cells render as thin tiles just above grade.
+  // "dirt" is the designer's eraser (bare ground): it draws nothing. Malformed
+  // cell keys/materials are skipped rather than guessed; the 24x16 designer
+  // grid already bounds the cell count.
+  const landscape = project.landscape || {};
+  const cellIn = Number(landscape.cell_size_inches) || 12;
+  const cells = landscape.cells || {};
+  Object.entries(cells).slice(0, 512).forEach(([key, matKey]) => {
+    const mat = materialByKey(matKey);
+    if (!mat || matKey === "dirt") return;
+    const [cx, cy] = key.split(",").map(Number);
+    if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
+    const tile = new THREE.Mesh(
+      new THREE.BoxGeometry(cellIn * IN, 0.6 * IN, cellIn * IN),
+      solid
+        ? new THREE.MeshStandardMaterial({ color: mat.color, roughness: 0.95 })
+        : new THREE.MeshBasicMaterial({ color: mat.color, wireframe: true })
+    );
+    tile.position.set((cx + 0.5) * cellIn * IN, 0.3 * IN, (cy + 0.5) * cellIn * IN);
+    group.add(tile);
   });
 
   if (showGround) {
