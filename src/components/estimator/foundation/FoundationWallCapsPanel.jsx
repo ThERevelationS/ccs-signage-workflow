@@ -312,6 +312,18 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 invalid={geometryIssues(index).some((i) => i.field === "length_inches") || undefined}
                 describedBy={geometryIssues(index).length ? `wall-cap-${index}-geometry` : undefined}
               />
+              <FoundationDimensionInput
+                {...capDimMeta("overhang_inches")}
+                value={cap.overhang_inches}
+                onCommit={(v) => patchCap(index, { overhang_inches: v })}
+                ariaLabel={`Cap ${index + 1} overhang (inches)`}
+              />
+              <FoundationDimensionInput
+                {...capDimMeta("height_inches")}
+                value={cap.height_inches}
+                onCommit={(v) => patchCap(index, { height_inches: v })}
+                ariaLabel={`Cap ${index + 1} thickness (inches)`}
+              />
             </div>
             {geometryIssues(index).length > 0 && (
               <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
