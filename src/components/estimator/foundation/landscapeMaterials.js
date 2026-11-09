@@ -43,6 +43,23 @@ export const visualObjectByKey = (key) =>
 export const GRID_COLS = 24;
 export const GRID_ROWS = 16;
 
+// O-074 (CMP-F07) -- curated-asset manifest. Every billable material and
+// decorative object is a shop-authored primitive (procedural color/geometry,
+// not a downloaded pack) -- no third-party assets ship inside the estimator.
+// `license` is the contract for any future real-asset replacement: a source
+// must be CC0/public-domain or shop-licensed and individually curated per
+// section-17 object type, never a blanket pack.
+export const LANDSCAPE_ASSET_MANIFEST = Object.freeze({
+  license_policy: "CC0 or shop-licensed, individually curated per object type -- no blanket packs",
+  source_kind: "procedural shop-authored primitives",
+  materials: LANDSCAPE_MATERIALS.map((m) => ({
+    key: m.key, label: m.label, kind: "billable material", source: "shop-authored color tile", license: "shop-authored",
+  })),
+  visual_objects: LANDSCAPE_VISUAL_OBJECTS.map((o) => ({
+    key: o.key, label: o.label, kind: "decorative object", source: "shop-authored primitive shape", license: "shop-authored",
+  })),
+});
+
 const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 
 // Inventory normalization boundary (CMP-A08): landscapePriceNumber is the
