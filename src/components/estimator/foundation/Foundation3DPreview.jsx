@@ -10,7 +10,7 @@ const IN = 1 / 12; // inches -> feet units
 const MAX_ITEM_MESHES = 128;
 const MAX_POLE_MESHES = 64;
 
-function buildScene(scene, project, solid, showGround, highlight) {
+function buildScene(scene, project, solid, showGround, highlight, exploded) {
   const group = new THREE.Group();
 
   const concreteMat = solid
@@ -43,12 +43,17 @@ function buildScene(scene, project, solid, showGround, highlight) {
   // caps steel at 2048 primitives and refuses unsupported roles itself.
   let rebarByKey = null;
   if (items.some((it) => it?.reinforcement_calculation_version === 2)) {
-    const rebarPreview = buildFoundationReinforcementPreview3D(project, { placementMode: "inspection" });
+    const rebarPreview = buildFoundationReinforcementPreview3D(project, {
+      placementMode: "inspection",
+      view: exploded ? "exploded" : "assembled",
+      explodeDepthFactor: 1,
+    });
     const errs = (rebarPreview?.issues || []).filter((i) => i.severity === "error");
     if (errs.length) console.warn("Foundation3DPreview reinforcement:", errs.map((i) => i.message).join(" | "));
     rebarByKey = new Map();
     for (const inst of rebarPreview?.instances || []) {
-      if (inst?.steel?.length) rebarByKey.set(`${inst.index}:${inst.instanceIndex}`, inst);
+      const prims = [...(inst?.steel || []), ...(inst?.supports || [])];
+      if (prims.length) rebarByKey.set(`${inst.index}:${inst.instanceIndex}`, { ...inst, prims });
     }
   }
   items.forEach((item, itemIndex) => {
@@ -75,7 +80,7 @@ function buildScene(scene, project, solid, showGround, highlight) {
 
       const rebar = rebarByKey?.get(`${itemIndex}:${i}`);
       if (rebar) {
-        try { mesh.add(createFoundationReinforcement3DGroup(rebar.steel)); }
+        try { mesh.add(createFoundationReinforcement3DGroup(rebar.prims)); }
         catch { /* unsupported roles refuse to draw; the concrete still renders. */ }
       }
 
@@ -149,6 +154,10 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   const [visible, setVisible] = useState(true);
   const [zoom, setZoom] = useState(100);
   const [glFailed, setGlFailed] = useState(false);
+  const [exploded, setExploded] = useState(false);
+  // O-029 section view — inches of elevation at which a horizontal clip plane
+  // cuts the scene (negative = below grade). null disables sectioning.
+  const [section, setSection] = useState(null);
   const highlightKey = Array.isArray(highlightComponentIds) ? highlightComponentIds.join(",") : "";
 
   const disposeObject = (root) => {
@@ -322,10 +331,22 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       st.scene.remove(st.modelGroup);
       disposeObject(st.modelGroup);
     }
-    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds));
+    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds), exploded);
     st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
-  }, [project, solid, showGround, visible, highlightKey]);
+  }, [project, solid, showGround, visible, highlightKey, exploded]);
+
+  // Section clip plane — a global renderer plane keeps everything below the
+  // chosen elevation (negative inches = below grade); no geometry is edited.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!st.renderer) return;
+    st.renderer.clippingPlanes = section === null
+      ? []
+      : [new THREE.Plane(new THREE.Vector3(0, -1, 0), section * IN)];
+    st.invalidate?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
 
   const setView = (v) => stateRef.current.setView?.(v);
 
@@ -374,6 +395,18 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             <ToolBtn onClick={() => setSolid((v) => !v)} active={solid}>
               <Box className="w-3 h-3" aria-hidden="true" /> {solid ? "Solid Mode" : "Wireframe"}
             </ToolBtn>
+            <ToolBtn onClick={() => setExploded((v) => !v)} active={exploded}>Exploded</ToolBtn>
+            <ToolBtn onClick={() => setSection((v) => (v === null ? -6 : null))} active={section !== null}>Section</ToolBtn>
+            {section !== null && (
+              <span className="flex items-center gap-1 text-[11px] text-gray-600">
+                <input
+                  type="range" min="-60" max="12" step="1" value={section}
+                  onChange={(e) => setSection(Number(e.target.value))}
+                  className="w-24 h-1 accent-blue-600" aria-label="Section elevation (inches)"
+                />
+                {section}&quot;
+              </span>
+            )}
             <ToolBtn onClick={() => mountRef.current?.requestFullscreen?.()}>
               <Maximize2 className="w-3 h-3" aria-hidden="true" /> Full Screen
             </ToolBtn>
