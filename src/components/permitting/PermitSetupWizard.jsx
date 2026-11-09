@@ -32,7 +32,11 @@ const officeRoles = (o) => {
 };
 const normalizePlaceName = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 const normalizeCountyName = (value) => normalizePlaceName(value).replace(/\s+county$/, "");
+const countyParts = (value) => String(value || "").split("/").map(normalizeCountyName).filter(Boolean);
 const localityCounty = (locality) => locality?.county_name || locality?.parent_county_name || "";
+const localityTypeLabel = (locality) => String(locality?.jurisdiction_type || "")
+  .replaceAll("_", " ")
+  .replace(/\w/g, character => character.toUpperCase());
 const localityIdentityKey = (locality) => [
   normalizePlaceName(locality?.name),
   normalizePlaceName(locality?.state),
@@ -42,10 +46,11 @@ const matchCandidateLocality = (candidate, localities) => {
   const name = normalizePlaceName(candidate?.name);
   if (!name) return [];
   return localities.filter((locality) => {
+    if (String(locality?.duplicate_of || "").trim()) return false;
     if (normalizePlaceName(locality?.name) !== name) return false;
     if (candidate.state && normalizePlaceName(locality?.state) !== normalizePlaceName(candidate.state)) return false;
     const county = localityCounty(locality);
-    if (candidate.county && county && normalizeCountyName(county) !== normalizeCountyName(candidate.county)) return false;
+    if (candidate.county && county && !countyParts(county).includes(normalizeCountyName(candidate.county))) return false;
     return true;
   });
 };
@@ -316,10 +321,11 @@ export default function PermitSetupWizard({
     const targetState = normalizePlaceName(resolution?.ai_state || resolution?.state || "");
     const rank = (item) => {
       const sameState = !!targetState && normalizePlaceName(item.state) === targetState;
-      const sameCounty = !!targetCounty && normalizeCountyName(localityCounty(item)) === targetCounty;
+      const sameCounty = !!targetCounty && countyParts(localityCounty(item)).includes(targetCounty);
       return sameState && sameCounty ? 0 : sameState ? 1 : 2;
     };
     return localities
+      .filter((item) => !String(item?.duplicate_of || "").trim())
       .filter((item) => {
         const county = localityCounty(item);
         const haystack = `${item.name || ""} ${county} ${item.state || ""}`.toLowerCase();
@@ -663,6 +669,7 @@ export default function PermitSetupWizard({
                         : ""}
                     </p>
                     <p className="truncate text-[11px] text-gray-500">
+                      {localityTypeLabel(locality) ? `${localityTypeLabel(locality)} · ` : ""}
                       {localityCounty(locality) || "county unknown"}, {locality.state || "state unknown"} · {(locality.offices || []).length} offices · {(locality.offices || []).filter(office => office.authority_verification_status === "staff_verified").length} verified
                     </p>
                   </div>
@@ -699,6 +706,7 @@ export default function PermitSetupWizard({
                               {item.name}{duplicate ? ` #${String(item.id || "").slice(-5)}` : ""}
                             </span>
                             <span className="block truncate text-[11px] text-gray-500">
+                              {localityTypeLabel(item) ? `${localityTypeLabel(item)} · ` : ""}
                               {localityCounty(item) || "county unknown"}, {item.state || "state unknown"} · {(item.offices || []).length} offices · {(item.offices || []).filter(office => office.authority_verification_status === "staff_verified").length} verified
                             </span>
                           </span>
