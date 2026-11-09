@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
 import { buildFoundationReinforcementPreview3D } from "./foundationReinforcementPreview3D.js";
 import { createFoundationReinforcement3DGroup } from "./foundationReinforcementThreePreview.js";
-import { materialByKey } from "./landscapeMaterials.js";
+import { materialByKey, visualObjectByKey } from "./landscapeMaterials.js";
 
 const IN = 1 / 12; // inches -> feet units
 // O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
@@ -253,17 +253,35 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
   const cellIn = Number(landscape.cell_size_inches) || 12;
   const cells = landscape.cells || {};
   Object.entries(cells).slice(0, 512).forEach(([key, matKey]) => {
+    // O-073 visual objects render as small shapes; billable materials as
+    // flat tiles. "dirt" draws nothing; malformed cell keys are skipped.
+    const obj = visualObjectByKey(matKey);
     const mat = materialByKey(matKey);
-    if (!mat || matKey === "dirt") return;
+    if (!mat && !obj) return;
+    if (matKey === "dirt") return;
     const [cx, cy] = key.split(",").map(Number);
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
+    const px = (cx + 0.5) * cellIn * IN, pz = (cy + 0.5) * cellIn * IN;
+    const material = solid
+      ? new THREE.MeshStandardMaterial({ color: (obj || mat).color, roughness: 0.95 })
+      : new THREE.MeshBasicMaterial({ color: (obj || mat).color, wireframe: true });
+    if (obj) {
+      const s = cellIn * IN;
+      let geo;
+      if (obj.key === "tree") geo = new THREE.ConeGeometry(s * 0.4, s * 1.4, 6);
+      else if (obj.key === "shrub") geo = new THREE.SphereGeometry(s * 0.35, 8, 6);
+      else if (obj.key === "light") geo = new THREE.CylinderGeometry(s * 0.1, s * 0.12, s * 1.0, 6);
+      else geo = new THREE.BoxGeometry(s * 0.55, s * 0.45, s * 0.55); // boulder
+      const marker = new THREE.Mesh(geo, material);
+      marker.position.set(px, obj.key === "light" ? s * 0.5 : s * 0.35, pz);
+      group.add(marker);
+      return;
+    }
     const tile = new THREE.Mesh(
       new THREE.BoxGeometry(cellIn * IN, 0.6 * IN, cellIn * IN),
-      solid
-        ? new THREE.MeshStandardMaterial({ color: mat.color, roughness: 0.95 })
-        : new THREE.MeshBasicMaterial({ color: mat.color, wireframe: true })
+      material
     );
-    tile.position.set((cx + 0.5) * cellIn * IN, 0.3 * IN, (cy + 0.5) * cellIn * IN);
+    tile.position.set(px, 0.3 * IN, pz);
     group.add(tile);
   });
 
