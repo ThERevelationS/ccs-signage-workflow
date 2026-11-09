@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
+import { memo, bust } from "../../shared/invokeMemo.ts";
 import { subscriptionsForUser, SUBSCRIPTIONS_MAX } from "../../shared/alertSubscriptionsModel.ts";
 
 // Persisted-notification layer for the unified attention feed
@@ -140,6 +141,11 @@ Deno.serve(async (req) => {
     const action = clean(body?.action);
     if (!action) throw bad("An action is required.");
 
+    // Anything that isn't a pure read can create/alter notification or pref
+    // rows — drop memoized reads so the next poll refetches.
+    const NOTIF_READS = new Set(["list_mine", "unread_count", "history", "get_preferences"]);
+    if (!NOTIF_READS.has(action)) bust('notif');
+
     const Notification = base44.asServiceRole.entities.Notification;
     const Pref = base44.asServiceRole.entities.NotificationPreference;
     const nowMs = Date.now();
@@ -150,7 +156,9 @@ Deno.serve(async (req) => {
       const limit = Math.min(Math.max(num(body?.limit, 60) || 60, 1), 200);
       const includeHandled = body?.include_handled === true;
       const includeSnoozed = body?.include_snoozed === true;
-      const rows = await Notification.filter({ recipient_email: me }, "-created_date", Math.min(limit * 3, 300)).catch(() => []);
+      const rows = await memo('notif', `lm:${me}:${limit}:${includeHandled}:${includeSnoozed}`, 15000,
+        () => Notification.filter({ recipient_email: me }, "-created_date", Math.min(limit * 3, 300)).catch(() => []),
+        { bypass: body?.bypass === true });
       const now = nowMs;
       const mine = sortNewest(rows).filter((n: any) => {
         if (!includeHandled && clean(n?.handled_at)) return false;
@@ -166,7 +174,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === "unread_count") {
-      const rows = await Notification.filter({ recipient_email: me }, "-created_date", 200).catch(() => []);
+      const rows = await memo('notif', `uc:${me}`, 15000,
+        () => Notification.filter({ recipient_email: me }, "-created_date", 200).catch(() => []),
+        { bypass: body?.bypass === true });
       const now = nowMs;
       const count = list(rows).filter((n: any) => activeNotification(n, now) && !clean(n?.read_at)).length;
       return Response.json({ success: true, action, unread_count: count });
@@ -176,7 +186,9 @@ Deno.serve(async (req) => {
       // Notification history log (#350): the entity IS the log — this is a
       // filtered read over the caller's rows, including read/snoozed/handled.
       const limit = Math.min(Math.max(num(body?.limit, 200) || 200, 1), 400);
-      const rows = await Notification.filter({ recipient_email: me }, "-created_date", Math.min(limit * 2, 400)).catch(() => []);
+      const rows = await memo('notif', `hist:${me}:${limit}`, 15000,
+        () => Notification.filter({ recipient_email: me }, "-created_date", Math.min(limit * 2, 400)).catch(() => []),
+        { bypass: body?.bypass === true });
       const category = clean(body?.category).toLowerCase();
       const q = clean(body?.q).toLowerCase();
       const includeHandled = body?.include_handled !== false;
