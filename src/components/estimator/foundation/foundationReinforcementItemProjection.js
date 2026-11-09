@@ -95,7 +95,17 @@ export function calculateFoundationReinforcementItemProjection({
   }
   const steel = reinforcement.steel.amounts;
   if (!reinforcement.steel.steelPriceAvailable || !steel) return unavailable();
-  const total = commonCost.total + steel.steel_cost, excavationVolume = common.volumeCY * 1.25;
+  const supports = reinforcement.supports;
+  // A modeled support plan without resolved economics cannot yield an honest
+  // replacement total; never emit a total that silently omits support money.
+  const supportsModeled = reinforcement.model.supports?.status === "modeled";
+  if (supportsModeled && supports?.status !== "resolved") {
+    issue("supports", "reinforcement_support_cost_unknown",
+      "Modeled support economics are unresolved; no replacement item total is available.");
+    return unavailable();
+  }
+  const supportCost = supportsModeled ? supports.amounts.support_cost : 0;
+  const total = commonCost.total + steel.steel_cost + supportCost, excavationVolume = common.volumeCY * 1.25;
   if (![total, excavationVolume].every(finiteNonnegative)) {
     issue("item_total_cost", "reinforcement_item_result_invalid", "The proposed item cost or excavation volume exceeds the supported numeric range.");
     return unavailable();
@@ -112,6 +122,13 @@ export function calculateFoundationReinforcementItemProjection({
       rebar_material_cost: steel.material_cost, rebar_labor_cost: steel.labor_cost,
       rebar_labor_hours: steel.labor_hours, rebar_geometry_feet: steel.geometry_feet,
       rebar_geometry_weight_lbs: steel.geometry_weight_lbs, rebar_connection_count: steel.connection_count,
+      support_count: supports?.amounts?.support_count ?? 0,
+      support_purchased_units: supports?.amounts?.support_purchased_units ?? 0,
+      support_packs: supports?.amounts?.support_packs ?? 0,
+      support_material_cost: supports?.amounts?.support_material_cost ?? 0,
+      support_labor_cost: supports?.amounts?.support_labor_cost ?? 0,
+      support_labor_hours: supports?.amounts?.support_labor_hours ?? 0,
+      support_cost: supportCost,
       excavation_cost: common.excavationCost, excavation_hours: common.excavationHours,
       forming_cost: common.formingCost, forming_qty: item.include_forming ? common.formingQty : 0,
       pouring_cost: common.pouringCost, finishing_cost: common.finishingCost,
