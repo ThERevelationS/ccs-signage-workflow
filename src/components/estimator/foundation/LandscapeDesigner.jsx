@@ -2,10 +2,13 @@ import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
   LANDSCAPE_MATERIALS,
+  LANDSCAPE_VISUAL_OBJECTS,
+  VISUAL_PREFIX,
   GRID_COLS,
   GRID_ROWS,
   landscapeSummary,
   materialByKey,
+  visualObjectByKey,
 } from "./landscapeMaterials";
 import { money } from "./foundationCalc";
 import {
@@ -169,6 +172,22 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               <span className="truncate text-gray-700">{m.label}</span>
             </button>
           ))}
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 pt-2">Decorative (not billed)</div>
+          {LANDSCAPE_VISUAL_OBJECTS.map((o) => {
+            const vkey = `${VISUAL_PREFIX}${o.key}`;
+            return (
+              <button type="button"
+                key={vkey}
+                onClick={() => setBrush(vkey)}
+                className={`w-full flex items-center gap-2 px-2 py-1 rounded-sm border text-[11px] ${
+                  brush === vkey ? "border-red-400 bg-red-50 font-semibold" : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <span className="w-3 h-3 rounded-sm" style={{ background: o.color }} />
+                <span className="truncate text-gray-700">{o.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div
@@ -182,7 +201,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
             {Array.from({ length: GRID_ROWS }).map((_, y) =>
               Array.from({ length: GRID_COLS }).map((__, x) => {
                 const key = viewCells[`${x},${y}`];
-                const mat = key ? materialByKey(key) : null;
+                const mat = key ? (materialByKey(key) || visualObjectByKey(key)) : null;
                 return (
                   <div
                     key={`${x},${y}`}
