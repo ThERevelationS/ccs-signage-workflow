@@ -36,8 +36,8 @@ function steelPrimitive(primitive, length, depth, width) {
 }
 
 // A modeled bottom-resting support is a vertical post from its base plane up to
-// the mat bearing plane. The marker radius is a fixed visual hint — the catalog
-// footprint lives on the priced pick, not in geometry — so the marker is never
+// the mat bearing plane. The marker radius is a fixed visual hint â€” the catalog
+// footprint lives on the priced pick, not in geometry â€” so the marker is never
 // read as a dimensioned object.
 function supportPrimitive(placement, ordinal, local) {
   if (!positive(placement?.required_height_inches)) return null;
@@ -58,9 +58,39 @@ function supportPrimitive(placement, ordinal, local) {
 
 // Inspection spreads quantity copies; layout uses one recorded anchor per item.
 // Steel stays local to its concrete mesh in either mode.
-export function buildFoundationReinforcementPreview3D(project = {}, { showReinforcement = true, placementMode = "inspection" } = {}) {
+// view "exploded" lifts each steel/support primitive upward proportional to its
+// elevation inside the footing (bottom stays, top separates) so multi-mat cages
+// read layer-by-layer; view "assembled" leaves modeled positions untouched.
+// Section views are renderer-side (a clip plane), not geometry edits — the
+// projection passes through sectionHeightInches so a consumer can place it.
+export function buildFoundationReinforcementPreview3D(project = {}, { showReinforcement = true, placementMode = "inspection", view = "assembled", explodeDepthFactor = 1.5, sectionHeightInches = null } = {}) {
   const instances = [], issues = [];
   let cursorX = 0, steelCount = 0, clipped = false, hasVersioned = false;
+  if (view !== "assembled" && view !== "exploded") return {
+    instances, issues: [{ index: null, message: "Preview view is unsupported.", severity: "error" }],
+    clipped: false, hasVersioned: false, steelCount, engineeringApproved: false, placementMode: null, view: null,
+  };
+  const explodeOffsetFeet = view === "exploded" && foundationInputNumber(explodeDepthFactor) > 0
+    ? foundationInputNumber(explodeDepthFactor)
+    : 0;
+  // Elevation-banded explode: each primitive end is lifted by its own height
+  // fraction inside the footing depth, so ties stretching between mats stay
+  // honest (their ends separate with the mats they connect) and support posts
+  // lengthen instead of floating.
+  const explodeY = (yFeet, depthFeet) =>
+    explodeOffsetFeet > 0 && depthFeet > 0
+      ? yFeet + explodeOffsetFeet * depthFeet * Math.min(1, Math.max(0, (yFeet + depthFeet / 2) / depthFeet))
+      : yFeet;
+  const explodePrimitive = (primitive, depthFeet) => {
+    if (explodeOffsetFeet <= 0 || !primitive) return primitive;
+    const next = { ...primitive };
+    if (Array.isArray(next.from)) next.from = [next.from[0], explodeY(next.from[1], depthFeet), next.from[2]];
+    if (Array.isArray(next.to)) next.to = [next.to[0], explodeY(next.to[1], depthFeet), next.to[2]];
+    if (Array.isArray(next.center)) next.center = [next.center[0], explodeY(next.center[1], depthFeet), next.center[2]];
+    if (Number.isFinite(next.lengthFeet) && Array.isArray(next.from) && Array.isArray(next.to))
+      next.lengthFeet = Math.hypot(...next.to.map((value, index) => value - next.from[index]));
+    return next;
+  };
   const add = (index, message, severity = "warning") => issues.push({ index, message: `Foundation ${index + 1}: ${message}`, severity });
   if (placementMode !== "inspection" && placementMode !== "layout") return {
     instances, issues: [{ index: null, message: "Foundation placement mode is unsupported.", severity: "error" }],
@@ -120,10 +150,10 @@ export function buildFoundationReinforcementPreview3D(project = {}, { showReinfo
       ];
       if (!positionFeet.every(renderable)) { add(index, "saved placement position exceeds the 3D numeric range.", "error"); return; }
       if (geometry.quantity > 1) add(index, "quantity greater than one has additional locations that are not recorded; one representative is shown.");
-      const drawn = steel.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount));
+      const drawn = steel.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount)).map(primitive => explodePrimitive(primitive, dimensionsFeet[1]));
       clipped ||= drawn.length < steel.length;
       steelCount += drawn.length;
-      const drawnSupports = supports.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount));
+      const drawnSupports = supports.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount)).map(primitive => explodePrimitive(primitive, dimensionsFeet[1]));
       clipped ||= drawnSupports.length < supports.length;
       steelCount += drawnSupports.length;
       instances.push({
@@ -141,10 +171,10 @@ export function buildFoundationReinforcementPreview3D(project = {}, { showReinfo
     for (let instanceIndex = 0; instanceIndex < shown; instanceIndex += 1) {
       const positionFeet = [cursorX + footprint / 2, -dimensionsFeet[1] / 2 + offset * IN, 0];
       if (!positionFeet.every(renderable)) { add(index, "inspection position exceeds the 3D numeric range.", "error"); clipped = true; break; }
-      const drawn = steel.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount));
+      const drawn = steel.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount)).map(primitive => explodePrimitive(primitive, dimensionsFeet[1]));
       clipped ||= drawn.length < steel.length;
       steelCount += drawn.length;
-      const drawnSupports = supports.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount));
+      const drawnSupports = supports.slice(0, Math.max(0, FOUNDATION_3D_PREVIEW_LIMITS.steelPrimitives - steelCount)).map(primitive => explodePrimitive(primitive, dimensionsFeet[1]));
       clipped ||= drawnSupports.length < supports.length;
       steelCount += drawnSupports.length;
       instances.push({
@@ -157,5 +187,5 @@ export function buildFoundationReinforcementPreview3D(project = {}, { showReinfo
       cursorX += footprint + 2;
     }
   });
-  return { instances, issues, clipped, hasVersioned, steelCount, engineeringApproved: false, placementMode };
+  return { instances, issues, clipped, hasVersioned, steelCount, engineeringApproved: false, placementMode, view, sectionHeightInches: foundationInputNumber(sectionHeightInches) };
 }
