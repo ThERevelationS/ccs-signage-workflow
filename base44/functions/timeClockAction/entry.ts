@@ -11146,7 +11146,20 @@ Deno.serve(async (req) => {
         return rowIn < claimedOut.getTime() && rowEnd > claimedIn.getTime();
       });
       if (overlapping?.id) {
-        return Response.json({ success: false, error: 'The reported times overlap an existing shift. Request a correction on that entry instead.' }, { status: 409 });
+        const blockingOpenEnded = !String(overlapping.clock_out || '').trim();
+        const blockingWhen = new Intl.DateTimeFormat('en-US', {
+          timeZone: COMPANY_TIME_ZONE, month: 'short', day: 'numeric',
+          hour: 'numeric', minute: '2-digit',
+        }).format(new Date(String(overlapping.clock_in)));
+        return Response.json({
+          success: false,
+          error: blockingOpenEnded
+            ? `The reported times overlap a shift that is still open since ${blockingWhen} ET. Close or resolve that entry first (missed-punch resolution or a manager correction).`
+            : `The reported times overlap an existing shift starting ${blockingWhen} ET. Request a correction on that entry instead.`,
+          blocking_clock_in: String(overlapping.clock_in || ''),
+          blocking_clock_out: String(overlapping.clock_out || ''),
+          blocking_status: String(overlapping.status || ''),
+        }, { status: 409 });
       }
 
       // A finalized pay period may not be re-opened by employee attestation.
