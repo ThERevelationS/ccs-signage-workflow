@@ -918,6 +918,45 @@ export default function FoundationLayoutCanvas({
     const plan = duplicateSelectionPlan(scene, selection.entries());
     if (plan.status === "ok" && typeof onDuplicateSelection === "function") onDuplicateSelection(plan);
   };
+  // O-094 — mirror the selection about the plan's vertical center line.
+  // Items/poles mirror their plan x (items also negate rotation); walls
+  // mirror each outline point with order reversed so winding stays
+  // consistent. Mounted caps/cabinets carry no coords — they follow their
+  // parents automatically. ONE undoable commit for the whole selection.
+  const opMirror = () => {
+    const cx = PLAN_W;
+    const patches = [];
+    selState.ids.forEach((id) => {
+      const [kind, ref] = [id.split(":")[0], id.split(":").slice(1).join(":")];
+      if (kind === "item") {
+        const res = items.findIndex((it, i) => layoutItemKey(it, i) === ref);
+        if (res < 0) return;
+        const fp = foundationLayoutFootprint(items[res]);
+        const pos = layoutPositionInches(items[res]);
+        if (!fp || !pos.valid) return;
+        const patch = { x_inches: Math.round((cx - (pos.x_inches + fp.width)) * 100) / 100 };
+        const rot = Number(items[res].rotation_degrees) || 0;
+        if (rot) patch.rotation_degrees = Math.round(((360 - rot) % 360) * 100) / 100;
+        patches.push({ collection: "items", index: res, key: ref, before: beforeFieldsOf(items[res], patch), patch });
+      } else if (kind === "pole") {
+        const res = poles.findIndex((p, i) => layoutItemKey(p, i) === ref);
+        if (res < 0) return;
+        const x = Number(poles[res].x_inches);
+        if (!Number.isFinite(x)) return;
+        const patch = { x_inches: Math.round((cx - x) * 100) / 100 };
+        patches.push({ collection: "poles", index: res, key: ref, before: beforeFieldsOf(poles[res], patch), patch });
+      } else if (kind === "wall") {
+        const res = walls.findIndex((w, i) => layoutItemKey(w, i) === ref);
+        if (res < 0) return;
+        const pts = walls[res]?.shape?.points;
+        if (!Array.isArray(pts) || !pts.every((p) => Number.isFinite(p?.x) && Number.isFinite(p?.z))) return;
+        const patch = { shape: { ...walls[res].shape, points: [...pts].reverse().map((p) => ({ x: Math.round((cx - p.x) * 100) / 100, z: p.z })) } };
+        patches.push({ collection: "walls", index: res, key: ref, before: beforeFieldsOf(walls[res], patch), patch });
+      }
+    });
+    if (patches.length) commitOpPatches("mirror", "toolbar", patches, { label: `Mirror ${patches.length} object${patches.length === 1 ? "" : "s"}` });
+  };
+  const canMirrorSel = editable && selState.count > 0 && selState.ids.some((id) => /^(item|pole|wall):/.test(id));
 
   // O-036 reparent — one plan over the whole selection (the target probes
   // structurally once; per-child skips land honestly in `skipped`),
@@ -1527,6 +1566,16 @@ export default function FoundationLayoutCanvas({
             className={`px-1.5 py-0.5 rounded-sm border ${canDuplicate ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
           >
             Duplicate
+          </button>
+          <button
+            type="button"
+            data-op="mirror"
+            disabled={!canMirrorSel}
+            title={canMirrorSel ? "Mirror selection about the plan's vertical center" : "Select an item, pole or wall to mirror"}
+            onClick={opMirror}
+            className={`px-1.5 py-0.5 rounded-sm border ${canMirrorSel ? "border-gray-300 hover:bg-gray-50 text-gray-700" : "border-gray-200 text-gray-300"}`}
+          >
+            Mirror
           </button>
           <button
             type="button"
