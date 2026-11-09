@@ -1,5 +1,5 @@
 import { money } from "./foundationCalc";
-import { landscapeSummary } from "./landscapeMaterials";
+import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -199,6 +199,17 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
               ))}
             </tbody>
           </table>
+          {(() => {
+            const counts = {};
+            Object.values(project?.landscape?.cells || {}).forEach((key) => {
+              const obj = isVisualCellKey(key) ? visualObjectByKey(key) : null;
+              if (obj) counts[obj.label] = (counts[obj.label] || 0) + 1;
+            });
+            const labels = Object.entries(counts).map(([l, c]) => `${c} ${l.toLowerCase()}${c === 1 ? "" : "s"}`);
+            return labels.length ? (
+              <p className="mt-2 text-[11px] text-gray-500">Decorative objects (not billed): {labels.join(", ")}</p>
+            ) : null;
+          })()}
         </Section>
       )}
     </div>
