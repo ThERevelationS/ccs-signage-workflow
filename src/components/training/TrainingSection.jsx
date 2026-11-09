@@ -68,7 +68,15 @@ export default function TrainingSection({ compact = false }) {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // Mount gate: this section is secondary to the page's own data — delaying
+  // the bootstrap a few seconds keeps it out of the mount burst that trips
+  // the app-level invoke cap when a load lands on a scheduled-fire minute.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 4000 + Math.floor(Math.random() * 3000));
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => { if (mounted) load(); }, [mounted, load]);
 
   const markDone = async (row) => {
     setBusyId(row.id);
