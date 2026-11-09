@@ -127,6 +127,16 @@ const nodeSummaryFields = (resolved) =>
     .filter(([, key]) => resolved.row?.[key] !== undefined && resolved.row?.[key] !== null)
     .map(([label, key]) => [label, resolved.row[key]]);
 
+// O-037 — the five scene collections are the canvas's layers; the
+// collection→layer map feeds the lock gate in commitOpPatches so a locked
+// layer refuses every channel (single, multi, reparent) honestly.
+const COLL_LAYER = { items: "items", poles: "poles", walls: "walls", wall_caps: "caps", signage_cabinets: "cabinets" };
+const KIND_LAYER = { item: "items", pole: "poles", wall: "walls", "wall-segment": "walls", "wall-cap": "caps", cabinet: "cabinets" };
+const LAYER_ROWS = [
+  ["items", "Foundations"], ["poles", "Poles"], ["walls", "Walls"],
+  ["caps", "Wall caps"], ["cabinets", "Cabinets"],
+];
+
 export default function FoundationLayoutCanvas({
   items = [],
   poles = [],
@@ -215,6 +225,21 @@ export default function FoundationLayoutCanvas({
     ? nodeSummaryFields(primaryResolved)
     : null;
 
+  // O-037 layer visibility — per-collection show/hide + lock + transparent
+  // concrete. Visibility is render-only; lock is enforced at the commit
+  // channel so no edit path can bypass it.
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [layers, setLayers] = useState({ items: true, poles: true, walls: true, caps: true, cabinets: true });
+  const [lockedLayers, setLockedLayers] = useState(() => new Set());
+  const [transparentConcrete, setTransparentConcrete] = useState(false);
+  const toggleLayer = (key) => setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleLock = (key) => setLockedLayers((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const visibleMountLinks = mountLinks.filter((l) => layers[KIND_LAYER[l.childKind]] !== false);
+
   // O-034 object tree — the scene tree the selection model already
   // builds (roots → children by mount), rendered as a collapsible list.
   // Rows click-select through the store so tree/canvas stay in sync.
@@ -289,6 +314,12 @@ export default function FoundationLayoutCanvas({
     sceneLayoutAnchor(opSceneWithPatches(scene, patches, { side }));
   const commitOpPatches = (op, method, patches, { label } = {}) => {
     if (!Array.isArray(patches) || !patches.length) return { status: "noop" };
+    // O-037 — locked layers refuse at the commit channel itself, so drag,
+    // toolbar ops, typed edits and reparent all honor the same guard.
+    if (patches.some((p) => lockedLayers.has(COLL_LAYER[p?.collection]))) {
+      setReparentNote("Layer is locked — unlock it in Layers ▸.");
+      return { status: "locked", op };
+    }
     if (patchesFitSingleItemChannel(patches) && editable) {
       const p = patches[0];
       const applied = onMoveItem(p.index, p.patch);
@@ -971,7 +1002,7 @@ export default function FoundationLayoutCanvas({
             preserveAspectRatio="none"
             style={{ pointerEvents: "none", zIndex: 1 }}
           >
-            {mountLinks.map((link) => {
+            {visibleMountLinks.map((link) => {
               const sel = selIds.has(link.childId);
               const a = link.handlePoint;
               const b = link.parentPoint;
@@ -1002,7 +1033,7 @@ export default function FoundationLayoutCanvas({
               );
             })}
           </svg>
-          {items.map((item, index) => {
+          {layers.items && items.map((item, index) => {
             const fp = foundationLayoutFootprint(item);
             const pos = layoutPositionInches(item);
             if (!fp || !pos.valid) return null;
@@ -1031,8 +1062,8 @@ export default function FoundationLayoutCanvas({
                 onKeyDown={editable ? (e) => onKeyDown(e, item, index) : undefined}
                 className={`absolute flex items-center justify-center border-2 text-[10px] font-semibold ${
                   isSel
-                    ? "border-solid border-sky-600 bg-sky-100/70 text-sky-900 z-10"
-                    : "border-dashed border-amber-500 bg-amber-100/70 text-amber-800"
+                    ? `border-solid border-sky-600 ${transparentConcrete ? "bg-sky-100/20" : "bg-sky-100/70"} text-sky-900 z-10`
+                    : `border-dashed border-amber-500 ${transparentConcrete ? "bg-amber-100/20" : "bg-amber-100/70"} text-amber-800`
                 } ${editable ? "cursor-move" : ""} ${item.foundation_type === "pillar" ? "rounded-full" : "rounded-sm"}`}
                 style={{
                   left: pctW(shown.x_inches),
@@ -1114,7 +1145,7 @@ export default function FoundationLayoutCanvas({
             />
           )}
 
-          {poles.map((pole, index) => {
+          {layers.poles && poles.map((pole, index) => {
             const nodeId = sceneNodeId.pole(layoutItemKey(pole, index));
             const isSel = selIds.has(nodeId);
             return (
@@ -1171,6 +1202,39 @@ export default function FoundationLayoutCanvas({
       >
         {treeOpen ? "▾" : "▸"} Objects
       </button>
+      <button
+        type="button"
+        data-layers-toggle="true"
+        onClick={() => setLayersOpen((v) => !v)}
+        className="mt-1.5 ml-3 text-[10px] text-gray-400 hover:text-gray-600"
+      >
+        {layersOpen ? "▾" : "▸"} Layers
+      </button>
+      {layersOpen && (
+        <div data-layers-panel="true" className="mt-0.5 rounded-sm border border-gray-200 bg-gray-50 p-1.5 text-[10px]">
+          {LAYER_ROWS.map(([key, label]) => (
+            <div key={key} data-layer={key} className="flex items-center gap-3 px-1 py-0.5">
+              <label className="flex flex-1 items-center gap-1.5 text-gray-600 cursor-pointer">
+                <input type="checkbox" checked={layers[key] !== false} onChange={() => toggleLayer(key)} />
+                {label}
+              </label>
+              <button
+                type="button"
+                data-layer-lock={key}
+                title={lockedLayers.has(key) ? "Unlock layer" : "Lock layer (blocks edits)"}
+                onClick={() => toggleLock(key)}
+                className={lockedLayers.has(key) ? "text-amber-600 font-semibold" : "text-gray-300 hover:text-gray-500"}
+              >
+                {lockedLayers.has(key) ? "🔒" : "🔓"}
+              </button>
+            </div>
+          ))}
+          <label className="mt-1 flex items-center gap-1.5 border-t border-gray-200 px-1 pt-1 text-gray-600 cursor-pointer">
+            <input type="checkbox" checked={transparentConcrete} onChange={(e) => setTransparentConcrete(e.target.checked)} />
+            Transparent concrete
+          </label>
+        </div>
+      )}
       {treeOpen && sceneTree && (
         <div data-object-tree="true" className="mt-0.5 max-h-44 overflow-auto rounded-sm border border-gray-200 bg-gray-50 p-1 text-[10px]">
           {sceneTree.order.map((id) => {
