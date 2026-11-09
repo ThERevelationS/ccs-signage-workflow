@@ -15,7 +15,7 @@ const isReserved = (v) => typeof v === "string" && v.startsWith(UNRESOLVED_PREFI
 const isUnresolvedToken = (v) => Object.values(UNRESOLVED).includes(v);
 const deepClone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 // Preserve a malformed value raw when it cannot be JSON-cloned (functions,
-// cycles) — the copy path must not crash on legacy data.
+// cycles) â€” the copy path must not crash on legacy data.
 const cloneRawValue = (v) => {
   try { return deepClone(v); } catch { return v; }
 };
@@ -139,7 +139,7 @@ const resolveParent = (canonValue, hasCanon, legacy, incoming, prev, unresolvedT
   return { canon: undefined, index: undefined };
 };
 
-const normalizeWalls = (walls, prevWalls, createId, used, seen) => {
+const normalizeWalls = (walls, prevWalls, items, prevItems, createId, used, seen) => {
   const prevSegIds = new Map();
   (prevWalls || []).forEach((w) => {
     const segs = w?.shape?.segments || [];
@@ -154,6 +154,9 @@ const normalizeWalls = (walls, prevWalls, createId, used, seen) => {
   const out = [];
   for (const w of walls || []) {
     const n = ensureNodeId(w, createId, "wall", used, seen);
+    const res = resolveParent(n.foundation_component_id, Object.prototype.hasOwnProperty.call(n, "foundation_component_id"), legacyIndexOf(n, ["foundation_index"]), items, prevItems, UNRESOLVED.foundation);
+    n.foundation_component_id = res.canon === undefined ? "" : res.canon;
+    n.foundation_index = res.index;
     const shape = isRecord(n.shape) ? { ...n.shape } : n.shape;
     const segs = shape?.segments;
     if (segs !== undefined && !Array.isArray(segs)) throw new Error("foundation assembly: wall shape segments must be an array");
@@ -258,7 +261,7 @@ export function normalizeFoundationAssembly(project, { previous = null, createId
   reserve(project, previous, used);
   const next = { ...project, assembly_schema_version: 1 };
   next.items = (project.items || []).map((it) => ensureNodeId(it, createId, "item", used, seen));
-  next.walls = normalizeWalls(project.walls, previous?.walls, createId, used, seen);
+  next.walls = normalizeWalls(project.walls, previous?.walls, next.items, previous?.items, createId, used, seen);
   next.poles = normalizePoles(project.poles, next.items, previous?.items, createId, used, seen);
   next.wall_caps = normalizeCaps(project.wall_caps, next.walls, previous?.walls, createId, used, seen);
   next.signage_cabinets = normalizeCabinets(project.signage_cabinets, next.items, next.poles, previous?.items, previous?.poles, createId, used, seen);
@@ -277,6 +280,12 @@ export function foundationAssemblyIssues(project) {
     if (canon === "" || canon === undefined || canon === null) continue;
     if (isReserved(canon)) issues.push({ code: "unresolved-parent", kind: "pole", componentId: p?.component_id, parentId: canon, message: "Pole legacy foundation index could not be resolved; left unresolved until reassigned." });
     else if (!byId(items, canon)) issues.push({ code: "dangling-parent", kind: "pole", componentId: p?.component_id, parentId: canon, message: "Pole references a foundation that is not present; it stays priced until reassigned." });
+  }
+  for (const w of project.walls || []) {
+    const fId = w?.foundation_component_id;
+    if (fId === "" || fId === undefined || fId === null) continue; // freestanding wall — allowed
+    if (isReserved(fId)) issues.push({ code: "unresolved-parent", kind: "wall", componentId: w?.component_id, parentId: fId, message: "Wall legacy foundation index could not be resolved; left unresolved until reassigned." });
+    else if (!byId(items, fId)) issues.push({ code: "dangling-parent", kind: "wall", componentId: w?.component_id, parentId: fId, message: "Wall references a foundation that is not present; it stays priced until reassigned." });
   }
   for (const c of project.wall_caps || []) {
     const wId = c?.wall_component_id;
@@ -311,9 +320,9 @@ export function foundationAssemblyIssues(project) {
 export function cloneFoundationComponents(project, { createId } = {}) {
   if (typeof createId !== "function") throw new Error("foundation assembly: createId(kind) factory is required");
   if (!isRecord(project)) throw new Error("foundation assembly: project must be a record");
-  // Legacy rows can carry a malformed wall outline — a nonarray `shape.segments`
+  // Legacy rows can carry a malformed wall outline â€” a nonarray `shape.segments`
   // value on a stored row. The copy path must not crash on them: detach the
-  // field for normalization, then restore the authored value raw on the clone —
+  // field for normalization, then restore the authored value raw on the clone â€”
   // no id remap is possible on a non-array, so none is attempted.
   const rawWallSegments = new Map();
   const wallsForNormalize = (Array.isArray(project.walls) ? project.walls : []).map((w, i) => {
