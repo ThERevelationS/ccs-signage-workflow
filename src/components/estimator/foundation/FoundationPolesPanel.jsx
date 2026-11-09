@@ -15,6 +15,7 @@ import { foundationLayoutFootprint, layoutPositionInches } from "./foundationLay
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const poleDimMeta = (field) => foundationDimensionFieldMeta("pole", field);
+const signDimMeta = (field) => foundationDimensionFieldMeta("sign", field);
 
 // CMP-E01/O-056: the project-level poles list below is the single priced
 // representation. Items can still carry pre-consolidation pole fields; they
@@ -258,6 +259,86 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   {issues.map((issue) => <p key={`${issue.field}-${issue.code}`}>{issue.message}</p>)}
                 </div>
               )}
+              {/* O-060 (CMP-E08) — editable sign list on the pole: each sign
+                  carries its own dims + mount height; the assembly model
+                  normalizes component_ids. */}
+              <div className="mt-2 border-t border-gray-100 pt-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-gray-600">Signs on this pole ({(pole.signs || []).length})</span>
+                  <button
+                    type="button"
+                    onClick={() => patchPole(index, {
+                      signs: [...(pole.signs || []), {
+                        component_id: `pole_sign_${Math.random().toString(36).slice(2, 10)}`,
+                        name: "",
+                        width_inches: 48, height_inches: 24, depth_inches: 8,
+                        mount_height_inches: pole.height_inches || 96,
+                        face_count: 1,
+                      }],
+                    })}
+                    className="h-[24px] px-2 rounded-sm border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
+                  >
+                    + Sign
+                  </button>
+                </div>
+                {(pole.signs || []).map((s, si) => {
+                  const patchSign = (changes) => patchPole(index, {
+                    signs: (pole.signs || []).map((sg, j) => (j === si ? { ...sg, ...changes } : sg)),
+                  });
+                  return (
+                    <div key={s.component_id || si} className="flex flex-wrap items-end gap-2 mb-1.5 rounded-sm border border-gray-100 bg-gray-50/60 px-2 py-1.5">
+                      <label className="text-[10px] text-gray-500">
+                        Sign
+                        <input
+                          type="text"
+                          value={s.name ?? ""}
+                          placeholder={`Sign ${si + 1}`}
+                          onChange={(e) => patchSign({ name: e.target.value })}
+                          className="block w-24 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} name`}
+                        />
+                      </label>
+                      <FoundationDimensionInput
+                        {...signDimMeta("width_inches")}
+                        value={s.width_inches ?? ""}
+                        onCommit={(v) => patchSign({ width_inches: v })}
+                        ariaLabel={`Pole ${index + 1} sign ${si + 1} width (inches)`}
+                      />
+                      <FoundationDimensionInput
+                        {...signDimMeta("height_inches")}
+                        value={s.height_inches ?? ""}
+                        onCommit={(v) => patchSign({ height_inches: v })}
+                        ariaLabel={`Pole ${index + 1} sign ${si + 1} height (inches)`}
+                      />
+                      <FoundationDimensionInput
+                        {...signDimMeta("mount_height_inches")}
+                        value={s.mount_height_inches ?? ""}
+                        onCommit={(v) => patchSign({ mount_height_inches: v })}
+                        ariaLabel={`Pole ${index + 1} sign ${si + 1} mount height (inches)`}
+                      />
+                      <label className="text-[10px] text-gray-500">
+                        Faces
+                        <select
+                          value={Number(s.face_count) || 1}
+                          onChange={(e) => patchSign({ face_count: Number(e.target.value) })}
+                          className="block w-14 h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} face count`}
+                        >
+                          {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => patchPole(index, { signs: (pole.signs || []).filter((_, j) => j !== si) })}
+                        className="h-7 w-7 rounded-sm text-red-500 hover:bg-red-50"
+                        aria-label={`Remove sign ${si + 1} from pole ${index + 1}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })
