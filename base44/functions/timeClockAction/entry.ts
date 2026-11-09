@@ -3462,6 +3462,7 @@ Deno.serve(async (req) => {
       bust('tcreview', `upr:${String(target.id || target.email || 'unknown')}`);
       bust('tcreview', `csr:${String(target.id || target.email || 'unknown')}`);
       bust('tcreview', `wdp:${String(target.id || target.email || 'unknown')}`);
+      bust('tcentry');
       bust('tccorr', String(target.email || 'unknown'));
       bust('tccorr', 'admin');
       bust('tcadmin');
@@ -3933,7 +3934,8 @@ Deno.serve(async (req) => {
           entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
         }), { bypass }) : Promise.resolve(null),
         state.status === 'clocked_in' && state.active_entry_id
-          ? entryEntity.get(state.active_entry_id).catch(() => null)
+          ? memo('tcentry', `ent:${state.active_entry_id}|${String(state.updated_date || '')}`, 60000,
+              () => entryEntity.get(state.active_entry_id).catch(() => null), { bypass })
           : Promise.resolve(null),
       ]);
       let promptActiveEntry: any = promptActiveEntryRow;
@@ -3955,12 +3957,20 @@ Deno.serve(async (req) => {
         const currentBreakStatus = breakStatusOf(state);
         const currentWorkPauseStatus = workPauseStatusOf(state);
         const currentLaborStatus = laborStatusOf(state);
+        // Version-stamped reads: every punch/break/pause/labor write bumps
+        // state.updated_date, so a memo keyed on it can never serve pre-write
+        // data. Saves ~5 entity calls per warm status call.
+        const entryVer = `${entry.id}|${String(state.updated_date || '')}`;
         const [activeBreak, activeWorkPause, breakSummary, workPauseSummary, laborSummary] = await Promise.all([
-          state.active_break_id ? breakEntity.get(state.active_break_id).catch(() => null) : Promise.resolve(null),
-          state.active_work_pause_id ? workPauseEntity.get(state.active_work_pause_id).catch(() => null) : Promise.resolve(null),
-          breakSummaryForEntry(breakEntity, entry.id, target.email),
-          workPauseSummaryForEntry(workPauseEntity, entry.id, target.email),
-          laborSummaryForEntry(laborEntity, entry.id, target.email),
+          state.active_break_id
+            ? memo('tcentry', `brk:${state.active_break_id}|${entryVer}`, 60000, () => breakEntity.get(state.active_break_id).catch(() => null), { bypass })
+            : Promise.resolve(null),
+          state.active_work_pause_id
+            ? memo('tcentry', `wp:${state.active_work_pause_id}|${entryVer}`, 60000, () => workPauseEntity.get(state.active_work_pause_id).catch(() => null), { bypass })
+            : Promise.resolve(null),
+          memo('tcentry', `bsum:${entryVer}`, 60000, () => breakSummaryForEntry(breakEntity, entry.id, target.email), { bypass }),
+          memo('tcentry', `wps:${entryVer}`, 60000, () => workPauseSummaryForEntry(workPauseEntity, entry.id, target.email), { bypass }),
+          memo('tcentry', `lsum:${entryVer}`, 60000, () => laborSummaryForEntry(laborEntity, entry.id, target.email), { bypass }),
         ]);
         const safeActiveBreak = activeBreak?.id && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
         const safeActiveWorkPause = activeWorkPause?.id && asEmail(activeWorkPause.user_email) === target.email && activeWorkPause.time_entry_id === entry.id ? activeWorkPause : null;
