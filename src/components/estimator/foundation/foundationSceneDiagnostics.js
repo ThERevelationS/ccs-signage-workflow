@@ -1,4 +1,4 @@
-// O-042 — pure scene conflict/clearance diagnostics over the normalized
+// O-042 -- pure scene conflict/clearance diagnostics over the normalized
 // scene ({items,poles,walls,wall_caps,signage_cabinets}). Findings carry
 // stable node ids so a consumer can click-to-select/focus the objects.
 // Every check reports what it can prove; unresolved rows and unmountable
@@ -23,7 +23,7 @@ const KIND_LABEL = {
 const itemRowName = (item, index) =>
   (typeof item?.description === "string" && item.description.trim()) || `Foundation ${index + 1}`;
 
-// Rotated-rect overlap (separating axis on both rects' axes). Cheap 2D SAT —
+// Rotated-rect overlap (separating axis on both rects' axes). Cheap 2D SAT --
 // both rects share center-space coordinates, so each contributes its two axes.
 const rectOverlap = (a, b) => {
   const verts = (r) => {
@@ -64,7 +64,7 @@ const pointInRect = (px, pz, r) => {
   return Math.abs(lx) <= r.w / 2 && Math.abs(lz) <= r.d / 2;
 };
 
-// Main entry — returns findings sorted error → warning → info.
+// Main entry -- returns findings sorted error -> warning -> info.
 export function foundationSceneDiagnostics(scene) {
   const findings = [];
   const push = (severity, kind, message, nodeIds) =>
@@ -72,12 +72,12 @@ export function foundationSceneDiagnostics(scene) {
   const items = scene?.items || [], poles = scene?.poles || [];
   const walls = scene?.walls || [], caps = scene?.wall_caps || [], cabinets = scene?.signage_cabinets || [];
 
-  // ── item bounds + pairwise clash ─────────────────────────────────────
+  // -- item bounds + pairwise clash -------------------------------------
   const rects = items.map((item, i) => ({ item, index: i, rect: itemRect(item, i) }));
   rects.forEach(({ item, index, rect }) => {
     const id = sceneNodeId.item(layoutItemKey(item, index));
     if (!rect) {
-      push("warning", "unplaced", `${itemRowName(item, index)} has no valid plan placement — fix its dimensions or position.`, [id]);
+      push("warning", "unplaced", `${itemRowName(item, index)} has no valid plan placement -- fix its dimensions or position.`, [id]);
       return;
     }
     const out =
@@ -97,53 +97,53 @@ export function foundationSceneDiagnostics(scene) {
     }
   }
 
-  // ── poles: mount target exists? inside an item but unmounted? ────────
+  // -- poles: mount target exists? inside an item but unmounted? --------
   poles.forEach((pole, i) => {
     const poleId = sceneNodeId.pole(layoutItemKey(pole, i));
     const parent = reparentParentOf(scene, "pole", pole);
     if (parent?.kind === "dangling") {
-      push("error", "unresolvable-mount", `Pole ${i + 1} is mounted to a foundation that no longer exists — remount or detach it.`, [poleId]);
+      push("error", "unresolvable-mount", `Pole ${i + 1} is mounted to a foundation that no longer exists -- remount or detach it.`, [poleId]);
       return;
     }
     if (parent?.kind === "unresolved") {
-      push("warning", "legacy-mount", `Pole ${i + 1}'s mount is stored in legacy form — save once to normalize it.`, [poleId]);
+      push("warning", "legacy-mount", `Pole ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [poleId]);
     }
     const px = Number(pole.x_inches), pz = Number(pole.z_inches);
     if (!Number.isFinite(px) || !Number.isFinite(pz)) return;
     const inside = rects.filter(({ rect }) => rect && pointInRect(px, pz, rect));
     if (!parent?.componentId && inside.length > 0) {
       push("info", "mount-candidate",
-        `Pole ${i + 1} stands unmounted inside ${itemRowName(inside[0].item, inside[0].index)} — select it and Mount to attach.`,
+        `Pole ${i + 1} stands unmounted inside ${itemRowName(inside[0].item, inside[0].index)} -- select it and Mount to attach.`,
         [poleId, sceneNodeId.item(layoutItemKey(inside[0].item, inside[0].index))]);
     }
     if (inside.length > 1 && !parent?.componentId) {
       push("warning", "ambiguous-footprint",
-        `Pole ${i + 1} sits inside ${inside.length} overlapping foundations — mount it to pick one.`,
+        `Pole ${i + 1} sits inside ${inside.length} overlapping foundations -- mount it to pick one.`,
         [poleId, ...inside.map((r) => sceneNodeId.item(layoutItemKey(r.item, r.index)))]);
     }
   });
 
-  // ── caps + cabinets: mount references must resolve ───────────────────
+  // -- caps + cabinets: mount references must resolve -------------------
   caps.forEach((cap, i) => {
     const capId = sceneNodeId.wallCap(layoutItemKey(cap, i));
     const parent = reparentParentOf(scene, "wall-cap", cap);
     if (parent?.kind === "dangling") {
-      push("error", "unresolvable-mount", `Wall cap ${i + 1} is bound to a wall that no longer exists — remount it.`, [capId]);
+      push("error", "unresolvable-mount", `Wall cap ${i + 1} is bound to a wall that no longer exists -- remount it.`, [capId]);
     } else if (parent?.kind === "unresolved") {
-      push("warning", "legacy-mount", `Wall cap ${i + 1}'s mount is stored in legacy form — save once to normalize it.`, [capId]);
+      push("warning", "legacy-mount", `Wall cap ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [capId]);
     } else if (!parent?.componentId) {
-      push("error", "unmounted-cap", `Wall cap ${i + 1} isn't bound to a wall or wall segment — it won't be billed to any wall.`, [capId]);
+      push("error", "unmounted-cap", `Wall cap ${i + 1} isn't bound to a wall or wall segment -- it won't be billed to any wall.`, [capId]);
     }
   });
   cabinets.forEach((cab, i) => {
     const cabId = sceneNodeId.cabinet(layoutItemKey(cab, i));
     const parent = reparentParentOf(scene, "cabinet", cab);
     if (parent?.kind === "dangling") {
-      push("error", "unresolvable-mount", `Cabinet ${i + 1} is mounted to an object that no longer exists — remount it.`, [cabId]);
+      push("error", "unresolvable-mount", `Cabinet ${i + 1} is mounted to an object that no longer exists -- remount it.`, [cabId]);
     } else if (parent?.kind === "unresolved") {
-      push("warning", "legacy-mount", `Cabinet ${i + 1}'s mount is stored in legacy form — save once to normalize it.`, [cabId]);
+      push("warning", "legacy-mount", `Cabinet ${i + 1}'s mount is stored in legacy form -- save once to normalize it.`, [cabId]);
     } else if (!parent?.componentId) {
-      push("error", "unmounted-cabinet", `Cabinet ${i + 1} isn't mounted to a pole or foundation — remount it.`, [cabId]);
+      push("error", "unmounted-cabinet", `Cabinet ${i + 1} isn't mounted to a pole or foundation -- remount it.`, [cabId]);
     }
   });
 
@@ -152,7 +152,7 @@ export function foundationSceneDiagnostics(scene) {
   return findings;
 }
 
-// Click handler helper — resolves a finding's first node id for
+// Click handler helper -- resolves a finding's first node id for
 // select+focus. Returns null when no node resolves (stale finding).
 export function diagnosticTarget(scene, finding) {
   const id = finding?.nodeIds?.[0];
