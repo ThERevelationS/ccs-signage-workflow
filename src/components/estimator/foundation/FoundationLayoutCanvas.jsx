@@ -34,6 +34,7 @@ import {
   parseSceneNodeId,
   nodeBreadcrumb,
   buildSceneTree,
+  resolveSceneNode,
 } from "./foundationSceneSelection";
 import {
   planReparentSelection,
@@ -111,6 +112,20 @@ const REPARENT_REASON_TEXT = {
   "commit-refused": "The page refused the mount change.",
   "unavailable": "Mounting needs the multi-object channel.",
 };
+
+// O-034 properties sync — notable fields per kind, shown only when the
+// resolved row actually carries them (no guessed values).
+const KIND_FIELD_KEYS = {
+  pole: [["height", "height_inches"], ["embed", "embedment_inches"], ["x", "x_inches"], ["z", "z_inches"]],
+  wall: [["height", "height_inches"], ["thickness", "thickness_inches"]],
+  "wall-segment": [["length", "length_inches"]],
+  "wall-cap": [["profile", "profile"], ["width", "width_inches"]],
+  cabinet: [["mount", "mount"], ["w", "width_inches"], ["h", "height_inches"], ["d", "depth_inches"]],
+};
+const nodeSummaryFields = (resolved) =>
+  (KIND_FIELD_KEYS[resolved?.node] || [])
+    .filter(([, key]) => resolved.row?.[key] !== undefined && resolved.row?.[key] !== null)
+    .map(([label, key]) => [label, resolved.row[key]]);
 
 export default function FoundationLayoutCanvas({
   items = [],
@@ -191,6 +206,14 @@ export default function FoundationLayoutCanvas({
   // mounts (e.g. Wall 1 › Segment 2 › Cap 1). Shown for any selection,
   // read-only canvases included — the toolbar stays edit-gated.
   const breadcrumb = selState.primaryId ? nodeBreadcrumb(scene, selState.primaryId) : [];
+
+  // O-034 properties sync — a resolved-row readout for the primary
+  // selection: non-item kinds always (they have no typed bar), items on
+  // read-only canvases (editable items already edit in the typed bar).
+  const primaryResolved = selState.primaryId ? resolveSceneNode(scene, selState.primaryId) : null;
+  const primaryProps = primaryResolved && (primaryResolved.node !== "item" || !editable)
+    ? nodeSummaryFields(primaryResolved)
+    : null;
 
   // O-034 object tree — the scene tree the selection model already
   // builds (roots → children by mount), rendered as a collapsible list.
@@ -1127,6 +1150,16 @@ export default function FoundationLayoutCanvas({
               </span>
             </span>
           ))}
+        </div>
+      )}
+
+      {primaryProps && primaryProps.length > 0 && (
+        <div data-selected-props="true" className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
+          <span className="font-semibold text-gray-600">{primaryResolved.node}:</span>
+          {primaryProps.map(([label, value]) => (
+            <span key={label}><span className="text-gray-400">{label}</span> {String(value)}</span>
+          ))}
+          <span className="text-gray-400 italic">edit via its panel</span>
         </div>
       )}
 
