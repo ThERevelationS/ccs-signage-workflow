@@ -179,7 +179,11 @@ bucket as every user.
       **N=10 PASSED post-publish 2026-11-09: 120/120 HTTP 200, 0×429, 0×5xx,
       p50 255ms, p95 740ms, p99 1041ms; status 11.3→2.4 avg entity calls,
       status_lite 0.9, ~280/min est. spend (~50% of 140 bucket under burst
-      replay — real steady-state is far lower).** N=25 still to run.
+      replay — real steady-state is far lower).**
+      **N=25 post-publish 2026-11-09: 300 calls → 206×200, 94×429, 0×5xx,
+      p50 250ms, p95 1793ms; entity spend ~166/min (memo holds: 0.1-2.0 avg
+      calls). The remaining 429s are the platform INVOKE cap (POST count),
+      not the entity bucket — WS-3 mount consolidation is the fix.**
 - [ ] Real-world check: all kiosks + 5 office sessions during a cron
       fire-minute → no banners.
 - [x] Published 2026-11-09T09:15Z checkpoint `6af182a3` (user-authorized
