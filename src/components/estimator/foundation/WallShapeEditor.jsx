@@ -6,11 +6,11 @@ import { foundationWallOutlineBasis, foundationWallRectangle, foundationWallSegm
 import { formatFoundationDimension, foundationDimensionInputIssue, parseFoundationDimension } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 
-// O-093 (CMP-H02): rectangle outline entry takes feet/inches text — the rect
+// O-093 (CMP-H02): rectangle outline entry takes feet/inches text â€” the rect
 // draft stays raw local state (same as before); parsing happens at validation/
 // apply time so a malformed draft disables Apply and shows the syntax hint
 // instead of silently coercing. Labels/help/placeholders come from the field
-// meta map (display text only — never stored defaults).
+// meta map (display text only â€” never stored defaults).
 const rectLMeta = foundationDimensionFieldMeta("wallOutline", "rect_length");
 const rectWMeta = foundationDimensionFieldMeta("wallOutline", "rect_width");
 
@@ -21,6 +21,40 @@ const SNAP = 2; // snap to 2"
 
 export function buildSegments(points, closed) {
   return foundationWallSegments(points, closed);
+}
+
+// O-045 (CMP-D02): advisory outline checks — duplicate-point (zero-length)
+// segments and non-adjacent proper crossings. Warnings never block editing;
+// the calc/pricing layer stays the fail-closed boundary on saved quantities.
+export function wallShapeIssues(points, closed) {
+  const issues = [];
+  const pts = Array.isArray(points) ? points : [];
+  const segs = [];
+  for (let i = 0; i + 1 < pts.length; i++) segs.push([pts[i], pts[i + 1]]);
+  if (closed === true && pts.length > 2) segs.push([pts[pts.length - 1], pts[0]]);
+  const fin = (p) => p && Number.isFinite(p.x) && Number.isFinite(p.z);
+  segs.forEach(([a, b], i) => {
+    if (fin(a) && fin(b) && a.x === b.x && a.z === b.z) {
+      issues.push(`Segment ${i + 1} has zero length (duplicate points).`);
+    }
+  });
+  const cross = (o, a, b) => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+  const proper = (a, b, c, d) => {
+    if (![a, b, c, d].every(fin)) return false;
+    const d1 = cross(c, d, a), d2 = cross(c, d, b);
+    const d3 = cross(a, b, c), d4 = cross(a, b, d);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  };
+  const n = segs.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 2; j < n; j++) {
+      if (i === 0 && j === n - 1 && closed) continue; // adjacent through closure
+      if (proper(segs[i][0], segs[i][1], segs[j][0], segs[j][1])) {
+        issues.push(`Segments ${i + 1} and ${j + 1} cross each other.`);
+      }
+    }
+  }
+  return issues;
 }
 
 const shapeRecord = (current) =>
@@ -36,7 +70,7 @@ export default function WallShapeEditor({ shape, onChange }) {
   const basis = foundationWallOutlineBasis(shape);
   const points = basis.points;
   const closed = basis.closed;
-  // Draft defaults display in the same ft/in form the parser accepts (8'×4').
+  // Draft defaults display in the same ft/in form the parser accepts (8'Ã—4').
   const [rect, setRect] = useState(() => ({
     l: formatFoundationDimension(96),
     w: formatFoundationDimension(48),
@@ -66,7 +100,7 @@ export default function WallShapeEditor({ shape, onChange }) {
   };
 
   // ft/in aware: parse the raw drafts first; validity is the parse plus the
-  // canonical-inch rectangle check (positive finite inches — unchanged rule).
+  // canonical-inch rectangle check (positive finite inches â€” unchanged rule).
   const rectL = parseFoundationDimension(rect.l);
   const rectW = parseFoundationDimension(rect.w);
   const rectShape = rectL.ok && rectW.ok ? foundationWallRectangle(rectL.inches, rectW.inches) : null;
@@ -211,14 +245,17 @@ export default function WallShapeEditor({ shape, onChange }) {
         )}
       </svg>
 
+      {wallShapeIssues(points, closed).map((msg) => (
+        <div key={msg} role="status" className="text-xs text-amber-600">{msg}</div>
+      ))}
       <div className="text-xs text-gray-600">
-        {hasSegmentLengths ? `${segments.length} segment${segments.length === 1 ? "" : "s"}` : "no segments"} · perimeter{" "}
+        {hasSegmentLengths ? `${segments.length} segment${segments.length === 1 ? "" : "s"}` : "no segments"} Â· perimeter{" "}
         <span className="font-semibold text-gray-900">{perimeter === null ? "Unavailable" : `${Math.round(perimeter)}"`}</span>
-        {closed ? " · closed" : points.length > 2 ? " · open (close it for an internal fill wall)" : ""}
+        {closed ? " Â· closed" : points.length > 2 ? " Â· open (close it for an internal fill wall)" : ""}
       </div>
       {legacyOnly && (
         <div role="status" className="text-xs text-amber-600">
-          Recorded segment lengths only — no drawable footprint. Draw or enter a rectangle to re-establish geometry.
+          Recorded segment lengths only â€” no drawable footprint. Draw or enter a rectangle to re-establish geometry.
         </div>
       )}
       {malformedPoints && (
