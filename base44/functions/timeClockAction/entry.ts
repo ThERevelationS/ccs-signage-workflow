@@ -3458,6 +3458,7 @@ Deno.serve(async (req) => {
     ]);
     if (!TIME_CLOCK_READS.has(action)) {
       bust('tclite', String(target.id || target.email || 'unknown'));
+      bust('tcstate', String(target.id || target.email || 'unknown'));
       bust('tccorr', String(target.email || 'unknown'));
       bust('tccorr', 'admin');
       bust('tcadmin');
@@ -3632,12 +3633,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    let state = await ensureState(stateEntity, target);
-    state = await recoverTransition({ stateEntity, entryEntity, auditEntity, laborEntity, state, target, actor });
-    state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
-    state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
-    state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
-    state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, state, target);
+    // The ensureState + recovery chain is ~6 entity reads. For the read-only
+    // `status` action, memoize it per-user for 3s — concurrent status calls
+    // share one resolution; recoveries are idempotent so a ≤3s deferral is
+    // safe. Mutations and bypass always get fresh state for punch decisions.
+    const resolveState = async () => {
+      let s = await ensureState(stateEntity, target);
+      s = await recoverTransition({ stateEntity, entryEntity, auditEntity, laborEntity, state: s, target, actor });
+      s = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state: s, target, actor });
+      s = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state: s, target, actor });
+      s = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state: s, target, actor });
+      return recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, s, target);
+    };
+    let state = action === 'status' && body?.bypass !== true
+      ? await memo('tcstate', String(target.id || target.email || 'unknown'), 3000, resolveState)
+      : await resolveState();
 
     if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {
       // Read-only Time Tracker snapshot + preferences. Never mutates clock
