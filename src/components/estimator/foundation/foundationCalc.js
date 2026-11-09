@@ -35,6 +35,8 @@ const ITEM_SNAPSHOT_FIELDS = [
 const REINFORCEMENT_SNAPSHOT_FIELDS = [
   "rebar_material_cost", "rebar_labor_cost", "rebar_labor_hours",
   "rebar_geometry_feet", "rebar_geometry_weight_lbs", "rebar_connection_count",
+  "support_count", "support_purchased_units", "support_packs", "support_material_cost",
+  "support_labor_cost", "support_labor_hours", "support_cost",
 ];
 
 // Versioned reinforcement dispatch (CMP-B): an item carrying
@@ -74,6 +76,7 @@ function calculateVersionedItem(item, project, inventory, settings, savedItem) {
           material: structuredClone(reinforcement.materialSnapshot),
           basis: structuredClone(reinforcement.basis),
           rate_sources: structuredClone(reinforcement.rateSources),
+          supports: structuredClone(reinforcement.supports),
         } : undefined,
       },
       issues: [],
