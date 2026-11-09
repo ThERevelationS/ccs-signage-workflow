@@ -34,7 +34,15 @@ const BY_TYPE = {
     { key: "fuel_surcharge", label: "Fuel surcharge", type: "number" },
   ],
   bagged_concrete: [{ key: "minimum_cost", label: "Minimum cost", type: "number" }],
-  rebar: [{ key: "rebar_size", label: "Rebar size (e.g. #4)", type: "text" }],
+  rebar: [
+    { key: "rebar_size", label: "Rebar size (e.g. #4)", type: "text" },
+    // O-029 / CMP-B15: stock lengths the rebar cut schedule packs against.
+    // The scalar is the primary stick length; the list carries any alternates
+    // the supplier also stocks (e.g. 240,480,720 for 20/40/60 ft). Unrecorded
+    // stays unknown — the schedule reports the gap, never an assumed length.
+    { key: "rebar_stock_length_inches", label: "Stock length (in)", type: "number" },
+    { key: "rebar_stock_lengths_inches", label: "Alt stock lengths (in, comma-separated)", type: "list" },
+  ],
   // O-021 / CMP-B07: the ten rebar_support_* catalog fields plus the COMMON
   // name/description/supplier/unit/cost_per_unit row. Field descriptor types:
   //   • "select" — renders a native <select> with the given options plus a
