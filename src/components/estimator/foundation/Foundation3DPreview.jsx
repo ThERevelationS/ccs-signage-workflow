@@ -186,7 +186,7 @@ function buildScene(scene, project, solid, showGround, highlight, exploded) {
     const height = (Number(wall?.heightInches) || 24) * IN;
     const capH = (Number(cap?.height_inches) || 3) * IN;
     const capLen = (Number(cap?.length_inches ?? cap?.cut_length_inches) || s.len) * IN;
-    const thick = ((Number(wall?.thicknessInches) || 8) + 2) * IN;
+    const thick = ((Number(wall?.thicknessInches) || 8) + 2 * (Number(cap?.overhang_inches) ?? 1)) * IN;
     const m = new THREE.Mesh(new THREE.BoxGeometry(capLen, capH, thick), capMat);
     m.position.set(((s.ax + s.bx) / 2) * IN, height + capH / 2, ((s.az + s.bz) / 2) * IN);
     m.rotation.y = -Math.atan2(s.bz - s.az, s.bx - s.ax);
