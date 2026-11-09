@@ -10,6 +10,17 @@ export const LANDSCAPE_MATERIALS = [
   { key: "mulch", label: "Mulch", color: "#92400e", cost_per_sqft: 1.25 },
   { key: "wood_decking", label: "Wood Decking", color: "#d97706", cost_per_sqft: 14 },
   { key: "water", label: "Water", color: "#38bdf8", cost_per_sqft: 6 },
+  // O-069 (CMP-F02) -- additional sqft-priced site materials. These bill by
+  // coverage like the base set; per-count objects (trees, lights, boulders)
+  // need a count-priced model -- they are intentionally absent rather than
+  // billed per square foot.
+  { key: "pavers", label: "Pavers", color: "#a8a29e", cost_per_sqft: 12 },
+  { key: "flagstone", label: "Flagstone", color: "#b45309", cost_per_sqft: 16 },
+  { key: "river_rock", label: "River Rock", color: "#78716c", cost_per_sqft: 3.5 },
+  { key: "sod", label: "Sod (installed)", color: "#16a34a", cost_per_sqft: 1.5 },
+  { key: "artificial_turf", label: "Artificial Turf", color: "#059669", cost_per_sqft: 11 },
+  { key: "ground_cover", label: "Ground Cover", color: "#65a30d", cost_per_sqft: 4 },
+  { key: "planting_bed", label: "Planting Bed", color: "#7c3f00", cost_per_sqft: 6 },
 ];
 
 export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
@@ -20,9 +31,9 @@ export const GRID_ROWS = 16;
 const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 
 // Inventory normalization boundary (CMP-A08): landscapePriceNumber is the
-// canonical catalog price basis (finite, nonnegative — an explicit 0 is a
+// canonical catalog price basis (finite, nonnegative â€” an explicit 0 is a
 // legitimate free material); landscapeCellSizeNumber is the positive
-// dimension basis — a missing cell size is not a guessable 12", it is
+// dimension basis â€” a missing cell size is not a guessable 12", it is
 // unavailable so the recorded total is held rather than repriced on a guess.
 import {
   inventoryNonnegativeNumber as landscapePriceNumber,
@@ -45,7 +56,7 @@ export function landscapeInputIssues(landscape) {
   const cells = isRecord(rawCells) ? rawCells : null;
   if (rawCells !== undefined && rawCells !== null && cells === null) {
     add("cells", "landscape_cells_unavailable",
-      "the recorded site grid is malformed — repair or clear it before repricing");
+      "the recorded site grid is malformed â€” repair or clear it before repricing");
     return issues;
   }
   const painted = Object.entries(cells || {}).filter(([, key]) => key && key !== "dirt");
@@ -61,7 +72,7 @@ export function landscapeInputIssues(landscape) {
     const mat = materialByKey(key);
     if (!mat) {
       add("cells", "landscape_material_unavailable",
-        `site material ${JSON.stringify(key)} is not in the landscape catalog — pick a catalog material or erase it before repricing`);
+        `site material ${JSON.stringify(key)} is not in the landscape catalog â€” pick a catalog material or erase it before repricing`);
     } else if (landscapePriceNumber(mat.cost_per_sqft) === null) {
       add("cost_per_sqft", "landscape_material_price_unavailable",
         `record a finite, nonnegative cost per sq ft for "${mat.label}" before repricing`);
@@ -71,7 +82,7 @@ export function landscapeInputIssues(landscape) {
 }
 
 // Area/cost rollup for the recorded grid. The ported accumulation is kept
-// verbatim for a fully priced grid — every line sqft and cost, and the total,
+// verbatim for a fully priced grid â€” every line sqft and cost, and the total,
 // are identical. An unpriceable line reports null amounts instead of the
 // ported $0, and a null total propagates "unavailable" to the section totals.
 export const landscapeSummary = (landscape) => {
