@@ -130,16 +130,16 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const saveAttemptRef = useRef(null);
   const exitGenerationRef = useRef(-1);
   const loadedOwnerRef = useRef(null);
-  // O-040 scene history — stroke-level undo for canvas geometry edits. One
+  // O-040 scene history â€” stroke-level undo for canvas geometry edits. One
   // store per mounted editor; the canvas records every committed gesture
-  // into it (foundationSceneHistory.js — see MOUNT-ANCHORS.md).
+  // into it (foundationSceneHistory.js â€” see MOUNT-ANCHORS.md).
   const sceneHistoryRef = useRef(null);
   if (!sceneHistoryRef.current) sceneHistoryRef.current = createSceneHistory();
   const sceneHistory = sceneHistoryRef.current;
   // Re-render on history mutations so the undo UI state stays live.
   useSyncExternalStore(sceneHistory.subscribe, () => sceneHistory.stateVersion);
-  // O-034 scene selection — object tree / properties / breadcrumb sync
-  // store (foundationSceneSelection.js — see MOUNT-ANCHORS.md). Same mount
+  // O-034 scene selection â€” object tree / properties / breadcrumb sync
+  // store (foundationSceneSelection.js â€” see MOUNT-ANCHORS.md). Same mount
   // shape as sceneHistory: the page owns one instance the canvas drives,
   // and this subscription keeps selection mutations render-live for the
   // CMP-C03 panels that consume it.
@@ -147,7 +147,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   if (!sceneSelectionRef.current) sceneSelectionRef.current = createSceneSelection();
   const sceneSelection = sceneSelectionRef.current;
   useSyncExternalStore(sceneSelection.subscribe, () => sceneSelection.stateVersion);
-  // O-034 — selected component ids feed the 3D preview's highlight seam.
+  // O-034 â€” selected component ids feed the 3D preview's highlight seam.
   const highlightComponentIds = sceneSelection.getState().ids
     .map((id) => parseSceneNodeId(id)?.componentId)
     .filter(Boolean);
@@ -161,9 +161,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     contextKeyRef.current = contextKey;
     editRevisionRef.current += 1;
     contextGenerationRef.current += 1;
-    // O-040: project/source switch — reset the scene undo chain so recorded
+    // O-040: project/source switch â€” reset the scene undo chain so recorded
     // gestures from the previous context can never apply to this one.
-    // O-035: the scene CAS domain is {items, poles, walls} — the canvas
+    // O-035: the scene CAS domain is {items, poles, walls} â€” the canvas
     // observes and records in the full domain now, so the reset anchor must
     // match or every later entry quarantines stale.
     sceneHistory.clear(sceneLayoutAnchor({ items: project?.items || [], poles: project?.poles || [], walls: project?.walls || [] }));
@@ -262,7 +262,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         const epochNow = sourceWriteEpochRef.current.get(proj.id);
         if (epochNow && epochNow.epoch > epochAtStart && proj.updated_date !== epochNow.lastSavedVersion) {
           // Our own delayed write landed during this read; the snapshot is
-          // older than the known saved version — one bounded fresh read.
+          // older than the known saved version â€” one bounded fresh read.
           setReloadRevision((r) => r + 1);
           return;
         }
@@ -316,8 +316,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         } else {
           setRecoveryRequired(false);
         }
-        // Canonicalize once at state ingress (CMP-A08): every downstream read —
-        // catalog memo, tab props, BOM, and calcProject — sees canonical rows.
+        // Canonicalize once at state ingress (CMP-A08): every downstream read â€”
+        // catalog memo, tab props, BOM, and calcProject â€” sees canonical rows.
         setInventory(normalizeFoundationInventoryRows([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]));
         setSettings(
           Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
@@ -343,7 +343,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const inputIssues = calc?.inputIssues || [];
   const inputBlocked = inputIssues.length > 0;
   const pricingBlocked = catalogBlocked || inputBlocked;
-  // Advisory construction checks (CMP-B16) — verify-style warnings only;
+  // Advisory construction checks (CMP-B16) â€” verify-style warnings only;
   // they render on the diagnostics surface but never block save or handoff.
   const constructionWarnings = calc?.constructionWarnings || [];
   const [catalogReloading, setCatalogReloading] = useState(false);
@@ -443,7 +443,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   // BrowserRouter (no data-router blocker APIs), so a page-scoped guard covers
   // the two real leave paths: internal anchor clicks (shell nav, in-page links)
   // and browser Back/Forward. Unsent edits are already persisted to the tab
-  // draft on every commit — the confirm makes an accidental leave a choice.
+  // draft on every commit â€” the confirm makes an accidental leave a choice.
   const navGuardArmedRef = useRef(false);
   useEffect(() => {
     const needsGuard = () => saving || dirty || recoveryRequired || draftSessionRef.current.pending;
@@ -464,17 +464,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     };
     // A same-URL sentinel history entry makes a Back press land on this page's
     // own URL first, where it can be confirmed before the app actually leaves.
-    // Cancel steps back onto the sentinel via forward() (no new entry — stale
+    // Cancel steps back onto the sentinel via forward() (no new entry â€” stale
     // sentinels never accumulate); confirm disarms then really goes back. A
     // stale sentinel popped while clean passes straight through. Standalone
-    // mode only — embedded, a route pop unmounts us before we could confirm,
+    // mode only â€” embedded, a route pop unmounts us before we could confirm,
     // so the sentinel would only leave a dead entry.
     if (!embedded && !navGuardArmedRef.current && needsGuard()) {
       try { window.history.pushState({ ccsFoundationLeaveGuard: true }, "", window.location.href); navGuardArmedRef.current = true; } catch { /* best effort */ }
     }
     const onPop = (e) => {
       if (!navGuardArmedRef.current) return;
-      if (e.state?.ccsFoundationLeaveGuard === true) return; // landed on the armed sentinel itself (Forward / re-entry) — nothing to do
+      if (e.state?.ccsFoundationLeaveGuard === true) return; // landed on the armed sentinel itself (Forward / re-entry) â€” nothing to do
       if (!needsGuard()) { navGuardArmedRef.current = false; window.history.back(); return; }
       if (confirmLeave()) { navGuardArmedRef.current = false; window.history.back(); }
       else { try { window.history.forward(); } catch { /* best effort */ } }
@@ -490,7 +490,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   // persistence, edit-revision bump) so an accepted proposal is an ordinary
   // undoable edit that reaches the entity only through the normal save path.
   // `blocked` mirrors the same busy/availability gates other edits honor;
-  // pricingBlocked is intentionally NOT included — a held item can still be
+  // pricingBlocked is intentionally NOT included â€” a held item can still be
   // drafted and previewed, and acceptance only lands through commit/save.
   const reinforcementEditor = useFoundationReinforcementEditor({
     getCurrent: () => {
@@ -518,7 +518,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     commit: (updater) => commit(updater),
   });
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading sectionâ€¦</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
@@ -538,9 +538,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     if (result.status === "stored") {
       session.revision = result.revision;
       session.pending = false;
-      setDraftOffer({ store: draftStore, backedUp: true, message: "Design and customer-pricing edits backed up in this browser tab only — closing the tab loses them; save to keep all changes." });
+      setDraftOffer({ store: draftStore, backedUp: true, message: "Design and customer-pricing edits backed up in this browser tab only â€” closing the tab loses them; save to keep all changes." });
     } else if (result.status === "conflict") {
-      // Never overwrite — re-read latest and surface a decision.
+      // Never overwrite â€” re-read latest and surface a decision.
       const latest = session.store.read();
       session.revision = latest.status !== "unavailable" ? latest.revision ?? null : result.revision ?? session.revision;
       session.pending = true;
@@ -585,13 +585,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items: prev.items.map((it, i) => (i === index ? { ...it, ...changes } : it)),
     }));
 
-  // O-035 multi-row commit channel — patch lists that do not fit the
+  // O-035 multi-row commit channel â€” patch lists that do not fit the
   // single-items channel (moves/resizes across poles or walls, align,
   // distribute, multi-row drags) route here through the SAME commit path
   // patchItem uses, so CAS guards + normalize + draft backup stay in force.
   // One commit for the whole list keeps the op atomic on the business side,
   // matching the single history entry the canvas records. Refusing (false)
-  // means the canvas records nothing — no silent partial application.
+  // means the canvas records nothing â€” no silent partial application.
   const patchScene = (patches) => {
     const list = (Array.isArray(patches) ? patches : []).filter(
       (p) => p && typeof p.collection === "string" && Number.isInteger(p.index) && p.index >= 0 && p.patch && typeof p.patch === "object",
@@ -611,7 +611,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }) !== false;
   };
 
-  // O-035 canvas snap prefs — optional Settings rows
+  // O-035 canvas snap prefs â€” optional Settings rows
   // (foundation_layout_object_snap=false disables object snap;
   // foundation_layout_snap_tolerance_inches and
   // foundation_layout_grid_snap_inches are inches). Absent or malformed
@@ -624,19 +624,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     gridSnapInches: prefNumber(settings?.foundation_layout_grid_snap_inches),
   };
 
-  // O-040 scene undo/redo — revert canvas geometry edits through the same
-  // commit channel the canvas already uses (patchItem → commit: CAS guards,
+  // O-040 scene undo/redo â€” revert canvas geometry edits through the same
+  // commit channel the canvas already uses (patchItem â†’ commit: CAS guards,
   // normalize, draft backup all stay in force). The store returns
   // patch-shaped payloads; a refused commit reports 'rejected' and the
   // stacks stay untouched.
   // O-035: undo/redo/observe anchors span the full scene domain
-  // ({items, poles, walls}) — the canvas records and observes there now, so
+  // ({items, poles, walls}) â€” the canvas records and observes there now, so
   // single-row and multi-row entries chain in ONE domain and an external
   // pole/wall write detaches recorded geometry just like an items write.
   const sceneAnchorOf = (p) =>
     sceneLayoutAnchor({ items: p?.items || [], poles: p?.poles || [], walls: p?.walls || [] });
   // Multi-row entries carry kind 'scene-multi', target:null (the honesty
-  // guard — a single-row apply would throw on .index and report
+  // guard â€” a single-row apply would throw on .index and report
   // 'rejected'), and patch {multi:[{collection,index,fields}]} where fields
   // is the before-side on undo and the after-side on redo. Branch BEFORE
   // touching rev.target so a real multi apply never trips the guard.
@@ -658,13 +658,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     commit((prev) => ({ items: prev.items.filter((_, i) => i !== index) }));
   };
 
-  // O-034 scene delete — the canvas reports Delete/Backspace as a
+  // O-034 scene delete â€” the canvas reports Delete/Backspace as a
   // delete-request carrying resolved selection entries (id/kind/collection/
   // live index) and never mutates business data. Whole-row deletions route
   // through the same commit channel as removeItem and the panel onChange
   // patches (CAS guards, normalize, draft backup all stay in force); entry
   // indexes address the live project arrays the canvas is fed. Sub-object
-  // entries (wall-segment, pole-sign) are intentionally not routed yet —
+  // entries (wall-segment, pole-sign) are intentionally not routed yet â€”
   // the CMP-C03 panel wiring owns sub-row semantics (MOUNT-ANCHORS.md).
   const deleteSceneSelection = (entries) => {
     const FIELD_OF_COLLECTION = {
@@ -702,7 +702,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       return { items };
     });
 
-  // O-035 scene duplicate — the canvas emits a pure plan
+  // O-035 scene duplicate â€” the canvas emits a pure plan
   // ({sources:[{collection,index,componentId}], offset_inches:{x,z}}) and
   // never mutates business data; foundationDuplicateMirror owns clone +
   // component-id minting + reference remap, and the resulting patch rides
@@ -733,7 +733,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     if (!session.store || session.store !== draftStore || !offer?.revision) return;
     const latest = session.store.read();
     if (latest.status !== "found" || latest.revision !== offer.revision) {
-      // Storage changed since the offer — surface the newest, never restore stale data.
+      // Storage changed since the offer â€” surface the newest, never restore stale data.
       // Preserve the known revision on a failed read so a retry does not conflict falsely.
       if (latest.status !== "unavailable") session.revision = latest.revision ?? null;
       if (latest.status === "found") setDraftOffer({ store: draftStore, revision: latest.revision, draft: latest.draft, savedAt: latest.savedAt, baseUpdatedAt: latest.baseUpdatedAt });
@@ -760,7 +760,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       session.revision = null;
       session.pending = false;
       setDraftOffer(null);
-      // Keep unsent in-memory edits backed up — never lose local newer edits on navigation.
+      // Keep unsent in-memory edits backed up â€” never lose local newer edits on navigation.
       if (dirty) persistBrowserDraft(projectRef.current ?? project);
     } else if (result.status === "retained") {
       const latest = session.store.read();
@@ -774,8 +774,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
   };
 
-  // Draft↔saved merge-conflict resolutions (CMP-A04 tail). Each choice routes
-  // through syncConflict.choose — the dialog closes only on a true return, so
+  // Draftâ†”saved merge-conflict resolutions (CMP-A04 tail). Each choice routes
+  // through syncConflict.choose â€” the dialog closes only on a true return, so
   // a resolution never silently half-applies.
   const conflictDraftFields = (draft) => {
     const out = {};
@@ -785,7 +785,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   };
   const adoptFreshSavedForConflict = async () => {
     // Re-read the saved record at click time and normalize it exactly like the
-    // load path — adopting anything else would land the editor on a stale or
+    // load path â€” adopting anything else would land the editor on a stale or
     // differently-shaped base.
     let saved = null;
     try { saved = await staffEntities.FoundationProject.get(id); } catch { saved = null; }
@@ -828,7 +828,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
     // save_conflict: the saved record moved under unsent edits. Adopt the fresh
     // record as the acknowledged base, then overlay the draft fields through
-    // one undoable commit — the next save lands on that revision.
+    // one undoable commit â€” the next save lands on that revision.
     const adopted = await adoptFreshSavedForConflict();
     if (!adopted) return false;
     const stored = draftStore.read();
@@ -844,7 +844,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const session = draftSessionRef.current;
     if (!c || session.store !== draftStore) return false;
     if (c.kind === "draft_vs_saved") {
-      // Explicit discard — same CAS clear as discardBrowserDraft (the dialog is
+      // Explicit discard â€” same CAS clear as discardBrowserDraft (the dialog is
       // the explicit choice; no second confirm).
       const cleared = draftStore.clear(draftVisible?.revision ?? session.revision ?? null);
       if (cleared.status !== "removed") {
@@ -856,11 +856,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       session.revision = null;
       session.pending = false;
       setDraftOffer(null);
-      // Keep unsent in-memory edits backed up — same net as discardBrowserDraft.
+      // Keep unsent in-memory edits backed up â€” same net as discardBrowserDraft.
       if (dirty) persistBrowserDraft(projectRef.current ?? project);
       return true;
     }
-    // save_conflict: drop unsent edits — clear any stored draft, then reload
+    // save_conflict: drop unsent edits â€” clear any stored draft, then reload
     // the newer saved record so the editor lands clean on that revision.
     const stored = draftStore.read();
     if (stored.status === "found" || stored.status === "invalid") draftStore.clear(stored.revision);
@@ -875,7 +875,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     const session = draftSessionRef.current;
     if (!c?.draft || session.store !== draftStore) return false;
     // Re-anchor the same draft content to the CURRENT saved revision through
-    // the store CAS write — nothing is dropped; the re-anchored draft stays
+    // the store CAS write â€” nothing is dropped; the re-anchored draft stays
     // an ordinary restorable offer.
     const baseRev = c.summary?.savedUpdatedAt ?? acknowledgedVersionRef.current?.updated_date ?? null;
     const rebase = foundationDraftRebaseProject({ draft: c.draft, sourceId: id });
@@ -903,7 +903,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   // Held extras: when a recorded cabinet row or the landscape grid cannot be
   // repriced the calc keeps the acknowledged project totals (or null), never a
-  // silently guessed amount. Null propagation keeps the section total honest —
+  // silently guessed amount. Null propagation keeps the section total honest â€”
   // "Estimate handoff paused" is already gated on pricingBlocked.
   const cabinetCost = calc.totals.total_signage_cabinet_cost;
   const landscapeCost = calc.totals.total_landscape_cost;
@@ -912,7 +912,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     : calc.totals.grand_total + cabinetCost + landscapeCost;
 
   // Saved-vs-current reconciliation (CMP-A10): the acknowledged record's
-  // persisted 12-field split-total sum — the same number the linked estimate
+  // persisted 12-field split-total sum â€” the same number the linked estimate
   // stored as live_total_snapshot at the last Builder save (manual add-on
   // Product parts live only on the estimate side, so record-sum is the right
   // comparator for this module-scoped sectionTotal). Null for a never-priced
@@ -943,7 +943,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     persistBrowserDraft(nextState);
   };
 
-  // O-040: route undo/redo through the scene store first — a committed
+  // O-040: route undo/redo through the scene store first â€” a committed
   // canvas gesture reverts with stroke-level fidelity ('applied').
   // Anything else falls back to the whole-project snapshot history.
   const handleUndo = () => {
@@ -1206,7 +1206,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         setDirty(true);
       } else if (sameContext && (outcome.status === "conflict" || outcome.status === "failed")) {
         if (outcome.status === "conflict" && outcome.conflictDetected) {
-          // Genuine classified CAS concurrent-edit conflict — open the merge
+          // Genuine classified CAS concurrent-edit conflict â€” open the merge
           // dialog with the best available draft (stored backup, else live edits).
           const latestDraft = draftSessionRef.current.store === draftStore ? draftStore.read() : { status: "unavailable" };
           const draftBackedUp = latestDraft.status === "found";
@@ -1279,7 +1279,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         project_name: `${project.project_name || "Foundation"} (Copy)`,
         client_name: project.client_name,
         customer_id: project.customer_id,
-        // Same-job metadata payload() does not own — a copy keeps the
+        // Same-job metadata payload() does not own â€” a copy keeps the
         // document link, the saved estimate-number lineage (mirroring
         // convertFoundationToBrickStone), the persisted beautify brief
         // image, and any externally-set pricing-engine context.
@@ -1340,7 +1340,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     return wrapped;
   };
 
-  // #77 — create a fresh Brick & Stone draft carrying the shared identity
+  // #77 â€” create a fresh Brick & Stone draft carrying the shared identity
   // fields; the Foundation source is left untouched.
   const handleSwapToBrickStone = async () => {
     if (draftSessionRef.current.pending) return;
@@ -1361,7 +1361,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
   };
 
-  // #88 — copy a read-only staff_view portal link for this estimate.
+  // #88 â€” copy a read-only staff_view portal link for this estimate.
   const handleShareLink = async () => {
     if (draftSessionRef.current.pending) return;
     try {
@@ -1388,7 +1388,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
             </ul>
             <button type="button" onClick={handleCatalogReload} disabled={catalogReloading || loading || saving}
               className="mt-2 rounded-sm border border-amber-400 bg-white px-2 py-1 text-[12px] font-semibold text-amber-800 disabled:opacity-50">
-              {catalogReloading ? "Reloading catalogs…" : "Reload catalogs"}
+              {catalogReloading ? "Reloading catalogsâ€¦" : "Reload catalogs"}
             </button>
           </div>
         )}
@@ -1460,7 +1460,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
         {constructionWarnings.length > 0 && (
           <div role="status" className="mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[12px] text-blue-900">
-            <span className="font-semibold">Construction checks — verify before build</span>
+            <span className="font-semibold">Construction checks â€” verify before build</span>
             <ul className="list-disc pl-5 mt-1 space-y-0.5">
               {constructionWarnings.map((warning, i) => (
                 <li key={`${warning.code}-${warning.kind}-${warning.index ?? ""}-${i}`}>{warning.message}</li>
@@ -1554,7 +1554,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 mb-3 text-[12px] text-blue-900">
             Add each footing or pillar under <b>Foundation</b>, then place poles, masonry walls and caps
             in the other tabs. Concrete, rebar, excavation and labor rates come from your settings and
-            supplier inventory. The 3D preview on the right updates as you type — left drag orbits,
+            supplier inventory. The 3D preview on the right updates as you type â€” left drag orbits,
             right drag pans, scroll zooms. Save & Exit pushes the total back to the combined estimate.
           </div>
         )}
@@ -1595,7 +1595,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
                 {calc.items.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-sm border border-dashed border-gray-300 text-[12px] text-gray-500">
-                    No foundations yet — add a spread footing or pillar to start.
+                    No foundations yet â€” add a spread footing or pillar to start.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1645,6 +1645,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   walls={calc.walls}
                   options={catalog.walls}
                   wallPricing={calc.wallPricing}
+                  items={calc.items}
                   onChange={(walls) => patch({ walls })}
                 />
                 <FoundationPolesPanel
@@ -1733,7 +1734,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     to="/FoundationCatalog"
                     className="inline-block mt-3 text-[12px] text-gray-600 hover:text-red-600"
                   >
-                    Manage foundation catalog →
+                    Manage foundation catalog â†’
                   </Link>
                 </div>
               </TabsContent>
@@ -1797,7 +1798,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         busy={saving || syncConflict.resolving}
         disabled={{
           keep_draft: sourceRefreshRef.current
-            ? "The project must be reloaded after the earlier save finished — reload before applying draft edits."
+            ? "The project must be reloaded after the earlier save finished â€” reload before applying draft edits."
             : null,
         }}
         onKeepDraft={handleConflictKeepDraft}
