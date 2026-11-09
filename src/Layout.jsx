@@ -492,29 +492,45 @@ function LayoutContent({ children }) {
     };
     const onPointerDown = (event) => {
       if (event.button === 2) return; // right-click opens context menus, not drags
+      window.__ccsNavDropFolder = "";
       const dragEl = event.target.closest?.("[data-rfd-draggable-id]");
       if (!dragEl) return;
       const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
       if (scope) freezeAll(scope, dragEl);
     };
-    // Track the pointer during drags so handleNavReorder can hit-test the
-    // folder pills' painted boxes directly — the pill the pointer is actually
-    // over is the user's intent, regardless of the library's displaced model.
-    const onPointerMove = (event) => {
-      window.__ccsNavPointer = { x: event.clientX, y: event.clientY };
+    // On release during a nav drag, hit-test the pointer against the folder
+    // pills' painted boxes BEFORE unfreezing (unfreeze restores pre-drag
+    // rects). handleNavReorder reads __ccsNavDropFolder so the pill the
+    // pointer is visually over wins — not whichever displaced model box the
+    // library's combine math picked.
+    const onPointerUp = (event) => {
+      window.__ccsNavDropFolder = "";
+      if (window.__ccsNavDragging) {
+        for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+          const id = el.getAttribute("data-rfd-draggable-id");
+          if (!(isFolderToken(id) || id?.startsWith("sfolder:"))) continue;
+          const r = el.getBoundingClientRect();
+          if (event.clientX < r.left || event.clientX > r.right ||
+              event.clientY < r.top || event.clientY > r.bottom) continue;
+          window.__ccsNavDropFolder = isFolderToken(id)
+            ? tokenFolderId(id) : id.slice("sfolder:".length);
+          break;
+        }
+      }
+      unfreezeAll();
     };
     const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
+    // pointerup on window+capture: registered at mount, so it runs before the
+    // drag library's own window-level release handler and before onDragEnd.
     document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("pointermove", onPointerMove, true);
-    document.addEventListener("pointerup", unfreezeAll, true);
-    document.addEventListener("pointercancel", unfreezeAll, true);
+    window.addEventListener("pointerup", onPointerUp, true);
+    window.addEventListener("pointercancel", unfreezeAll, true);
     document.addEventListener("keydown", onKeyDown);
     window.addEventListener("blur", unfreezeAll);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("pointermove", onPointerMove, true);
-      document.removeEventListener("pointerup", unfreezeAll, true);
-      document.removeEventListener("pointercancel", unfreezeAll, true);
+      window.removeEventListener("pointerup", onPointerUp, true);
+      window.removeEventListener("pointercancel", unfreezeAll, true);
       document.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("blur", unfreezeAll);
       unfreezeAll();
@@ -546,24 +562,19 @@ function LayoutContent({ children }) {
     navDragFlag(false);
     const state = navState();
 
-    // WYSIWYG folder drop: if the pointer is visually over a folder pill at
-    // release, that pill is the intent — regardless of which displaced model
-    // box the library's combine math picked. Folder drags can't nest (their
-    // url resolves null and falls through to the reorder path).
-    const pt = window.__ccsNavPointer;
-    if (pt) {
-      for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
-        const id = el.getAttribute("data-rfd-draggable-id");
-        if (!(isFolderToken(id) || id?.startsWith("sfolder:"))) continue;
-        const r = el.getBoundingClientRect();
-        if (pt.x < r.left || pt.x > r.right || pt.y < r.top || pt.y > r.bottom) continue;
-        const folderId = isFolderToken(id) ? tokenFolderId(id) : id.slice("sfolder:".length);
-        const url = pageUrlFromDraggable(draggableId);
-        if (url && folderId) {
-          const next = movePageToFolder(state, url, folderId);
-          persistNavState(mergeHiddenTail(next.order), next.folders);
-          return;
-        }
+    // WYSIWYG folder drop: the pointerup handler recorded which folder pill
+    // (if any) the pointer was visually over while rects still reflected the
+    // painted positions — that intent beats the library's displaced-model
+    // combine math. Folder drags can't nest (their url resolves null and
+    // falls through to the reorder path).
+    const dropFolder = window.__ccsNavDropFolder;
+    window.__ccsNavDropFolder = "";
+    if (dropFolder) {
+      const url = pageUrlFromDraggable(draggableId);
+      if (url) {
+        const next = movePageToFolder(state, url, dropFolder);
+        persistNavState(mergeHiddenTail(next.order), next.folders);
+        return;
       }
     }
 
