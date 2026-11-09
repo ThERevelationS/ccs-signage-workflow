@@ -8,7 +8,7 @@ const verLabel = (v) => {
 };
 
 export default function FoundationReinforcementProposalPanel({
-  item, draft, catalog = [], preview, disabled = false, busy = false, error,
+  item, draft, catalog = [], supportCatalog = [], preview, disabled = false, busy = false, error,
   acknowledgments = null, onAcknowledgmentsChange,
   onStart, onDraftChange, onPreview, onAccept, onDiscard,
 }) {
@@ -57,7 +57,7 @@ export default function FoundationReinforcementProposalPanel({
         </div>
       ) : (
         <fieldset disabled={blocked} className="mt-2 space-y-3 min-w-0">
-          <ReinforcementDraftGeometry draft={draft} item={item} disabled={blocked} onChange={(design) => changeDraft({ design })} />
+          <ReinforcementDraftGeometry draft={draft} item={item} supportCatalog={supportCatalog} disabled={blocked} onChange={(design) => changeDraft({ design })} />
           <ReinforcementDraftMaterial draft={draft} catalog={catalog} disabled={blocked} onChange={(p) => { if (!blocked) onDraftChange?.({ ...draft, ...p }); }} />
 
           {preview && (
