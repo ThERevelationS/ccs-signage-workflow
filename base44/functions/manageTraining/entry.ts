@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { memo, bust } from '../../shared/invokeMemo.ts';
 
 // Session-authenticated gateway for the training tracker. TrainingItem and
 // TrainingAssignment are backend-only RLS — all staff access flows through
@@ -76,9 +77,11 @@ function isEditor(user: any, settings: any) {
 }
 
 async function loadEditorEmails(GlobalSettings: any) {
-  const rows = await GlobalSettings.filter({ setting_key: SETTINGS_KEY }).catch(() => []);
-  const value = Array.isArray(rows) && rows[0]?.setting_value ? rows[0].setting_value : {};
-  return Array.isArray(value?.editor_emails) ? value.editor_emails : [];
+  return memo('training', 'editor_emails', 60000, async () => {
+    const rows = await GlobalSettings.filter({ setting_key: SETTINGS_KEY }).catch(() => []);
+    const value = Array.isArray(rows) && rows[0]?.setting_value ? rows[0].setting_value : {};
+    return Array.isArray(value?.editor_emails) ? value.editor_emails : [];
+  });
 }
 
 async function listAll(entity: any, sort = '-updated_date', label = 'list') {
@@ -146,6 +149,10 @@ Deno.serve(async (req) => {
     const canEdit = isEditor(user, { editor_emails: editorEmails });
     const isAdmin = user.role === 'admin';
     const action = String(body?.action || 'bootstrap').trim();
+    // Write actions change assignments/items — drop memoized reads so the
+    // next bootstrap refetches.
+    const TRAINING_READS = new Set(['bootstrap', 'my_assignments', 'report']);
+    if (!TRAINING_READS.has(action)) bust('training');
     const nowIso = new Date().toISOString();
     const today = nowIso.slice(0, 10);
 
@@ -156,7 +163,9 @@ Deno.serve(async (req) => {
     }));
 
     if (action === 'bootstrap' || action === 'my_assignments') {
-      const mine = await TrainingAssignment.filter({ assignee_email: email }, '-updated_date', 200);
+      const mine = await memo('training', `mine:${email}`, 10000,
+        () => TrainingAssignment.filter({ assignee_email: email }, '-updated_date', 200),
+        { bypass: body?.bypass === true });
       const payload: any = {
         me: { email, name: String(user.full_name || ''), role: user.role, canEdit },
         // Cancelled rows are invisible to the assignee in every client —
@@ -165,9 +174,9 @@ Deno.serve(async (req) => {
       };
       if (canEdit) {
         const [items, assignments, staffRows] = await Promise.all([
-          listAll(TrainingItem, 'sort_order', 'training items'),
-          listAll(TrainingAssignment, '-updated_date', 'training assignments'),
-          AuthorizedEmail.filter({}, null, 500).catch(() => []),
+          memo('training', 'items', 15000, () => listAll(TrainingItem, 'sort_order', 'training items'), { bypass: body?.bypass === true }),
+          memo('training', 'assignments', 15000, () => listAll(TrainingAssignment, '-updated_date', 'training assignments'), { bypass: body?.bypass === true }),
+          memo('training', 'staff_roster', 60000, () => AuthorizedEmail.filter({}, null, 500).catch(() => []), { bypass: body?.bypass === true }),
         ]);
         payload.items = items || [];
         payload.assignments = decorate(assignments || []);
