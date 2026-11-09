@@ -174,11 +174,17 @@ bucket as every user.
 
 ## WS-8 — Verification gates
 
-- [ ] `scripts/load-sim.mjs` at N=10, N=25: **0 gaveUp, 0 user-visible errors,
+- [~] `scripts/load-sim.mjs` at N=10, N=25: **0 gaveUp, 0 user-visible errors,
       p95 hot-action <800ms, sustained spend <70% of bucket**.
+      **N=10 PASSED post-publish 2026-11-09: 120/120 HTTP 200, 0×429, 0×5xx,
+      p50 255ms, p95 740ms, p99 1041ms; status 11.3→2.4 avg entity calls,
+      status_lite 0.9, ~280/min est. spend (~50% of 140 bucket under burst
+      replay — real steady-state is far lower).** N=25 still to run.
 - [ ] Real-world check: all kiosks + 5 office sessions during a cron
       fire-minute → no banners.
-- [ ] Checkpoint before each WS lands; nothing publishes without explicit say-so.
+- [x] Published 2026-11-09T09:15Z checkpoint `6af182a3` (user-authorized
+      "ship it"): memo layer all gateways live, mount gates, leader election,
+      lazy face-api, instrumentation visible on published route.
 
 ---
 
