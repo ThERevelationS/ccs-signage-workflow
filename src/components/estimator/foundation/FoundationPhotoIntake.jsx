@@ -34,7 +34,14 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
         if (file.size > MAX_BYTES) { setError(`${file.name} exceeds ${MAX_BYTES / 1048576} MB.`); continue; }
         const res = await base44.integrations.Core.UploadFile({ file });
         const url = res?.file_url || res?.url || "";
-        if (url) added.push({ url, caption: file.name.replace(/\.[^.]+$/, ""), notes: "" });
+        // W-013 -- the reference record carries a stable id, purpose,
+        // provenance, consent and processing state; no image bytes in JSON.
+        if (url) added.push({
+          id: `photo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+          url, caption: file.name.replace(/\.[^.]+$/, ""), notes: "",
+          purpose: "ai_design_context", provenance: "operator_upload",
+          consent: true, state: "accepted", uploaded_at: new Date().toISOString(),
+        });
       }
       if (added.length) onChange?.({ reference_photos: [...photos, ...added] });
     } catch (e) {
@@ -95,6 +102,9 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
                     onChange={(e) => update(i, "notes", e.target.value)}
                     placeholder="Notes for the review"
                     className="mt-0.5 w-full h-5 px-1 text-[10px] border border-gray-100 rounded-sm bg-white" />
+                  <p className="text-[9px] text-gray-400 mt-px">
+                    {p?.purpose ? p.purpose.replace(/_/g, " ") : "context"}{p?.state ? ` - ${p.state}` : ""}
+                  </p>
                 </div>
                 {!disabled && (
                   <div className="flex flex-col gap-0.5 flex-none">
