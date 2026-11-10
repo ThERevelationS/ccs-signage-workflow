@@ -362,6 +362,69 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 ariaLabel={`Cap ${index + 1} thickness (inches)`}
               />
             </div>
+            {/* O-050 (CMP-D07) -- optional cap metadata: profile / width /
+                elevation / joint spacing / slope / end treatment. Blank =
+                "not recorded", never a silent default on the cap's geometry
+                or finish. */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mt-2">
+              <label className="text-xs text-gray-500">
+                Profile
+                <input
+                  type="text"
+                  value={cap.profile ?? ""}
+                  placeholder={capDimMeta("profile")?.placeholder ?? "flat"}
+                  onChange={(e) => patchCap(index, { profile: e.target.value === "" ? undefined : e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} profile`}
+                />
+              </label>
+              <FoundationDimensionInput
+                {...capDimMeta("width_inches")}
+                value={cap.width_inches}
+                onCommit={(v) => patchCap(index, { width_inches: v })}
+                ariaLabel={`Cap ${index + 1} width (inches)`}
+              />
+              <FoundationDimensionInput
+                {...capDimMeta("elevation_inches")}
+                value={cap.elevation_inches}
+                onCommit={(v) => patchCap(index, { elevation_inches: v })}
+                ariaLabel={`Cap ${index + 1} elevation (inches)`}
+              />
+              <FoundationDimensionInput
+                {...capDimMeta("joint_spacing_inches")}
+                value={cap.joint_spacing_inches}
+                onCommit={(v) => patchCap(index, { joint_spacing_inches: v })}
+                ariaLabel={`Cap ${index + 1} joint spacing (inches)`}
+              />
+              <label className="text-xs text-gray-500">
+                Slope
+                <select
+                  value={cap.slope ?? ""}
+                  onChange={(e) => patchCap(index, { slope: e.target.value === "" ? undefined : e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} slope`}
+                >
+                  <option value="">Not recorded</option>
+                  <option value="flat">Flat</option>
+                  <option value="single">Single-slope</option>
+                  <option value="double">Double-slope</option>
+                </select>
+              </label>
+              <label className="text-xs text-gray-500">
+                End treatment
+                <select
+                  value={cap.end_treatment ?? ""}
+                  onChange={(e) => patchCap(index, { end_treatment: e.target.value === "" ? undefined : e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} end treatment`}
+                >
+                  <option value="">Not recorded</option>
+                  <option value="straight">Straight</option>
+                  <option value="mitered">Mitered</option>
+                  <option value="returned">Returned</option>
+                </select>
+              </label>
+            </div>
             {geometryIssues(index).length > 0 && (
               <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
                 {geometryIssues(index).map((issue) => (
