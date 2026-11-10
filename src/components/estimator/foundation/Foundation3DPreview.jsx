@@ -210,6 +210,27 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
       m.rotation.y = -Math.atan2(s.bz - s.az, s.bx - s.ax);
       tag(m, wall?.shape?.segments?.[si]?.component_id ?? wall?.component_id, "wall");
       group.add(m);
+      // O-033 (CMP-C02) -- brick-course detail: horizontal course lines on the
+      // wall's front/back faces (authored `course_height_inches`, default a
+      // ~4" masonry course; the lines are a visual detail, never a quantity).
+      const courseH = (Number(wall?.course_height_inches) || 4) * IN;
+      if (courseH > 0 && height / courseH > 1) {
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x44403c });
+        const pts2 = [];
+        const half = (s.len * IN) / 2;
+        for (let y = courseH; y < height - 0.01; y += courseH) {
+          pts2.push(new THREE.Vector3(-half, y - height / 2, thick / 2 + 0.01));
+          pts2.push(new THREE.Vector3(half, y - height / 2, thick / 2 + 0.01));
+          pts2.push(new THREE.Vector3(-half, y - height / 2, -thick / 2 - 0.01));
+          pts2.push(new THREE.Vector3(half, y - height / 2, -thick / 2 - 0.01));
+        }
+        const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+        const lines = new THREE.LineSegments(geo2, lineMat);
+        lines.position.copy(m.position);
+        lines.rotation.y = m.rotation.y;
+        tag(lines, wall?.shape?.segments?.[si]?.component_id ?? wall?.component_id, "wall_course");
+        group.add(lines);
+      }
     });
   });
   (project.wall_caps || []).forEach((cap) => {
