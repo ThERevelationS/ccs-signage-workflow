@@ -193,8 +193,19 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
                   matters stated. "I don't know" is an honest answer. */}
               <p className="text-[9px] text-amber-700/80 mt-0.5">
                 {(() => {
-                  const missing = [it.quantity === "" && "quantity", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean);
-                  return missing.length ? `Unknown: ${missing.join(", ")} -- needed for concrete volume and bearing.` : "";
+                  // O-083 -- per-field why-it-matters: a contextual reason per
+                  // missing field (not the generic bearing boilerplate).
+                  const WHY = {
+                    quantity: "sets how many footings to dig",
+                    length_inches: "sets the footing's plan area for concrete volume",
+                    width_inches: "sets the footing's plan area for concrete volume",
+                    depth_inches: "sets the embedment for bearing + frost",
+                  };
+                  const missing = [["quantity", it.quantity], ["length_inches", it.length_inches], ["width_inches", it.width_inches], ["depth_inches", it.depth_inches]]
+                    .filter(([, v]) => v === "").map(([k]) => k);
+                  return missing.length
+                    ? `Unknown: ${missing.map((k) => `${k.replace(/_inches$/, "")} (${WHY[k]})`).join(", ")}.`
+                    : "";
                 })()}
               </p>
             </div>
