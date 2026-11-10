@@ -556,12 +556,40 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         />
                       </label>
                       {s.artwork_url && (
-                        <img
-                          src={s.artwork_url}
-                          alt={`Sign ${si + 1} artwork`}
-                          className="h-7 w-7 self-end rounded-sm border border-gray-200 object-cover"
-                          onError={(e) => { e.currentTarget.style.display = "none"; }}
-                        />
+                        <>
+                          {/* O-061 (CMP-E06) -- artwork crop/fit: the
+                              reference image's `objectFit` + scale controls
+                              (contain/cover/fill + a zoom); blank defaults to
+                              cover (the original render). */}
+                          <label className="text-[10px] text-gray-500 self-end" title="Artwork fit">
+                            <select
+                              value={s.artwork_fit ?? "cover"}
+                              onChange={(e) => patchSign({ artwork_fit: e.target.value === "cover" ? undefined : e.target.value })}
+                              className="h-5 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                              aria-label={`Sign ${si + 1} artwork fit`}
+                            >
+                              <option value="cover">Cover</option>
+                              <option value="contain">Contain</option>
+                              <option value="fill">Fill</option>
+                            </select>
+                          </label>
+                          <label className="text-[10px] text-gray-500 self-end" title="Artwork scale">
+                            <input
+                              type="number" min="0.1" max="4" step="0.1" placeholder="1"
+                              value={s.artwork_scale ?? ""}
+                              onChange={(e) => patchSign({ artwork_scale: e.target.value === "" ? undefined : Number(e.target.value) })}
+                              className="h-5 w-10 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                              aria-label={`Sign ${si + 1} artwork scale`}
+                            />
+                          </label>
+                          <img
+                            src={s.artwork_url}
+                            alt={`Sign ${si + 1} artwork`}
+                            className="h-7 w-7 self-end rounded-sm border border-gray-200 object-cover"
+                            style={{ objectFit: s.artwork_fit || "cover", transform: s.artwork_scale ? `scale(${s.artwork_scale})` : undefined }}
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                        </>
                       )}
                       <button
                         type="button"
