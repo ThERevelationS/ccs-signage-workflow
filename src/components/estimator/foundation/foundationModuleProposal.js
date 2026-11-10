@@ -64,3 +64,18 @@ export const ESTIMATOR_AI_EVAL_CASES = Object.freeze([
   { case_id: "unavailable_service", input: "InvokeLLM rejects/times out", guard: "error classification (rate-limit/network/timeout) + Cancel/Retry" },
   { case_id: "certification_claim", input: "the AI phrases a suggestion as engineering approval", guard: "stripCertification + 'never invent engineering values' prompt" },
 ]);
+
+// W-022 (AI-11) -- output contract: the fields the parse schema enforces and
+// the bounded extras. Deterministic, lead-authored; a consumer/test reads this
+// shape instead of inferring the contract from the prompt text.
+export const FOUNDATION_AI_OUTPUT_CONTRACT = Object.freeze({
+  items: { required: ["foundation_type"], optional: ["quantity", "length_inches", "width_inches", "diameter", "depth_inches", "locked"] },
+  poles: { optional: ["height_inches", "description"] },
+  bounded: {
+    contradictions: "string", suggestions: "string",
+    alternatives: "[{label, cost_impact}] max 4",
+    follow_ups: "[{topic, question}] max 6",
+    exclusions: "[string]",
+  },
+  meta: ["schema_version", "module_key", "proposal_id", "base_project_revision", "brief", "evidence_refs", "user_locks", "exclusions"],
+});
