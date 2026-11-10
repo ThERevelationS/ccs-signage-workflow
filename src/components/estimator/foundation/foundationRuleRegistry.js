@@ -1756,3 +1756,19 @@ export const foundationRulesForDomain = (domain, context, opts) =>
   FOUNDATION_RULE_REGISTRY.rulesForDomain(domain, context, opts);
 export const assertFoundationRuleParams = (ruleOrId, params) =>
   FOUNDATION_RULE_REGISTRY.assertParamsAgainstRule(ruleOrId, params);
+
+// O-103 (CMP-I02) -- authority-class lookup surface: `foundationSourceAuthorityClass(id)`
+// returns the source's class key; `foundationSourceClassLabel(key)` the display
+// label. Citation displays surface the class so a shop assumption never reads
+// as adopted code.
+export const foundationSourceAuthorityClass = (sourceId) =>
+  typeof sourceId === "string" ? (SOURCE_AUTHORITY_CLASS[sourceId] ?? null) : null;
+export const FOUNDATION_SOURCE_CLASS_LABELS = Object.freeze({
+  local_code: "Adopted local code",
+  structural_standard: "Referenced structural standard",
+  engineering_guidance: "Engineering guidance",
+  manufacturer_instructions: "Manufacturer instructions",
+  shop_assumptions: "Shop estimating assumption",
+});
+export const foundationSourceClassLabel = (classKey) =>
+  FOUNDATION_SOURCE_CLASS_LABELS[classKey] ?? null;
