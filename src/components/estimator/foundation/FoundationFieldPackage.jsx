@@ -148,7 +148,7 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
       {caps.length > 0 && (
         <Section title={`Wall caps (${caps.length})`}>
           <table className="w-full">
-            <thead><tr><Th>Cap</Th><Th>Cut</Th><Th>Stock</Th><Th>Position</Th><Th>Cost</Th></tr></thead>
+            <thead><tr><Th>Cap</Th><Th>Cut</Th><Th>Stock</Th><Th>Position</Th><Th>Supplies</Th><Th>Cut labor</Th><Th>Cost</Th></tr></thead>
             <tbody>
               {caps.map((c, i) => (
                 <tr key={c.component_id || c.id || i} className="border-t border-gray-100">
@@ -156,6 +156,11 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
                   <Td mono>{dim(wallCapCutLengthValue(c))}</Td>
                   <Td mono>{dim(c.stock_length_inches)}</Td>
                   <Td mono>{dim(c.position_along_segment_inches)}</Td>
+                  {/* O-055 (CMP-D12) -- production detail: the cap's authored
+                      supplies/cut-labor extras (the install supplies + cuts
+                      the production crew needs); "not recorded" when blank. */}
+                  <Td mono>{money(c.supplies_cost)}</Td>
+                  <Td mono>{money(c.cut_labor_cost)}</Td>
                   <Td mono>{money(c.cost)}</Td>
                 </tr>
               ))}
