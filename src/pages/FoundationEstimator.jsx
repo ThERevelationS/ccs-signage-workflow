@@ -14,6 +14,7 @@ import {
   Tag,
 } from "lucide-react";
 import FoundationItemCard from "@/components/estimator/foundation/FoundationItemCard";
+import { hasPreliminaryNotice } from "@/components/estimator/foundation/foundationPreliminaryNotice";
 import FoundationReinforcementProposalPanel from "@/components/estimator/foundation/FoundationReinforcementProposalPanel";
 import { useFoundationReinforcementEditor } from "@/components/estimator/foundation/useFoundationReinforcementEditor";
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
@@ -1752,6 +1753,23 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     value={project.project_name || ""}
                     onChange={(e) => patch({ project_name: e.target.value })}
                   />
+                </label>
+                {/* O-119 (CMP-I18) -- page notes UI: the authored `project.notes`
+                    surface on the summary tab; the preliminary notice stamp
+                    keeps "Preliminary estimating only - final engineering
+                    required" attached to the authored note. */}
+                <label className="block bg-white rounded-sm border border-gray-200 p-3 text-[11px] text-gray-500">
+                  Notes <span className="text-[10px] text-gray-400">(carried to the estimate/handoff)</span>
+                  <textarea
+                    value={project.notes || ""}
+                    onChange={(e) => patch({ notes: e.target.value })}
+                    placeholder="Notes for the estimate -- the preliminary notice stays attached."
+                    rows={3}
+                    className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-800"
+                  />
+                  {hasPreliminaryNotice(project.notes)
+                    ? <p className="mt-1 text-[10px] text-amber-700">Preliminary notice attached.</p>
+                    : <p className="mt-1 text-[10px] text-gray-400">The preliminary-engineering notice stamps on save.</p>}
                 </label>
                 <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
