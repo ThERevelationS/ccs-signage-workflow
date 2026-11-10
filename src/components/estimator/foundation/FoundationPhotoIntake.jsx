@@ -44,6 +44,14 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
           const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.92));
           if (blob) uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
         } catch { /* re-encode unavailable -- the original uploads */ }
+        // W-013 -- SHA-256 content hash for provenance/dedup (computed from
+        // the original file bytes; the upload may re-encode to JPEG).
+        let hash = null;
+        try {
+          const buf = await file.arrayBuffer();
+          const digest = await crypto.subtle.digest("SHA-256", buf);
+          hash = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+        } catch { /* hash unavailable -- the reference records without it */ }
         const res = await base44.integrations.Core.UploadFile({ file: uploadFile });
         const url = res?.file_url || res?.url || "";
         // W-013 -- the reference record carries a stable id, purpose,
@@ -51,6 +59,11 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
         if (url) added.push({
           id: `photo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
           url, caption: file.name.replace(/\.[^.]+$/, ""), notes: "",
+          // W-013 -- type/hash/scale/units: type from the source file, hash is
+          // the SHA-256 content digest; scale/units stay blank ("not recorded",
+          // never an invented scale).
+          type: file.type || null, hash,
+          scale: null, units: null,
           purpose: "ai_design_context", provenance: "operator_upload",
           consent: true, state: "accepted", uploaded_at: new Date().toISOString(),
         });
