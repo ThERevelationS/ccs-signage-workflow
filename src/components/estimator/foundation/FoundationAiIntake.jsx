@@ -148,6 +148,20 @@ export default function FoundationAiIntake({ onApply, disabled }) {
             </div>
           ))}
           {proposal.notes && <p className="text-[10px] text-gray-500 italic">{proposal.notes}</p>}
+          {/* O-086 -- apply preview: what lands + what drops, before the
+              operator commits. Rows with no dimension are dropped; the
+              proposal APPENDS to the existing design, never replaces. */}
+          {(() => {
+            const validItems = proposal.items.filter(i => Number(i.length_inches) || Number(i.diameter) || Number(i.depth_inches)).length;
+            const dropped = proposal.items.length - validItems;
+            const validPoles = proposal.poles.filter(p => Number(p.height_inches)).length;
+            return (
+              <p className="text-[9px] text-gray-500 mt-1">
+                Applies {validItems} foundation{validItems === 1 ? "" : "s"} + {validPoles} pole{validPoles === 1 ? "" : "s"} (appends to the current design)
+                {dropped > 0 ? ` -- drops ${dropped} dimensionless row${dropped === 1 ? "" : "s"}` : ""}.
+              </p>
+            );
+          })()}
           <div className="flex gap-1.5 items-center mt-1">
             <input value={revisionText} onChange={(e) => setRevisionText(e.target.value)} disabled={running}
               placeholder="Revise: 'add a pole', 'wider base'..."
