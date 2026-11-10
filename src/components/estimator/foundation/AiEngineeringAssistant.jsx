@@ -85,9 +85,15 @@ export default function AiEngineeringAssistant({ project, onResult }) {
   const meta = project?.ai_engineering_data;
   const samePolicy = meta?.policy_version === FOUNDATION_AI_REVIEW_POLICY && typeof meta?.source_key === "string" && !!meta.source_key;
   const stale = samePolicy && (!prepared || meta.source_key !== prepared.key);
+  // O-121 (CMP-I20) -- version-update surface: a review recorded under a
+  // different policy version flags affected-project recalculation rather than
+  // silently reading as current.
+  const policyMismatch = !!meta?.policy_version && meta.policy_version !== FOUNDATION_AI_REVIEW_POLICY;
   const label = stale
     ? "Design changed since this note. Run a fresh review."
-    : samePolicy && meta?.source_key
+    : policyMismatch
+      ? `Policy ${meta.policy_version} (current: ${FOUNDATION_AI_REVIEW_POLICY}) - review may be affected by a method update`
+      : samePolicy && meta?.source_key
       ? "Preliminary review"
       : "Historical / unverified AI note";
 
