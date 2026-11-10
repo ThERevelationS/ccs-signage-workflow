@@ -5,6 +5,7 @@ import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { inventoryNumberInput } from "@/components/masterInventory/inventoryNormalization";
 import { FoundationDimensionInput } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
+import { suggestFeasibleFoundationDims } from "./poleCalculator";
 
 const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
 const num2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : "Not saved");
@@ -101,6 +102,9 @@ const Picker = ({ label, value, onChange, options, placeholder }) => {
 };
 
 export default function FoundationItemCard({ item, index, catalog, onChange, onRemove, onDuplicate, pricing }) {
+  // O-115 (CMP-I14) -- the item's documented feasible-dims domain
+  // (spread_foot depth / wall height minimum), rendered as an advisory.
+  const feasible = suggestFeasibleFoundationDims(item);
   const set = (patch) => onChange(index, patch);
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   // Blank clears the override (null); a malformed draft is preserved verbatim so
@@ -130,6 +134,14 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             <p key={k} className="text-[10px] text-amber-700">{i.message}</p>
           ))}
         </div>
+      )}
+      {/* O-115 (CMP-I14) -- feasible-dims advisory: the item's documented
+          feasible-dims domain (spread_foot depth / wall height minimum) --
+          a named governing check vs a blind "bigger than current" multiplier. */}
+      {feasible?.available && (
+        <p className="mb-2 text-[10px] text-sky-700" title={feasible.governing}>
+          Feasible dims: {feasible.depth_inches != null ? `depth >= ${feasible.depth_inches}"` : feasible.height_inches != null ? `height >= ${feasible.height_inches}"` : ""} ({feasible.governing})
+        </p>
       )}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
