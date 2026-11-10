@@ -289,6 +289,14 @@ export const landscapeSummary = (landscape) => {
     };
   });
   const bedsTotal = bedLines.length === 0 ? 0 : bedLines.every((l) => l.cost !== null) ? bedLines.reduce((s, l) => s + l.cost, 0) : null;
+  // O-073 (CMP-F06) -- bed volume: `sum(sqft) x bed_depth / 27` cubic yards --
+  // the bed depth scales the authored coverage to a material volume the
+  // field/production surface reads (held when the depth or a sqft is
+  // missing/malformed, never an invented volume).
+  const bedsSqft = bedLines.reduce((s, l) => s + (Number.isFinite(l.sqft) ? l.sqft : 0), 0);
+  const bedVolumeCy = bedDepth !== null && bedLines.every((l) => l.sqft !== null) && bedsSqft > 0
+    ? bedsSqft * bedDepth / 27
+    : null;
   const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null || bedsTotal === null
     ? null
     : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal + bedsTotal;
@@ -308,6 +316,6 @@ export const landscapeSummary = (landscape) => {
   return {
     lines, object_lines: objectLines, border_lines: borderLines, bed_lines: bedLines, total,
     materials_total: materialsTotal, objects_total: objectsTotal, borders_total: bordersTotal, beds_total: bedsTotal,
-    labor_cost: labor, plant_count: plantCount, groups, issues: landscapeInputIssues(landscape),
+    labor_cost: labor, plant_count: plantCount, groups, bed_volume_cy: bedVolumeCy, issues: landscapeInputIssues(landscape),
   };
 };
