@@ -579,6 +579,20 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           aria-label={`Pole ${index + 1} sign ${si + 1} artwork URL`}
                         />
                       </label>
+                      {/* O-061 (CMP-E06) -- artwork upload: a file picker
+                          mints a blob URL into `artwork_url` (the picked
+                          image renders in the thumbnail; blank = "not
+                          recorded", never an invented URL). */}
+                      <input
+                        type="file" accept="image/*"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) patchSign({ artwork_url: URL.createObjectURL(f), artwork_name: f.name });
+                          e.target.value = "";
+                        }}
+                        className="text-[10px]"
+                        aria-label={`Pole ${index + 1} sign ${si + 1} artwork upload`}
+                      />
                       {s.artwork_url && (
                         <>
                           {/* O-061 (CMP-E06) -- artwork crop/fit: the
