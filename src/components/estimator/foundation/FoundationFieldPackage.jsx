@@ -1,5 +1,6 @@
 import { money } from "./foundationCalc";
 import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
+import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -31,6 +32,15 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
   const delivery = calc?.delivery || {};
   const totals = calc?.totals || {};
   const land = landscapeSummary(project?.landscape);
+  // Design notes: the same scene diagnostics the canvas reports, surfaced
+  // on the production sheet so unresolved flags travel to the field.
+  const diags = foundationSceneDiagnostics({
+    items: calc?.items || [],
+    poles: calc?.poles || [],
+    walls: calc?.walls || [],
+    wall_caps: calc?.wallCaps || [],
+    signage_cabinets: project?.signage_cabinets || [],
+  }) || [];
   const flags = [];
   if (pricingUnavailable) flags.push("Customer pricing is blocked - resolve highlighted inputs before production.");
   if (project?.engineering_approved === false) flags.push("Preliminary estimate - structural engineering review required before construction.");
@@ -212,6 +222,22 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
           })()}
         </Section>
       )}
+
+      <Section title={`Design notes (${diags.length})`}>
+        {diags.length === 0 ? (
+          <p className="text-[11px] text-gray-500">No unresolved scene flags.</p>
+        ) : (
+          <ul className="space-y-1">
+            {diags.map((d, i) => (
+              <li key={i} className="flex items-start gap-2 text-[11px]">
+                <span className={`font-semibold uppercase text-[10px] mt-px ${d.severity === "error" ? "text-red-600" : d.severity === "warning" ? "text-amber-600" : "text-gray-500"}`}>{d.severity}</span>
+                <span className="text-gray-700">{d.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-2 text-[10px] text-gray-400">Preliminary estimating only - final engineering review required before fabrication or construction.</p>
+      </Section>
     </div>
   );
 }
