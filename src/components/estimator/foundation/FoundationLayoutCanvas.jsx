@@ -366,7 +366,14 @@ export default function FoundationLayoutCanvas({
   // O-042 diagnostics — pure conflict/clearance findings over the live
   // scene; clicking a finding selects + focuses the object it names.
   const [diagOpen, setDiagOpen] = useState(false);
+  const [diagView, setDiagView] = useState("all");
   const diagnostics = diagOpen ? foundationSceneDiagnostics(scene) : null;
+  // O-042 -- plan-vs-elevation filter: mount/height findings surface on the
+  // elevation view; placement/clash findings on the plan view.
+  const ELEVATION_KINDS = new Set(["sign-fit", "sign-collision", "mounted-off-foundation", "unresolvable-mount", "legacy-mount", "impossible-fit"]);
+  const PLAN_KINDS = new Set(["out-of-bounds", "footprint-clash", "mount-candidate", "ambiguous-footprint", "unplaced", "unmounted-cap", "unmounted-cabinet", "mounted-off-foundation"]);
+  const diagFiltered = (diagnostics || []).filter((f) =>
+    diagView === "all" || (diagView === "elevation" ? ELEVATION_KINDS.has(f.kind) : PLAN_KINDS.has(f.kind)));
   const diagClick = (finding) => {
     const id = diagnosticTarget(scene, finding);
     if (!id) return;
@@ -1470,10 +1477,18 @@ export default function FoundationLayoutCanvas({
       </button>
       {diagOpen && (
         <div data-diag-panel="true" className="mt-0.5 max-h-36 overflow-auto rounded-sm border border-gray-200 bg-gray-50 p-1 text-[10px]">
-          {(!diagnostics || diagnostics.length === 0) && (
+          <div className="flex gap-1 mb-0.5">
+            {["all", "plan", "elevation"].map((v) => (
+              <button key={v} type="button" onClick={() => setDiagView(v)}
+                className={`h-4 px-1 rounded-sm text-[9px] ${diagView === v ? "bg-violet-600 text-white" : "border border-gray-300 text-gray-500"}`}>
+                {v}
+              </button>
+            ))}
+          </div>
+          {(!diagFiltered.length) && (
             <p className="px-1 py-1 text-gray-400">No conflicts detected.</p>
           )}
-          {(diagnostics || []).map((f, i) => (
+          {diagFiltered.map((f, i) => (
             <button
               key={i}
               type="button"
