@@ -166,6 +166,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         evidence_refs: (Array.isArray(project?.reference_photos) ? project.reference_photos : [])
           .map(p => ({ id: p?.id, url: p?.url, caption: p?.caption }))
           .filter(r => r.url),
+        // W-014 (AI-03) -- user_locks/exclusions as first-class fields: locked
+        // item indexes (the O-088 lock) travel as user_locks; exclusions is an
+        // authored list the proposal carries (never silently dropped).
+        user_locks: (parsed.items || []).map((i, ix) => i?.locked === true ? ix : null).filter(ix => ix !== null),
+        exclusions: Array.isArray(parsed.exclusions) ? parsed.exclusions.filter(x => typeof x === "string") : [],
       });
       // W-019 -- bounded parse history: the committed parse appends to the
       // capped trail (last 10), so the operator sees the revision path.
