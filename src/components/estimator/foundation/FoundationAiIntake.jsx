@@ -66,6 +66,9 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   // capped array (last 10) so the operator sees the revision trail; the array
   // never grows unbounded.
   const [parseHistory, setParseHistory] = useState([]);
+  // W-017 -- a proposal drafted against a stale base flags a warning the
+  // operator confirms before applying.
+  const [staleBase, setStaleBase] = useState(false);
   const [revisionText, setRevisionText] = useState("");
   // W-019 -- a token invalidates in-flight parse responses: a superseded or
   // cancelled request can't overwrite a newer proposal. InvokeLLM isn't
@@ -152,7 +155,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
     });
   };
 
-  const apply = () => {
+  const apply = (force = false) => {
     if (!proposal || typeof onApply !== "function") return;
     // W-017 -- validate before apply: field/object issues block the merge and
     // surface to the operator; a valid proposal then merges through commit
@@ -162,6 +165,15 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       setError(issues[0]?.message || "The proposal cannot be applied.");
       return;
     }
+    // W-017 -- base-revision verification: a proposal drafted against a stale
+    // base (project.updated_date moved) flags a stale-draft warning before the
+    // merge -- the operator confirms the revision-aware apply.
+    if (!force && proposal.base_project_revision != null && project?.updated_date != null
+      && proposal.base_project_revision !== project.updated_date) {
+      setStaleBase(true);
+      return;
+    }
+    setStaleBase(false);
     const items = proposal.items
       .map(i => ({ ...i, quantity: Number(i.quantity) || 1 }))
       .filter(i => Number(i.length_inches) || Number(i.diameter) || Number(i.depth_inches));
@@ -318,6 +330,17 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             <button type="button" onClick={() => setProposal(null)} className="h-6 px-2 text-[10px] border border-gray-300 rounded-sm">Discard</button>
             <button type="button" onClick={apply} className="h-6 px-2 text-[10px] bg-violet-600 text-white rounded-sm font-semibold">Apply to design</button>
           </div>
+          {/* W-017 -- stale-base warning + an explicit apply-anyway. */}
+          {staleBase && (
+            <div className="mt-1 flex items-center gap-2 rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-1 text-[10px] text-amber-800">
+              Draft is stale - the design changed since this proposal. Review the current design, then apply anyway or regenerate.
+              <button
+                type="button"
+                onClick={() => { setStaleBase(false); apply(true); }}
+                className="ml-auto h-5 px-1.5 rounded-sm border border-amber-300 text-amber-800 hover:bg-amber-100"
+              >Apply anyway</button>
+            </div>
+          )}
         </div>
       )}
       {/* W-019 (AI-09) -- bounded parse history: the revision trail (last 10
