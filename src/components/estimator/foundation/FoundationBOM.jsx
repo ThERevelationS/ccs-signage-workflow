@@ -38,9 +38,11 @@ export default function FoundationBOM({
     // O-097 "why this quantity" — every priced row may carry an honest
     // derivation note; it renders under the row like the reinforcement
     // notes already do. Only real derivation classes, never invented math.
-    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null) => {
+    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null, costClass = "calculated") => {
       if (num(rawQty) <= 0 && !hasFoundationCostSnapshot(cost)) return;
-      out.push({ material, quantity: displayQty, cost, ...(note ? { note } : {}) });
+      // O-115 (CMP-I15) -- cost_class separates published-minimum / calculated /
+      // contingency rows so "what changed the price" is honest provenance.
+      out.push({ material, quantity: displayQty, cost, cost_class: costClass, ...(note ? { note } : {}) });
     };
     const nameOf = (id) => inventory.find((i) => i.id === id)?.material_name || "Material";
     const resolved = items.filter((_, i) => itemPricing[i]?.available !== false);
@@ -51,6 +53,7 @@ export default function FoundationBOM({
         material: "Concrete delivery/order (saved)",
         quantity: Number.isFinite(delivery.roundedYards) ? qty(delivery.roundedYards, "CY") : "Not saved",
         cost: hasFoundationCostSnapshot(delivery.concreteTotal) ? delivery.concreteTotal : "Not saved",
+        cost_class: "saved",
         saved: true,
       });
     } else if (num(delivery?.roundedYards) > 0) {
@@ -277,6 +280,10 @@ export default function FoundationBOM({
                 <tr key={i} className="border-b border-gray-100 last:border-0">
                   <td className={`py-1.5 pr-3 text-gray-800${r.note ? " min-w-0 break-words" : ""}`}>
                     {r.material}
+                    {/* O-115 (CMP-I15) -- cost-class provenance tag. */}
+                    {r.cost_class && r.cost_class !== "calculated" && (
+                      <span className="ml-1 rounded-sm bg-gray-100 px-1 text-[9px] uppercase tracking-wide text-gray-500">{r.cost_class.replace(/_/g, " ")}</span>
+                    )}
                     {r.note && <p className="mt-1 text-[11px] leading-snug text-gray-500 break-words">{r.note}</p>}
                   </td>
                   <td className="py-1.5 pr-3 whitespace-nowrap text-gray-600">{r.quantity}</td>
