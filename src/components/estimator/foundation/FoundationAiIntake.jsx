@@ -147,6 +147,13 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         schema_version: 1, module_key: "foundation",
         proposal_id: `prop_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
         base_project_revision: project?.updated_date ?? null,
+        // W-016 (AI-05) -- brief + evidence_refs: the intake's description text
+        // is its brief; evidence_refs points at the project's reference_photos
+        // (context urls, never image bytes).
+        brief: t.slice(0, 500),
+        evidence_refs: (Array.isArray(project?.reference_photos) ? project.reference_photos : [])
+          .map(p => ({ id: p?.id, url: p?.url, caption: p?.caption }))
+          .filter(r => r.url),
       });
       // W-019 -- bounded parse history: the committed parse appends to the
       // capped trail (last 10), so the operator sees the revision path.
