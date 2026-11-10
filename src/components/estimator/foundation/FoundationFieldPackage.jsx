@@ -226,6 +226,25 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
         </Section>
       )}
 
+      {(calc?.equipment || []).length > 0 && (
+        <Section title={`Equipment & installation (${(calc.equipment || []).length})`}>
+          <table className="w-full">
+            <thead><tr><Th>Equipment</Th><Th>Duration</Th><Th>Rate</Th><Th>Delivery</Th><Th>Attachments</Th></tr></thead>
+            <tbody>
+              {(calc.equipment || []).map((e, i) => (
+                <tr key={i} className="border-t border-gray-100">
+                  <Td>{e?.equipment?.name || `Equipment ${i + 1}`}</Td>
+                  <Td mono>{Number.isFinite(e?.duration) ? `${e.duration} ${e.rentalPeriod || "day"}${e.duration === 1 ? "" : "s"}` : "-"}</Td>
+                  <Td mono>{Number.isFinite(e?.rate) ? money(e.rate) : "Not saved"}</Td>
+                  <Td mono>{Number.isFinite(e?.deliveryCharge) ? money(e.deliveryCharge) : "-"}</Td>
+                  <Td mono>{(e?.attachmentLines?.length || 0) + (e?.subAttachmentLines?.length || 0) || "-"}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+      )}
+
       <Section title="Plan view">
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-1" dangerouslySetInnerHTML={{ __html: planSvg }} />
       </Section>
