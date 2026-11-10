@@ -56,6 +56,55 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
     if (made.length) onChange([...caps, ...made]);
   };
 
+  // O-051 (CMP-D08): corner/miter/end-piece generation — mint a cap row per
+  // non-collinear wall vertex (a mitered corner) and one per open end
+  // (straight end treatment). Cut lengths stay BLANK for authored entry —
+  // never an invented dimension; held-closed until the operator records them.
+  const capCorners = (wallId) => {
+    const inv = options[0];
+    const wall = walls.find((w) => w.component_id === wallId);
+    const pts = wall?.shape?.points || [];
+    const closed = wall?.shape?.closed === true;
+    if (pts.length < 2) return;
+    const cross = (a, b, c) => (b.x - a.x) * (c.z - b.z) - (b.z - a.z) * (c.x - b.x);
+    const n = pts.length;
+    const cornerIdx = [];
+    for (let i = 0; i < n; i++) {
+      if (!closed && (i === 0 || i === n - 1)) continue; // open ends are end-pieces
+      const a = pts[(i - 1 + n) % n], b = pts[i], c = pts[(i + 1) % n];
+      if (Math.abs(cross(a, b, c)) > 0.01) cornerIdx.push(i);
+    }
+    const made = cornerIdx.map((vi) => ({
+      id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      cap_inventory_id: inv?.id || "",
+      wall_component_id: wallId,
+      wall_index: walls.findIndex((w) => w.component_id === wallId),
+      end_treatment: "mitered",
+      length_inches: "",
+      position_along_segment_inches: 0,
+      rotation_offset_degrees: 0,
+      lateral_offset_inches: 0,
+      corner_vertex_index: vi,
+    }));
+    if (!closed) {
+      [0, n - 1].forEach((ei) => {
+        made.push({
+          id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          cap_inventory_id: inv?.id || "",
+          wall_component_id: wallId,
+          wall_index: walls.findIndex((w) => w.component_id === wallId),
+          end_treatment: "straight",
+          length_inches: "",
+          position_along_segment_inches: 0,
+          rotation_offset_degrees: 0,
+          lateral_offset_inches: 0,
+          end_vertex_index: ei,
+        });
+      });
+    }
+    if (made.length) onChange([...caps, ...made]);
+  };
+
   const removeCap = (index) => {
     if (!window.confirm(`Remove cap ${index + 1}?`)) return;
     onChange(caps.filter((_, i) => i !== index));
@@ -216,6 +265,15 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           )}
           <Button variant="outline" size="sm" onClick={addCap} disabled={options.length === 0}>
             <Plus className="w-4 h-4" aria-hidden="true" /> Cap
+          </Button>
+          {/* O-051 (CMP-D08) -- corner/end-piece generation on the picked wall. */}
+          <Button
+            variant="outline" size="sm"
+            disabled={options.length === 0 || !capWallId}
+            onClick={() => capCorners(capWallId)}
+            title="Mint a mitered cap at each wall vertex plus end-pieces on open runs"
+          >
+            Corner pieces
           </Button>
         </div>
       </div>
