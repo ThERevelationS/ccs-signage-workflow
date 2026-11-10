@@ -194,9 +194,23 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-1.5 py-1" data-follow-ups="true">
               <p className="text-[10px] font-semibold text-gray-700">Follow-ups</p>
               {proposal.followUps.map((f, i) => (
-                <p key={i} className="text-[10px] text-gray-600 mt-0.5">
-                  <span className="font-medium text-gray-700">{f.topic}:</span> {f.question}
-                </p>
+                <div key={i} className="mt-0.5">
+                  <p className="text-[10px] text-gray-600">
+                    <span className="font-medium text-gray-700">{f.topic}:</span> {f.question}
+                  </p>
+                  {/* O-082 -- an answer appends to the description and re-parses;
+                      the Q&A loop enriches the draft instead of starting over. */}
+                  <input disabled={disabled || running}
+                    placeholder="Answer, then Enter to refine"
+                    className="mt-0.5 w-full h-5 px-1 text-[10px] border border-gray-200 rounded-sm bg-white"
+                    onKeyDown={(e) => {
+                      const v = e.currentTarget.value.trim();
+                      if (e.key === "Enter" && v) {
+                        setText(prev => `${prev}\n${f.question} ${v}`);
+                        e.currentTarget.value = "";
+                      }
+                    }} />
+                </div>
               ))}
             </div>
           )}
