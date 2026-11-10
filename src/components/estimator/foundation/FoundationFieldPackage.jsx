@@ -1,4 +1,5 @@
 import { money } from "./foundationCalc";
+import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
 import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
 import { buildFoundationPlanSvg } from "./foundationPlanExport";
@@ -74,6 +75,10 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
         </button>
       </div>
 
+      {/* O-119 (CMP-I18) -- preliminary notice on the handoff export: the
+          field package carries "Preliminary estimating only - final
+          engineering required" like every other structural concept surface. */}
+      <PreliminaryNotice />
       {flags.length > 0 && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700 mb-1">Unresolved flags</div>
