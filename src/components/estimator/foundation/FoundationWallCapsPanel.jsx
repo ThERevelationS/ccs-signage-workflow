@@ -58,6 +58,49 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
     if (made.length) onChange([...caps, ...made]);
   };
 
+  // O-051 (CMP-D08) -- auto-fit placement: tiles caps along a wall's
+  // segments at stock-length intervals (fills the segment end-to-end vs one
+  // cap at position 0); the remainder tail stays blank for authored entry
+  // (held-closed, never an invented cut).
+  const capFit = (wallId) => {
+    const inv = options[0];
+    const stockLength = wallCapInputNumber(inv?.cap_stock_length_inches);
+    const wall = walls.find((w) => w.component_id === wallId);
+    if (!wall || !Number.isFinite(stockLength) || stockLength <= 0) return;
+    const capped = new Set(caps.filter((c) => c?.locked !== false).map((c) => c.segment_component_id).filter(Boolean));
+    const made = [];
+    const wi = walls.indexOf(wall);
+    (wall?.shape?.segments || []).forEach((sg, si) => {
+      if (sg?.component_id && capped.has(sg.component_id)) return;
+      const len = wallCapInputNumber(sg?.length);
+      if (!Number.isFinite(len) || len <= 0) return;
+      let pos = 0, n = 0;
+      while (pos + stockLength <= len && n < 200) {
+        made.push({
+          id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          cap_inventory_id: inv?.id || "", wall_component_id: wallId, wall_index: wi < 0 ? undefined : wi,
+          segment_component_id: sg?.component_id || "", segment_index: si,
+          position_along_segment_inches: Math.round(pos * 100) / 100,
+          length_inches: stockLength,
+          rotation_offset_degrees: 0, lateral_offset_inches: 0,
+        });
+        pos += stockLength; n += 1;
+      }
+      if (len - pos > 0.01) {
+        made.push({
+          id: `cap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          cap_inventory_id: inv?.id || "", wall_component_id: wallId, wall_index: wi < 0 ? undefined : wi,
+          segment_component_id: sg?.component_id || "", segment_index: si,
+          position_along_segment_inches: Math.round(pos * 100) / 100,
+          length_inches: "", // remainder tail -- authored entry (held-closed)
+          rotation_offset_degrees: 0, lateral_offset_inches: 0,
+        });
+      }
+      if (sg?.component_id) capped.add(sg.component_id);
+    });
+    if (made.length) onChange([...caps, ...made]);
+  };
+
   // O-051 (CMP-D08): corner/miter/end-piece generation — mint a cap row per
   // non-collinear wall vertex (a mitered corner) and one per open end
   // (straight end treatment). Cut lengths stay BLANK for authored entry —
@@ -230,6 +273,17 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
             onClick={() => capWalls([capWallId])}
           >
             Cap wall
+          </Button>
+          {/* O-051 (CMP-D08) -- auto-fit: tiles caps along the picked wall's
+              segments at stock-length intervals (fills end-to-end vs one cap
+              at position 0); the remainder tail stays blank for authored
+              entry (held-closed, never an invented cut). */}
+          <Button
+            variant="outline" size="sm"
+            disabled={options.length === 0 || !capWallId}
+            onClick={() => capFit(capWallId)}
+          >
+            Fit caps
           </Button>
           <Button
             variant="outline" size="sm"
