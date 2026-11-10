@@ -32,21 +32,40 @@ export default function NavFlyoutMenu({
   onContextMenuItem,
 }) {
   const [open, setOpen] = useState(false);
+  // "Lite" = menu opened WHILE a drag is in flight. @hello-pangea/dnd cannot
+  // register a populated Droppable mid-drag (fld-* children register before
+  // their parent droppable -> shouldPublishUpdate's getById throws -> drag
+  // dies), so the lite list renders plain items and the Layout's pointer
+  // hit-test resolves the drop index instead.
+  const [liteMode, setLiteMode] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+  const openRef = useRef(false);
+  openRef.current = open;
 
   // Mid-drag auto-open: an armed nav drag lingering on this pill dispatches
-  // ccs-nav-open-folder so the menu mounts while the drag is still in flight
-  // and its folder-list droppable can take the drop.
+  // ccs-nav-open-folder so the menu mounts while the drag is still in flight.
+  // An already-open menu keeps its real Droppable (it was collected at drag
+  // start); only a closed->open transition during the drag picks lite mode.
   useEffect(() => {
     if (!folderId) return undefined;
     const onOpen = (event) => {
-      if (event.detail?.folderId === folderId) setOpen(true);
+      if (event.detail?.folderId !== folderId || openRef.current) return;
+      setLiteMode(!!window.__ccsNavDragging);
+      setOpen(true);
     };
     window.addEventListener("ccs-nav-open-folder", onOpen);
     return () => window.removeEventListener("ccs-nav-open-folder", onOpen);
   }, [folderId]);
+
+  // Once the drag finishes, upgrade a lite-open menu back to the real
+  // Droppable list so items can be dragged out again.
+  useEffect(() => {
+    const onDragEnd = () => setLiteMode(false);
+    window.addEventListener("ccs-nav-drag-end", onDragEnd);
+    return () => window.removeEventListener("ccs-nav-drag-end", onDragEnd);
+  }, []);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -180,7 +199,34 @@ export default function NavFlyoutMenu({
 
       {open &&
         createPortal(
-          folderId ? (
+          liteMode && folderId ? (
+            <div
+              ref={menuRef}
+              role="menu"
+              data-ccs-folder-list={folderId}
+              className="ccs-glass-panel fixed z-[80] rounded-xl p-1 text-slate-100 shadow-2xl"
+              style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
+            >
+              {items.map((item) => {
+                const ItemIcon = item.icon;
+                const itemLook = navButtonStyle(item.stylePreset || "glass", item.accent);
+                return (
+                  <div
+                    key={item.url}
+                    data-ccs-fld-item
+                    className={`${itemLook.glass ? "ccs-glass-nav-item" : "ccs-nav-styled"} flex items-center gap-2 rounded-lg px-3 py-2 transition-transform duration-100`}
+                    style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent), ...itemLook.style }}
+                  >
+                    <ItemIcon className="h-4 w-4 flex-shrink-0" style={{ color: itemLook.textColor || item.accent }} />
+                    <span className="text-sm font-medium" style={{ color: itemLook.textColor || "#f1f5f9", textShadow: itemLook.style?.textShadow }}>
+                      {item.title}
+                    </span>
+                  </div>
+                );
+              })}
+              {!items.length && <div className="px-3 py-2 text-xs text-slate-400">Empty — drop page here</div>}
+            </div>
+          ) : folderId ? (
             <Droppable droppableId={`folder-list:${folderId}`} direction="vertical">
               {(dropProvided, dropSnapshot) => (
                 <div
