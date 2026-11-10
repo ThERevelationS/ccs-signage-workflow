@@ -158,3 +158,30 @@ export function buildFoundationElevationSvg(scene, { width = 480, height = 320 }
   out.push("</svg>");
   return out.join("\n");
 }
+
+// O-043 (CMP-C12) -- BOM image export: the BOM `lines[]` (the
+// FoundationBOM `{material, quantity, cost, cost_class, note}` rows) rendered
+// as an SVG table. Pure builder -- a held/"Not saved" cost renders verbatim,
+// never a silently-zero total.
+export function buildFoundationBomSvg(lines, { width = 480, title = "Bill of materials" } = {}) {
+  const rows = Array.isArray(lines) ? lines : [];
+  const rowH = 16, headerH = 22, height = headerH + rows.length * rowH + 22;
+  const out = [];
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" font-family="system-ui, sans-serif">`);
+  out.push(`<rect width="${width}" height="${height}" fill="#ffffff"/>`);
+  out.push(`<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" fill="none" stroke="#94a3b8" stroke-width="1"/>`);
+  out.push(`<text x="8" y="15" font-size="10" font-weight="600" fill="#1e293b">${esc(title)}</text>`);
+  out.push(`<text x="8" y="15" text-anchor="end" x2="${width - 8}" font-size="8" fill="#64748b" x="${width - 8}">qty | cost</text>`);
+  rows.forEach((r, i) => {
+    const y = headerH + i * rowH;
+    if (i % 2 === 0) out.push(`<rect x="4" y="${y}" width="${width - 8}" height="${rowH}" fill="#f8fafc"/>`);
+    const cost = r?.cost;
+    const costText = Number.isFinite(cost) ? `$${cost.toFixed(2)}` : (typeof cost === "string" && cost !== "" ? cost : "-");
+    out.push(`<text x="8" y="${y + 11}" font-size="9" fill="#334155">${esc(String(r?.material || "Item"))}</text>`);
+    out.push(`<text x="${width - 90}" y="${y + 11}" font-size="8" fill="#475569" text-anchor="end">${esc(String(r?.quantity || ""))}</text>`);
+    out.push(`<text x="${width - 8}" y="${y + 11}" font-size="9" fill="#1e293b" text-anchor="end">${esc(costText)}</text>`);
+  });
+  out.push(`<text x="6" y="${height - 6}" font-size="8" fill="#64748b">${rows.length} line(s) -- labeled export</text>`);
+  out.push("</svg>");
+  return out.join("\n");
+}
