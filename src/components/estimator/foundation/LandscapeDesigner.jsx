@@ -34,6 +34,8 @@ const costLabel = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 export default function LandscapeDesigner({ landscape, onChange }) {
   const [brush, setBrush] = useState("grass");
   const [painting, setPainting] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedCell, setSelectedCell] = useState(null);
   const [hoverCell, setHoverCell] = useState(null);
   // O-071 (CMP-F04): bucket-fill mode — a click floods the contiguous region
   // of the same material (empty cells count as one region); dirt erases it.
@@ -228,6 +230,16 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
             >+Obj</button>
           </label>
+          {/* O-071 (CMP-F04) -- selection tool: Select mode clicks a cell to
+              select it (shows the material + a clear-cell action); paint/fill
+              modes are unchanged. */}
+          <button type="button"
+            onClick={() => setSelectMode((v) => !v)}
+            aria-pressed={selectMode}
+            className={`h-[26px] px-2 flex items-center gap-1 rounded-sm border text-[11px] ${
+              selectMode ? "border-blue-400 bg-blue-50 text-blue-700 font-medium" : "border-gray-300 text-gray-600 hover:bg-gray-50"
+            }`}
+          >Select</button>
           <button type="button"
             onClick={() => setFillMode((v) => !v)}
             aria-pressed={fillMode}
@@ -312,6 +324,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   <div
                     key={`${x},${y}`}
                     onMouseDown={() => {
+                      if (selectMode) { setSelectedCell({ x, y }); return; }
                       if (fillMode) { flood(x, y); return; }
                       setPainting(true);
                       paint(x, y);
@@ -320,7 +333,10 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                     onMouseLeave={() => setHoverCell(null)}
                     onMouseUp={endStroke}
                     className="aspect-square cursor-crosshair"
-                    style={{ background: mat ? mat.color : "rgba(0,0,0,0.06)" }}
+                    style={{
+                      background: mat ? mat.color : "rgba(0,0,0,0.06)",
+                      outline: selectedCell && selectedCell.x === x && selectedCell.y === y ? "2px solid #3b82f6" : undefined,
+                    }}
                   />
                 );
               })
@@ -338,6 +354,31 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           return `cell ${hoverCell.x},${hoverCell.y} - ${xf.toFixed(1)}' x ${yf.toFixed(1)}'${mat ? ` - ${mat.label}` : ""}`;
         })() : "Hover the grid for a cell position"}
       </div>
+      {/* O-071 (CMP-F04) -- selected-cell readout + clear action. */}
+      {selectedCell && (
+        <div className="mt-1 flex items-center gap-2 text-[10px] text-blue-700" aria-live="polite">
+          {(() => {
+            const key = viewCells[`${selectedCell.x},${selectedCell.y}`];
+            const mat = key ? (materialByKey(key) || visualObjectByKey(key)) : null;
+            return `Selected cell ${selectedCell.x},${selectedCell.y}${mat ? ` - ${mat.label}` : " (empty)"}`;
+          })()}
+          <button
+            type="button"
+            onClick={() => {
+              const next = { ...(landscape?.cells || {}) };
+              delete next[`${selectedCell.x},${selectedCell.y}`];
+              onChange({ ...landscape, cells: next });
+              setSelectedCell(null);
+            }}
+            className="h-5 px-1.5 rounded-sm border border-blue-300 text-blue-700 hover:bg-blue-50"
+          >Clear cell</button>
+          <button
+            type="button"
+            onClick={() => setSelectedCell(null)}
+            className="h-5 px-1.5 rounded-sm border border-gray-300 text-gray-500 hover:bg-gray-50"
+          >Deselect</button>
+        </div>
+      )}
       {summary.lines.length > 0 && (
         <div className="mt-3 border-t border-gray-100 pt-2 space-y-1">
           {summary.lines.map((l) => (
