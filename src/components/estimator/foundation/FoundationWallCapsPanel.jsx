@@ -238,6 +238,19 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           >
             Cap all walls
           </Button>
+          {/* O-054 (CMP-D11) -- rebuild preview: before a regeneration runs,
+              surface which caps hold their segment (locked) vs free for
+              regeneration (unlocked) -- the rebuild's effect is visible
+              before apply, never a silent destruction. */}
+          {caps.length > 0 && (() => {
+            const lockedCount = caps.filter((c) => c?.locked !== false).length;
+            const freeCount = caps.length - lockedCount;
+            return (
+              <span className="text-[10px] text-gray-500" title="Caps that hold their segment vs free for regeneration">
+                {lockedCount} locked hold{lockedCount === 1 ? "" : "s"} · {freeCount} free to regenerate
+              </span>
+            );
+          })()}
           {/* O-049 (CMP-D06) -- selection-scoped cap: check the walls to cap,
               then "Cap selected" mints one cap row per un-capped segment on
               only those walls (between the single-wall and cap-all paths). */}
