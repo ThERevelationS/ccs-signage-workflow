@@ -25,6 +25,17 @@ export const LANDSCAPE_MATERIALS = [
 
 export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
 
+// O-073 (CMP-F06) -- catalog-configured material: `landscape.material_overrides`
+// map {key: {catalog_id, unit_price}} records a per-key catalog/configured
+// price -- the override's `unit_price` governs the billing when present
+// (blank/invalid = the material's own `cost_per_sqft` stays the rate).
+export const configuredMaterialPrice = (key, overrides) => {
+  const ov = isRecord(overrides) ? overrides[key] : null;
+  const up = ov ? Number(ov.unit_price) : null;
+  if (Number.isFinite(up) && up >= 0) return { rate: up, catalog_id: typeof ov.catalog_id === "string" && ov.catalog_id !== "" ? ov.catalog_id : null, configured: true };
+  return { rate: null, catalog_id: null, configured: false };
+};
+
 // O-077 (CMP-F10) -- the manifest's `verification` map by material/object key;
 // a UI consumer surfaces the verification state without re-deriving it.
 export const verificationForKey = (key) => {
@@ -199,7 +210,11 @@ export const landscapeSummary = (landscape) => {
   const lines = Object.entries(counts).map(([key, count]) => {
     const mat = materialByKey(key);
     const sqft = sqftPerCell === null ? null : rows[key] * (1 + waste);
-    const rate = mat ? landscapePriceNumber(mat.cost_per_sqft) : null;
+    // O-073 (CMP-F06) -- a configured material override's `unit_price` governs
+    // the billing when present; the material's own `cost_per_sqft` is the
+    // default rate (never a silently-zero configured rate).
+    const configured = configuredMaterialPrice(key, landscape?.material_overrides);
+    const rate = configured.configured ? configured.rate : mat ? landscapePriceNumber(mat.cost_per_sqft) : null;
     return {
       key,
       label: mat?.label || key,
@@ -207,6 +222,8 @@ export const landscapeSummary = (landscape) => {
       cells: count,
       sqft,
       volume_cuft: sqft === null || bedDepth === null ? null : (sqft * bedDepth) / 12,
+      cost_per_sqft: rate,
+      configured_catalog_id: configured.catalog_id,
       cost: sqft === null || rate === null ? null : sqft * rate,
     };
   });
