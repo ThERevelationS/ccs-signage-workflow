@@ -598,10 +598,26 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
       // invalid cost holds the whole signs total (never a silent 0, never a
       // partial sum that drops one sign's money).
       const signRows = Array.isArray(pole?.signs) ? pole.signs : [];
-      const signCosts = signRows.map((s) => Number(s?.unit_cost));
+      // O-066 -- each sign's total = unit_cost (required) + optional hardware/
+      // labor/paint/waste components. Absent optional field = 0 (a sign may
+      // legitimately have no hardware); present must be finite nonnegative —
+      // a malformed component holds the whole sign's money, never a partial sum.
+      const signCosts = signRows.map((s) => {
+        const unit = Number(s?.unit_cost);
+        if (!(Number.isFinite(unit) && unit >= 0)) return null;
+        const parts = [s?.hardware_cost, s?.labor_cost, s?.paint_cost, s?.waste_cost];
+        let total = unit;
+        for (const p of parts) {
+          if (p == null || p === "") continue;
+          const n = Number(p);
+          if (!(Number.isFinite(n) && n >= 0)) return null;
+          total += n;
+        }
+        return total;
+      });
       const signTotal =
         !signRows.length ? 0
-        : signCosts.every((c) => Number.isFinite(c) && c >= 0)
+        : signCosts.every((c) => c !== null)
           ? signCosts.reduce((a, b) => a + b, 0)
           : null;
       return {
