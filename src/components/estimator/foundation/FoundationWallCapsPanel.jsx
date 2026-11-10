@@ -15,6 +15,12 @@ const capDimMeta = (field) => foundationDimensionFieldMeta("wallCap", field);
 
 export default function FoundationWallCapsPanel({ caps = [], walls = [], options = [], onChange }) {
   const [capWallId, setCapWallId] = useState("");
+  const [selectedWallIds, setSelectedWallIds] = useState(() => new Set());
+  const toggleWall = (id) => setSelectedWallIds((prev) => {
+    const n = new Set(prev);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
   const patchCap = (index, changes) =>
     onChange(caps.map((c, i) => (i === index ? { ...c, ...changes } : c)));
 
@@ -177,6 +183,37 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           >
             Cap all walls
           </Button>
+          {/* O-049 (CMP-D06) -- selection-scoped cap: check the walls to cap,
+              then "Cap selected" mints one cap row per un-capped segment on
+              only those walls (between the single-wall and cap-all paths). */}
+          {walls.length > 1 && (
+            <>
+              <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Walls to cap">
+                {walls.map((w, i) => {
+                  const id = w.component_id || "";
+                  const checked = selectedWallIds.has(id);
+                  return (
+                    <label key={id || i} className="flex items-center gap-1 text-[11px] text-gray-600 border rounded px-1.5 h-7">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleWall(id)}
+                        aria-label={`Select ${w.name || `wall ${i + 1}`} for capping`}
+                      />
+                      {w.name || `Wall ${i + 1}`}
+                    </label>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline" size="sm"
+                disabled={options.length === 0 || selectedWallIds.size === 0}
+                onClick={() => capWalls([...selectedWallIds])}
+              >
+                Cap selected
+              </Button>
+            </>
+          )}
           <Button variant="outline" size="sm" onClick={addCap} disabled={options.length === 0}>
             <Plus className="w-4 h-4" aria-hidden="true" /> Cap
           </Button>
