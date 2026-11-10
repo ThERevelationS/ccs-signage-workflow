@@ -66,7 +66,9 @@ export async function ensureEstimateCustomerLocation({
   }
 
   const wanted = normalizeAddress(address);
-  const existing = await entity.filter({ customer_id: id }).catch(() => []);
+  // O-014 -- fail-closed: a transient filter failure propagates rather than
+  // silently reading "no existing locations" (which would mint a duplicate).
+  const existing = await entity.filter({ customer_id: id });
   const rows = Array.isArray(existing) ? existing : [];
   const match = rows.find(
     (location) => normalizeAddress(location?.label) === wanted || locationAddress(location) === wanted
