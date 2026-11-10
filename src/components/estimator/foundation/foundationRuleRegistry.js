@@ -855,6 +855,38 @@ export const FOUNDATION_RULE_SEEDS = deepFreeze([
     status: "active",
   },
 
+  // ===== support.compatibility — pillar-bar / base-plate entries (O-111) =====
+  {
+    rule_id: "SUP-COMPAT-PILLAR-BAR-LONGITUDINAL",
+    domain: "support.compatibility",
+    statement: "A pillar/column cage's longitudinal bars run vertically through the shaft — the pillar bar is the cage's vertical member carried on the cage's own stand, not a slab-chair/bolster selection. The pillar bar's support kind is the drilled-shaft/cage class, never a flat-slab chair.",
+    params: {},
+    units: null,
+    logic: null,
+    source_ref: src("CMP-SUP-003", "cage vs slab support taxonomy — drilled-shaft cages are positioned by wheels/centralizers, not mat chairs"),
+    corroborating_register_ids: ["CMP-SUP-003", "CMP-SUP-010"],
+    applicability: { member_types: ["pillar", "pillar_cage", "drilled_shaft"], support_classes: ["positioner", "cage_stand"] },
+    limits: [],
+    unsupported: ["a pillar bar's vertical bar size/count is a structural design input, not a register constant — the entry records the support kind only"],
+    rule_version: "1.0.0",
+    status: "active",
+  },
+  {
+    rule_id: "SUP-COMPAT-BASE-PLATE-ON-SHAFT",
+    domain: "support.compatibility",
+    statement: "A base plate (the pole/sign mounting plate at the top of a shaft) bears on the shaft's concrete, not a support stand — the plate is the pole's mount, not a reinforcement support. Its basis records the mount-vs-support distinction so a base plate is never selected as a chair/bolster support.",
+    params: {},
+    units: null,
+    logic: null,
+    source_ref: src("CMP-SUP-003", "mount vs support — a base plate is the pole's mount, not a bar support"),
+    corroborating_register_ids: [],
+    applicability: { member_types: ["base_plate"], usages: ["sign_pole", "shaft_mount"] },
+    limits: [],
+    unsupported: ["plate thickness/bolt pattern is a structural design input, not a register constant"],
+    rule_version: "1.0.0",
+    status: "active",
+  },
+
   // ===== support.catalog — catalog-row modeling rules =====
   {
     rule_id: "SUP-CATALOG-PER-SKU-RANGES",
