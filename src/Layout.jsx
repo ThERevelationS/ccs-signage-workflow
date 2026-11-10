@@ -81,7 +81,6 @@ import {
   isFolderToken,
   movePageToFolder,
   movePageToTop,
-  navDragStyle,
   newFolderId,
   patchFolder as navPatchFolder,
   removeUrlEverywhere,
@@ -399,16 +398,38 @@ function LayoutContent({ children }) {
     const FROZEN = "ccs-nav-frozen";
     const POS_PROPS = ["position", "left", "top", "right", "bottom", "width", "height",
       "minWidth", "minHeight", "margin", "zIndex", "flexShrink", "justifySelf", "alignSelf",
-      "boxSizing"];
+      "boxSizing",
+      // Containing-block creators — cleared on the drag source's ancestor
+      // chain so the ghost's position:fixed stays viewport-true (see below).
+      "backdropFilter", "WebkitBackdropFilter", "filter", "perspective",
+      "willChange", "contain", "containerType", "contentVisibility"];
     const saveStyle = (el) => {
       const saved = {};
       for (const k of POS_PROPS) saved[k] = el.style[k];
       return saved;
     };
+    // Props that make an element a containing block for position:fixed
+    // descendants (CSS Contain + Filter specs). The glass shell/panel's
+    // backdrop-filter does exactly this — the ghost's fixed coords resolved
+    // inside the blurred box instead of the viewport, so the dragged pill
+    // floated offset from the pointer ("not tied to the mouse location").
+    // Cleared for the duration of the freeze and restored verbatim.
+    const CB_RESET = {
+      backdropFilter: "none", WebkitBackdropFilter: "none", filter: "none",
+      perspective: "none", willChange: "auto", contain: "none",
+      containerType: "normal", contentVisibility: "visible",
+    };
+    const clearContainingBlock = (el) => { for (const k in CB_RESET) el.style[k] = CB_RESET[k]; };
     const freezeAll = (root, dragEl) => {
-      for (const dropEl of root.querySelectorAll("[data-rfd-droppable-id]")) {
+      // The scope element itself may BE a droppable (open flyout menu) —
+      // querySelectorAll only matches descendants.
+      const drops = root.matches?.("[data-rfd-droppable-id]")
+        ? [root, ...root.querySelectorAll("[data-rfd-droppable-id]")]
+        : [...root.querySelectorAll("[data-rfd-droppable-id]")];
+      for (const dropEl of drops) {
         if (dropEl.__ccsFrozen) continue;
         dropEl.__ccsFrozen = true;
+        const isSourceDrop = dropEl.contains(dragEl);
         // Measure EVERYTHING before mutating — each style change can reflow
         // siblings, so lazy measurement would corrupt the offsets.
         const rect = dropEl.getBoundingClientRect();
@@ -429,6 +450,7 @@ function LayoutContent({ children }) {
         for (const [a, r, pos] of anchors) {
           a.__ccsSavedStyle = saveStyle(a);
           a.__ccsPinned = true;
+          if (isSourceDrop) clearContainingBlock(a);
           if (pos === "fixed" || pos === "sticky") {
             a.style.width = `${r.width}px`;
             a.style.height = `${r.height}px`;
@@ -452,7 +474,10 @@ function LayoutContent({ children }) {
         dropEl.__ccsAnchors = anchors.map(([a]) => a);
         dropEl.__ccsSavedStyle = saveStyle(dropEl);
         dropEl.classList.add(FROZEN);
-        dropEl.style.position = "relative";
+        if (isSourceDrop) clearContainingBlock(dropEl);
+        // A portal'd droppable (open flyout menu) is already position:fixed —
+        // forcing relative here would teleport it to the flow origin.
+        if (getComputedStyle(dropEl).position !== "fixed") dropEl.style.position = "relative";
         // Pin BOTH dims — once the children leave flow the container would
         // otherwise collapse to 0x0 and stop being a hit-testable drop zone.
         // border-box so px pins match the measured border-box exactly.
@@ -496,6 +521,38 @@ function LayoutContent({ children }) {
       }
     };
     let pressedEl = null;
+    let armed = false;
+    let holdTimer = null;
+    let hoverTimer = null;
+    let hoverEl = null;
+    let hoverId = "";
+    const HOLD_MS = 1000;       // press-and-hold charge-up before the drag arms
+    const HOVER_OPEN_MS = 420;  // linger on a folder pill before it opens
+
+    const clearHover = () => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (hoverEl) { hoverEl.classList.remove("ccs-drop-hover"); hoverEl = null; }
+      hoverId = "";
+    };
+    const resetDragUI = () => {
+      clearHover();
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      armed = false;
+      if (pressedEl) pressedEl.classList.remove("ccs-nav-holding");
+      document.documentElement.classList.remove("ccs-grab-cursor");
+      pressedEl = null;
+    };
+    // First draggable under the point, skipping the pointer-following ghost.
+    const dragTargetAt = (x, y) => {
+      for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+        if (el === pressedEl) continue;
+        const r = el.getBoundingClientRect();
+        if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+        return el;
+      }
+      return null;
+    };
+
     const onPointerDown = (event) => {
       if (event.button === 2) return; // right-click opens context menus, not drags
       window.__ccsNavDropFolder = "";
@@ -504,6 +561,50 @@ function LayoutContent({ children }) {
       if (!pressedEl) return;
       const scope = pressedEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
       if (scope) freezeAll(scope, pressedEl);
+      // Hold-to-drag ritual: HOLD_MS of still-pressing charges up the pill
+      // (.ccs-nav-holding cue), then the drag arms and the cursor becomes the
+      // grab hand. Moves before arming are swallowed so the library can't
+      // lift early.
+      pressedEl.classList.add("ccs-nav-holding");
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        armed = true;
+        pressedEl?.classList.remove("ccs-nav-holding");
+        document.documentElement.classList.add("ccs-grab-cursor");
+      }, HOLD_MS);
+    };
+
+    const onPointerMove = (event) => {
+      if (!pressedEl) return;
+      if (!armed) { event.stopImmediatePropagation(); return; }
+      // Armed: hover bookkeeping — highlight the folder pill under the
+      // pointer; lingering opens top-bar flyouts so the page can be placed
+      // inside. Over an open menu = inside the folder, no pill hover.
+      if (event.target.closest?.("[role='menu']")) { clearHover(); return; }
+      const srcId = pressedEl.getAttribute("data-rfd-draggable-id") || "";
+      const srcIsFolder = isFolderToken(srcId) || srcId.startsWith("sfolder:");
+      const hit = dragTargetAt(event.clientX, event.clientY);
+      const hitId = hit?.getAttribute("data-rfd-draggable-id") || "";
+      if (!srcIsFolder && hit && (isFolderToken(hitId) || hitId.startsWith("sfolder:"))) {
+        if (hitId !== hoverId) {
+          clearHover();
+          hoverId = hitId;
+          hoverEl = hit;
+          hit.classList.add("ccs-drop-hover");
+          if (isFolderToken(hitId)) {
+            const fid = tokenFolderId(hitId);
+            hoverTimer = setTimeout(() => {
+              hoverTimer = null;
+              window.dispatchEvent(new CustomEvent("ccs-nav-open-folder", { detail: { folderId: fid } }));
+            }, HOVER_OPEN_MS);
+          }
+        }
+      } else clearHover();
+    };
+    // Pre-arm swallow for the legacy mouse-event path (the library may listen
+    // mousemove instead of pointermove depending on sensor).
+    const onMouseMove = (event) => {
+      if (pressedEl && !armed) event.stopImmediatePropagation();
     };
     // On release during a nav drag, hit-test the pointer against the folder
     // pills' painted boxes BEFORE unfreezing (unfreeze restores pre-drag
@@ -532,23 +633,29 @@ function LayoutContent({ children }) {
         }
         window.__ccsNavDropPage = page;
       }
-      pressedEl = null;
+      resetDragUI();
       unfreezeAll();
     };
-    const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
+    const onKeyDown = (event) => { if (event.key === "Escape") { resetDragUI(); unfreezeAll(); } };
+    const onCancel = () => { resetDragUI(); unfreezeAll(); };
     // pointerup on window+capture: registered at mount, so it runs before the
     // drag library's own window-level release handler and before onDragEnd.
     document.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("pointermove", onPointerMove, true);
+    window.addEventListener("mousemove", onMouseMove, true);
     window.addEventListener("pointerup", onPointerUp, true);
-    window.addEventListener("pointercancel", unfreezeAll, true);
+    window.addEventListener("pointercancel", onCancel, true);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("blur", unfreezeAll);
+    window.addEventListener("blur", onCancel);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("pointermove", onPointerMove, true);
+      window.removeEventListener("mousemove", onMouseMove, true);
       window.removeEventListener("pointerup", onPointerUp, true);
-      window.removeEventListener("pointercancel", unfreezeAll, true);
+      window.removeEventListener("pointercancel", onCancel, true);
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("blur", unfreezeAll);
+      window.removeEventListener("blur", onCancel);
+      resetDragUI();
       unfreezeAll();
     };
   }, []);
@@ -1221,13 +1328,31 @@ function LayoutContent({ children }) {
           display: none !important;
         }
 
-        /* The library still publishes displaced-model transforms to non-source
-           pills mid-drag ("dodging"). Kill them at the paint layer — render
-           timing made a style-prop strip unreliable — so parked pills are
-           exactly where the pointer-up hit-test reads them. The drag source
-           keeps its transform: it IS the pointer-following ghost. */
-        .ccs-nav-frozen [data-rfd-draggable-id]:not(.ccs-drag-src) {
-          transform: none !important;
+
+        /* Press-and-hold charge-up: a 1s fill cue on the pressed pill before
+           the drag arms — communicates "keep holding to grab". */
+        .ccs-nav-holding {
+          animation: ccsNavHoldCharge 1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards !important;
+        }
+        @keyframes ccsNavHoldCharge {
+          0%   { box-shadow: inset 0 0 0 2px rgba(139,92,246,0), 0 0 0 0 rgba(139,92,246,0); transform: scale(1); }
+          55%  { box-shadow: inset 0 0 0 2px rgba(139,92,246,.75), 0 0 10px 1px rgba(139,92,246,.30); transform: scale(1.035); }
+          100% { box-shadow: inset 0 0 0 2px rgba(139,92,246,.95), 0 0 16px 3px rgba(139,92,246,.45); transform: scale(1.06); }
+        }
+
+        /* Folder pill currently hovered by an armed drag — ring + glow shows
+           it will receive the page (and will open after a short linger). */
+        .ccs-drop-hover {
+          outline: 2px solid rgba(139,92,246,.95) !important;
+          outline-offset: 2px;
+          box-shadow: 0 0 0 5px rgba(139,92,246,.28), 0 0 20px rgba(139,92,246,.5) !important;
+        }
+
+        /* While a nav drag is armed: the whole window gets the grab-hand
+           cursor (gloved fist asset) with native grabbing as fallback. */
+        html.ccs-grab-cursor,
+        html.ccs-grab-cursor * {
+          cursor: url("data:image/svg+xml,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20id%3D%22emoji%22%20viewBox%3D%220%200%2072%2072%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20id%3D%22color%22%3E%3Cline%20x1%3D%2251%22%20x2%3D%2251%22%20y1%3D%2247.42%22%20y2%3D%2233.14%22%20fill%3D%22none%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22skin%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m42.03%2047.56c-0.3312%202.471-2.599%207.032-5.057%206.7-0.293-0.03821-0.6495-0.1401-1.045-0.293%200.8407-3.095%205.477-7.923%206.114-9.579l-0.01274%201.987c0.05095%200.3949%200.05095%200.8025%200%201.185z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.19%2024.09-0.01274%201.223h0.01274c0.05095-0.4204%200.05095-0.828%200-1.223zm8.917-1.146v1.172c0.05095-0.3949%200.05095-0.8025%200-1.172z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m56.86%2028.69c-0.2038-0.1529-1.745-0.3482-1.745-0.3482l-3.264-0.01274c-0.5987-0.2802-0.8247-1.55-0.8247-4.288%200.3312-2.471-1.401-4.726-3.86-5.057-8.881%202.622-2.133%201.723-8.917%200.08917-9.376%202.498-1.771%202.843-8.917%201.185-9.755%200.1624-1.828%206.409-9.006%201.274-2.458-0.3312-4.726%201.401-5.044%203.86-0.06369%200.3949-0.06369%200.8025%200%201.197h-0.03821l0.03821%2010.97c-0.3312%202.458%201.401%204.726%203.86%205.057%206.352-0.265%205.107-9.398%205.057%201.223-0.3312%202.458%201.401%204.726%203.86%205.057%204.281-2.589%204.384%206.516%207.599%208.173%200.8025%202.051%2010.28-0.168%2011.56-0.1043%204.928%202.479%2012.18-2.03%2010.32-4.553%200.05095-0.3949%200.05095-8.165%200-8.56%200.1783-2.076%201.185-13.71-0.6751-15.16z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m32.48%2046.77c-0.293%200.5095-0.7006%200.9426-1.172%201.287%200.2165-0.4331%200.5987-0.8789%201.172-1.287z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.13%2041.53c0.03821%200.8789%200.02548%202.879-0.01274%203.401z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m32.48%2046.77c-0.293%200.5095-0.7006%200.9426-1.172%201.287%200.2165-0.4331%200.5987-0.8789%201.172-1.287z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.12%2044.93%200.01274-3.401c0.03821%200.8789%200.02548%202.879-0.01274%203.401z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m33.19%2025.31h-0.01274l0.01274-1.223c0.05095%200.3949%200.05095%200.8025%200%201.223z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m42.11%2024.11v-1.172c0.05095%200.3694%200.05095%200.777%200%201.172z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m39.17%2056.81c-2.577%200-9.977%204.548-8.467-7.881z%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22m57.31%2033.52c0-1.9%200-4.118-2.011-4.118z%22%2F%3E%3C%2Fg%3E%3Cg%20id%3D%22line%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m41.94%2037.24v7.074c-0.3346%202.512%201.428%204.82%203.936%205.156%202.509%200.3352%204.813-1.43%205.148-3.942%200.0536-0.4028%200.0536-0.8107%200-1.213l-5.19e-4%20-20.48c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942v1.301c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942v2.427c0.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942c-0.02619%200.8746-0.02488%201.613-0.08098%202.513%200.3346-2.512-1.428-4.82-3.936-5.156s-4.813%201.43-5.148%203.942c-0.0536%200.4028-0.0536%200.8107-0.02011%201.214l0.02064%2011.19c-0.3346%202.512%201.428%204.82%203.936%205.156%202.509%200.3352%204.813-1.43%205.148-3.942%200.0536-0.4028%200.0536-0.8107%200-1.213v-1.341l0.04022-3.517-0.04023%2011.27c-0.3346%202.512%201.428%204.82%203.936%205.156s4.813-1.43%205.148-3.942c0.0536-0.4028%200.0536-3.548%200-3.951v-5.012l-0.04075-4.248%200.04075%2014.6c-0.3346%202.512%201.428%204.82%203.936%205.156s4.813-1.43%205.148-3.942c0.0536-0.4028%200.0536-0.8107%200-1.213l0.08046-15.82z%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m57.43%2052.08c-0.2117%202.896-2.598%205.149-5.497%205.19h-12.98%22%2F%3E%3Cline%20x1%3D%2257.43%22%20x2%3D%2257.43%22%20y1%3D%2252.08%22%20y2%3D%2233.52%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%2210%22%20stroke-width%3D%222%22%20d%3D%22m38.95%2057.27c-2.625%200-7.445%200.6149-7.445-3.105%22%2F%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%2210%22%20stroke-width%3D%222%22%20d%3D%22m57.43%2033.52c0-1.938%200-4.201-2.049-4.201%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, grabbing !important;
         }
 
         .ccs-focus-pause-glass {
@@ -1683,7 +1808,6 @@ function LayoutContent({ children }) {
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
                                     {...dragProvided.dragHandleProps}
-                                    style={navDragStyle(dragProvided.draggableProps.style, dragSnapshot.isDragging)}
                                   >
                                     <SidebarNavGroup
                                       label={folder.name}
@@ -1883,7 +2007,6 @@ function LayoutContent({ children }) {
                                         ref={dragProvided.innerRef}
                                         {...dragProvided.draggableProps}
                                         {...dragProvided.dragHandleProps}
-                                        style={navDragStyle(dragProvided.draggableProps.style, dragSnapshot.isDragging)}
                                         className="rounded-lg"
                                       >
                                         <NavFlyoutMenu
