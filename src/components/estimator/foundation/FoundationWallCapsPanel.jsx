@@ -30,7 +30,9 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
   const capWalls = (wallIds) => {
     const inv = options[0];
     const stockLength = wallCapInputNumber(inv?.cap_stock_length_inches);
-    const capped = new Set(caps.map((c) => c.segment_component_id).filter(Boolean));
+    // O-054 (CMP-D11): a cap with `locked: true` keeps its segment covered
+    // — generators skip locked caps' segments entirely.
+    const capped = new Set(caps.filter((c) => c?.locked !== false).map((c) => c.segment_component_id).filter(Boolean));
     const made = [];
     wallIds.forEach((wallId) => {
       const wi = walls.findIndex((w) => w.component_id === wallId);
@@ -500,6 +502,15 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 {unavailableCaps.has(index) ? "Saved stock length: " : "Stock length: "}<span className="font-semibold text-gray-900">{hasFoundationCostSnapshot(cap.stock_length_inches) && cap.stock_length_inches > 0 ? cap.stock_length_inches + String.fromCharCode(34) : "Not saved"}</span>
               </span>
               <div className="ml-auto flex items-center gap-3">
+                <label className="flex items-center gap-1 text-[10px] text-gray-500" title="Locked caps keep their segment covered; unlock to regenerate">
+                  <input
+                    type="checkbox"
+                    checked={cap.locked !== false}
+                    onChange={(e) => patchCap(index, { locked: e.target.checked ? undefined : false })}
+                    aria-label={`Cap ${index + 1} locked`}
+                  />
+                  Locked
+                </label>
                 <span className="font-bold text-gray-900">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : "Not saved"}</span>
                 {unavailableCaps.has(index) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
                 <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
