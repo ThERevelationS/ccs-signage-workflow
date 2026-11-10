@@ -256,6 +256,32 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       placeholder: "0\"",
       unit: "inches", ftIn: true, signed: true,
     }),
+    // O-060 (CMP-E05) -- panel-shape/trim/body-color/envelope metadata.
+    // Optional authored fields; blank = "not recorded", never a silent default.
+    panel_shape: Object.freeze({
+      label: "Panel shape",
+      help: "Sign panel shape: cabinet / panel / letters.",
+      placeholder: "cabinet",
+      unit: "text", ftIn: false, signed: false,
+    }),
+    trim_color: Object.freeze({
+      label: "Trim color",
+      help: "Sign trim / frame color.",
+      placeholder: "bronze",
+      unit: "text", ftIn: false, signed: false,
+    }),
+    body_color: Object.freeze({
+      label: "Body color",
+      help: "Sign body / cabinet color.",
+      placeholder: "white",
+      unit: "text", ftIn: false, signed: false,
+    }),
+    envelope: Object.freeze({
+      label: "Envelope",
+      help: "Physical envelope note (overall bounding box / projection).",
+      placeholder: "e.g. 4'x2'x8\"",
+      unit: "text", ftIn: false, signed: false,
+    }),
     orientation: Object.freeze({
       label: "Orient (deg)",
       help: "Sign face rotation on the pole (0 = facing the plan's +x direction).",
