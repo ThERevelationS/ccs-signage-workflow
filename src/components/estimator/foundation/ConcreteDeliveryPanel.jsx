@@ -31,7 +31,7 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
         <h3 className="font-semibold text-gray-900 text-sm">Ready-Mix Concrete Order</h3>
         <div className="text-right">
           <div className="font-bold text-gray-900">{amt(delivery?.concreteTotal)}</div>
-          <div className="text-[11px] text-gray-400">
+          <div className="text-[11px] text-gray-500">
             {cy(delivery?.roundedYards)} · {amt(delivery?.ratePerYard)}/CY
           </div>
         </div>
@@ -48,13 +48,13 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
           {mixMissing && <option value={savedMixId} disabled>Catalog mix unavailable ({savedMixId})</option>}
           {mixes.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} — {hasFoundationCostSnapshot(m.price) ? `${money(m.price)}/CY` : "price unavailable"}
+              {m.name} — {money(m.price)}/CY
             </option>
           ))}
         </select>
       </label>
       {!mixMissing && (
-        <p className="text-[11px] text-gray-400 mt-1">
+        <p className="text-[11px] text-gray-500 mt-1">
           {mixes.find((m) => m.id === (savedMixId || "4000_ae"))?.desc}
         </p>
       )}
@@ -68,7 +68,7 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
               <div key={id} className="text-xs text-amber-700">Catalog admixture unavailable ({id})</div>
             ))}
           {admix.map((a) => (
-            <label key={a.id} className={`flex gap-2 items-start text-xs ${unavailable ? "text-gray-400" : "text-gray-600"}`}>
+            <label key={a.id} className={`flex gap-2 items-start text-xs ${unavailable ? "text-gray-500" : "text-gray-600"}`}>
               <input
                 type="checkbox"
                 className="mt-0.5"
@@ -77,8 +77,8 @@ export default function ConcreteDeliveryPanel({ project, delivery, onChange }) {
                 onChange={() => toggleAdmix(a.id)}
               />
               <span>
-                <span className="font-medium text-gray-800">{a.name}</span> — {hasFoundationCostSnapshot(a.price) ? `${money(a.price)}/CY` : "price unavailable"}
-                <span className="block text-[11px] text-gray-400">{a.desc}</span>
+                <span className="font-medium text-gray-800">{a.name}</span> — {money(a.price)}/CY
+                <span className="block text-[11px] text-gray-500">{a.desc}</span>
               </span>
             </label>
           ))}
