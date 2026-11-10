@@ -247,7 +247,9 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         {hoverCell ? (() => {
           const cs = Number(landscape?.cell_size_inches) || 12;
           const xf = (hoverCell.x * cs) / 12, yf = (hoverCell.y * cs) / 12;
-          return `cell ${hoverCell.x},${hoverCell.y} - ${xf.toFixed(1)}' x ${yf.toFixed(1)}' from origin`;
+          const key = viewCells[`${hoverCell.x},${hoverCell.y}`];
+          const mat = key ? (materialByKey(key) || visualObjectByKey(key)) : null;
+          return `cell ${hoverCell.x},${hoverCell.y} - ${xf.toFixed(1)}' x ${yf.toFixed(1)}'${mat ? ` - ${mat.label}` : ""}`;
         })() : "Hover the grid for a cell position"}
       </div>
       {summary.lines.length > 0 && (
