@@ -230,6 +230,28 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
             >+Obj</button>
           </label>
+          {/* O-072 (CMP-F05) -- site-photo/plan backdrop: `backdrop_url` +
+              `backdrop_opacity` render a reference image behind the grid. The
+              authored `cell_size_inches` IS the scale contract -- the operator
+              confirms the image's real-world coverage via the cell size. */}
+          <label className="text-[10px] text-gray-500 flex items-center gap-1">
+            Backdrop
+            <input
+              type="text" placeholder="image URL"
+              value={landscape?.backdrop_url ?? ""}
+              onChange={(e) => onChange({ ...landscape, backdrop_url: e.target.value === "" ? undefined : e.target.value })}
+              className="h-6 w-24 rounded-sm border border-gray-300 px-1 text-[10px]"
+              aria-label="Backdrop image URL"
+            />
+            <input
+              type="range" min="0" max="0.8" step="0.05"
+              value={landscape?.backdrop_opacity ?? 0.35}
+              onChange={(e) => onChange({ ...landscape, backdrop_opacity: Number(e.target.value) })}
+              className="w-14 h-4 accent-blue-500"
+              aria-label="Backdrop opacity"
+              title="Backdrop opacity"
+            />
+          </label>
           {/* O-071 (CMP-F04) -- selection tool: Select mode clicks a cell to
               select it (shows the material + a clear-cell action); paint/fill
               modes are unchanged. */}
@@ -309,11 +331,21 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         </div>
 
         <div
-          className="flex-1 overflow-auto rounded-sm border border-gray-300 bg-[#a1866f] p-1 select-none"
+          className="relative flex-1 overflow-auto rounded-sm border border-gray-300 bg-[#a1866f] p-1 select-none"
           onMouseLeave={endStroke}
         >
+          {landscape?.backdrop_url && (
+            <img
+              src={landscape.backdrop_url}
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: Number.isFinite(Number(landscape.backdrop_opacity)) ? Number(landscape.backdrop_opacity) : 0.35 }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
+          )}
           <div
-            className="grid gap-px"
+            className="relative grid gap-px"
             style={{ gridTemplateColumns: `repeat(${GRID_COLS}, minmax(14px, 1fr))` }}
           >
             {Array.from({ length: GRID_ROWS }).map((_, y) =>
