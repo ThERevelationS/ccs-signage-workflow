@@ -564,7 +564,7 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       <div className="flex items-center justify-between mb-2">
         <div>
           <span className="text-[12px] font-bold text-gray-800">3D Preview</span>
-          <span className="text-[11px] text-gray-400 ml-2">Updates live as you edit</span>
+          <span className="text-[11px] text-gray-500 ml-2">Updates live as you edit</span>
         </div>
         <button
           type="button"
