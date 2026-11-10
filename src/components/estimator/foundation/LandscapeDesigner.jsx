@@ -210,6 +210,28 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   aria-label={`Object ${oi + 1} rotation degrees`}
                   title="Object rotation (degrees)"
                 />
+                {/* O-071 (CMP-F04) -- object editing: nudge buttons move the
+                    placed object (x by 1" steps, rotation by 15deg steps) --
+                    the operator nudges a placed object instead of typing. */}
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, x_inches: (Number(r.x_inches) || 0) - 1 } : r) })}
+                  className="h-5 w-4 rounded-sm text-gray-500 hover:bg-gray-100 text-[9px]"
+                  aria-label={`Object ${oi + 1} nudge left`}
+                >−</button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, x_inches: (Number(r.x_inches) || 0) + 1 } : r) })}
+                  className="h-5 w-4 rounded-sm text-gray-500 hover:bg-gray-100 text-[9px]"
+                  aria-label={`Object ${oi + 1} nudge right`}
+                >+</button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, rotation_degrees: ((Number(r.rotation_degrees) || 0) + 15) % 360 } : r) })}
+                  className="h-5 rounded-sm px-0.5 text-gray-500 hover:bg-gray-100 text-[9px]"
+                  aria-label={`Object ${oi + 1} rotate 15`}
+                  title="Rotate +15deg"
+                >↻</button>
                 <input
                   type="number" step="0.25" placeholder="elev"
                   value={o.elevation_inches ?? ""}
