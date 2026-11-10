@@ -62,6 +62,10 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
   const [proposal, setProposal] = useState(null);
+  // W-019 (AI-09) -- bounded parse history: each committed parse appends to a
+  // capped array (last 10) so the operator sees the revision trail; the array
+  // never grows unbounded.
+  const [parseHistory, setParseHistory] = useState([]);
   const [revisionText, setRevisionText] = useState("");
   // W-019 -- a token invalidates in-flight parse responses: a superseded or
   // cancelled request can't overwrite a newer proposal. InvokeLLM isn't
@@ -131,6 +135,9 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         proposal_id: `prop_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
         base_project_revision: project?.updated_date ?? null,
       });
+      // W-019 -- bounded parse history: the committed parse appends to the
+      // capped trail (last 10), so the operator sees the revision path.
+      setParseHistory((h) => [...h, { description: t.slice(0, 120), at: Date.now(), revision: !!revision }].slice(-10));
     } catch (e) {
       setError(e?.message || "The description could not be parsed.");
     } finally {
@@ -311,6 +318,19 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             <button type="button" onClick={() => setProposal(null)} className="h-6 px-2 text-[10px] border border-gray-300 rounded-sm">Discard</button>
             <button type="button" onClick={apply} className="h-6 px-2 text-[10px] bg-violet-600 text-white rounded-sm font-semibold">Apply to design</button>
           </div>
+        </div>
+      )}
+      {/* W-019 (AI-09) -- bounded parse history: the revision trail (last 10
+          committed parses). */}
+      {parseHistory.length > 0 && (
+        <div className="mt-1.5 text-[9px] text-gray-400" aria-live="polite">
+          <span className="font-medium text-gray-500">Parse history:</span>{" "}
+          {parseHistory.slice(-3).map((h, i) => (
+            <span key={i}>
+              {h.revision ? "revision: " : "parse: "}{h.description}
+              {i < Math.min(3, parseHistory.length) - 1 ? " · " : ""}
+            </span>
+          ))}
         </div>
       )}
     </div>
