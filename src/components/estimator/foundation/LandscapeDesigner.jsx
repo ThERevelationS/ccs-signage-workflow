@@ -395,6 +395,22 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               />
               <span className="text-[9px]">scale confirmed</span>
             </label>
+            {/* O-072 (CMP-F05) -- manual-correction preservation:
+                `scale_correction` records the operator's manual scale
+                correction (a corrected cell size vs the authored
+                `cell_size_inches`) -- the correction is preserved on the
+                backdrop, never overwritten by a re-confirmation. */}
+            <label className="flex items-center gap-1 cursor-pointer" title="The operator's manual scale correction (a corrected cell size vs the authored cell_size_inches)">
+              <input
+                type="number" step="0.1" min="0"
+                placeholder="corr in"
+                value={landscape?.scale_correction ?? ""}
+                onChange={(e) => onChange({ ...landscape, scale_correction: e.target.value === "" ? undefined : Number(e.target.value) })}
+                className="h-5 w-16 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                aria-label="Manual scale correction (inches per cell)"
+              />
+              <span className="text-[9px]">corr</span>
+            </label>
           </label>
           {/* O-071 (CMP-F04) -- selection tool: Select mode clicks a cell to
               select it (shows the material + a clear-cell action); paint/fill
