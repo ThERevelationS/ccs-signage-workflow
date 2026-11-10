@@ -182,6 +182,38 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   className="h-6 w-10 rounded-sm border border-gray-300 px-0.5 text-[10px]"
                   aria-label={`Object ${oi + 1} count`}
                 />
+                <input
+                  type="number" step="0.25" placeholder="x in"
+                  value={o.x_inches ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, x_inches: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-12 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} x position inches`}
+                  title="Object x position (inches)"
+                />
+                <input
+                  type="number" step="0.25" placeholder="z in"
+                  value={o.z_inches ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, z_inches: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-12 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} z position inches`}
+                  title="Object z position (inches)"
+                />
+                <input
+                  type="number" step="15" placeholder="rot"
+                  value={o.rotation_degrees ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, rotation_degrees: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-10 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} rotation degrees`}
+                  title="Object rotation (degrees)"
+                />
+                <input
+                  type="number" step="0.25" placeholder="elev"
+                  value={o.elevation_inches ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, elevation_inches: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-10 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} elevation inches`}
+                  title="Object elevation above grade (inches)"
+                />
                 <button
                   type="button"
                   onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).filter((_, j) => j !== oi) })}
