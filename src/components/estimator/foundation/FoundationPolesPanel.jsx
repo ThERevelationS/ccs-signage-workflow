@@ -185,6 +185,28 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   >
                     Center on foundation
                   </Button>
+                  {/* O-058 (CMP-E03) -- snap-to-edge variant: snaps the pole's
+                      x/z to the mounted foundation's right edge (footprint
+                      edge minus a 4" cover offset); center z. A snap-to-edge
+                      the layout explicitly chooses -- never an invented
+                      placement. */}
+                  <Button
+                    type="button" variant="outline" size="sm"
+                    disabled={!pole.foundation_component_id || !items.some((it) => it.component_id === pole.foundation_component_id)}
+                    onClick={() => {
+                      const it = items.find((x) => x.component_id === pole.foundation_component_id);
+                      const pos = it && layoutPositionInches(it);
+                      const fp = it && foundationLayoutFootprint(it);
+                      if (!pos?.valid || !fp) return;
+                      const cover = Math.min(4, Math.max(0, fp.width / 2));
+                      patchPole(index, {
+                        x_inches: Math.round((pos.x_inches + fp.width - cover) * 100) / 100,
+                        z_inches: Math.round((pos.z_inches + fp.depth / 2) * 100) / 100,
+                      });
+                    }}
+                  >
+                    Snap to edge
+                  </Button>
                   {/* O-058 (CMP-E03) -- edge/cover readout: the pole's nearest
                       distance to the mounted foundation's edge (in inches).
                       Read-only; absent when unmounted or placement unresolved. */}
