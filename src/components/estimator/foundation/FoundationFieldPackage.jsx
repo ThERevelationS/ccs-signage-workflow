@@ -97,7 +97,7 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
 
       <Section title={`Foundations (${items.length})`}>
         <table className="w-full">
-          <thead><tr><Th>Item</Th><Th>Type</Th><Th>L x W / Dia</Th><Th>Depth</Th><Th>Qty</Th><Th>Grade off.</Th><Th>Rot</Th></tr></thead>
+          <thead><tr><Th>Item</Th><Th>Type</Th><Th>L x W / Dia</Th><Th>Depth</Th><Th>Qty</Th><Th>Grade off.</Th><Th>Rot</Th><Th>Supports</Th></tr></thead>
           <tbody>
             {items.map((it, i) => (
               <tr key={it.component_id || i} className="border-t border-gray-100">
@@ -108,6 +108,14 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
                 <Td mono>{it.quantity ?? 1}</Td>
                 <Td mono>{dim(it.grade_offset_inches)}</Td>
                 <Td mono>{dim(it.rotation_degrees, "deg")}</Td>
+                {/* O-031 (CMP-B17) -- the rebar-supports part surfaced on the
+                    field doc: the BOM's `foundation:item:<i>:rebar-supports`
+                    amount travels to the field as a supports cost; blank =
+                    unresolved/off_explained. */}
+                <Td mono>{(() => {
+                  const sc = it?.reinforcement_cost_snapshot?.amounts?.supports_cost ?? it?.basis?.supports_cost;
+                  return Number.isFinite(sc) && sc > 0 ? `$${sc.toFixed(2)}` : "-";
+                })()}</Td>
               </tr>
             ))}
           </tbody>
