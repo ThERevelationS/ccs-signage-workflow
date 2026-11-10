@@ -66,9 +66,17 @@ export const LANDSCAPE_ASSET_MANIFEST = Object.freeze({
   source_kind: "procedural shop-authored primitives",
   materials: LANDSCAPE_MATERIALS.map((m) => ({
     key: m.key, label: m.label, kind: "billable material", source: "shop-authored color tile", license: "shop-authored",
+    // O-075 (CMP-F08) -- manifest metadata: author/provenance, original scale,
+    // preview, optimized-file hash, bounds/pivot, and a fallback representation.
+    // Shop-authored primitives carry the primitive itself as the fallback.
+    author: "shop", original_scale_inches: null, preview: null, file_hash: null,
+    bounds_inches: null, pivot: "center-bottom", fallback: "color tile",
   })),
   visual_objects: LANDSCAPE_VISUAL_OBJECTS.map((o) => ({
     key: o.key, label: o.label, kind: "decorative object", source: "shop-authored primitive shape", license: "shop-authored",
+    author: "shop", original_scale_inches: o.height_inches ?? null, preview: null, file_hash: null,
+    bounds_inches: o.height_inches != null && o.radius_inches != null ? { h: o.height_inches, r: o.radius_inches } : null,
+    pivot: "center-bottom", fallback: "primitive shape",
   })),
 });
 
