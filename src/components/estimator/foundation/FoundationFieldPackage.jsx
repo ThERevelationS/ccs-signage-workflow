@@ -291,6 +291,12 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Masonry", db.masonry],
             ["Cap material", db.cap_material],
             ["Coping", db.coping],
+            // O-106/O-107/O-108 (CMP-I05/I06/I07) -- structural-method fields:
+            // authored sign-wind/footing/shaft basis travel to the field
+            // alongside the material rows; blank = "not recorded".
+            ["Sign wind", db.sign_wind],
+            ["Footing basis", db.footing_basis],
+            ["Shaft basis", db.shaft_basis],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
