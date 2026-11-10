@@ -144,6 +144,12 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       placeholder: "3/8\"",
       unit: "inches", ftIn: true, signed: false,
     }),
+    wasteFraction: Object.freeze({
+      label: "Waste (0-1)",
+      help: "Waste/cut factor on brick+mortar+labor quantities (0.1 = +10%).",
+      placeholder: "0.1",
+      unit: "fraction", ftIn: false, signed: false,
+    }),
     internalWallHeightInches: Object.freeze({
       label: "Fill wall height (in)",
       help: "Internal fill wall height â€” blank follows the outer wall height.",
