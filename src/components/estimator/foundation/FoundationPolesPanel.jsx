@@ -346,6 +346,14 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         onCommit={(v) => patchSign({ horizontal_offset_inches: v })}
                         ariaLabel={`Pole ${index + 1} sign ${si + 1} horizontal offset (inches)`}
                       />
+                      {/* O-059 (CMP-E04) -- centered-sign preset: zero the
+                          horizontal offset (the sign sits on the pole axis). */}
+                      <button
+                        type="button"
+                        onClick={() => patchSign({ horizontal_offset_inches: 0 })}
+                        className="h-9 px-2 self-end rounded-md border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50"
+                        aria-label={`Pole ${index + 1} sign ${si + 1} center on pole`}
+                      >Center</button>
                       <label className="flex items-center gap-1 text-[10px] text-gray-500 self-end pb-1" title="Mirror a second sign across the pole">
                         <input
                           type="checkbox"
