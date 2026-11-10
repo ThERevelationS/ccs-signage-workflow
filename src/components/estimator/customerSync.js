@@ -151,7 +151,7 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
   if (linkedId) {
     const linked = customers.find((customer) => customer.id === linkedId);
     if (linked) return linked;
-    const fetched = await staffEntities.Customer.get(linkedId).catch(() => null);
+    const fetched = await staffEntities.Customer.get(linkedId);
     if (fetched) return fetched;
   }
   return findCustomerByName(customers, form?.client_name);
