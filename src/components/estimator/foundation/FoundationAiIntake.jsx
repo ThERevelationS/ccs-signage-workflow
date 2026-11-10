@@ -222,6 +222,18 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       .map(i => ({ ...i, quantity: Number(i.quantity) || 1 }))
       .filter(i => Number(i.length_inches) || Number(i.diameter) || Number(i.depth_inches));
     const poles = proposal.poles.filter(p => Number(p.height_inches));
+    // O-087 (CMP-G10) -- referential validity: a proposed pole's `mounts_to`
+    // (a 1-based item index) must reference an item that lands in the merge
+    // (a bound pole to a non-existent item is a referential error, blocked
+    // before the merge -- never a silent drop to a default mount).
+    const badRef = poles.findIndex((p) => {
+      const ref = Number(p.mounts_to);
+      return p.mounts_to != null && p.mounts_to !== "" && (!Number.isInteger(ref) || ref < 1 || ref > items.length);
+    });
+    if (badRef >= 0) {
+      setError(`Pole ${badRef + 1} mounts to item ${poles[badRef].mounts_to} -- no item lands at that index (only ${items.length} land). Fix the mount reference or remove it.`);
+      return;
+    }
     onApply({ foundations: items, poles });
     setProposal(null);
     setText("");
@@ -303,6 +315,13 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
                 placeholder="pole" className="col-span-4 h-5 px-1 text-[10px] border border-gray-200 rounded-sm" />
               <input value={p.height_inches} onChange={(e) => setField("poles", i, "height_inches", e.target.value)}
                 placeholder="height in" className="col-span-2 h-5 px-1 text-[10px] border border-gray-200 rounded-sm" />
+              {/* O-087 (CMP-G10) -- mount reference: `mounts_to` records which
+                  item (1-based) the pole mounts to -- a bound pole to a
+                  non-existent item is a referential error the apply blocks. */}
+              <input value={p.mounts_to ?? ""} onChange={(e) => setField("poles", i, "mounts_to", e.target.value)}
+                placeholder="mounts to item #" aria-label={`Pole ${i + 1} mounts to item`}
+                title="Which item (1-based) this pole mounts to -- an invalid reference is a referential error"
+                className="col-span-2 h-5 px-1 text-[10px] border border-gray-200 rounded-sm" />
             </div>
           ))}
           {proposal.notes && <p className="text-[10px] text-gray-500 italic">{proposal.notes}</p>}
