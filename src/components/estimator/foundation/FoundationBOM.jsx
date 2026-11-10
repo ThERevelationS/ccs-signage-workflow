@@ -81,6 +81,16 @@ export default function FoundationBOM({
     const formingCost = resolved.reduce((s, i) => s + num(i.forming_cost), 0);
     if (formingQty > 0) add("Forming material", qty(formingQty, "units"), formingCost, formingQty, "Form units from item perimeter x depth.");
 
+    // O-116 (CMP-I15) -- a shop/user contingency row separate from the
+    // calculated rows: `project.contingency_cost` (a disclosed allowance,
+    // never an invented price) surfaces as a "contingency" cost_class row
+    // so "what changed the price" names the contingency apart from the
+    // published-minimum / calculated baseline.
+    const contingency = num(project?.contingency_cost);
+    if (contingency > 0) {
+      add("Shop/user contingency", qty(1, "allowance"), contingency, 1, "A disclosed shop/user contingency allowance -- not a calculated baseline quantity.", "contingency");
+    }
+
     blocked.forEach((i) => {
       const label = `Foundation ${i.component_id ?? "?"} (saved)`;
       {
