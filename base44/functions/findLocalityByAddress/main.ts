@@ -224,9 +224,37 @@ function constantTimeEqual(a, b) {
   return diff === 0;
 }
 
+// base44/shared/ownerRole.ts
+var normEmail = (v) => String(v || "").trim().toLowerCase();
+var DEFAULT_OWNER_EMAILS = ["brett@cincisigns.com"];
+function ownerEmails() {
+  try {
+    const raw = (typeof Deno !== "undefined" ? Deno.env.get("APP_OWNER_EMAILS") : "") || "";
+    const parsed = raw.split(",").map(normEmail).filter(Boolean);
+    return parsed.length ? parsed : DEFAULT_OWNER_EMAILS;
+  } catch {
+    return DEFAULT_OWNER_EMAILS;
+  }
+}
+function isOwnerEmail(email) {
+  return ownerEmails().includes(normEmail(email));
+}
+function isOwnerRecord(row) {
+  if (!row || typeof row !== "object") return false;
+  return row.is_owner === true || isOwnerEmail(row.email);
+}
+function applyOwnerCapabilities(row) {
+  if (!isOwnerRecord(row) || !row) return row;
+  row.role = "admin";
+  row.is_owner = true;
+  row.is_full_admin = true;
+  row.role_label = "Owner";
+  return row;
+}
+
 // base44/shared/signShopSession.ts
 var sessionAuthCache = /* @__PURE__ */ new Map();
-var SESSION_AUTH_CACHE_MS = 6e4;
+var SESSION_AUTH_CACHE_MS = 15e3;
 function b64urlEncode(str) {
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -284,7 +312,14 @@ async function authenticateSignShopSession(base44, token) {
   };
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
+  if (cachedAuth && cachedAuth.expires > Date.now()) {
+    const cachedUser = applyOwnerCapabilities(stripExpiredGrant(cachedAuth.user));
+    const cachedNotBefore = Date.parse(String(cachedUser?.session_not_before || ""));
+    if (Number.isFinite(cachedNotBefore) && cachedNotBefore > 0 && issuedAt < cachedNotBefore) {
+      throw Object.assign(new Error("Authentication required"), { status: 401 });
+    }
+    return cachedUser;
+  }
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
@@ -301,7 +336,7 @@ async function authenticateSignShopSession(base44, token) {
   } catch (e) {
     if (e?.status === 401) throw e;
   }
-  const user = stripExpiredGrant(users[0]);
+  const user = applyOwnerCapabilities(stripExpiredGrant(users[0]));
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
   sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ""));
@@ -732,6 +767,15 @@ function traceDelay(kind, ms, retry = false) {
 }
 
 // base44/shared/entityRateLimitRetry.ts
+var isolateEntityStats = {
+  calls: 0,
+  // total entity API attempts (incl. retries)
+  retries: 0,
+  // attempts that were 429 retries (not new logical calls)
+  paced_waits: 0,
+  // times a caller waited on the paceMs queue
+  since: (/* @__PURE__ */ new Date()).toISOString()
+};
 function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
   if (!client?.asServiceRole?.entities) return client;
   let queue = Promise.resolve();
@@ -757,7 +801,12 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
       if (typeof value !== "function") return value;
       return async (...args) => {
         for (let attempt = 0; ; attempt++) {
-          if (paceMs) await reserveRequest();
+          if (paceMs) {
+            isolateEntityStats.paced_waits++;
+            await reserveRequest();
+          }
+          isolateEntityStats.calls++;
+          if (attempt > 0) isolateEntityStats.retries++;
           try {
             return await value.apply(target, args);
           } catch (e) {
