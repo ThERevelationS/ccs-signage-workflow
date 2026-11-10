@@ -156,6 +156,30 @@ export function foundationSceneDiagnostics(scene) {
         }
       });
     }
+    // O-065 (CMP-E10) -- horizontal clearance: two signs on the same pole whose
+    // plan x-extents (offset +/- width/2) AND vertical bands (mount_height ..
+    // +height) overlap physically collide. Skips unresolved dims (their own
+    // findings already fire).
+    const signsArr = pole.signs || [];
+    for (let a = 0; a < signsArr.length; a++) {
+      const A = signsArr[a];
+      const ax = Number(A?.horizontal_offset_inches) || 0, aw = Number(A?.width_inches);
+      const amh = Number(A?.mount_height_inches), ash = Number(A?.height_inches);
+      if (!Number.isFinite(aw) || aw <= 0 || !Number.isFinite(amh) || !Number.isFinite(ash)) continue;
+      for (let b = a + 1; b < signsArr.length; b++) {
+        const B = signsArr[b];
+        const bx = Number(B?.horizontal_offset_inches) || 0, bw = Number(B?.width_inches);
+        const bmh = Number(B?.mount_height_inches), bsh = Number(B?.height_inches);
+        if (!Number.isFinite(bw) || bw <= 0 || !Number.isFinite(bmh) || !Number.isFinite(bsh)) continue;
+        const xOverlap = (ax - aw / 2) < (bx + bw / 2) && (bx - bw / 2) < (ax + aw / 2);
+        const yOverlap = amh < bmh + bsh && bmh < amh + ash;
+        if (xOverlap && yOverlap) {
+          push("warning", "sign-horizontal-overlap",
+            `Pole ${i + 1} signs ${a + 1} and ${b + 1} overlap in plan + elevation -- check horizontal offset or mount height.`,
+            [poleId]);
+        }
+      }
+    }
   });
 
   // -- caps + cabinets: mount references must resolve -------------------
