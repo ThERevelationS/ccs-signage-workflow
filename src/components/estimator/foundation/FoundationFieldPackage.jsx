@@ -65,6 +65,13 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             {revision ? ` - saved revision ${revision}` : " - unsaved working copy"}
             {" - generated "}{new Date().toLocaleString()}
           </p>
+          {/* O-100 (CMP-H09) -- multi-revision history header: the saved
+              revision trail the O-099 pair-compare enumerates. */}
+          {Array.isArray(project?.revision_history) && project.revision_history.length > 0 && (
+            <p className="text-[9px] text-gray-400">
+              Prior revisions: {project.revision_history.slice(-5).map(r => r.updated_date).join(", ")}
+            </p>
+          )}
         </div>
         <button
           type="button"
