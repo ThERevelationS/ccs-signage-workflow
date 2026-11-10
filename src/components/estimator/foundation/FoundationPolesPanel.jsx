@@ -184,6 +184,24 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   >
                     Center on foundation
                   </Button>
+                  {/* O-058 (CMP-E03) -- edge/cover readout: the pole's nearest
+                      distance to the mounted foundation's edge (in inches).
+                      Read-only; absent when unmounted or placement unresolved. */}
+                  {(() => {
+                    const it = pole.foundation_component_id
+                      ? items.find((x) => x.component_id === pole.foundation_component_id)
+                      : null;
+                    const pos = it && layoutPositionInches(it);
+                    const fp = it && foundationLayoutFootprint(it);
+                    const px = Number(pole.x_inches), pz = Number(pole.z_inches);
+                    if (!pos?.valid || !fp || !Number.isFinite(px) || !Number.isFinite(pz)) return null;
+                    const edge = Math.min(px - pos.x_inches, pos.x_inches + fp.width - px, pz - pos.z_inches, pos.z_inches + fp.depth - pz);
+                    return (
+                      <span className="block text-[10px] text-gray-500 mt-1" title="Pole distance to the mounted foundation's nearest edge">
+                        Edge cover: {edge >= 0 ? `${Math.round(edge)}"` : "outside footprint"}
+                      </span>
+                    );
+                  })()}
                 </label>
                 <FoundationDimensionInput
                   {...poleDimMeta("height_inches")}
