@@ -44,7 +44,18 @@ const sceneSummary = (project) => {
   return `${items.length} foundations (${dims || "none"}) and ${poles.length} poles currently in the design`;
 };
 
-export default function FoundationAiIntake({ project, onApply, disabled }) {
+const catalogNames = (catalog) => {
+  const names = [];
+  for (const rows of Object.values(catalog || {})) {
+    for (const r of rows || []) {
+      const n = r?.material_name || r?.name || r?.service_name;
+      if (n && !names.includes(n)) names.push(n);
+    }
+  }
+  return names.slice(0, 24);
+};
+
+export default function FoundationAiIntake({ project, catalog, onApply, disabled }) {
   const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
@@ -64,11 +75,14 @@ export default function FoundationAiIntake({ project, onApply, disabled }) {
       const prior = revision && proposal ? `Current draft: ${JSON.stringify({ items: proposal.items, poles: proposal.poles })}. Apply this revision, keep unmentioned rows: ${t}` : `Description: ${t}`;
       // O-084 -- the current scene feeds the parse so the LLM can flag where
       // the description contradicts the design ("says 2 poles but 3 exist").
+      // O-085 -- the real catalog feeds the parse so any assembly proposal
+      // references actual stock names, never invented materials.
+      const stock = catalogNames(catalog).join(", ") || "none loaded";
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). ${prior}`,
+        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. ${prior}`,
         response_json_schema: {
           type: "object",
-          properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" } },
+          properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" } },
         },
       });
       const parsed = typeof res === "string" ? JSON.parse(res) : res;
@@ -83,6 +97,7 @@ export default function FoundationAiIntake({ project, onApply, disabled }) {
         })),
         notes: typeof parsed.notes === "string" ? parsed.notes : "",
         contradictions: typeof parsed.contradictions === "string" ? parsed.contradictions : "",
+        suggestions: typeof parsed.suggestions === "string" ? parsed.suggestions : "",
       });
     } catch (e) {
       setError(e?.message || "The description could not be parsed.");
@@ -164,6 +179,11 @@ export default function FoundationAiIntake({ project, onApply, disabled }) {
           {proposal.contradictions && (
             <p className="mt-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-sm px-1.5 py-0.5">
               Contradiction: {proposal.contradictions}
+            </p>
+          )}
+          {proposal.suggestions && (
+            <p className="mt-1 text-[10px] text-sky-800 bg-sky-50 border border-sky-200 rounded-sm px-1.5 py-0.5">
+              Suggested assembly: {proposal.suggestions}
             </p>
           )}
           {/* O-086 -- apply preview: what lands + what drops, before the
