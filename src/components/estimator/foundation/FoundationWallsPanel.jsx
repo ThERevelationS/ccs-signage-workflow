@@ -231,6 +231,43 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
       {showEditor && (
         <WallShapeEditor shape={wall.shape} onChange={(shape) => set({ shape })} />
       )}
+      {/* O-045 (CMP-D02) -- wall openings: each row deducts its area from the
+          masonry quantities in calcWallCosts. width/height must be finite
+          positive; a malformed row holds the whole deduction (never partial). */}
+      <div className="mt-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold text-gray-600">Openings ({(wall.openings || []).length})</span>
+          <button
+            type="button"
+            onClick={() => set({ openings: [...(wall.openings || []), { id: `op_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, width_inches: "", height_inches: "" }] })}
+            className="h-5 px-1.5 rounded-sm border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50"
+          >+ Opening</button>
+        </div>
+        {(wall.openings || []).map((o, oi) => (
+          <div key={o.id || oi} className="flex items-center gap-1.5 mt-1">
+            <input
+              type="number" min="0" step="0.25" placeholder="W in"
+              value={o.width_inches ?? ""}
+              onChange={(e) => set({ openings: (wall.openings || []).map((row, j) => j === oi ? { ...row, width_inches: e.target.value === "" ? undefined : Number(e.target.value) } : row) })}
+              className="w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+              aria-label={`Wall opening ${oi + 1} width (inches)`}
+            />
+            <input
+              type="number" min="0" step="0.25" placeholder="H in"
+              value={o.height_inches ?? ""}
+              onChange={(e) => set({ openings: (wall.openings || []).map((row, j) => j === oi ? { ...row, height_inches: e.target.value === "" ? undefined : Number(e.target.value) } : row) })}
+              className="w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+              aria-label={`Wall opening ${oi + 1} height (inches)`}
+            />
+            <button
+              type="button"
+              onClick={() => set({ openings: (wall.openings || []).filter((_, j) => j !== oi) })}
+              className="h-7 px-1.5 rounded-sm border border-gray-300 text-[10px] text-gray-500 hover:bg-gray-50"
+              aria-label={`Remove opening ${oi + 1}`}
+            >x</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
