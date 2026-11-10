@@ -10,7 +10,7 @@ import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundati
 import { groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { staffEntities } from "@/components/staff/staffEntities";
 

@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { addDays, format, startOfDay } from "date-fns";
 import { Loader2, Link as LinkIcon, Search, RefreshCw, CalendarClock, AlertTriangle, CheckCircle2, ChevronDown, StickyNote, ListTodo } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";

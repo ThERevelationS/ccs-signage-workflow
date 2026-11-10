@@ -11,7 +11,7 @@ import MinimumsTab from "@/components/signMaintenance/MinimumsTab";
 import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
 import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
 import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createMaintenanceActionRateIfAbsent } from "@/components/signMaintenance/maintenanceActionRatePersistence";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";

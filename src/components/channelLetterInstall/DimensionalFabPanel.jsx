@@ -12,7 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/api/gatedEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   calcDimensionalUnitCost,
   materialCostPerSqin,

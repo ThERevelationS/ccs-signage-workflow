@@ -42,7 +42,7 @@ import { calcChannelProject } from "@/components/channelLetterInstall/channelLet
 import { buildSummaryText, downloadCSV } from "@/components/channelLetterInstall/installExport";
 import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";

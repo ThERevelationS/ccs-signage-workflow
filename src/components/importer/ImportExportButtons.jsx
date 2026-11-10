@@ -21,7 +21,7 @@ import { useRef, useState } from "react";
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, Library, ListPlus, Copy, FileText, DatabaseBackup } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadAllCustomers } from "@/components/estimator/customerSync";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { buildCustomerQuoteRows } from "@/components/estimator/customerQuote";

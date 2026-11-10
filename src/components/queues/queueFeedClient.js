@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { getSessionToken } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { fetchAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSavedQueueViews } from "./savedViewsPersistence";

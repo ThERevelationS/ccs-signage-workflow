@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { liquidPaintRatePerSqft } from "@/components/estimator/paint/paintCalc";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
 import { PAINTING_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 

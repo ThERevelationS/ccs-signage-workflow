@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Trash2, Plus, Edit, Package, Building2, Layers, Wrench, Square } from 'lucide-react';
 import EquipmentInventoryTab from '@/components/foundation/EquipmentInventoryTab';
 import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
-import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { loadAllEntityRows } from '@/lib/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
 import { staffEntities } from "@/components/staff/staffEntities";

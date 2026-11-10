@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { VinylWorkflowTemplate } from "@/entities/all";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 export default function VinylWorkflowTemplatesDialog({
   open, onClose, mode = "apply", currentWorkflow, onApply,

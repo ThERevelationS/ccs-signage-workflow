@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
@@ -36,7 +36,7 @@ import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffec
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
 import { staffEntities, loadEntitiesBatch } from "@/components/staff/staffEntities";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
-import { primeEntityRowsCache } from "@/components/estimator/loadAllEntityRows";
+import { primeEntityRowsCache } from "@/lib/loadAllEntityRows";
 
 const primeAndReturn = (entity, query, sort, rows) => { primeEntityRowsCache(entity, query, sort, rows); return rows; };
 

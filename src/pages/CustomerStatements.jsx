@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Customer } from "@/api/gatedEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadQuoteDefaults } from "@/components/estimator/quoteDefaults";
 import { buildStatement, paymentsFromArCsv } from "@/components/statements/statementModel";
 import StatementView from "@/components/statements/StatementView";

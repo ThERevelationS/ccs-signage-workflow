@@ -11,7 +11,7 @@ import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadshee
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
 import { resolveRestoredSalesFilterModes } from "@/components/sales/salesFilterPreferenceRestore.mjs";

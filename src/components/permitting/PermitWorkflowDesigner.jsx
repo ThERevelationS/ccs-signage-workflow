@@ -8,7 +8,7 @@ import { Loader2, Sparkles, X, AlertTriangle, CheckCircle, FileText, MapPin, Che
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import WorkflowCitationList from "./WorkflowCitationList";

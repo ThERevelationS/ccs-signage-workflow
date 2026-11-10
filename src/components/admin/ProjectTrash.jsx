@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { restoreWorkOrderFromLoadedTrashSnapshot } from "@/components/workflow/workOrderPersistence";
 import {
   assertSystemResetCatalogStable,

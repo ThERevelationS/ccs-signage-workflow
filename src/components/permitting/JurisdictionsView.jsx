@@ -14,7 +14,7 @@ import {
   jurisdictionIdentityKey,
   saveJurisdictionFromLoadedSnapshot,
 } from "@/components/permitting/jurisdictionPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";

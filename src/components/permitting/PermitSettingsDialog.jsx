@@ -23,7 +23,7 @@ import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnc
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
 import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
 import { copyCatalogOfficeToLocality, resolveCatalogOfficeProvenance } from "./localityOfficeCatalogBridge";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const PermitLocality = base44.entities.PermitLocality;

@@ -11,7 +11,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { VinylInventory, User } from "@/api/gatedEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

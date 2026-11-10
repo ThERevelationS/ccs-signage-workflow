@@ -7,7 +7,7 @@ import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel"
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneAvailability } from "@/components/estimator/brick/brickPricingAvailability";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
 import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";

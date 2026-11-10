@@ -15,7 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const UserPTOBalance = staffEntities.UserPTOBalance;

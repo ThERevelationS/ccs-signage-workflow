@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Upload, History, RefreshCw, ShieldAlert } from "lucide-react";
 import ImportWizard from "@/components/imports/ImportWizard";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { EmptyState, PageHeader, StatusChip } from "@/components/kit";
 
 const fmtDate = (v) => {

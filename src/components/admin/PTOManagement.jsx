@@ -50,7 +50,7 @@ import {
   deletePTOPolicyIfUnused,
   updatePTOPolicyIfUnchanged,
 } from "@/components/timeclock/ptoPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";

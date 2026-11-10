@@ -25,7 +25,7 @@ import { Plus, Trash2, Edit, Users, Mail, X } from "lucide-react";
 import { ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfUnchanged } from "@/components/admin/emailGroupPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 
 const EmailGroup = base44.entities.EmailGroup;

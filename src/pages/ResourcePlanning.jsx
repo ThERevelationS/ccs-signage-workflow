@@ -28,7 +28,7 @@ import {
   Settings,
   Save
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";

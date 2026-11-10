@@ -1,6 +1,6 @@
 import { staffEntities } from "@/components/staff/staffEntities";
 import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { createSavedViewStore } from "./savedViewsModel";
 
 // SavedQueueView persistence — every op routes through the session-

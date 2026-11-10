@@ -16,7 +16,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { AllInOneEstimate, GlobalSettings, OpportunityActivity } from "@/api/gatedEntities";

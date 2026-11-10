@@ -19,7 +19,7 @@ import {
   Calendar as CalendarIcon, Loader2,
   Link as LinkIcon
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   createWorkOrderArrayItemLocator,
   findOptionalWorkOrderArrayItemIndex,

@@ -1,5 +1,5 @@
 import { staffEntities } from "@/components/staff/staffEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 // Persistence for the pricing-admin entities. All three are backend-only under
 // RLS, so — exactly like the CRM/activity layer — reads route through the

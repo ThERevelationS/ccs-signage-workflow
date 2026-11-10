@@ -1,5 +1,5 @@
 import { replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);

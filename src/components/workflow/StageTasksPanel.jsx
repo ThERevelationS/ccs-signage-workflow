@@ -3,7 +3,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const GeneralTask = staffEntities.GeneralTask;

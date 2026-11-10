@@ -11,7 +11,7 @@ import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRe
 import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
 import PermittingRulesList from "@/components/admin/PermittingRulesList";
 import CoverageMap from "@/components/permitting/CoverageMap";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function AdminPermittingSettings() {

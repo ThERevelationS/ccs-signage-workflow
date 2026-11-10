@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, ChevronRight, Save, ClipboardList, Loader2 } from "lucide-react";
 import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 

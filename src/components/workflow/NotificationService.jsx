@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { getSessionToken } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { emailBodyToPlainText } from "@/components/comms/sendStaffEmail";
 import { appParams } from "@/lib/app-params";

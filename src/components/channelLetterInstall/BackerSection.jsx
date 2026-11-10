@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Layers, X, AlertCircle } from "lucide-react";
 import { ChannelLetterInstallInventory } from "@/api/gatedEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import BackerFabPanel from "./BackerFabPanel";
 import { channelDraftValue } from "./channelLetterPricingAvailability";
 

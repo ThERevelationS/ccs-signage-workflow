@@ -7,7 +7,7 @@ import EstimateCard from "@/components/estimator/EstimateCard";
 import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
 import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";

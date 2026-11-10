@@ -4,7 +4,7 @@
 // wires the store to staffEntities.SavedQueueView; tests inject a fake
 // entity + a Map-backed storage.
 import { DEFAULT_QUEUE_FILTERS, PAGE_SIZES } from "./productQueueModel";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   ensureIdempotentEntityCreate,
   newCreationRequestKey,

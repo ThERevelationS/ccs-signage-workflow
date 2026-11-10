@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { downloadCsv } from "@/components/shared/exportCsv";
 import { loadGlLookup } from "@/components/shared/loadGlLookup";

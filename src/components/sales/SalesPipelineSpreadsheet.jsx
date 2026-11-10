@@ -51,7 +51,7 @@ import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDia
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
 import { useImportProgress } from "@/components/shared/ImportProgressContext";
-import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows, withRateLimitRetry } from "@/lib/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";

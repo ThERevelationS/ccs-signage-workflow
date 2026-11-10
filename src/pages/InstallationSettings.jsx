@@ -11,7 +11,7 @@ import RacewayTimesCard from "@/components/channelLetterInstall/RacewayTimesCard
 import { HEIGHT_BUCKETS, ENV_KEYS, qualifiedKey, qualifiedNotesKey } from "@/components/channelLetterInstall/installSizeRates";
 import { WALL_MATERIALS } from "@/components/channelLetterInstall/wallMaterials";
 import { createSettingRowIfAbsent, preflightSettingsRows, saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 const SIZE_DEFS = [
   { key: "extra_small", label: "XS", range: '2"–8"' },

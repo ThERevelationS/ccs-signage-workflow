@@ -4,7 +4,7 @@ import { Bell } from "lucide-react";
 import StatCards from "@/components/estimator/home/StatCards";
 import FadeIn from "@/components/motion/FadeIn";
 import RecentActivity from "@/components/estimator/home/RecentActivity";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function SalesHome() {

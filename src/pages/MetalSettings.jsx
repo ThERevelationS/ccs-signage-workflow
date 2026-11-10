@@ -5,7 +5,7 @@ import { ArrowLeft, Hammer, RotateCcw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
 import { METAL_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 

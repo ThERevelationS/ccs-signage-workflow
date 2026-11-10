@@ -49,7 +49,7 @@ import {
   remainingTimeClockSessionMs,
   classifyTimeClockLoginStatus,
 } from "@/components/timeclock/timeClockSessionSecurity";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const TimeEntry = staffEntities.TimeEntry;

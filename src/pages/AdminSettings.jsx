@@ -112,7 +112,7 @@ import {
   deleteAutomationRuleIfUnchanged,
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
 import { createFeatureReportWithRecovery } from "@/components/reports/featureReportPersistence";

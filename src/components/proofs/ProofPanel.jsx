@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { FileCheck2, ExternalLink, History, Loader2, Upload } from "lucide-react";
 import { UploadFile } from "@/integrations/Core";
 import { transitionProductAndBuilderStatus } from "@/components/estimator/workOrderConversion";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";

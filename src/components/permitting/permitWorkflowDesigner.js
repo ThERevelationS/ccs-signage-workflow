@@ -15,7 +15,7 @@ import { base44 } from "@/api/base44Client";
 import { captureElectricalOfficeResponses } from "./electricalOfficeResponseHandoff.mjs";
 import { captureWorkflowSources, WORKFLOW_SOURCE_FIELDS } from "./workflowSourceEvidence.mjs";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 
 const ELECTRICAL_RESEARCH_ROLES = [
   { role: "electrical_permit", label: "Permit issuance" },

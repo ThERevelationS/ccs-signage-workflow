@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, GripVertical } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { loadAllEntityRows } from '@/lib/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
 import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';

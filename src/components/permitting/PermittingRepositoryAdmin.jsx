@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 import { staffEntities } from "@/components/staff/staffEntities";
 

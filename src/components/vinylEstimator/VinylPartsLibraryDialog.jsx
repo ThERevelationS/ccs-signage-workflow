@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { VinylPartTemplate } from "@/entities/all";
 import { BookmarkPlus, Plus, Trash2, Search } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
   const [templates, setTemplates] = useState([]);

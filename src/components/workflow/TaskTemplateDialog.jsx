@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Save, Edit, Check, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createTaskTemplateIfAbsent, deleteTaskTemplateIfUnchanged, updateTaskTemplateIfUnchanged } from "@/components/workflow/taskTemplatePersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const TaskTemplate = staffEntities.TaskTemplate;

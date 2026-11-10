@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Calendar
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";

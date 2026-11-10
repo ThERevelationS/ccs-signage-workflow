@@ -12,7 +12,7 @@ import {
   List, Copy, GripVertical, Check, AlertTriangle
 } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   createChecklistSubItemIfAbsent,
   deleteChecklistSubItemIfUnchanged,

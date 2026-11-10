@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { getSmartsheetColumns } from "@/components/admin/smartsheetSyncPersistence";
 import { CUSTOM_ASSIGNEE_SETTING_KEY, reviewedCustomAssigneeNames, resolveSmartsheetTaskAssignee } from "@/components/admin/smartsheetTaskAssigneeModel";
 import { validateCustomAssigneeName } from "@/components/sales/customAssigneeName";

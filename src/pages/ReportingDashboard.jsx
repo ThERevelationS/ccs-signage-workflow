@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 // due_date is stored date-only ("YYYY-MM-DD"); a bare new Date(str) parses it

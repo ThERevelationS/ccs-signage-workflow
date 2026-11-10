@@ -49,7 +49,7 @@ import { calcProject, money, captureConcreteDeliverySnapshot } from "@/component
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { normalizeFoundationInventoryRows } from "@/components/masterInventory/inventoryNormalization";
 import { recordBuilderSave, foundationRecordSavedTotal } from "@/components/estimator/builder/builderService";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { updateBuilderSourceProject, sourcePatchMatches } from "@/components/estimator/builder/sourceProjectPersistence";
 import { loadFoundationBuilderRecovery, verifyFoundationRecoverySource } from "@/components/estimator/foundation/foundationBuilderRecovery";
 import { createFoundationSaveSession } from "@/components/estimator/foundation/foundationSaveSession";

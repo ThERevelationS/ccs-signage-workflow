@@ -7,7 +7,7 @@
 // missing, we fall back to DEFAULT_ROLE_RATE so the dropdown still works.
 
 import { base44 } from "@/api/base44Client";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 // Full, non-abbreviated role names. NOTE: no "Installer".

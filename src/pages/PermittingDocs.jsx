@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from "@/components/permitting/SourceTextEvidenceBrowser";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import {
   BookOpen, ChevronDown, ChevronUp, ShieldCheck, FileSearch, RefreshCw,
   AlertTriangle, MapPin, Search, Sparkles, ClipboardCheck, BarChart3,

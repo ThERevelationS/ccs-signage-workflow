@@ -17,7 +17,7 @@ import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteS
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
 import { deleteInventoryRecordIfUnchanged, findInventoryPartReferences } from "@/components/masterInventory/inventoryPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { staffEntities } from "@/components/staff/staffEntities";
 

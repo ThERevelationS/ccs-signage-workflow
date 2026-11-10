@@ -18,7 +18,7 @@
 
 import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
+import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 
 // ── Deterministic hash (djb2 — synchronous, no crypto needed) ──
 

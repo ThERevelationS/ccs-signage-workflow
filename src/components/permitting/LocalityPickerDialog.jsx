@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Search, Loader2, MapPin, AlertTriangle, CheckCircle2, Zap, ZapOff, X, Save , Mic} from "lucide-react";
 import GoogleMapView from "./GoogleMapView";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
 import {
   findRepositoryJurisdictionMatches,

@@ -14,7 +14,7 @@ import {
   Plus,
   SkipForward,
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createImportedInventoryRowSafely, importedPayloadMatches } from "./inventoryImportPersistence";
 import {

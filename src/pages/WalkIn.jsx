@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Loader2, Store } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { EmptyState, PageHeader } from "@/components/kit";
 import WalkInSale from "@/components/walkin/WalkInSale";
 

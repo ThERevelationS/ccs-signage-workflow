@@ -1,5 +1,5 @@
 import { staffEntities } from "@/components/staff/staffEntities";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { buildGlLookup } from "./glExport";
 
 // One catalog fetch → name → GL-code map, shared by every GL-coded export

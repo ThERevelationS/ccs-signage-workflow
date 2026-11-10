@@ -11,7 +11,7 @@ import {
   Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Loader2,
   ArrowLeft, Download, Lock, Play,
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { downloadCsv } from "@/components/shared/exportCsv";

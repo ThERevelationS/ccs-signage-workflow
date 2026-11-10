@@ -1,6 +1,6 @@
 import { MaintenanceInventory } from "@/api/gatedEntities";
 import { loadMasterPartCatalog } from "@/components/estimator/parts/partCatalog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
