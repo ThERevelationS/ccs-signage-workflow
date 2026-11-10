@@ -56,10 +56,10 @@ export function foundationItemGeometryIssues(item, index = 0) {
   return foundationGeometryValidation(item, index).issues;
 }
 
-// â”€â”€ O-093 (CMP-H02) input-layer schema â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  -  -  -  -  -  -  O-093 (CMP-H02) input-layer schema  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
 // Plain-language labels, contextual help, and suggested-format placeholders for
 // every linear-dimension entry surface in the foundation module. Stored values
-// stay canonical inches â€” `placeholder` is DISPLAY text only; this map never
+// stay canonical inches  -  -  -  `placeholder` is DISPLAY text only; this map never
 // mints stored defaults (explicit-null discipline unchanged: add-row factories
 // keep their existing authored init values, blank fields stay blank).
 // `ftIn: true` fields accept feet/inches text via foundationDimensionDraftValue
@@ -69,24 +69,24 @@ export function foundationItemGeometryIssues(item, index = 0) {
 // Sections keyed by surface so same-named fields (length_inches on a footing
 // vs a wall cap) never collide.
 export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
-  // Foundation item card (spread footing / pillar) â€” consumed by the card-label
+  // Foundation item card (spread footing / pillar)  -  -  -  consumed by the card-label
   // remainder; recorded here so card + panels share one label source.
   foundation: Object.freeze({
     length_inches: Object.freeze({
       label: "Length (in)",
-      help: "Footing length â€” the long side of a rectangular spread footing.",
+      help: "Footing length  -  -  -  the long side of a rectangular spread footing.",
       placeholder: "4' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     width_inches: Object.freeze({
       label: "Width (in)",
-      help: "Footing width â€” the short side of a rectangular spread footing.",
+      help: "Footing width  -  -  -  the short side of a rectangular spread footing.",
       placeholder: "4' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     depth_inches: Object.freeze({
       label: "Depth (in)",
-      help: "Footing or pier depth below grade â€” must reach below the frost line for your area.",
+      help: "Footing or pier depth below grade  -  -  -  must reach below the frost line for your area.",
       placeholder: "3' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
@@ -113,24 +113,24 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
     }),
     embedment_inches: Object.freeze({
       label: "Embedment below grade (in)",
-      help: "Pole length buried in the footing â€” must satisfy frost depth and the pole supplier's embedment guidance.",
+      help: "Pole length buried in the footing  -  -  -  must satisfy frost depth and the pole supplier's embedment guidance.",
       placeholder: "3' 6\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     base_offset_inches: Object.freeze({
       label: "Base offset above grade (in)",
-      help: "Lifts the pole bottom above grade for wall or pier mounts â€” the gap still counts toward required stock length.",
+      help: "Lifts the pole bottom above grade for wall or pier mounts  -  -  -  the gap still counts toward required stock length.",
       placeholder: "0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     total_length_inches: Object.freeze({
       label: "Total stock length (in)",
-      help: "Billed pole length when a full stick is purchased â€” leave blank to price height above grade plus embedment.",
+      help: "Billed pole length when a full stick is purchased  -  -  -  leave blank to price height above grade plus embedment.",
       placeholder: "20' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
   }),
-  // Masonry walls (FoundationWallsPanel) â€” camelCase wall record keys.
+  // Masonry walls (FoundationWallsPanel)  -  -  -  camelCase wall record keys.
   wall: Object.freeze({
     heightInches: Object.freeze({
       label: "Wall height (in)",
@@ -140,7 +140,7 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
     }),
     mortarGapInches: Object.freeze({
       label: "Mortar joint (in)",
-      help: "Mortar thickness between masonry units â€” 3/8\" is typical.",
+      help: "Mortar thickness between masonry units  -  -  -  3/8\" is typical.",
       placeholder: "3/8\"",
       unit: "inches", ftIn: true, signed: false,
     }),
@@ -152,7 +152,7 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
     }),
     internalWallHeightInches: Object.freeze({
       label: "Fill wall height (in)",
-      help: "Internal fill wall height â€” blank follows the outer wall height.",
+      help: "Internal fill wall height  -  -  -  blank follows the outer wall height.",
       placeholder: "2' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
@@ -163,12 +163,12 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       unit: "inches", ftIn: true, signed: false,
     }),
   }),
-  // Wall caps (FoundationWallCapsPanel) â€” length_inches is the cap cut, not a
+  // Wall caps (FoundationWallCapsPanel)  -  -  -  length_inches is the cap cut, not a
   // footing length; keep it in its own section.
   wallCap: Object.freeze({
     length_inches: Object.freeze({
       label: "Cut length (in)",
-      help: "Cap stock cut for this piece â€” the full stock price is charged per cut piece.",
+      help: "Cap stock cut for this piece  -  -  -  the full stock price is charged per cut piece.",
       placeholder: "4' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
@@ -228,19 +228,19 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
   cabinet: Object.freeze({
     width_inches: Object.freeze({
       label: "Width (in)",
-      help: "Cabinet face width â€” horizontal across the sign face.",
+      help: "Cabinet face width  -  -  -  horizontal across the sign face.",
       placeholder: "4' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     height_inches: Object.freeze({
       label: "Height (in)",
-      help: "Cabinet face height â€” vertical on the sign face.",
+      help: "Cabinet face height  -  -  -  vertical on the sign face.",
       placeholder: "2' 0\"",
       unit: "inches", ftIn: true, signed: false,
     }),
     depth_inches: Object.freeze({
       label: "Depth (in)",
-      help: "Cabinet depth front-to-back â€” affects wind load and mounting.",
+      help: "Cabinet depth front-to-back  -  -  -  affects wind load and mounting.",
       placeholder: "8\"",
       unit: "inches", ftIn: true, signed: false,
     }),
@@ -251,7 +251,7 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       unit: "inches", ftIn: true, signed: false,
     }),
   }),
-  // Rectangle outline entry (WallShapeEditor) â€” local draft, applied on click.
+  // Rectangle outline entry (WallShapeEditor)  -  -  -  local draft, applied on click.
   wallOutline: Object.freeze({
     rect_length: Object.freeze({
       label: "Rectangle length (in)",
@@ -270,14 +270,14 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
   landscape: Object.freeze({
     cell_size_inches: Object.freeze({
       label: "Cell size (in)",
-      help: "Edge length of one grid cell â€” 12\" makes each cell 1 sq ft.",
+      help: "Edge length of one grid cell  -  -  -  12\" makes each cell 1 sq ft.",
       placeholder: "12\"",
       unit: "inches", ftIn: true, signed: false,
     }),
   }),
 });
 
-// Field-metadata resolver â€” fail-closed: unknown section or field â†’ null, so
+// Field-metadata resolver  -  -  -  fail-closed: unknown section or field  -  -  -  null, so
 // callers never render a guessed label for an unmapped field.
 export const foundationDimensionFieldMeta = (section, field) => {
   const group = FOUNDATION_DIMENSION_FIELDS[section];
