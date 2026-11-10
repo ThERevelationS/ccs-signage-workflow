@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.25";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
+import { subscriptionsForUser } from "../../shared/alertSubscriptionsModel.ts";
 
 // One composed mount read: session identity + workspace preferences +
 // notification unread count. The page's global providers used to each POST
@@ -17,9 +18,10 @@ Deno.serve(async (req) => {
     const me = String(user.email).toLowerCase();
 
     const entities = base44.asServiceRole.entities;
-    const [prefRows, notifRows] = await Promise.all([
+    const [prefRows, notifRows, notifPrefRows] = await Promise.all([
       entities.UserWorkspacePreferences.filter({ user_email: me }).catch(() => []),
       entities.Notification.filter({ recipient_email: me }, "-created_date", 200).catch(() => []),
+      entities.NotificationPreference.filter({ user_email: me }, "-created_date", 3).catch(() => []),
     ]);
 
     const nowMs = Date.now();
@@ -31,12 +33,29 @@ Deno.serve(async (req) => {
     }).length;
 
     const row = Array.isArray(prefRows) ? prefRows[0] : null;
+    // Mirrors notificationAction get_preferences' normalized shape so the
+    // client can prime that read slot byte-for-byte.
+    const np = Array.isArray(notifPrefRows) ? notifPrefRows[0] : null;
+    const listClean = (v: any) => (Array.isArray(v) ? v.map((x: any) => String(x ?? "").trim()).filter(Boolean) : []);
+    const notification_prefs = np ? {
+      hidden_sections: listClean(np.hidden_sections),
+      section_snoozed_until: np.section_snoozed_until && typeof np.section_snoozed_until === "object" ? np.section_snoozed_until : {},
+      dismissed_feed_items: Array.isArray(np.dismissed_feed_items) ? np.dismissed_feed_items : [],
+      sound_on: np.sound_on !== false,
+      digest_opt_in: np.digest_opt_in === true,
+      last_digest_date: String(np.last_digest_date || ""),
+      subscriptions: subscriptionsForUser(np),
+    } : {
+      hidden_sections: [], section_snoozed_until: {}, dismissed_feed_items: [],
+      sound_on: true, digest_opt_in: false, last_digest_date: "", subscriptions: [],
+    };
     return Response.json({
       success: true,
       me: { email: me, name: String(user.full_name || "").trim(), role: String(user.role || "user") },
       prefs: row?.preferences ?? null,
       profiles: Array.isArray(row?.profiles) ? row.profiles : [],
       unread_count: unread,
+      notification_prefs,
     });
   } catch (e: any) {
     return Response.json({ success: false, error: String(e?.message || e) }, { status: 500 });
