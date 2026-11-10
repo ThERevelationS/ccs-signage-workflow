@@ -603,6 +603,11 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
       // legitimately have no hardware); present must be finite nonnegative —
       // a malformed component holds the whole sign's money, never a partial sum.
       const signCosts = signRows.map((s) => {
+        // O-063 (CMP-E08) -- a `display_only` linked sign (from an existing
+        // estimator sign product) is excluded from fabrication/installation
+        // charges -- explicit ownership prevents a double-charge; the row
+        // still renders in plan/elevation/3D.
+        if (s?.display_only === true) return 0;
         const unit = Number(s?.unit_cost);
         if (!(Number.isFinite(unit) && unit >= 0)) return null;
         const parts = [s?.hardware_cost, s?.labor_cost, s?.paint_cost, s?.waste_cost];
