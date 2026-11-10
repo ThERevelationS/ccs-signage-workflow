@@ -14,6 +14,7 @@ const EMPTY_TOTALS = {};
 const EMPTY_INVENTORY = [];
 
 export default function FoundationBOM({
+  onSelectIssue,
   items = EMPTY_ITEMS,
   poles = EMPTY_POLES,
   walls = EMPTY_WALLS,
@@ -241,7 +242,21 @@ export default function FoundationBOM({
             .concat(cabinetRows.filter(p => p && p.available === false))
             .concat(landscapePricing && landscapePricing.available === false ? [landscapePricing] : [])
             .flatMap((p, k) =>
-            (p.issues || []).map((i, j) => <p key={`${k}-${j}`} className="text-[10px] text-amber-700">{i.message}</p>)
+            (p.issues || []).map((i, j) => (
+              <p key={`${k}-${j}`} className="text-[10px] text-amber-700">
+                {i.message}
+                {/* O-097 -- click-to-fix: the issue's componentId navigates to
+                    the problematic object in the scene. */}
+                {onSelectIssue && (i.componentId != null || i.index != null) && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectIssue(i)}
+                    className="ml-1 text-[9px] text-amber-800 underline hover:text-amber-900"
+                    aria-label={`Select ${i.kind || "item"} ${i.index != null ? i.index + 1 : ""}`}
+                  >(select)</button>
+                )}
+              </p>
+            ))
           )}
         </div>
       )}
