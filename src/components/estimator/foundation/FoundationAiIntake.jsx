@@ -132,9 +132,10 @@ export default function FoundationAiIntake({ onApply, disabled }) {
                   unknown (never invented), flagged amber, with the reason it
                   matters stated. "I don't know" is an honest answer. */}
               <p className="text-[9px] text-amber-700/80 mt-0.5">
-                {[it.quantity === "" && "qty", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean).join(" · ")
-                  ? `Unknown: ${[it.quantity === "" && "quantity", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean).join(", ")} -- needed for concrete volume and bearing.`
-                  : ""}
+                {(() => {
+                  const missing = [it.quantity === "" && "quantity", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean);
+                  return missing.length ? `Unknown: ${missing.join(", ")} -- needed for concrete volume and bearing.` : "";
+                })()}
               </p>
             </div>
           ))}
