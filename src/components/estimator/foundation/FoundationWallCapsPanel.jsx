@@ -452,6 +452,25 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           </div>
         ))
       )}
+      {/* O-053 (CMP-D10) -- offcut-reuse alternative: the leftover stock after
+          each cut, surfaced for the operator's reuse decision. Informational
+          only -- the priced contract stays full-stock per cut; the offcut is
+          never priced and never a silent zero. */}
+      {(() => {
+        const offcuts = (caps || []).map((c) => {
+          const inv = options.find((o) => o.id === c?.cap_inventory_id);
+          const stock = wallCapInputNumber(inv?.cap_stock_length_inches);
+          const cut = wallCapInputNumber(wallCapCutLengthValue(c));
+          return stock !== null && stock > 0 && cut !== null && cut > 0 && cut <= stock ? stock - cut : null;
+        }).filter((n) => n !== null && n > 0);
+        if (!offcuts.length) return null;
+        const total = offcuts.reduce((a, b) => a + b, 0);
+        return (
+          <p className="text-[11px] text-gray-500 mt-1">
+            Offcuts: {offcuts.length} piece{offcuts.length === 1 ? "" : "s"} totaling {Math.round(total)}&quot; reusable -- not billed (full-stock pricing already charged).
+          </p>
+        );
+      })()}
     </div>
   );
 }
