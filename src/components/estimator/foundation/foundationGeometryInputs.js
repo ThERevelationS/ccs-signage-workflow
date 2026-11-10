@@ -184,6 +184,45 @@ export const FOUNDATION_DIMENSION_FIELDS = Object.freeze({
       placeholder: "3\"",
       unit: "inches", ftIn: true, signed: false,
     }),
+    // O-050 (CMP-D07) -- cap profile / width / elevation / joints / slope /
+    // end-treatment metadata. Optional authored fields; blank = "not recorded",
+    // never a silent default on the cap's geometry or finish.
+    width_inches: Object.freeze({
+      label: "Cap width (in)",
+      help: "How wide the cap spans the wall top  -  0 is flush with the wall face.",
+      placeholder: "8\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    elevation_inches: Object.freeze({
+      label: "Cap elevation (in)",
+      help: "Height of the cap's top surface above the slab.",
+      placeholder: "24\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    joint_spacing_inches: Object.freeze({
+      label: "Joint spacing (in)",
+      help: "Distance between cap joints along the wall run.",
+      placeholder: "48\"",
+      unit: "inches", ftIn: true, signed: false,
+    }),
+    profile: Object.freeze({
+      label: "Cap profile",
+      help: "The cap's edge profile (flat, sloped, beveled, rounded).",
+      placeholder: "flat",
+      unit: "text", ftIn: false, signed: false,
+    }),
+    slope: Object.freeze({
+      label: "Cap slope",
+      help: "Whether the cap top sheds water (flat, single-slope, double-slope).",
+      placeholder: "flat",
+      unit: "text", ftIn: false, signed: false,
+    }),
+    end_treatment: Object.freeze({
+      label: "End treatment",
+      help: "How the cap terminates at wall ends (straight, mitered, returned).",
+      placeholder: "straight",
+      unit: "text", ftIn: false, signed: false,
+    }),
   }),
   // Pole-mounted signs (FoundationPolesPanel sign sub-list).
   sign: Object.freeze({
