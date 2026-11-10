@@ -157,8 +157,12 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
         if (segLen !== null && start > cursor) {
           pieces.push({ gap: start - cursor });
         }
+        // O-051 -- overlap-vs-gap differentiation: a cap starting before the
+        // previous piece ends is a miter-overlap (intentional joint), not an
+        // uncovered gap. Surface it distinctly on the cut list.
+        const overlap = cursor > start ? cursor - start : 0;
         if (cut !== null && cut > 0) {
-          pieces.push({ ci, start, end: start + cut, over: segLen !== null && start + cut > segLen });
+          pieces.push({ ci, start, end: start + cut, over: segLen !== null && start + cut > segLen, overlap });
           cursor = Math.max(cursor, start + cut);
         } else {
           pieces.push({ ci, start, end: null, uncut: true });
@@ -300,7 +304,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   {row.pieces.map((p, pi) => {
                     if (p.gap !== undefined) return <span key={pi} className="text-amber-700">gap {Math.round(p.gap)}″</span>;
                     if (p.uncut) return <span key={pi}>cap {p.ci + 1} @ {Math.round(p.start)}″ (no cut length)</span>;
-                    return <span key={pi} className={p.over ? "text-red-600 font-medium" : undefined}>cap {p.ci + 1} @ {Math.round(p.start)}″–{Math.round(p.end)}″{p.over ? " (overruns segment)" : ""}</span>;
+                    return <span key={pi} className={p.over ? "text-red-600 font-medium" : undefined}>cap {p.ci + 1} @ {Math.round(p.start)}″–{Math.round(p.end)}″{p.over ? " (overruns segment)" : ""}{p.overlap ? ` (miter overlap ${Math.round(p.overlap)}″)` : ""}</span>;
                   }).reduce((acc, el, i) => i === 0 ? [el] : [...acc, ", ", el], [])}
                 </span>
               </div>
