@@ -285,6 +285,12 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Rebar", db.rebar],
             ["Cover", db.cover],
             ["Durability", db.durability],
+            // O-112 (CMP-I11) -- masonry/cap/coping fields: authored masonry
+            // assumptions travel to the field alongside the material rows;
+            // blank = "not recorded".
+            ["Masonry", db.masonry],
+            ["Cap material", db.cap_material],
+            ["Coping", db.coping],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
