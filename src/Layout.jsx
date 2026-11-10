@@ -491,14 +491,15 @@ function LayoutContent({ children }) {
         dropEl.__ccsAnchors = null;
       }
     };
+    let pressedEl = null;
     const onPointerDown = (event) => {
       if (event.button === 2) return; // right-click opens context menus, not drags
       window.__ccsNavDropFolder = "";
       window.__ccsNavDropPage = "";
-      const dragEl = event.target.closest?.("[data-rfd-draggable-id]");
-      if (!dragEl) return;
-      const scope = dragEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
-      if (scope) freezeAll(scope, dragEl);
+      pressedEl = event.target.closest?.("[data-rfd-draggable-id]") || null;
+      if (!pressedEl) return;
+      const scope = pressedEl.closest("[data-top-navigation-links], .side-nav, [role='menu']");
+      if (scope) freezeAll(scope, pressedEl);
     };
     // On release during a nav drag, hit-test the pointer against the folder
     // pills' painted boxes BEFORE unfreezing (unfreeze restores pre-drag
@@ -511,6 +512,9 @@ function LayoutContent({ children }) {
       if (window.__ccsNavDragging) {
         let page = "";
         for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+          // The drag ghost always contains the release point — skip it or it
+          // shadows the real target (self-combine no-ops the drop).
+          if (el === pressedEl) continue;
           const id = el.getAttribute("data-rfd-draggable-id");
           const r = el.getBoundingClientRect();
           if (event.clientX < r.left || event.clientX > r.right ||
@@ -524,6 +528,7 @@ function LayoutContent({ children }) {
         }
         window.__ccsNavDropPage = page;
       }
+      pressedEl = null;
       unfreezeAll();
     };
     const onKeyDown = (event) => { if (event.key === "Escape") unfreezeAll(); };
@@ -577,6 +582,7 @@ function LayoutContent({ children }) {
     const dropFolder = window.__ccsNavDropFolder;
     window.__ccsNavDropFolder = "";
     if (dropFolder) {
+      window.__ccsNavDropPage = "";
       const url = pageUrlFromDraggable(draggableId);
       if (url) {
         const next = movePageToFolder(state, url, dropFolder);
