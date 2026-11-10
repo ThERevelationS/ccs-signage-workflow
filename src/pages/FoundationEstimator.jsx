@@ -23,6 +23,7 @@ import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDel
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationFieldPackage from "@/components/estimator/foundation/FoundationFieldPackage";
 import FoundationBulkMaterialPanel from "@/components/estimator/foundation/FoundationBulkMaterialPanel";
+import FoundationGuidedSteps from "@/components/estimator/foundation/FoundationGuidedSteps";
 import { diffFoundationProjects, summarizeFoundationDiff } from "@/components/estimator/foundation/foundationRevisionDiff";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
@@ -1579,7 +1580,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_560px] gap-4 items-start">
+        <FoundationGuidedSteps project={project} calc={calc} savedSourceProject={savedSourceProject} />
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_560px] gap-4 items-start mt-3">
           <div>
             <Tabs defaultValue="foundations">
               <TabsList className="flex flex-wrap h-auto bg-white border border-gray-200 p-1 mb-3 rounded-sm justify-start">
