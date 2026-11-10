@@ -483,6 +483,20 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                             aria-label={`Pole ${index + 1} sign ${si + 1} job link`}
                           />
                         </label>
+                        {/* O-059 (CMP-E04) -- multipole sign spanning: `spans`
+                            records which poles (comma-separated pole indexes)
+                            the sign spans -- a multipole sign's authored span
+                            vs the pole.signs[] per-pole mount. */}
+                        <label className="text-[10px] text-gray-500" title="The sign's span -- comma-separated pole indexes it spans (a multipole sign)">
+                          Spans
+                          <input
+                            type="text" placeholder="pole idx e.g. 1,3"
+                            value={s.spans ?? ""}
+                            onChange={(e) => patchSign({ spans: e.target.value === "" ? undefined : e.target.value })}
+                            className="ml-1 h-5 w-20 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} spans`}
+                          />
+                        </label>
                       )}
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
