@@ -497,6 +497,24 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                             aria-label={`Pole ${index + 1} sign ${si + 1} spans`}
                           />
                         </label>
+                        {/* O-059 (CMP-E04) -- foundation/wall-top mounting:
+                            `mount_type` records the mount kind (the default
+                            `pole` mount vs a `wall_top`/`foundation` mount --
+                            a sign mounted on a wall cap or directly on the
+                            foundation, not the pole). */}
+                        <label className="text-[10px] text-gray-500" title="The sign's mount kind -- pole (default) vs wall_top / foundation">
+                          Mount
+                          <select
+                            value={s.mount_type ?? "pole"}
+                            onChange={(e) => patchSign({ mount_type: e.target.value === "pole" ? undefined : e.target.value })}
+                            className="ml-1 h-5 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} mount type`}
+                          >
+                            <option value="pole">pole</option>
+                            <option value="wall_top">wall top</option>
+                            <option value="foundation">foundation</option>
+                          </select>
+                        </label>
                       )}
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
