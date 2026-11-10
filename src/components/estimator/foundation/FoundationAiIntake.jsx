@@ -116,11 +116,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       const stock = catalogNames(catalog).join(", ") || "none loaded";
       const res = await base44.integrations.Core.InvokeLLM({
         model: ESTIMATOR_AI_MODEL, // W-024 -- the pinned shared flagship
-        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. List up to 4 structured alternatives in "alternatives" ({label, cost_impact}) -- a different stock/assembly choice with a brief cost-impact note; empty array if none. List up to 6 grouped follow-up questions in "follow_ups" (topic + question) for missing facts the design still needs -- sign style/weight, mounting, site constraints, scope; empty array if fully described. ${prior}`,
+        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. List up to 4 structured alternatives in "alternatives" ({label, cost_impact, sensitivity}) -- a different stock/assembly choice with a brief cost-impact note and a sensitivity note (what uncertain input most changes its cost); empty array if none. List up to 6 grouped follow-up questions in "follow_ups" (topic + question) for missing facts the design still needs -- sign style/weight, mounting, site constraints, scope; empty array if fully described. ${prior}`,
         response_json_schema: {
           type: "object",
           properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" },
-            alternatives: { type: "array", items: { type: "object", properties: { label: { type: "string" }, cost_impact: { type: "string" } } } },
+            alternatives: { type: "array", items: { type: "object", properties: { label: { type: "string" }, cost_impact: { type: "string" }, sensitivity: { type: "string" } } } },
             follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } } },
         },
       });
@@ -149,7 +149,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         // up to 4 {label, cost_impact} rows alongside the free-text suggestion.
         alternatives: (Array.isArray(parsed.alternatives) ? parsed.alternatives : [])
           .filter(a => a && typeof a === "object" && typeof a.label === "string")
-          .slice(0, 4).map(a => ({ label: stripCertification(a.label), cost_impact: typeof a.cost_impact === "string" ? stripCertification(a.cost_impact) : "" })),
+          .slice(0, 4).map(a => ({ label: stripCertification(a.label), cost_impact: typeof a.cost_impact === "string" ? stripCertification(a.cost_impact) : "", sensitivity: typeof a.sensitivity === "string" ? stripCertification(a.sensitivity) : "" })),
         followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
           .filter(f => f && typeof f === "object" && typeof f.question === "string")
           .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
@@ -313,6 +313,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
               {proposal.alternatives.map((a, i) => (
                 <p key={i} className="text-[10px] text-sky-700 mt-0.5">
                   {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
+                  {a.sensitivity && <span className="text-sky-500 italic"> ({a.sensitivity})</span>}
                 </p>
               ))}
             </div>
