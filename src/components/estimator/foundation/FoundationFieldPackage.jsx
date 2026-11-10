@@ -10,7 +10,7 @@ import { wallCapCutLengthValue } from "./wallCapCalculator";
 // landscape materials, and any unresolved engineering flags. Everything is
 // labeled; nothing here re-derives pricing or invents missing values.
 
-const Th = ({ children }) => <th className="pr-3 py-0.5 text-left text-[10px] uppercase tracking-wide text-gray-400 font-medium">{children}</th>;
+const Th = ({ children }) => <th className="pr-3 py-0.5 text-left text-[10px] uppercase tracking-wide text-gray-500 font-medium">{children}</th>;
 const Td = ({ children, mono }) => <td className={`pr-3 py-0.5 text-[11px] text-gray-800 ${mono ? "tabular-nums" : ""}`}>{children}</td>;
 const dim = (v, unit = "in") => (Number.isFinite(Number(v)) && Number(v) !== 0 ? `${Number(v)}${unit === "in" ? '"' : ` ${unit}`}` : "-");
 const qty = (v, unit) => (Number.isFinite(Number(v)) && Number(v) > 0 ? `${v} ${unit}` : "-");
@@ -249,6 +249,33 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-1" dangerouslySetInnerHTML={{ __html: planSvg }} />
       </Section>
 
+      {/* O-118 (CMP-I17) -- design-basis summary: the project's authored
+          design-basis fields travel to the field/engineer handoff; blank =
+          "not recorded" (never an invented basis). */}
+      <Section title="Design basis">
+        {(() => {
+          const db = project?.design_basis || {};
+          const rows = [
+            ["Code edition", db.code_edition],
+            ["Jurisdiction", db.jurisdiction],
+            ["Basis source", db.basis_source],
+            ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
+            ["Notes", db.basis_notes],
+          ].filter(([, v]) => v != null && v !== "");
+          return rows.length === 0 ? (
+            <p className="text-[11px] text-gray-500">No design basis recorded.</p>
+          ) : (
+            <dl className="space-y-1 text-[11px]">
+              {rows.map(([label, value]) => (
+                <div key={label} className="flex gap-2">
+                  <dt className="w-28 shrink-0 font-medium text-gray-600">{label}</dt>
+                  <dd className="text-gray-800">{String(value)}</dd>
+                </div>
+              ))}
+            </dl>
+          );
+        })()}
+      </Section>
       <Section title={`Design notes (${diags.length})`}>
         {diags.length === 0 ? (
           <p className="text-[11px] text-gray-500">No unresolved scene flags.</p>
@@ -262,7 +289,7 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ))}
           </ul>
         )}
-        <p className="mt-2 text-[10px] text-gray-400">Preliminary estimating only - final engineering review required before fabrication or construction.</p>
+        <p className="mt-2 text-[10px] text-gray-500">Preliminary estimating only - final engineering review required before fabrication or construction.</p>
       </Section>
     </div>
   );
