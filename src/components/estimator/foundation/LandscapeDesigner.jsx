@@ -252,6 +252,19 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               aria-label="Backdrop opacity"
               title="Backdrop opacity"
             />
+            {/* O-072 (CMP-F05) -- explicit scale confirmation: the operator
+                acknowledges the backdrop's real-world coverage matches the
+                authored cell_size_inches; unchecked = unconfirmed (the
+                backdrop still renders, the flag records the confirmation). */}
+            <label className="flex items-center gap-1 cursor-pointer" title="Confirm the backdrop's real-world coverage matches the cell size">
+              <input
+                type="checkbox"
+                checked={landscape?.scale_confirmed === true}
+                onChange={(e) => onChange({ ...landscape, scale_confirmed: e.target.checked === true ? true : undefined })}
+                aria-label="Confirm backdrop scale"
+              />
+              <span className="text-[9px]">scale confirmed</span>
+            </label>
           </label>
           {/* O-071 (CMP-F04) -- selection tool: Select mode clicks a cell to
               select it (shows the material + a clear-cell action); paint/fill
