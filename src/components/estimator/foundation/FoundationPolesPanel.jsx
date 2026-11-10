@@ -412,6 +412,43 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
                         </select>
                       </label>
+                      {/* O-060 (CMP-E05) -- panel-shape/trim/body-color/envelope
+                          authored fields; blank = "not recorded". */}
+                      <label className="text-[10px] text-gray-500">
+                        Shape
+                        <select
+                          value={s.panel_shape ?? ""}
+                          onChange={(e) => patchSign({ panel_shape: e.target.value === "" ? undefined : e.target.value })}
+                          className="block w-16 h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} panel shape`}
+                        >
+                          <option value="">--</option>
+                          <option value="cabinet">Cabinet</option>
+                          <option value="panel">Panel</option>
+                          <option value="letters">Letters</option>
+                        </select>
+                      </label>
+                      <label className="text-[10px] text-gray-500">
+                        Trim
+                        <input type="text" value={s.trim_color ?? ""} placeholder="color"
+                          onChange={(e) => patchSign({ trim_color: e.target.value === "" ? undefined : e.target.value })}
+                          className="block w-14 h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} trim color`} />
+                      </label>
+                      <label className="text-[10px] text-gray-500">
+                        Body
+                        <input type="text" value={s.body_color ?? ""} placeholder="color"
+                          onChange={(e) => patchSign({ body_color: e.target.value === "" ? undefined : e.target.value })}
+                          className="block w-14 h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} body color`} />
+                      </label>
+                      <label className="text-[10px] text-gray-500">
+                        Envelope
+                        <input type="text" value={s.envelope ?? ""} placeholder="4'x2'x8&quot;"
+                          onChange={(e) => patchSign({ envelope: e.target.value === "" ? undefined : e.target.value })}
+                          className="block w-20 h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} envelope`} />
+                      </label>
                       <label className="text-[10px] text-gray-500">
                         Artwork
                         <input
