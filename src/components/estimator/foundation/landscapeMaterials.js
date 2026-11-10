@@ -265,12 +265,31 @@ export const landscapeSummary = (landscape) => {
     };
   });
   const bordersTotal = borderLines.length === 0 ? 0 : borderLines.every((l) => l.cost !== null) ? borderLines.reduce((s, l) => s + l.cost, 0) : null;
-  const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null
+  // O-068 (CMP-F01) -- named-bed entries: `landscape.beds[]` rows
+  // {material, sqft} bill an authored coverage (a bed polygon's area the
+  // operator records) vs cell paint -- a discrete bed entry, not a cell.
+  // A malformed row (unknown material, non-positive sqft) holds its line.
+  const bedLines = (Array.isArray(landscape?.beds) ? landscape.beds : []).map((b) => {
+    const mat = materialByKey(b?.material);
+    const sqft = Number(b?.sqft);
+    const validSqft = Number.isFinite(sqft) && sqft > 0;
+    const rate = mat ? landscapePriceNumber(mat.cost_per_sqft) : null;
+    return {
+      key: b?.material || "unknown",
+      label: mat?.label || (b?.material || "Bed"),
+      sqft: validSqft ? sqft : null,
+      cost_per_sqft: rate,
+      cost: validSqft && rate !== null ? sqft * rate : null,
+      invalid: !mat || !validSqft || rate === null,
+    };
+  });
+  const bedsTotal = bedLines.length === 0 ? 0 : bedLines.every((l) => l.cost !== null) ? bedLines.reduce((s, l) => s + l.cost, 0) : null;
+  const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null || bedsTotal === null
     ? null
-    : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal;
+    : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal + bedsTotal;
   return {
-    lines, object_lines: objectLines, border_lines: borderLines, total,
-    materials_total: materialsTotal, objects_total: objectsTotal, borders_total: bordersTotal,
+    lines, object_lines: objectLines, border_lines: borderLines, bed_lines: bedLines, total,
+    materials_total: materialsTotal, objects_total: objectsTotal, borders_total: bordersTotal, beds_total: bedsTotal,
     labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape),
   };
 };
