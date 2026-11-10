@@ -268,12 +268,16 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
     if (obj) {
       const s = cellIn * IN;
       let geo;
-      if (obj.key === "tree") geo = new THREE.ConeGeometry(s * 0.4, s * 1.4, 6);
-      else if (obj.key === "shrub") geo = new THREE.SphereGeometry(s * 0.35, 8, 6);
-      else if (obj.key === "light") geo = new THREE.CylinderGeometry(s * 0.1, s * 0.12, s * 1.0, 6);
-      else geo = new THREE.BoxGeometry(s * 0.55, s * 0.45, s * 0.55); // boulder
+      // O-068 -- each object carries an authored size (height_inches /
+      // radius_inches in landscapeMaterials), so the marker scale is
+      // object-typed, not a cell-size fraction.
+      const oh = (obj.height_inches || cellIn) * IN, orad = (obj.radius_inches || cellIn * 0.4) * IN;
+      if (obj.key === "tree") geo = new THREE.ConeGeometry(orad, oh, 6);
+      else if (obj.key === "shrub") geo = new THREE.SphereGeometry(orad, 8, 6);
+      else if (obj.key === "light") geo = new THREE.CylinderGeometry(orad, orad * 1.2, oh, 6);
+      else geo = new THREE.BoxGeometry(orad * 2, oh, orad * 2); // boulder
       const marker = new THREE.Mesh(geo, material);
-      marker.position.set(px, obj.key === "light" ? s * 0.5 : s * 0.35, pz);
+      marker.position.set(px, oh / 2, pz);
       group.add(marker);
       return;
     }
