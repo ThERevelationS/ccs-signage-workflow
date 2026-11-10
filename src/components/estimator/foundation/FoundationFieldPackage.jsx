@@ -2,7 +2,7 @@ import { money } from "./foundationCalc";
 import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
 import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
-import { buildFoundationPlanSvg } from "./foundationPlanExport";
+import { buildFoundationPlanSvg, buildFoundationElevationSvg } from "./foundationPlanExport";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -45,6 +45,7 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
   };
   const diags = foundationSceneDiagnostics(scene) || [];
   const planSvg = buildFoundationPlanSvg(scene, { width: 480, depth: 320 });
+  const elevSvg = buildFoundationElevationSvg(scene, { width: 480, height: 240 });
   const flags = [];
   if (pricingUnavailable) flags.push("Customer pricing is blocked - resolve highlighted inputs before production.");
   if (project?.engineering_approved === false) flags.push("Preliminary estimate - structural engineering review required before construction.");
@@ -282,6 +283,13 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
 
       <Section title="Plan view">
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-1" dangerouslySetInnerHTML={{ __html: planSvg }} />
+      </Section>
+
+      {/* O-100 (CMP-H09) -- elevation embed: the elevation SVG renders
+          alongside the plan -- the field doc's image embeds carry the
+          accepted revision's plan AND elevation, not just the plan. */}
+      <Section title="Elevation">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-1" dangerouslySetInnerHTML={{ __html: elevSvg }} />
       </Section>
 
       {/* O-118 (CMP-I17) -- design-basis summary: the project's authored
