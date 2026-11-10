@@ -83,9 +83,17 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     totalBricks = (totalLinearInches * wallHeightInches * unitW) / CUBIC_INCHES_PER_CUBIC_YARD;
   } else {
     const numCoursesRounded = Math.ceil(numCourses);
+    // O-047 (CMP-D04) -- bond/offset quantity effect: a `bond_fraction`
+    // (0..1, e.g. 0.5 = half-bond stagger) adds a partial brick at the
+    // wall's ends for every staggered course — the offset starts the course
+    // on a partial unit, not a full one (the bond stagger's quantity effect,
+    // not a silent no-op on the authored field).
+    const bond = Number.isFinite(Number(wall?.bond_fraction)) && Number(wall.bond_fraction) > 0 && Number(wall.bond_fraction) < 1
+      ? Number(wall.bond_fraction) : 0;
+    const staggeredBricks = bond > 0 && numCoursesRounded > 1 ? numCoursesRounded - 1 : 0;
     wallShape.segments.forEach(seg => {
       const bricksThisCourse = Math.ceil(seg.length / brickPitch);
-      totalBricks += bricksThisCourse * numCoursesRounded;
+      totalBricks += (bricksThisCourse * numCoursesRounded) + staggeredBricks;
     });
   }
   // O-045 -- openings deduct their equivalent quantity on either basis.
