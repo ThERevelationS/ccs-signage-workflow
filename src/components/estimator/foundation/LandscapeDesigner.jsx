@@ -109,7 +109,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
       <div className="flex items-center justify-between mb-2">
         <div>
           <h3 className="text-[13px] font-bold text-gray-900">Landscape Designer</h3>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-500">
             Draw landscaping features, paths and site boundaries. Each cell is 1 sq ft.
           </p>
         </div>
@@ -299,7 +299,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
 
       <div className="flex gap-3 items-start">
         <div className="w-[120px] flex-shrink-0 space-y-1">
-          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Materials</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-500">Materials</div>
           {LANDSCAPE_MATERIALS.map((m) => (
             <button type="button"
               key={m.key}
@@ -312,7 +312,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               <span className="truncate text-gray-700">{m.label}</span>
             </button>
           ))}
-          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 pt-2">Decorative (not billed)</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-500 pt-2">Decorative (not billed)</div>
           {LANDSCAPE_VISUAL_OBJECTS.map((o) => {
             const vkey = `${VISUAL_PREFIX}${o.key}`;
             return (
@@ -377,7 +377,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         </div>
       </div>
 
-      <div className="mt-1.5 text-[10px] text-gray-400 h-3.5" aria-live="polite">
+      <div className="mt-1.5 text-[10px] text-gray-500 h-3.5" aria-live="polite">
         {hoverCell ? (() => {
           const cs = Number(landscape?.cell_size_inches) || 12;
           const xf = (hoverCell.x * cs) / 12, yf = (hoverCell.y * cs) / 12;
