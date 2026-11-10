@@ -3,11 +3,11 @@
 // wallCapInputNumber is the boundary's finite signed basis (CMP-A08).
 import { inventoryFiniteNumber as wallCapInputNumber } from "@/components/masterInventory/inventoryNormalization";
 export { wallCapInputNumber };
-// O-009 tail: catalog lifecycle classification is the single contract — a
+// O-009 tail: catalog lifecycle classification is the single contract â€” a
 // resolved-but-inactive/deleted cap row flags catalog_item_inactive /
 // catalog_item_deleted instead of silently repricing (the acknowledged
 // snapshot holds through the unchanged issues channel). The integrity module
-// imports foundationWallCapCatalogIssues back from this file — both
+// imports foundationWallCapCatalogIssues back from this file â€” both
 // directions are call-time function declarations, so the cycle is eval-safe.
 import { foundationCatalogRowAvailability } from "./foundationCatalogIntegrity";
 export function wallCapCutLengthValue(cap) {
@@ -85,8 +85,8 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
       issue("cap_inventory_id",
         availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
         availability === "deleted"
-          ? "the selected catalog material is marked deleted — pick a replacement."
-          : "the selected catalog material is inactive — reactivate it or pick a replacement.");
+          ? "the selected catalog material is marked deleted â€” pick a replacement."
+          : "the selected catalog material is inactive â€” reactivate it or pick a replacement.");
       return held(cap);
     }
     const firstIssue = issues.length;
@@ -114,6 +114,13 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
       cap_name: inv.material_name || "",
       stock_length_inches: stockLength,
       cost: rate,
+      // O-053 (CMP-D10) -- the reusable offcut after the cut: stockLength -
+      // cutLength. Informational only -- the priced contract stays full-stock
+      // per cut; the offcut surfaces for the reuse alternative, never priced.
+      offcut_inches:
+        stockLength !== null && stockLength > 0 && cutLength !== null && cutLength > 0 && cutLength <= stockLength
+          ? stockLength - cutLength
+          : null,
     };
   });
 
