@@ -79,10 +79,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       // references actual stock names, never invented materials.
       const stock = catalogNames(catalog).join(", ") || "none loaded";
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. ${prior}`,
+        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. List up to 6 grouped follow-up questions in "follow_ups" (topic + question) for missing facts the design still needs -- sign style/weight, mounting, site constraints, scope; empty array if fully described. ${prior}`,
         response_json_schema: {
           type: "object",
-          properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" } },
+          properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" },
+            follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } } },
         },
       });
       const parsed = typeof res === "string" ? JSON.parse(res) : res;
@@ -98,6 +99,9 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         notes: typeof parsed.notes === "string" ? parsed.notes : "",
         contradictions: typeof parsed.contradictions === "string" ? parsed.contradictions : "",
         suggestions: typeof parsed.suggestions === "string" ? parsed.suggestions : "",
+        followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
+          .filter(f => f && typeof f === "object" && typeof f.question === "string")
+          .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
       });
     } catch (e) {
       setError(e?.message || "The description could not be parsed.");
@@ -185,6 +189,16 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             <p className="mt-1 text-[10px] text-sky-800 bg-sky-50 border border-sky-200 rounded-sm px-1.5 py-0.5">
               Suggested assembly: {proposal.suggestions}
             </p>
+          )}
+          {proposal.followUps?.length > 0 && (
+            <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-1.5 py-1" data-follow-ups="true">
+              <p className="text-[10px] font-semibold text-gray-700">Follow-ups</p>
+              {proposal.followUps.map((f, i) => (
+                <p key={i} className="text-[10px] text-gray-600 mt-0.5">
+                  <span className="font-medium text-gray-700">{f.topic}:</span> {f.question}
+                </p>
+              ))}
+            </div>
           )}
           {/* O-086 -- apply preview: what lands + what drops, before the
               operator commits. Rows with no dimension are dropped; the
