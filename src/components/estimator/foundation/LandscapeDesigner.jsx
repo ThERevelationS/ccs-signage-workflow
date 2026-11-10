@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
+  LANDSCAPE_COUNT_OBJECTS,
   LANDSCAPE_MATERIALS,
   LANDSCAPE_VISUAL_OBJECTS,
   VISUAL_PREFIX,
@@ -158,6 +159,43 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               />
             </label>
           ))}
+          {/* O-069 (CMP-F02) -- count-priced objects: `landscape.objects[]`
+              rows {type, qty} bill qty x the catalog object's unit_cost. A
+              malformed row holds its line in the summary -- never a silent $0. */}
+          <label className="text-[10px] text-gray-500 flex items-center gap-1">
+            Objects
+            {(landscape?.objects || []).map((o, oi) => (
+              <span key={oi} className="inline-flex items-center gap-0.5">
+                <select
+                  value={o.type || ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, type: e.target.value } : r) })}
+                  className="h-6 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} type`}
+                >
+                  <option value="">--</option>
+                  {LANDSCAPE_COUNT_OBJECTS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+                <input
+                  type="number" min="0" step="1" placeholder="qty"
+                  value={o.qty ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, qty: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-10 rounded-sm border border-gray-300 px-0.5 text-[10px]"
+                  aria-label={`Object ${oi + 1} count`}
+                />
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).filter((_, j) => j !== oi) })}
+                  className="h-5 w-5 text-[10px] text-red-500"
+                  aria-label={`Remove object ${oi + 1}`}
+                >x</button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange({ ...landscape, objects: [...(landscape?.objects || []), { type: "", qty: 1 }] })}
+              className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
+            >+Obj</button>
+          </label>
           <button type="button"
             onClick={() => setFillMode((v) => !v)}
             aria-pressed={fillMode}
