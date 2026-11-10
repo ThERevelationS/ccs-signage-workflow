@@ -119,6 +119,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [autoSave, setAutoSave] = useState(false);
+  const [mainTab, setMainTab] = useState("foundations");
   const [history, setHistory] = useState({ past: [], future: [] });
   const [templateMode, setTemplateMode] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -1580,10 +1581,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           </div>
         )}
 
-        <FoundationGuidedSteps project={project} calc={calc} savedSourceProject={savedSourceProject} />
+        <FoundationGuidedSteps project={project} calc={calc} savedSourceProject={savedSourceProject} onStepClick={setMainTab} />
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_560px] gap-4 items-start mt-3">
           <div>
-            <Tabs defaultValue="foundations">
+            <Tabs value={mainTab} onValueChange={setMainTab}>
               <TabsList className="flex flex-wrap h-auto bg-white border border-gray-200 p-1 mb-3 rounded-sm justify-start">
                 <TabsTrigger value="foundations" className={TAB_CLASS}>
                   <AnchorIcon className="w-3.5 h-3.5" /> Foundation ({calc.items.length})
