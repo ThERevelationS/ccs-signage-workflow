@@ -40,6 +40,18 @@ export const isVisualCellKey = (key) => typeof key === "string" && key.startsWit
 export const visualObjectByKey = (key) =>
   isVisualCellKey(key) ? LANDSCAPE_VISUAL_OBJECTS.find((o) => o.key === key.slice(VISUAL_PREFIX.length)) : undefined;
 
+// O-069 (CMP-F02) -- count-priced objects: tree/shrub/light/boulder bill by
+// authored `unit_cost` per placed object, NOT by cell sqft. A `landscape.objects[]`
+// row {type, qty} prices qty x the object's unit_cost; a `unit_cost: null`
+// object holds its line (never a silent $0 count).
+export const LANDSCAPE_COUNT_OBJECTS = [
+  { key: "tree", label: "Tree", unit_cost: 350, height_inches: 96, radius_inches: 24 },
+  { key: "shrub", label: "Shrub", unit_cost: 45, height_inches: 18, radius_inches: 12 },
+  { key: "light", label: "Light", unit_cost: 120, height_inches: 72, radius_inches: 2 },
+  { key: "boulder", label: "Boulder", unit_cost: 180, height_inches: 30, radius_inches: 18 },
+];
+export const countObjectByKey = (key) => LANDSCAPE_COUNT_OBJECTS.find((o) => o.key === key);
+
 export const GRID_COLS = 24;
 export const GRID_ROWS = 16;
 
@@ -159,6 +171,30 @@ export const landscapeSummary = (landscape) => {
     };
   });
   const materialsTotal = lines.every((l) => l.cost !== null) ? lines.reduce((s, l) => s + l.cost, 0) : null;
-  const total = laborInvalid ? null : materialsTotal === null || labor === null ? materialsTotal : materialsTotal + labor;
-  return { lines, total, materials_total: materialsTotal, labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape) };
+  // O-069 (CMP-F02) -- count-priced objects: `landscape.objects[]` rows
+  // {type, qty} price qty x the catalog object's unit_cost. A malformed row
+  // (unknown type, non-positive qty) holds its line -- never a silent $0 count.
+  const objectLines = (Array.isArray(landscape?.objects) ? landscape.objects : []).map((o) => {
+    const catalog = countObjectByKey(o?.type);
+    const qty = Number(o?.qty);
+    const validQty = Number.isFinite(qty) && qty > 0;
+    const unit = catalog ? Number(catalog.unit_cost) : null;
+    return {
+      key: o?.type || "unknown",
+      label: catalog?.label || (o?.type || "Object"),
+      qty: validQty ? qty : null,
+      unit_cost: unit,
+      cost: validQty && unit !== null ? qty * unit : null,
+      invalid: !catalog || !validQty || unit === null,
+    };
+  });
+  const objectsTotal = objectLines.length === 0 ? 0 : objectLines.every((l) => l.cost !== null) ? objectLines.reduce((s, l) => s + l.cost, 0) : null;
+  const total = laborInvalid || objectsTotal === null || materialsTotal === null
+    ? null
+    : materialsTotal + (labor === null ? 0 : labor) + objectsTotal;
+  return {
+    lines, object_lines: objectLines, total,
+    materials_total: materialsTotal, objects_total: objectsTotal,
+    labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape),
+  };
 };
