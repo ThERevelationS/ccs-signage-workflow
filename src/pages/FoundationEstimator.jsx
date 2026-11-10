@@ -1617,7 +1617,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 <AiEngineeringAssistant project={project} onResult={patch} />
 
                 {calc.items.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-sm border border-dashed border-gray-300 text-[12px] text-gray-500">
+                  <div className="bg-white rounded-sm border border-dashed border-gray-300 p-6">
+                    <p className="text-[12px] font-semibold text-gray-700 mb-3">Start a foundation project</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setMainTab("foundations")} className="px-3 py-1.5 rounded-sm bg-violet-600 text-white text-[11px] font-semibold hover:bg-violet-700" data-mode="ai">Start with AI</button>
+                      <button type="button" onClick={() => { if (!draftSessionRef.current.pending) setTemplateMode("load"); }} className="px-3 py-1.5 rounded-sm border border-gray-300 text-gray-700 text-[11px] font-semibold hover:bg-gray-50" data-mode="template">Use a template</button>
+                      <button type="button" className="px-3 py-1.5 rounded-sm border border-gray-200 text-gray-500 text-[11px] font-semibold" data-mode="manual" aria-disabled="true" title="Author items directly below">Build manually</button>
+                    </div>
                     No foundations yet â€” add a spread footing or pillar to start.
                   </div>
                 ) : (
