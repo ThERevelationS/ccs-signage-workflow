@@ -541,6 +541,7 @@ function LayoutContent({ children }) {
       if (pressedEl) pressedEl.classList.remove("ccs-nav-holding");
       document.documentElement.classList.remove("ccs-grab-cursor");
       pressedEl = null;
+      hideLiteGap();
     };
     // First draggable under the point, skipping the pointer-following ghost.
     const dragTargetAt = (x, y) => {
@@ -574,12 +575,56 @@ function LayoutContent({ children }) {
       }, HOLD_MS);
     };
 
+    // Lite flyout gap preview: pointer inside an auto-opened folder list
+    // shifts the items below the insertion point down, opening a visible gap
+    // — same "make room" language as the bar's displaced pills.
+    const hideLiteGap = () => {
+      for (const el of document.querySelectorAll("[data-ccs-fld-item]")) {
+        el.style.transform = "";
+        el.__ccsOrigCenter = null;
+      }
+      for (const m of document.querySelectorAll("[data-ccs-folder-list]")) {
+        m.__ccsGapIdx = null;
+        m.classList.remove("ccs-drop-hover");
+      }
+    };
+    const showLiteGap = (menuEl, y) => {
+      const items = Array.from(menuEl.querySelectorAll("[data-ccs-fld-item]"));
+      const itemH = items[0]?.offsetHeight || 38;
+      const idx = items.filter((el) => {
+        if (el.__ccsOrigCenter == null) {
+          const r = el.getBoundingClientRect();
+          // Rect may already be displaced by our own shift — subtract it back.
+          el.__ccsOrigCenter = r.top + r.height / 2 - (el.__ccsShifted ? itemH : 0);
+        }
+        return el.__ccsOrigCenter < y;
+      }).length;
+      menuEl.__ccsGapIdx = idx;
+      menuEl.classList.add("ccs-drop-hover");
+      items.forEach((el, i) => {
+        const on = i >= idx;
+        if (on !== !!el.__ccsShifted) {
+          el.__ccsShifted = on;
+          el.style.transform = on ? `translateY(${itemH}px)` : "";
+        }
+      });
+    };
+
     const onPointerMove = (event) => {
       if (!pressedEl) return;
       if (!armed) { event.stopImmediatePropagation(); return; }
       // Armed: hover bookkeeping — highlight the folder pill under the
       // pointer; lingering opens top-bar flyouts so the page can be placed
       // inside. Over an open menu = inside the folder, no pill hover.
+      const liteMenu = document.elementFromPoint(event.clientX, event.clientY)
+        ?.closest?.("[data-ccs-folder-list]");
+      const srcId0 = pressedEl.getAttribute("data-rfd-draggable-id") || "";
+      if (liteMenu && !(isFolderToken(srcId0) || srcId0.startsWith("sfolder:"))) {
+        clearHover();
+        showLiteGap(liteMenu, event.clientY);
+        return;
+      }
+      hideLiteGap();
       if (event.target.closest?.("[role='menu']")) { clearHover(); return; }
       const srcId = pressedEl.getAttribute("data-rfd-draggable-id") || "";
       const srcIsFolder = isFolderToken(srcId) || srcId.startsWith("sfolder:");
@@ -615,10 +660,19 @@ function LayoutContent({ children }) {
       window.__ccsNavDropFolder = "";
       window.__ccsNavDropPage = "";
       window.__ccsNavDropAfter = false;
+      window.__ccsNavDropIndex = -1;
       if (window.__ccsNavDragging) {
+        // Release inside an auto-opened (lite) folder list: the gap index the
+        // preview showed is the slot the page lands in.
+        const liteMenu = document.elementFromPoint(event.clientX, event.clientY)
+          ?.closest?.("[data-ccs-folder-list]");
+        if (liteMenu) {
+          window.__ccsNavDropFolder = liteMenu.getAttribute("data-ccs-folder-list") || "";
+          window.__ccsNavDropIndex = Number.isInteger(liteMenu.__ccsGapIdx) ? liteMenu.__ccsGapIdx : 0;
+        }
         let page = "";
         let pageRect = null;
-        for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
+        for (const el of liteMenu ? [] : document.querySelectorAll("[data-rfd-draggable-id]")) {
           // The drag ghost always contains the release point — skip it or it
           // shadows the real target (self-combine no-ops the drop).
           if (el === pressedEl) continue;
@@ -688,6 +742,7 @@ function LayoutContent({ children }) {
   const handleNavReorder = (result) => {
     const { source, destination, draggableId, combine } = result;
     navDragFlag(false);
+    window.dispatchEvent(new Event("ccs-nav-drag-end"));
     const state = navState();
 
     // WYSIWYG folder drop: the pointerup handler recorded which folder pill
@@ -701,7 +756,10 @@ function LayoutContent({ children }) {
       window.__ccsNavDropPage = "";
       const url = pageUrlFromDraggable(draggableId);
       if (url) {
-        const next = movePageToFolder(state, url, dropFolder);
+        const idx = window.__ccsNavDropIndex;
+        window.__ccsNavDropIndex = -1;
+        const next = movePageToFolder(state, url, dropFolder,
+          Number.isInteger(idx) && idx >= 0 ? idx : undefined);
         persistNavState(mergeHiddenTail(next.order), next.folders);
         return;
       }
@@ -724,7 +782,12 @@ function LayoutContent({ children }) {
       const url = pageUrlFromDraggable(draggableId);
       if (!url) return;
       if (folderId) {
-        const next = movePageToFolder(state, url, folderId);
+        // Pointer-measured slot inside an auto-opened (lite) list wins over a
+        // plain append — the visible gap the user aimed at is the contract.
+        const idx = window.__ccsNavDropIndex;
+        window.__ccsNavDropIndex = -1;
+        const next = movePageToFolder(state, url, folderId,
+          Number.isInteger(idx) && idx >= 0 ? idx : undefined);
         persistNavState(mergeHiddenTail(next.order), next.folders);
         return;
       }
