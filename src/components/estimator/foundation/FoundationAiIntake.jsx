@@ -3,7 +3,7 @@
 // shows a proposal preview for operator review, then merges into the
 // project on Apply. The parse is an intake proposal only -- the operator
 // reviews every parsed field before it lands; nothing applies silently.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
 import { validateFoundationProposal } from "./foundationModuleProposal";
@@ -62,6 +62,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   const [error, setError] = useState("");
   const [proposal, setProposal] = useState(null);
   const [revisionText, setRevisionText] = useState("");
+  // W-019 -- a token invalidates in-flight parse responses: a superseded or
+  // cancelled request can't overwrite a newer proposal. InvokeLLM isn't
+  // abortable; the server call completes but its result is discarded.
+  const tokenRef = useRef(0);
+  const cancel = () => { tokenRef.current += 1; setRunning(false); };
 
   // O-088 -- a revision feeds the current proposal + the natural-language
   // edit back to the parser, so "add a pole" / "wider base" modify the
@@ -70,6 +75,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   const parse = async (revision = null) => {
     const t = (revision ?? text).trim();
     if (!t || running) return;
+    const token = ++tokenRef.current;
     setRunning(true);
     setError("");
     try {
@@ -87,6 +93,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } } },
         },
       });
+      if (token !== tokenRef.current) return; // superseded -- discard
       const parsed = typeof res === "string" ? JSON.parse(res) : res;
       setProposal({
         items: (parsed.items || []).filter(i => i && typeof i === "object").map(i => ({
@@ -158,6 +165,10 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
           className="h-auto px-2.5 rounded-sm bg-violet-600 text-white text-[11px] font-semibold hover:bg-violet-700 disabled:opacity-50 flex items-center gap-1">
           {running ? <Loader2 className="w-3 h-3 animate-spin" /> : null}Parse
         </button>
+        {running && (
+          <button type="button" onClick={cancel}
+            className="h-auto px-2 rounded-sm border border-gray-300 text-[11px] text-gray-600">Cancel</button>
+        )}
       </div>
       {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
       {proposal && (
