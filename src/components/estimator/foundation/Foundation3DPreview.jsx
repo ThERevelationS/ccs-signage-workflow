@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Maximize2, RotateCcw, Eye, EyeOff, Box } from "lucide-react";
 import { buildFoundationReinforcementPreview3D } from "./foundationReinforcementPreview3D.js";
 import { createFoundationReinforcement3DGroup } from "./foundationReinforcementThreePreview.js";
-import { materialByKey, visualObjectByKey } from "./landscapeMaterials.js";
+import { materialByKey, visualObjectByKey, countObjectByKey } from "./landscapeMaterials.js";
 
 const IN = 1 / 12; // inches -> feet units
 // O-041 bounded complexity — quantity/pole loops cap mesh count; a pathological
@@ -287,6 +287,27 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
     );
     tile.position.set(px, 0.3 * IN, pz);
     group.add(tile);
+  });
+
+  // O-070 (CMP-F03) -- placed count-objects: `landscape.objects[]` rows draw
+  // at authored x/z + rotation/elevation. Blank position/rotation/elevation
+  // draws nothing (never an invented placement).
+  (Array.isArray(landscape?.objects) ? landscape.objects : []).forEach((o) => {
+    const obj = countObjectByKey(o?.type);
+    const ox = Number(o?.x_inches), oz = Number(o?.z_inches);
+    if (!obj || !Number.isFinite(ox) || !Number.isFinite(oz)) return;
+    const oh = (obj.height_inches || 24) * IN, orad = (obj.radius_inches || 12) * IN;
+    let geo;
+    if (obj.key === "tree") geo = new THREE.ConeGeometry(orad, oh, 6);
+    else if (obj.key === "shrub") geo = new THREE.SphereGeometry(orad, 8, 6);
+    else if (obj.key === "light") geo = new THREE.CylinderGeometry(orad, orad * 1.2, oh, 6);
+    else geo = new THREE.BoxGeometry(orad * 2, oh, orad * 2);
+    const marker = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: obj.color || 0x78716c, roughness: 0.95 }));
+    const rot = Number(o?.rotation_degrees) || 0;
+    marker.rotation.y = (rot * Math.PI) / 180;
+    const elev = Number(o?.elevation_inches) || 0;
+    marker.position.set(ox * IN, (oh / 2) + elev * IN, oz * IN);
+    group.add(marker);
   });
 
   if (showGround) {
