@@ -484,6 +484,29 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   <option value="returned">Returned</option>
                 </select>
               </label>
+              {/* O-055 (CMP-D12) -- optional authored installation-supplies +
+                  cut-labor cost lines; each blank = $0, authored must be finite
+                  nonnegative or the whole cap's cost holds. */}
+              <label className="text-xs text-gray-500">
+                Supplies $
+                <input
+                  type="number" min="0" step="0.01" placeholder="0"
+                  value={cap.supplies_cost ?? ""}
+                  onChange={(e) => patchCap(index, { supplies_cost: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} supplies cost`}
+                />
+              </label>
+              <label className="text-xs text-gray-500">
+                Cut labor $
+                <input
+                  type="number" min="0" step="0.01" placeholder="0"
+                  value={cap.cut_labor_cost ?? ""}
+                  onChange={(e) => patchCap(index, { cut_labor_cost: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} cut labor cost`}
+                />
+              </label>
             </div>
             {geometryIssues(index).length > 0 && (
               <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
