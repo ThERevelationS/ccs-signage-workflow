@@ -1618,7 +1618,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               <TabsContent value="foundations" className="space-y-3">
                 <AiEngineeringAssistant project={project} onResult={patch} />
                 <FoundationPhotoIntake project={project} onChange={patch} />
-                <FoundationAiIntake onApply={({ foundations: newItems, poles: newPoles }) => commit((prev) => ({ items: [...(prev.items || []), ...newItems], poles: [...(prev.poles || []), ...newPoles] }))} />
+                <FoundationAiIntake project={project} onApply={({ foundations: newItems, poles: newPoles }) => commit((prev) => ({ items: [...(prev.items || []), ...newItems], poles: [...(prev.poles || []), ...newPoles] }))} />
 
                 {calc.items.length === 0 ? (
                   <div className="bg-white rounded-sm border border-dashed border-gray-300 p-6">
