@@ -160,10 +160,14 @@ export default function FoundationBOM({
         const extras = ["hardware_cost", "labor_cost", "paint_cost", "waste_cost"]
           .map((k) => Number(s?.[k]) || 0)
           .reduce((a, b) => a + b, 0);
+        // O-063 (CMP-E08) -- a display_only linked sign lists its row without a
+        // billed cost (the linked product carries the fabrication/installation
+        // charge elsewhere; this row stays visible, never billed twice).
+        const linked = s?.display_only === true;
         out.push({
           material: `${label} — sign ${si + 1}${s?.name ? ` (${s.name})` : ""}`,
-          quantity: `1 sign${s?.faces ? ` x ${s.faces} faces` : ""}`,
-          cost: hasFoundationCostSnapshot(s?.unit_cost) ? Number(s.unit_cost) + extras : "Not saved",
+          quantity: `1 sign${s?.faces ? ` x ${s.faces} faces` : ""}${linked ? " (linked)" : ""}`,
+          cost: linked ? "—" : hasFoundationCostSnapshot(s?.unit_cost) ? Number(s.unit_cost) + extras : "Not saved",
           saved: true,
         });
       });
