@@ -84,7 +84,7 @@ const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
 const SALESFILTER_READ_ACTIONS = new Set(['preferences_get', 'default_sort_get', 'roster']);
 
 function isReadFunctionInvocation(fnName, payload) {
-  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'appBootstrap', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
   if (fnName === 'timeClockAction') return TIMECLOCK_READ_ACTIONS.has(payload?.action);
   if (fnName === 'notificationAction') return NOTIFICATION_READ_ACTIONS.has(payload?.action);
   if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
@@ -321,6 +321,15 @@ export const base44 = new Proxy(rawClient, {
 });
 
 export const requestGovernor = governor;
+
+// Seeds a read-lane TTL slot exactly as a real invoke response would, so a
+// later identical call (same fn + payload, JSON key order included) resolves
+// from cache without a POST. Used by the appBootstrap mount read to carry
+// several providers' opening data in one call.
+export function primeReadResponse(fnName, payload, data) {
+  const cacheKey = `${governor.getEpoch()}|fn:${fnName}:${JSON.stringify(payload ?? null)}`;
+  readCacheSet(cacheKey, { data });
+}
 
 // Developer diagnostics only: counts, timings and labels (entity/function
 // names). Never payloads, tokens or record contents.
