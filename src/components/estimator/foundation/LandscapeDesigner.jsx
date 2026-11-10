@@ -33,6 +33,7 @@ const costLabel = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 export default function LandscapeDesigner({ landscape, onChange }) {
   const [brush, setBrush] = useState("grass");
   const [painting, setPainting] = useState(false);
+  const [hoverCell, setHoverCell] = useState(null);
   // O-071 (CMP-F04): bucket-fill mode — a click floods the contiguous region
   // of the same material (empty cells count as one region); dirt erases it.
   const [fillMode, setFillMode] = useState(false);
@@ -210,7 +211,8 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                       setPainting(true);
                       paint(x, y);
                     }}
-                    onMouseEnter={() => painting && !fillMode && paint(x, y)}
+                    onMouseEnter={() => { setHoverCell({ x, y }); if (painting && !fillMode) paint(x, y); }}
+                    onMouseLeave={() => setHoverCell(null)}
                     onMouseUp={endStroke}
                     className="aspect-square cursor-crosshair"
                     style={{ background: mat ? mat.color : "rgba(0,0,0,0.06)" }}
@@ -222,6 +224,13 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         </div>
       </div>
 
+      <div className="mt-1.5 text-[10px] text-gray-400 h-3.5" aria-live="polite">
+        {hoverCell ? (() => {
+          const cs = Number(landscape?.cell_size_inches) || 12;
+          const xf = (hoverCell.x * cs) / 12, yf = (hoverCell.y * cs) / 12;
+          return `cell ${hoverCell.x},${hoverCell.y} - ${xf.toFixed(1)}' x ${yf.toFixed(1)}' from origin`;
+        })() : "Hover the grid for a cell position"}
+      </div>
       {summary.lines.length > 0 && (
         <div className="mt-3 border-t border-gray-100 pt-2 space-y-1">
           {summary.lines.map((l) => (
