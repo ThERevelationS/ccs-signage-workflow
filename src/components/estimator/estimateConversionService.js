@@ -11,6 +11,7 @@ import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrd
 import { createEstimateLinkedWorkOrderWithRecovery, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { projectFoundationReinforcementWorkOrderPart } from "./foundation/foundationReinforcementWorkOrderPart";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -153,6 +154,7 @@ export async function buildEstimateMaterialsManifest(estimate, { parts = null } 
         builder_product_id: str(p?.builder_product_id),
         module_key: str(line?.module_key) || str(p?.source_module_key),
         section_name: str(line?.client_product_name || line?.project_name),
+        ...projectFoundationReinforcementWorkOrderPart(p),
       };
     })
     .sort((a, b) => a.part_name.localeCompare(b.part_name));
@@ -251,7 +253,10 @@ export async function prepareEstimateConversion({
     if (!existing && linkedId) {
       // work_order_id is set but no estimate_id-linked WO matched — the link
       // may point at a WO created by the combined path (estimate_ids only).
-      const linked = await WorkOrder.get(linkedId).catch(() => null);
+      // O-014 -- fail-closed: a transient WorkOrder.get failure propagates
+      // rather than silently reading the link as absent (a not-found returns
+      // null through the get contract; an error is a real failure).
+      const linked = await WorkOrder.get(linkedId);
       if (linked?.id && linked.deleted !== true) existing = linked;
     }
   }
@@ -537,7 +542,7 @@ export async function convertEstimatesToSharedWorkOrder({
   const linkedIds = [...new Set(prepared.map((p) => str(p.estimateBefore?.work_order_id)).filter(Boolean))];
   let sharedWo = null;
   for (const woId of linkedIds) {
-    const wo = await WorkOrder.get(woId).catch(() => null);
+    const wo = await WorkOrder.get(woId);
     if (wo?.id && wo.deleted !== true) { sharedWo = wo; break; }
     if (wo?.deleted === true) {
       rejected.push({ estimate_id: "", estimate_number: "", reason: `Linked Work Order ${woId} is in Trash — restore it before combining.` });
@@ -546,7 +551,7 @@ export async function convertEstimatesToSharedWorkOrder({
   if (linkedIds.length > 1) {
     const liveIds = [];
     for (const woId of linkedIds) {
-      const wo = await WorkOrder.get(woId).catch(() => null);
+      const wo = await WorkOrder.get(woId);
       if (wo?.id && wo.deleted !== true) liveIds.push(woId);
     }
     if (liveIds.length > 1) {
