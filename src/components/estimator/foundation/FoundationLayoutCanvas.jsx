@@ -275,6 +275,7 @@ export default function FoundationLayoutCanvas({
   objectSnap = true,
   snapToleranceInches = DEFAULT_SNAP_TOLERANCE_INCHES,
   gridSnapInches = 0,
+  landscape = null,
 }) {
   const boxRef = useRef(null);
   const [zoom, setZoom] = useState(1);
@@ -287,7 +288,7 @@ export default function FoundationLayoutCanvas({
   // The full scene the selection model sees — the canvas renders items +
   // poles today, but hit tests, the object tree, cycling, region selects
   // and breadcrumbs all address all five assembly arrays + wall segments.
-  const scene = { items, poles, walls, wall_caps: wallCaps, signage_cabinets: signageCabinets };
+  const scene = { items, poles, walls, wall_caps: wallCaps, signage_cabinets: signageCabinets, landscape };
 
   // O-040 history seam — an internal store keeps the component
   // self-contained; a mounted editor passes its own via `sceneHistory` for
