@@ -682,3 +682,30 @@ export const suggestFeasibleDimensions = (pole) => {
   }
   return out;
 };
+
+// O-115 (CMP-I14) -- per-type domains: a foundation-type feasible-dims
+// variant inside a documented domain (spread_foot minimum depth / wall
+// minimum height -- named shop-assumption domains, never a universal claim
+// or a blind multiplier).
+export const FOUNDATION_TYPE_METHOD_DOMAIN = Object.freeze({
+  spread_foot_depth_min_inches: 12,
+  wall_height_min_inches: 6,
+  domain: "shop-assumption minimum dims (spread_foot depth / wall height); inside the documented domain",
+});
+
+export const suggestFeasibleFoundationDims = (item) => {
+  const type = item?.foundation_type;
+  if (type !== "spread_foot" && type !== "wall") return { available: false, reason: "no documented feasible-dims domain for this foundation type" };
+  if (type === "spread_foot") {
+    return {
+      available: true,
+      depth_inches: FOUNDATION_TYPE_METHOD_DOMAIN.spread_foot_depth_min_inches,
+      governing: "spread_foot depth >= 12\" (shop-assumption minimum)",
+    };
+  }
+  return {
+    available: true,
+    height_inches: FOUNDATION_TYPE_METHOD_DOMAIN.wall_height_min_inches,
+    governing: "wall height >= 6\" (shop-assumption minimum)",
+  };
+};
