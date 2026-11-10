@@ -57,6 +57,12 @@ const catalogNames = (catalog) => {
   return names.slice(0, 24);
 };
 
+// W-018 (AI-07) -- certification strip: drop certification/approval claims
+// from AI text so a suggestion never reads as engineering approval.
+const stripCertification = (s) => typeof s === "string"
+  ? s.replace(/\b(certified|code-compliant|code compliant|engineer-approved|engineer approved|stamped|PE-stamped|PE stamped|structurally approved)\b/gi, "[certification claim removed]")
+  : s;
+
 export default function FoundationAiIntake({ project, catalog, onApply, disabled }) {
   const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
@@ -120,14 +126,18 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         poles: (parsed.poles || []).filter(p => p && typeof p === "object").map(p => ({
           height_inches: p.height_inches ?? "", description: p.description ?? "",
         })),
-        notes: typeof parsed.notes === "string" ? parsed.notes : "",
+        // W-018 (AI-07) -- certification strip: the AI cannot emit a priced
+        // value, but it could phrase a suggestion as "certified"/"code-
+        // compliant". Strip certification claims so a suggestion never reads
+        // as engineering approval.
+        notes: typeof parsed.notes === "string" ? stripCertification(parsed.notes) : "",
         contradictions: typeof parsed.contradictions === "string" ? parsed.contradictions : "",
-        suggestions: typeof parsed.suggestions === "string" ? parsed.suggestions : "",
+        suggestions: typeof parsed.suggestions === "string" ? stripCertification(parsed.suggestions) : "",
         // O-085 (CMP-G08) -- structured alternatives with a cost-impact note:
         // up to 4 {label, cost_impact} rows alongside the free-text suggestion.
         alternatives: (Array.isArray(parsed.alternatives) ? parsed.alternatives : [])
           .filter(a => a && typeof a === "object" && typeof a.label === "string")
-          .slice(0, 4).map(a => ({ label: a.label, cost_impact: typeof a.cost_impact === "string" ? a.cost_impact : "" })),
+          .slice(0, 4).map(a => ({ label: stripCertification(a.label), cost_impact: typeof a.cost_impact === "string" ? stripCertification(a.cost_impact) : "" })),
         followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
           .filter(f => f && typeof f === "object" && typeof f.question === "string")
           .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
