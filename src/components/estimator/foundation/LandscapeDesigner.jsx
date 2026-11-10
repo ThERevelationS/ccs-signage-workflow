@@ -12,6 +12,7 @@ import {
   materialByKey,
   visualObjectByKey,
   verificationForKey,
+  patternForKey,
 } from "./landscapeMaterials";
 import { money } from "./foundationCalc";
 import {
@@ -539,7 +540,12 @@ export default function LandscapeDesigner({ landscape, onChange }) {
             // material (procedural-fallback / verified-scale from the manifest).
             const ver = key ? verificationForKey(key) : null;
             const verNote = ver ? ` [${ver.scale === "verified" ? "verified scale" : "scale unverified"}]` : "";
-            return `Selected cell ${selectedCell.x},${selectedCell.y}${mat ? ` - ${mat.label}${verNote}` : " (empty)"}`;
+            // O-068 (CMP-F01) -- realistic-material hint: the material's
+            // `pattern` (stone/pebble/grass/turf/foliage/soil/paver) surfaces
+            // alongside the label -- a texture hint, never a price.
+            const pat = key ? patternForKey(key) : null;
+            const patNote = pat ? ` (${pat})` : "";
+            return `Selected cell ${selectedCell.x},${selectedCell.y}${mat ? ` - ${mat.label}${patNote}${verNote}` : " (empty)"}`;
           })()}
           <button
             type="button"
