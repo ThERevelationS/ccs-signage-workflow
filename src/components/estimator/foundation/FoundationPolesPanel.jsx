@@ -207,6 +207,35 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   >
                     Snap to edge
                   </Button>
+                  {/* O-058 (CMP-E03) -- multi-instance spread: for a quantity>1
+                      foundation or a pole row spanning several mounts, the
+                      pole snaps to a spread position along the mounted item's
+                      width (index-th position across N poles on the same
+                      mount) -- an explicit spread, never an invented
+                      placement. */}
+                  <Button
+                    type="button" variant="outline" size="sm"
+                    disabled={!pole.foundation_component_id || !items.some((it) => it.component_id === pole.foundation_component_id)}
+                    onClick={() => {
+                      const it = items.find((x) => x.component_id === pole.foundation_component_id);
+                      const pos = it && layoutPositionInches(it);
+                      const fp = it && foundationLayoutFootprint(it);
+                      if (!pos?.valid || !fp) return;
+                      const siblings = (poles || []).filter((p) => p?.foundation_component_id === pole.foundation_component_id);
+                      const n = Math.max(1, siblings.length);
+                      const slot = siblings.findIndex((p) => p === pole || p.component_id === pole.component_id);
+                      const i = slot < 0 ? 0 : slot;
+                      const cover = Math.min(4, Math.max(0, fp.width / 4));
+                      const span = fp.width - 2 * cover;
+                      const x = n === 1 ? pos.x_inches + fp.width / 2 : pos.x_inches + cover + (span * i) / (n - 1 || 1);
+                      patchPole(index, {
+                        x_inches: Math.round(x * 100) / 100,
+                        z_inches: Math.round((pos.z_inches + fp.depth / 2) * 100) / 100,
+                      });
+                    }}
+                  >
+                    Spread on foundation
+                  </Button>
                   {/* O-058 (CMP-E03) -- edge/cover readout: the pole's nearest
                       distance to the mounted foundation's edge (in inches).
                       Read-only; absent when unmounted or placement unresolved. */}
