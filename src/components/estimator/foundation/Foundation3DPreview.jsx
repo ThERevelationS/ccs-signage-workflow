@@ -276,6 +276,18 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
     m.position.set(px, mh + h / 2, pz);
     tag(m, cab?.component_id, "cabinet");
     group.add(m);
+    // O-033 (CMP-C02) -- cabinet face panel: a thin face on the cabinet's
+    // front face in the authored `panel_color`/`body_color` (blank = the
+    // box's default cabMat; never an invented color).
+    const cabColor = (typeof cab?.panel_color === "string" && cab.panel_color !== "" ? cab.panel_color
+      : typeof cab?.body_color === "string" && cab.body_color !== "" ? cab.body_color : null);
+    if (cabColor) {
+      const faceMat = new THREE.MeshLambertMaterial({ color: cabColor });
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), faceMat);
+      face.position.set(px, mh + h / 2, pz + d / 2 + 0.5);
+      tag(face, cab?.component_id, "cabinet_face");
+      group.add(face);
+    }
   });
 
   // O-033 landscape — painted cells render as thin tiles just above grade.
