@@ -71,12 +71,25 @@ export const LANDSCAPE_ASSET_MANIFEST = Object.freeze({
     // Shop-authored primitives carry the primitive itself as the fallback.
     author: "shop", original_scale_inches: null, preview: null, file_hash: null,
     bounds_inches: null, pivot: "center-bottom", fallback: "color tile",
+    // O-077 (CMP-F10) -- asset-verification checklist: procedural primitives
+    // have no textures/CORS/foliage (not_applicable) but scale comes from the
+    // authored material coverage (verified). Re-check when real assets land.
+    verification: {
+      transparent_foliage: "not_applicable", shadows: "procedural", scale: "verified",
+      thumbnail: "procedural", cors: "not_applicable", unavailable_asset: "not_applicable",
+      low_power_fallback: "procedural-fallback",
+    },
   })),
   visual_objects: LANDSCAPE_VISUAL_OBJECTS.map((o) => ({
     key: o.key, label: o.label, kind: "decorative object", source: "shop-authored primitive shape", license: "shop-authored",
     author: "shop", original_scale_inches: o.height_inches ?? null, preview: null, file_hash: null,
     bounds_inches: o.height_inches != null && o.radius_inches != null ? { h: o.height_inches, r: o.radius_inches } : null,
     pivot: "center-bottom", fallback: "primitive shape",
+    verification: {
+      transparent_foliage: "not_applicable", shadows: "procedural", scale: "verified",
+      thumbnail: "procedural", cors: "not_applicable", unavailable_asset: "not_applicable",
+      low_power_fallback: "procedural-fallback",
+    },
   })),
 });
 
