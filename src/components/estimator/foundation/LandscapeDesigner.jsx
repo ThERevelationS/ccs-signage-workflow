@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
   LANDSCAPE_COUNT_OBJECTS,
+  LANDSCAPE_BORDER_TYPES,
   LANDSCAPE_MATERIALS,
   LANDSCAPE_VISUAL_OBJECTS,
   VISUAL_PREFIX,
@@ -230,6 +231,43 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               onClick={() => onChange({ ...landscape, objects: [...(landscape?.objects || []), { type: "", qty: 1 }] })}
               className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
             >+Obj</button>
+          </label>
+          {/* O-069 (CMP-F02) -- linear-entry borders: `landscape.borders[]`
+              rows {type, linear_feet} price linear_feet x the border type's
+              cost_per_ft -- a discrete linear entry, not a cell coverage. */}
+          <label className="text-[10px] text-gray-500 flex items-center gap-1">
+            Borders
+            {(landscape?.borders || []).map((b, bi) => (
+              <span key={bi} className="flex items-center gap-0.5">
+                <select
+                  aria-label={`Border ${bi + 1} type`}
+                  value={b?.type || ""}
+                  onChange={(e) => onChange({ ...landscape, borders: (landscape.borders || []).map((r, j) => j === bi ? { ...r, type: e.target.value } : r) })}
+                  className="h-5 rounded-sm border border-gray-300 text-[9px]"
+                >
+                  <option value="">-</option>
+                  {LANDSCAPE_BORDER_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                </select>
+                <input
+                  type="number" min="0" step="0.5" placeholder="ft"
+                  aria-label={`Border ${bi + 1} linear feet`}
+                  value={b?.linear_feet ?? ""}
+                  onChange={(e) => onChange({ ...landscape, borders: (landscape.borders || []).map((r, j) => j === bi ? { ...r, linear_feet: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-5 w-10 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove border ${bi + 1}`}
+                  onClick={() => onChange({ ...landscape, borders: (landscape.borders || []).filter((_, j) => j !== bi) })}
+                  className="text-[9px] text-red-600"
+                >x</button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange({ ...landscape, borders: [...(landscape?.borders || []), { type: "", linear_feet: "" }] })}
+              className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
+            >+Border</button>
           </label>
           {/* O-072 (CMP-F05) -- site-photo/plan backdrop: `backdrop_url` +
               `backdrop_opacity` render a reference image behind the grid. The
