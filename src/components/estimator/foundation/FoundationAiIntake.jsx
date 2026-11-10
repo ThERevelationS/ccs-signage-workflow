@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
 import { validateFoundationProposal } from "./foundationModuleProposal";
+import { ESTIMATOR_AI_MODEL } from "../../../../base44/shared/estimatorAiModelPolicy.js";
 
 const PARSE_SCHEMA = {
   type: "object",
@@ -86,6 +87,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       // references actual stock names, never invented materials.
       const stock = catalogNames(catalog).join(", ") || "none loaded";
       const res = await base44.integrations.Core.InvokeLLM({
+        model: ESTIMATOR_AI_MODEL, // W-024 -- the pinned shared flagship
         prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). Available catalog stock: ${stock}. If a complete assembly can be proposed from that stock (concrete + pole + rebar + finish), put it in "suggestions" referencing only real stock names; empty string if none. List up to 6 grouped follow-up questions in "follow_ups" (topic + question) for missing facts the design still needs -- sign style/weight, mounting, site constraints, scope; empty array if fully described. ${prior}`,
         response_json_schema: {
           type: "object",
