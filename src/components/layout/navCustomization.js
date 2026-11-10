@@ -9,17 +9,6 @@ export const folderToken = (id) => `${FOLDER_TOKEN_PREFIX}${id}`;
 export const isFolderToken = (entry) => typeof entry === "string" && entry.startsWith(FOLDER_TOKEN_PREFIX);
 export const tokenFolderId = (entry) => (isFolderToken(entry) ? entry.slice(FOLDER_TOKEN_PREFIX.length) : null);
 
-// During a nav drag the DOM-freeze pins every item at its measured spot; the
-// library still emits a displaced-model transform for non-source items (the
-// "dodging pill" effect). Dropping that transform keeps painted boxes where
-// the user sees them, so the pointer-up hit-test in Layout lands exactly.
-// The dragged source keeps its transform — that IS the ghost.
-export const navDragStyle = (style, isDragging) => {
-  if (!style || isDragging || typeof window === "undefined" || !window.__ccsNavDragging) return style;
-  const { transform, ...rest } = style;
-  return rest;
-};
-
 export function sanitizeFolders(raw) {
   if (!Array.isArray(raw)) return null;
   const out = [];
