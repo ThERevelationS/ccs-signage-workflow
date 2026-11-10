@@ -70,6 +70,17 @@ export default function LandscapeDesigner({ landscape, onChange }) {
   };
   const viewCells = strokeCells || cells;
 
+  // O-068 -- borders/edging as a linear entry: paint the grid's outer
+  // perimeter with the current brush in ONE commit (same cell contract as
+  // free painting -- the edging is just a painted perimeter ring).
+  const edge = () => {
+    if (brush === "dirt" || brush == null) return;
+    const next = { ...(strokeRef.current ?? cells) };
+    for (let x = 0; x < GRID_COLS; x++) { next[`${x},0`] = brush; next[`${x},${GRID_ROWS - 1}`] = brush; }
+    for (let y = 0; y < GRID_ROWS; y++) { next[`0,${y}`] = brush; next[`${GRID_COLS - 1},${y}`] = brush; }
+    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
+  };
+
   const flood = (x, y) => {
     const target = cells[`${x},${y}`] || "";
     if (target === (brush === "dirt" ? "" : brush)) return; // already the brush value
@@ -139,6 +150,14 @@ export default function LandscapeDesigner({ landscape, onChange }) {
             }`}
           >
             Fill
+          </button>
+          <button type="button"
+            onClick={edge}
+            disabled={brush === "dirt" || brush == null}
+            title="Paint the grid's perimeter with the selected material"
+            className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Edging
           </button>
           <button type="button"
             onClick={() => {
