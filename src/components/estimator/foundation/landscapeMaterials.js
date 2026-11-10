@@ -30,10 +30,10 @@ export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === 
 // summary and never fabricate a cost; an unknown visual key is flagged like
 // an unknown material.
 export const LANDSCAPE_VISUAL_OBJECTS = [
-  { key: "tree", label: "Tree", color: "#166534" },
-  { key: "shrub", label: "Shrub", color: "#15803d" },
-  { key: "light", label: "Light", color: "#f59e0b" },
-  { key: "boulder", label: "Boulder", color: "#57534e" },
+  { key: "tree", label: "Tree", color: "#166534", height_inches: 96, radius_inches: 24 },
+  { key: "shrub", label: "Shrub", color: "#15803d", height_inches: 18, radius_inches: 12 },
+  { key: "light", label: "Light", color: "#f59e0b", height_inches: 72, radius_inches: 2 },
+  { key: "boulder", label: "Boulder", color: "#57534e", height_inches: 30, radius_inches: 18 },
 ];
 export const VISUAL_PREFIX = "visual:";
 export const isVisualCellKey = (key) => typeof key === "string" && key.startsWith(VISUAL_PREFIX);
