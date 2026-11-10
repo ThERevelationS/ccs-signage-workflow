@@ -34,6 +34,10 @@
       "type": "string",
       "description": "Optional canonical JurisdictionProfile ID this tracker locality was explicitly created from. Existing legacy localities may remain unlinked until staff verifies the relationship."
     },
+    "duplicate_of": {
+      "type": "string",
+      "description": "Tombstone: id of the canonical PermitLocality row this duplicate was merged into. Pickers and bridge filters exclude rows where this is set \u2014 the row's data (offices, links, notes) is preserved for forensics/recovery. Never set on the canonical row."
+    },
     "office_change_log": {
       "type": "array",
       "description": "Append-only (cap 20) log of detected changes to this locality's offices[] \u2014 entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the offices-updated alerts.",
