@@ -10,7 +10,7 @@ import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import WallShapeEditor from "./WallShapeEditor";
 
 // O-093 (CMP-H02): linear-dimension fields take feet/inches entry through the
-// shared dimension field â€” same verbatim-draft contract as the CMP-A08
+// shared dimension field  -  -  -  same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const wallDimMeta = (field) => foundationDimensionFieldMeta("wall", field);
@@ -55,13 +55,23 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
         />
         <FoundationDimensionInput
           {...wallDimMeta("mortarGapInches")}
-          // Display-only fallback: 0.375 shows until a value is recorded â€”
+          // Display-only fallback: 0.375 shows until a value is recorded  -  -  - 
           // nothing is stored by the fallback (explicit-null discipline).
           value={wall.mortarGapInches ?? 0.375}
           onCommit={(v) => set({ mortarGapInches: v })}
           ariaLabel="Wall mortar gap (in)"
           invalid={fieldIssue("mortarGapInches") || undefined}
           describedBy={describedBy("mortarGapInches")}
+        />
+        <FoundationDimensionInput
+          {...wallDimMeta("wasteFraction")}
+          // O-047 -- authored waste/cut factor scales brick+mortar+labor;
+          // blank stores undefined (never a silent 0).
+          value={wall.wasteFraction ?? ""}
+          onCommit={(v) => set({ wasteFraction: v === "" || v == null ? undefined : v })}
+          ariaLabel="Wall waste fraction"
+          invalid={fieldIssue("wasteFraction") || undefined}
+          describedBy={describedBy("wasteFraction")}
         />
         <label className="text-xs text-gray-500 md:col-span-2">
           Wall material
@@ -73,7 +83,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
             aria-describedby={describedBy("materialId")}
             onChange={(e) => set({ materialId: e.target.value })}
           >
-            <option value="">Select materialâ€¦</option>
+            <option value="">Select material -  -  - </option>
             {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
               <option value={wall.materialId} disabled>{`Catalog material unavailable (${wall.materialId})`}</option>
             )}
@@ -104,7 +114,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
           >
             <option value="">Freestanding (no foundation)</option>
             {wall.foundation_component_id && !items.some((it) => it.component_id === wall.foundation_component_id) && (
-              <option value={wall.foundation_component_id} disabled>{`Missing foundation (${String(wall.foundation_component_id).slice(0, 18)}…)`}</option>
+              <option value={wall.foundation_component_id} disabled>{`Missing foundation (${String(wall.foundation_component_id).slice(0, 18)}...)`}</option>
             )}
             {items.map((it, i) => (
               <option key={it.component_id || i} value={it.component_id || ""}>
@@ -139,7 +149,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
                 aria-describedby={describedBy("internalMaterialId")}
                 onChange={(e) => set({ internalMaterialId: e.target.value })}
               >
-                <option value="">Select materialâ€¦</option>
+                <option value="">Select material -  -  - </option>
                 {wall.internalMaterialId && !options.some((o) => o.id === wall.internalMaterialId) && (
                   <option value={wall.internalMaterialId} disabled>{`Catalog material unavailable (${wall.internalMaterialId})`}</option>
                 )}
@@ -155,7 +165,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
             </label>
             <FoundationDimensionInput
               {...wallDimMeta("internalWallHeightInches")}
-              // Display-only fallback: blank follows the outer wall height â€”
+              // Display-only fallback: blank follows the outer wall height  -  -  - 
               // nothing is stored by the fallback (explicit-null discipline).
               value={wall.internalWallHeightInches ?? wall.heightInches ?? ""}
               onCommit={(v) => set({ internalWallHeightInches: v })}
@@ -177,7 +187,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
-        {/* CMP-D03: the snapshot carries its quantity basis â€” poured concrete
+        {/* CMP-D03: the snapshot carries its quantity basis  -  -  -  poured concrete
             reads placed volume in CY (never "Units"), unit masonry keeps the
             unit count. Held rows keep whatever basis the acknowledged
             snapshot recorded. */}
