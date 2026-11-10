@@ -1,0 +1,45 @@
+{
+  "name": "OAuthStateNonce",
+  "type": "object",
+  "description": "Short-lived, one-time-use nonces for signed Google OAuth state values (Gmail / Drive). Created when a user starts the connect flow and consumed by the callback so a state cannot be replayed.",
+  "properties": {
+    "nonce_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the random nonce embedded in the signed state."
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who started the OAuth flow."
+    },
+    "purpose": {
+      "type": "string",
+      "description": "OAuth flow the state was issued for (e.g. gmail_oauth)."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "State expiry \u2014 callbacks after this time are rejected."
+    },
+    "used": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once consumed; a second callback with the same state is rejected."
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "nonce_hash",
+    "user_id",
+    "purpose",
+    "expires_at"
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__oauthstatenonce_backend_only__" } },
+    "read": { "user_condition": { "role": "__oauthstatenonce_backend_only__" } },
+    "update": { "user_condition": { "role": "__oauthstatenonce_backend_only__" } },
+    "delete": { "user_condition": { "role": "__oauthstatenonce_backend_only__" } }
+  }
+}

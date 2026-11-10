@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { issueOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
         }
 
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-        const state = await issueOAuthState(user, 'gmail_oauth');
+        const state = await issueOAuthState(base44, user, 'gmail_oauth');
         
         // Build the redirect URI for the callback
         const redirectUri = `https://clay-flow-signage-suite-387da97c.base44.app/api/functions/gmailAuthCallback`;
