@@ -38,7 +38,7 @@ import FoundationTemplateDialog from "@/components/estimator/foundation/Foundati
 import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
 import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
 import { createSceneHistory, sceneLayoutAnchor } from "@/components/estimator/foundation/foundationSceneHistory";
-import { createSceneSelection, parseSceneNodeId } from "@/components/estimator/foundation/foundationSceneSelection";
+import { createSceneSelection, parseSceneNodeId, sceneNodeId } from "@/components/estimator/foundation/foundationSceneSelection";
 import { duplicateFoundationAssembly } from "@/components/estimator/foundation/foundationDuplicateMirror";
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
@@ -1799,6 +1799,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   onApply={(patch) => setProject((prev) => (prev ? { ...prev, ...patch } : prev))}
                 />
                 <FoundationBOM
+                  // O-097 -- click-to-fix: an issue's kind/componentId/index
+                  // resolves to the scene node id, selects it, and navigates
+                  // to the foundations (canvas) tab.
+                  onSelectIssue={(issue) => {
+                    const kindMap = { foundation: "item", item: "item", pole: "pole", wall: "wall", cabinet: "cabinet" };
+                    const nodeKind = kindMap[issue?.kind] || null;
+                    if (!nodeKind || typeof sceneNodeId[nodeKind] !== "function") return;
+                    const key = issue.componentId != null ? `component:${issue.componentId}` : issue.index != null ? `index:${issue.index}` : null;
+                    if (!key) return;
+                    sceneSelection.select({ id: sceneNodeId[nodeKind](key) });
+                    setMainTab("foundations");
+                  }}
                   items={calc.items}
                   poles={calc.poles}
                   walls={calc.walls}
