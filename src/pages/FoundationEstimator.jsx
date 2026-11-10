@@ -990,6 +990,13 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     customer_markup_percent: project.customer_markup_percent || 0,
     customer_price_override: project.customer_price_override,
     customer_pricing: project.customer_pricing,
+    // O-099 (CMP-H08) -- revision history: each save appends the prior
+    // `updated_date` (the revision being superseded) to a capped 12-entry
+    // list, so a revision-pair compare can diff any two stored revisions.
+    revision_history: [
+      ...(Array.isArray(project.revision_history) ? project.revision_history : []).slice(-11),
+      ...(project.updated_date ? [{ updated_date: project.updated_date, at: Date.now() }] : []),
+    ],
     excavation_method: project.excavation_method,
     selected_concrete_id: project.selected_concrete_id,
     project_concrete_type: project.project_concrete_type,
