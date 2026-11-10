@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
+import { validateFoundationProposal } from "./foundationModuleProposal";
 
 const PARSE_SCHEMA = {
   type: "object",
@@ -125,6 +126,14 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
 
   const apply = () => {
     if (!proposal || typeof onApply !== "function") return;
+    // W-017 -- validate before apply: field/object issues block the merge and
+    // surface to the operator; a valid proposal then merges through commit
+    // (which carries the schema-valid + undo contract).
+    const { valid, issues } = validateFoundationProposal(proposal);
+    if (!valid) {
+      setError(issues[0]?.message || "The proposal cannot be applied.");
+      return;
+    }
     const items = proposal.items
       .map(i => ({ ...i, quantity: Number(i.quantity) || 1 }))
       .filter(i => Number(i.length_inches) || Number(i.diameter) || Number(i.depth_inches));
