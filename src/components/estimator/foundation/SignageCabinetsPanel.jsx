@@ -39,7 +39,7 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
         <span className="text-[12px] font-bold text-gray-800 whitespace-nowrap">
           {money((cabinet.unit_cost || 0) * (cabinet.quantity || 1))}
         </span>
-        <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
+        <button type="button" onClick={onRemove} className="text-gray-500 hover:text-red-600" title="Remove">
           <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
@@ -129,12 +129,12 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
     <div className="space-y-4">
       <div className="bg-white rounded-sm border border-gray-200 p-3">
         <h3 className="text-[13px] font-bold text-gray-900">Signage Cabinets</h3>
-        <p className="text-[11px] text-gray-400 mb-2">
+        <p className="text-[11px] text-gray-500 mb-2">
           Add cabinets directly on a foundation or mount them on a placed pole.
         </p>
 
         {items.length === 0 ? (
-          <p className="text-[11px] italic text-gray-400">Add a foundation first to mount cabinets on it.</p>
+          <p className="text-[11px] italic text-gray-500">Add a foundation first to mount cabinets on it.</p>
         ) : (
           items.map((item, index) => {
             const rows = group("foundation", index);
@@ -153,7 +153,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                   </button>
                 </div>
                 {rows.length === 0 ? (
-                  <p className="text-[11px] text-gray-400">No cabinets on this foundation.</p>
+                  <p className="text-[11px] text-gray-500">No cabinets on this foundation.</p>
                 ) : (
                   <div className="space-y-2">
                     {rows.map(({ c, i }) => (
@@ -174,11 +174,11 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
 
       <div className="bg-white rounded-sm border border-gray-200 p-3">
         <h3 className="text-[13px] font-bold text-gray-900">Signage Cabinets on Poles</h3>
-        <p className="text-[11px] text-gray-400 mb-2">
+        <p className="text-[11px] text-gray-500 mb-2">
           Add cabinets to placed poles. Place poles in the "Walls &amp; Poles" tab.
         </p>
         {poles.length === 0 ? (
-          <p className="text-[11px] italic text-gray-400">
+          <p className="text-[11px] italic text-gray-500">
             No poles placed. To mount cabinets on a pole, add poles in the "Walls &amp; Poles" tab. (Or skip this and
             use foundation-mounted cabinets above.)
           </p>
@@ -197,7 +197,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                   </button>
                 </div>
                 {rows.length === 0 ? (
-                  <p className="text-[11px] text-gray-400">No cabinets on this pole.</p>
+                  <p className="text-[11px] text-gray-500">No cabinets on this pole.</p>
                 ) : (
                   <div className="space-y-2">
                     {rows.map(({ c, i }) => (
