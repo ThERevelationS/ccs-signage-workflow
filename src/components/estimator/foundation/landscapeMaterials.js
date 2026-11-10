@@ -63,9 +63,9 @@ export const LANDSCAPE_ASSET_MANIFEST = Object.freeze({
 const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 
 // Inventory normalization boundary (CMP-A08): landscapePriceNumber is the
-// canonical catalog price basis (finite, nonnegative â€” an explicit 0 is a
+// canonical catalog price basis (finite, nonnegative  -  -  -  -  -  -  - ? an explicit 0 is a
 // legitimate free material); landscapeCellSizeNumber is the positive
-// dimension basis â€” a missing cell size is not a guessable 12", it is
+// dimension basis  -  -  -  -  -  -  - ? a missing cell size is not a guessable 12", it is
 // unavailable so the recorded total is held rather than repriced on a guess.
 import {
   inventoryNonnegativeNumber as landscapePriceNumber,
@@ -88,7 +88,7 @@ export function landscapeInputIssues(landscape) {
   const cells = isRecord(rawCells) ? rawCells : null;
   if (rawCells !== undefined && rawCells !== null && cells === null) {
     add("cells", "landscape_cells_unavailable",
-      "the recorded site grid is malformed â€” repair or clear it before repricing");
+      "the recorded site grid is malformed  -  -  -  -  -  -  - ? repair or clear it before repricing");
     return issues;
   }
   const painted = Object.entries(cells || {}).filter(([, key]) => key && key !== "dirt");
@@ -111,7 +111,7 @@ export function landscapeInputIssues(landscape) {
     const mat = materialByKey(key);
     if (!mat) {
       add("cells", "landscape_material_unavailable",
-        `site material ${JSON.stringify(key)} is not in the landscape catalog â€” pick a catalog material or erase it before repricing`);
+        `site material ${JSON.stringify(key)} is not in the landscape catalog  -  -  -  -  -  -  - ? pick a catalog material or erase it before repricing`);
     } else if (landscapePriceNumber(mat.cost_per_sqft) === null) {
       add("cost_per_sqft", "landscape_material_price_unavailable",
         `record a finite, nonnegative cost per sq ft for "${mat.label}" before repricing`);
@@ -121,23 +121,32 @@ export function landscapeInputIssues(landscape) {
 }
 
 // Area/cost rollup for the recorded grid. The ported accumulation is kept
-// verbatim for a fully priced grid â€” every line sqft and cost, and the total,
+// verbatim for a fully priced grid  -  -  -  -  -  -  - ? every line sqft and cost, and the total,
 // are identical. An unpriceable line reports null amounts instead of the
 // ported $0, and a null total propagates "unavailable" to the section totals.
 export const landscapeSummary = (landscape) => {
   const cells = isRecord(landscape?.cells) ? landscape.cells : {};
   const cellSize = landscapeCellSizeNumber(landscape?.cell_size_inches);
   const sqftPerCell = cellSize === null ? null : Math.pow(cellSize / 12, 2);
+  // O-073 (CMP-F06) -- authored bed-depth / waste / labor fields: blank =
+  // "not recorded" (depth/volume + labor hold, waste scales to 0), never a
+  // silent zero on the design's money.
+  const waste = Number.isFinite(landscape?.waste_fraction) && landscape.waste_fraction >= 0 ? landscape.waste_fraction : 0;
+  const labor = landscape?.labor_cost == null ? null : Number.isFinite(Number(landscape.labor_cost)) && Number(landscape.labor_cost) >= 0 ? Number(landscape.labor_cost) : null;
+  const laborInvalid = landscape?.labor_cost != null && labor === null;
+  const bedDepth = Number.isFinite(landscape?.bed_depth_inches) && landscape.bed_depth_inches > 0 ? landscape.bed_depth_inches : null;
   const counts = {};
   const rows = {};
+  let plantCount = 0;
   Object.values(cells).forEach((key) => {
-    if (!key || key === "dirt" || isVisualCellKey(key)) return;
+    if (!key || key === "dirt") return;
+    if (isVisualCellKey(key)) { plantCount += 1; return; }
     counts[key] = (counts[key] || 0) + 1;
     if (sqftPerCell !== null) rows[key] = (rows[key] || 0) + sqftPerCell;
   });
   const lines = Object.entries(counts).map(([key, count]) => {
     const mat = materialByKey(key);
-    const sqft = sqftPerCell === null ? null : rows[key];
+    const sqft = sqftPerCell === null ? null : rows[key] * (1 + waste);
     const rate = mat ? landscapePriceNumber(mat.cost_per_sqft) : null;
     return {
       key,
@@ -145,9 +154,11 @@ export const landscapeSummary = (landscape) => {
       color: mat?.color || "#999",
       cells: count,
       sqft,
+      volume_cuft: sqft === null || bedDepth === null ? null : (sqft * bedDepth) / 12,
       cost: sqft === null || rate === null ? null : sqft * rate,
     };
   });
-  const total = lines.every((l) => l.cost !== null) ? lines.reduce((s, l) => s + l.cost, 0) : null;
-  return { lines, total, issues: landscapeInputIssues(landscape) };
+  const materialsTotal = lines.every((l) => l.cost !== null) ? lines.reduce((s, l) => s + l.cost, 0) : null;
+  const total = laborInvalid ? null : materialsTotal === null || labor === null ? materialsTotal : materialsTotal + labor;
+  return { lines, total, materials_total: materialsTotal, labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape) };
 };
