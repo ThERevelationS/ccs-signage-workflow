@@ -32,7 +32,19 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
       for (const file of incoming) {
         if (!file.type?.startsWith("image/")) { setError(`${file.name} is not an image.`); continue; }
         if (file.size > MAX_BYTES) { setError(`${file.name} exceeds ${MAX_BYTES / 1048576} MB.`); continue; }
-        const res = await base44.integrations.Core.UploadFile({ file });
+        // W-021 (AI-10) -- EXIF/metadata strip: the image decodes to a bitmap
+        // and re-encodes through a canvas, dropping EXIF/GPS/camera metadata
+        // before the external upload. On failure the original file uploads.
+        let uploadFile = file;
+        try {
+          const bmp = await createImageBitmap(file);
+          const c = document.createElement("canvas");
+          c.width = bmp.width; c.height = bmp.height;
+          c.getContext("2d").drawImage(bmp, 0, 0);
+          const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.92));
+          if (blob) uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+        } catch { /* re-encode unavailable -- the original uploads */ }
+        const res = await base44.integrations.Core.UploadFile({ file: uploadFile });
         const url = res?.file_url || res?.url || "";
         // W-013 -- the reference record carries a stable id, purpose,
         // provenance, consent and processing state; no image bytes in JSON.
@@ -102,7 +114,7 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
                     onChange={(e) => update(i, "notes", e.target.value)}
                     placeholder="Notes for the review"
                     className="mt-0.5 w-full h-5 px-1 text-[10px] border border-gray-100 rounded-sm bg-white" />
-                  <p className="text-[9px] text-gray-400 mt-px">
+                  <p className="text-[9px] text-gray-500 mt-px">
                     {p?.purpose ? p.purpose.replace(/_/g, " ") : "context"}{p?.state ? ` - ${p.state}` : ""}
                   </p>
                 </div>
