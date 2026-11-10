@@ -3,11 +3,11 @@ import { applyOwnerCapabilities } from './ownerRole.ts';
 
 // Short-lived auth cache — every function call used to spend ~2 entity_list
 // reads re-verifying the same session (AuthorizedEmail + UserSession). Deno
-// isolates persist across invocations, so a 60s cache eliminates the
+// isolates persist across invocations, so a 15s cache eliminates the
 // per-invoke read cost on warm isolates while keeping session revocation
-// near-immediate. Only successful authentications are cached.
+// bounded. Only successful authentications are cached.
 const sessionAuthCache = new Map<string, { user: any; expires: number }>();
-const SESSION_AUTH_CACHE_MS = 60_000;
+const SESSION_AUTH_CACHE_MS = 15_000;
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -92,7 +92,16 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
 
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return applyOwnerCapabilities(stripExpiredGrant(cachedAuth.user));
+  if (cachedAuth && cachedAuth.expires > Date.now()) {
+    // Free hit-path recheck — the cached user's session_not_before still gates
+    // older tokens (catches not_before bumps fetched inside the cache window).
+    const cachedUser = applyOwnerCapabilities(stripExpiredGrant(cachedAuth.user));
+    const cachedNotBefore = Date.parse(String(cachedUser?.session_not_before || ''));
+    if (Number.isFinite(cachedNotBefore) && cachedNotBefore > 0 && issuedAt < cachedNotBefore) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+    return cachedUser;
+  }
 
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
