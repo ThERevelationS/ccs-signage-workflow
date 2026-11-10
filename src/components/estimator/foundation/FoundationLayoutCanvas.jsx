@@ -1149,7 +1149,7 @@ export default function FoundationLayoutCanvas({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div>
           <h3 className="text-[13px] font-bold text-gray-900">Layout Canvas</h3>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-500">
             {editable
               ? "Drag a foundation or use arrow keys (Shift for larger steps). Click selects, Ctrl/Shift-click adds, drag empty space to box-select, Tab/arrows cycle, Esc clears."
               : "Foundation positions (read-only). Click to select, drag empty space to box-select."}
@@ -1159,7 +1159,7 @@ export default function FoundationLayoutCanvas({
           <span className="flex items-center gap-1">
             <Move className="w-3 h-3" aria-hidden="true" /> Move Foundation
           </span>
-          <span className="text-gray-400">40ft × 26ft 8in</span>
+          <span className="text-gray-500">40ft × 26ft 8in</span>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
@@ -1222,7 +1222,7 @@ export default function FoundationLayoutCanvas({
             {[0, 120, 240, 360, 480].map((inches) => (
               <span
                 key={inches}
-                className="absolute text-[9px] text-gray-400"
+                className="absolute text-[9px] text-gray-500"
                 style={{ left: pctW(inches), transform: "translateX(-50%)" }}
               >
                 {inches / 12}&apos;
@@ -1462,9 +1462,9 @@ export default function FoundationLayoutCanvas({
         <div data-selected-props="true" className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
           <span className="font-semibold text-gray-600">{primaryResolved.node}:</span>
           {primaryProps.map(([label, value]) => (
-            <span key={label}><span className="text-gray-400">{label}</span> {String(value)}</span>
+            <span key={label}><span className="text-gray-500">{label}</span> {String(value)}</span>
           ))}
-          <span className="text-gray-400 italic">edit via its panel</span>
+          <span className="text-gray-500 italic">edit via its panel</span>
         </div>
       )}
 
@@ -1472,7 +1472,7 @@ export default function FoundationLayoutCanvas({
         type="button"
         data-tree-toggle="true"
         onClick={() => setTreeOpen((v) => !v)}
-        className="mt-1.5 text-[10px] text-gray-400 hover:text-gray-600"
+        className="mt-1.5 text-[10px] text-gray-500 hover:text-gray-600"
       >
         {treeOpen ? "▾" : "▸"} Objects
       </button>
@@ -1480,7 +1480,7 @@ export default function FoundationLayoutCanvas({
         type="button"
         data-layers-toggle="true"
         onClick={() => setLayersOpen((v) => !v)}
-        className="mt-1.5 ml-3 text-[10px] text-gray-400 hover:text-gray-600"
+        className="mt-1.5 ml-3 text-[10px] text-gray-500 hover:text-gray-600"
       >
         {layersOpen ? "▾" : "▸"} Layers
       </button>
@@ -1488,7 +1488,7 @@ export default function FoundationLayoutCanvas({
         type="button"
         data-diag-toggle="true"
         onClick={() => setDiagOpen((v) => !v)}
-        className="mt-1.5 ml-3 text-[10px] text-gray-400 hover:text-gray-600"
+        className="mt-1.5 ml-3 text-[10px] text-gray-500 hover:text-gray-600"
       >
         {diagOpen ? "▾" : "▸"} Diagnostics
       </button>
@@ -1503,7 +1503,7 @@ export default function FoundationLayoutCanvas({
             ))}
           </div>
           {(!diagFiltered.length) && (
-            <p className="px-1 py-1 text-gray-400">No conflicts detected.</p>
+            <p className="px-1 py-1 text-gray-500">No conflicts detected.</p>
           )}
           {diagFiltered.map((f, i) => (
             <button
