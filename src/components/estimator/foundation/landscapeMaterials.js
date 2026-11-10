@@ -287,9 +287,22 @@ export const landscapeSummary = (landscape) => {
   const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null || bedsTotal === null
     ? null
     : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal + bedsTotal;
+  // O-071 (CMP-F04) -- grouped placement: objects sharing a `group` key
+  // summarize by that group (`{count, cost}`) -- the grouped placement's
+  // aggregate surface (the objects still bill individually; the group is a
+  // placement/pricing cohort, not a lumped line).
+  const groups = {};
+  (Array.isArray(landscape?.objects) ? landscape.objects : []).forEach((o, i) => {
+    const key = o?.group;
+    if (!key) return;
+    const l = objectLines[i];
+    const g = groups[key] || (groups[key] = { count: 0, cost: 0 });
+    g.count += 1;
+    if (l && Number.isFinite(l.cost)) g.cost += l.cost;
+  });
   return {
     lines, object_lines: objectLines, border_lines: borderLines, bed_lines: bedLines, total,
     materials_total: materialsTotal, objects_total: objectsTotal, borders_total: bordersTotal, beds_total: bedsTotal,
-    labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape),
+    labor_cost: labor, plant_count: plantCount, groups, issues: landscapeInputIssues(landscape),
   };
 };
