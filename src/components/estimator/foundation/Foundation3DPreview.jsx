@@ -154,6 +154,18 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
         }
         tag(box, s.component_id, "pole_sign");
         group.add(box);
+        // O-067 (CMP-E12) -- sign-face panel: a thin face on the sign's front
+        // face in the authored body/trim color (blank = the box's default
+        // cabMat; never an invented color).
+        const bodyColor = typeof s?.body_color === "string" && s.body_color !== "" ? s.body_color : null;
+        if (bodyColor) {
+          const faceMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+          const face = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), faceMat);
+          face.position.set(box.position.x, box.position.y, box.position.z + sd / 2 + 0.5);
+          if (fi) face.rotation.y = ang;
+          tag(face, s.component_id, "pole_sign_face");
+          group.add(face);
+        }
       }
     });
   });
