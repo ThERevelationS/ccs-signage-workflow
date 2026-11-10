@@ -101,7 +101,7 @@ export default function ReinforcementDraftGeometry({ draft, item, supportCatalog
               </select>
             </label>
             {supports.catalog_id && !supportRows.some(r => r.id === supports.catalog_id) && (
-              <p className="mt-0.5 text-[11px] text-amber-700">Pinned support ID is not in the current catalog — pricing will report it unresolved.</p>
+              <p className="mt-0.5 text-[11px] text-amber-700">Pinned support ID is not in the current catalog â€” pricing will report it unresolved.</p>
             )}
             {!supportRows.length && (
               <p className="mt-0.5 text-[11px] text-amber-700">No rebar_support catalog rows loaded; compatible-pick pricing will stay unresolved.</p>
@@ -176,6 +176,21 @@ export default function ReinforcementDraftGeometry({ draft, item, supportCatalog
         </div>
       ) : (
         <div className="space-y-2">
+          {(() => {
+            const depth = Number(item?.depth_inches);
+            const cov = Number(cover?.top);
+            const dia = Number(design?.bar_diameter_inches);
+            const ready = Number.isFinite(depth) && Number.isFinite(cov) && Number.isFinite(dia);
+            return (
+              <button
+                type="button"
+                disabled={disabled || !ready}
+                title={ready ? "Add a mat with bearing elevation = depth - top cover - 2 x bar diameter; spacing stays authored." : "Record depth, top cover and bar diameter first."}
+                onClick={() => setSpread({ mats: [...(mats ?? []), { id: newRowId("mat"), bearing_elevation_inches: depth - cov - 2 * dia, max_spacing_x_inches: "", max_spacing_z_inches: "" }] })}
+                className="h-5 px-1.5 rounded-sm border border-violet-300 text-[10px] text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+              >+ Top mat (elevation from cover)</button>
+            );
+          })()}
           <ReinforcementDraftList
             title="Spread mats"
             listKey="mats"
