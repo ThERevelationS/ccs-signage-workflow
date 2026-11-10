@@ -13,17 +13,17 @@ import { CheckCircle2, Circle } from "lucide-react";
 function stepState(project, calc, savedSourceProject) {
   const cells = Object.keys(project?.landscape?.cells || {}).length;
   const steps = [
-    { label: "Brief", done: !!(project?.id && project?.customer_name), hint: "customer + project basics" },
-    { label: "Structure", done: (calc?.items || []).length > 0, hint: "foundation items" },
-    { label: "Walls/Caps", done: ((calc?.walls || []).length > 0 || (calc?.wallCaps || []).length > 0), hint: "walls + caps" },
-    { label: "Signs/Site", done: ((calc?.poles || []).length > 0 || (project?.signage_cabinets || []).length > 0 || cells > 0), hint: "poles, signs, landscape" },
-    { label: "Review/Save", done: !!savedSourceProject, hint: "saved revision" },
+    { label: "Brief", tab: "foundations", done: !!(project?.id && project?.customer_name), hint: "customer + project basics" },
+    { label: "Structure", tab: "foundations", done: (calc?.items || []).length > 0, hint: "foundation items" },
+    { label: "Walls/Caps", tab: "caps", done: ((calc?.walls || []).length > 0 || (calc?.wallCaps || []).length > 0), hint: "walls + caps" },
+    { label: "Signs/Site", tab: "signage", done: ((calc?.poles || []).length > 0 || (project?.signage_cabinets || []).length > 0 || cells > 0), hint: "poles, signs, landscape" },
+    { label: "Review/Save", tab: "summary", done: !!savedSourceProject, hint: "saved revision" },
   ];
   const firstPending = steps.findIndex((s) => !s.done);
   return steps.map((s, i) => ({ ...s, active: i === firstPending }));
 }
 
-export default function FoundationGuidedSteps({ project, calc, savedSourceProject }) {
+export default function FoundationGuidedSteps({ project, calc, savedSourceProject, onStepClick }) {
   const steps = stepState(project, calc, savedSourceProject);
   const doneCount = steps.filter((s) => s.done).length;
   return (
@@ -37,9 +37,14 @@ export default function FoundationGuidedSteps({ project, calc, savedSourceProjec
             {s.done
               ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
               : <Circle className={`h-3.5 w-3.5 ${s.active ? "text-violet-600" : "text-gray-300"}`} aria-hidden="true" />}
-            <span className={`text-[11px] ${s.done ? "text-gray-400 line-through" : s.active ? "font-semibold text-violet-700" : "text-gray-500"}`}>
+            <button
+              type="button"
+              onClick={() => onStepClick?.(s.tab)}
+              className={`text-[11px] hover:underline ${s.done ? "text-gray-400 line-through" : s.active ? "font-semibold text-violet-700" : "text-gray-500"}`}
+              title={`Go to ${s.label}`}
+            >
               {s.label}
-            </span>
+            </button>
             <span className="text-[10px] text-gray-400">{s.done ? "" : s.hint}</span>
             {i < steps.length - 1 && <span className="text-gray-300" aria-hidden="true">&rarr;</span>}
           </li>
