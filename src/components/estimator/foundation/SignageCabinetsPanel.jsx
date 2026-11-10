@@ -1,16 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
-import { money, calcSignageCabinetPricing } from "./foundationCalc";
-import { FoundationDimensionInput } from "./foundationFtInEntry";
-import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
-
-// O-093 (CMP-H02): cabinet dimensions take feet/inches entry through the
-// shared dimension field — same verbatim-draft contract as the panel's
-// cabinetInputValue (blank stays, malformed stores verbatim for diagnostics),
-// canonical inches stored, plain-language label + help + suggested-format
-// placeholder from the field meta map (never stored defaults). Quantity and
-// unit cost are counts/currency, not dimensions — they keep the numeric path.
-const cabDimMeta = (field) => foundationDimensionFieldMeta("cabinet", field);
+import { money } from "./foundationCalc";
 
 const blankCabinet = (mount, index, canonId) => ({
   id: `cab_${Date.now()}`,
@@ -28,13 +18,6 @@ const blankCabinet = (mount, index, canonId) => ({
   unit_cost: 0,
 });
 
-// Blank-preserving draft coercion (same rule as the wall/pole/equipment
-// panels): a blank draft stays blank, a numeric draft becomes a number, and a
-// malformed draft is stored verbatim so the pricing diagnostics can flag it —
-// never coerced to 0 by parseFloat || 0.
-const cabinetInputValue = (value) =>
-  value === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : value;
-
 const Field = ({ label, ...props }) => (
   <label className="text-[10px] text-gray-500">
     {label}
@@ -42,15 +25,10 @@ const Field = ({ label, ...props }) => (
   </label>
 );
 
-function CabinetRow({ cabinet, detail, diagId, onChange, onRemove }) {
-  const issues = detail?.issues || [];
-  const broken = issues.length > 0;
-  const fieldIssue = (field) => issues.some((i) => i.field === field);
-  const describedBy = (field) => (fieldIssue(field) ? diagId : undefined);
-  const num = (key) => (e) => onChange({ [key]: cabinetInputValue(e.target.value) });
-  const lineTotal = broken || !Number.isFinite(detail?.cost) ? "Not saved" : money(detail.cost);
+function CabinetRow({ cabinet, onChange, onRemove }) {
+  const num = (key) => (e) => onChange({ [key]: parseFloat(e.target.value) || 0 });
   return (
-    <div className={`rounded-sm border bg-white p-2 ${broken ? "border-amber-300" : "border-gray-200"}`}>
+    <div className="rounded-sm border border-gray-200 bg-white p-2">
       <div className="flex items-center gap-2 mb-2">
         <Input
           value={cabinet.description || ""}
@@ -58,87 +36,48 @@ function CabinetRow({ cabinet, detail, diagId, onChange, onRemove }) {
           placeholder="Cabinet description"
           className="h-8 text-[12px]"
         />
-        <span className={`text-[12px] font-bold whitespace-nowrap ${broken ? "text-amber-700" : "text-gray-800"}`}>
-          {lineTotal}
+        <span className="text-[12px] font-bold text-gray-800 whitespace-nowrap">
+          {money((cabinet.unit_cost || 0) * (cabinet.quantity || 1))}
         </span>
         <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
           <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-      {broken && (
-        <ul role="status" id={diagId} className="list-disc pl-5 mb-2 text-[10px] text-amber-800">
-          {issues.map((i, k) => <li key={k}>{i.message}</li>)}
-        </ul>
-      )}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <FoundationDimensionInput
-          {...cabDimMeta("width_inches")}
-          value={cabinet.width_inches ?? 0}
-          onCommit={(v) => onChange({ width_inches: v })}
-          invalid={fieldIssue("width_inches") || undefined}
-          describedBy={describedBy("width_inches")}
-          labelClassName="text-[10px] text-gray-500"
-          inputClassName="h-8 text-[12px]"
-        />
-        <FoundationDimensionInput
-          {...cabDimMeta("height_inches")}
-          value={cabinet.height_inches ?? 0}
-          onCommit={(v) => onChange({ height_inches: v })}
-          invalid={fieldIssue("height_inches") || undefined}
-          describedBy={describedBy("height_inches")}
-          labelClassName="text-[10px] text-gray-500"
-          inputClassName="h-8 text-[12px]"
-        />
-        <FoundationDimensionInput
-          {...cabDimMeta("depth_inches")}
-          value={cabinet.depth_inches ?? 0}
-          onCommit={(v) => onChange({ depth_inches: v })}
-          invalid={fieldIssue("depth_inches") || undefined}
-          describedBy={describedBy("depth_inches")}
-          labelClassName="text-[10px] text-gray-500"
-          inputClassName="h-8 text-[12px]"
-        />
-        <FoundationDimensionInput
-          {...cabDimMeta("mount_height_inches")}
+        <Field label="Width (in)" type="number" value={cabinet.width_inches ?? 0} onChange={num("width_inches")} />
+        <Field label="Height (in)" type="number" value={cabinet.height_inches ?? 0} onChange={num("height_inches")} />
+        <Field label="Depth (in)" type="number" value={cabinet.depth_inches ?? 0} onChange={num("depth_inches")} />
+        <Field
+          label="Mount ht (in)"
+          type="number"
           value={cabinet.mount_height_inches ?? 0}
-          onCommit={(v) => onChange({ mount_height_inches: v })}
-          invalid={fieldIssue("mount_height_inches") || undefined}
-          describedBy={describedBy("mount_height_inches")}
-          labelClassName="text-[10px] text-gray-500"
-          inputClassName="h-8 text-[12px]"
+          onChange={num("mount_height_inches")}
         />
-        <Field
-          label="Qty"
-          type="number"
-          min={0}
-          step="any"
-          placeholder="1"
-          data-cabinet-field="quantity"
-          value={cabinet.quantity ?? ""}
-          aria-invalid={fieldIssue("quantity") || undefined}
-          aria-describedby={describedBy("quantity")}
-          onChange={num("quantity")}
-        />
-        <Field
-          label="Unit cost"
-          type="number"
-          min={0}
-          step="any"
-          placeholder="0"
-          data-cabinet-field="unit_cost"
-          value={cabinet.unit_cost ?? ""}
-          aria-invalid={fieldIssue("unit_cost") || undefined}
-          aria-describedby={describedBy("unit_cost")}
-          onChange={num("unit_cost")}
-        />
+        {/* O-062 (CMP-E07) -- typed mount hardware: bracket / base-plate /
+            anchor assembly. Authored; blank = "not recorded", never invented. */}
+        <label className="text-[10px] text-gray-500">
+          Mount hardware
+          <select
+            value={cabinet.mount_hardware ?? ""}
+            onChange={(e) => onChange({ mount_hardware: e.target.value === "" ? undefined : e.target.value })}
+            className="block w-full h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+            aria-label="Cabinet mount hardware"
+          >
+            <option value="">--</option>
+            <option value="bracket">Bracket</option>
+            <option value="base_plate">Base plate</option>
+            <option value="anchor">Anchor assembly</option>
+            <option value="other">Other (engineering review)</option>
+          </select>
+        </label>
+        <Field label="Qty" type="number" value={cabinet.quantity ?? 1} onChange={num("quantity")} />
+        <Field label="Unit cost" type="number" value={cabinet.unit_cost ?? 0} onChange={num("unit_cost")} />
       </div>
     </div>
   );
 }
 
 export default function SignageCabinetsPanel({ cabinets = [], items = [], poles = [], onChange }) {
-  const pricingRows = calcSignageCabinetPricing(cabinets);
-  const hasIssues = pricingRows.some((row) => row.issues.length > 0);
   const update = (idx, changes) =>
     onChange(cabinets.map((c, i) => (i === idx ? { ...c, ...changes } : c)));
   const remove = (idx) => {
@@ -188,11 +127,6 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
 
   return (
     <div className="space-y-4">
-      {hasIssues && (
-        <p className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
-          Cabinet pricing unavailable — fix highlighted inputs. Saved amounts only; the current total is not repriced.
-        </p>
-      )}
       <div className="bg-white rounded-sm border border-gray-200 p-3">
         <h3 className="text-[13px] font-bold text-gray-900">Signage Cabinets</h3>
         <p className="text-[11px] text-gray-400 mb-2">
@@ -226,8 +160,6 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                       <CabinetRow
                         key={c.component_id || c.id || i}
                         cabinet={c}
-                        detail={pricingRows[i]}
-                        diagId={`signage-cabinet-${i}-pricing`}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
                       />
@@ -272,8 +204,6 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                       <CabinetRow
                         key={c.component_id || c.id || i}
                         cabinet={c}
-                        detail={pricingRows[i]}
-                        diagId={`signage-cabinet-${i}-pricing`}
                         onChange={(changes) => update(i, changes)}
                         onRemove={() => remove(i)}
                       />
@@ -293,8 +223,6 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                 <div key={c.component_id || c.id || i}>
                   <CabinetRow
                     cabinet={c}
-                    detail={pricingRows[i]}
-                    diagId={`signage-cabinet-${i}-pricing`}
                     onChange={(changes) => update(i, changes)}
                     onRemove={() => remove(i)}
                   />
