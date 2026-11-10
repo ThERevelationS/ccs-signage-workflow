@@ -4,9 +4,7 @@ const whole = value => nonnegative(value) && Number.isSafeInteger(value);
 const STEEL_ROLES = Object.freeze(["horizontal", "longitudinal", "hoop", "inter_mat_tie"]);
 
 // Internal steel cost only. Call with a freshly calculated model, never stored calculated metadata.
-// `supportsResolution` is the fresh support-economics result for modeled supports;
-// steel amounts here stay steel-only — support money is added exactly once downstream.
-export function priceFoundationReinforcementModel(model, basis = {}, supportsResolution = null) {
+export function priceFoundationReinforcementModel(model, basis = {}) {
   const issues = [];
   const issue = (field, code, message, severity = "error") => issues.push({ field, code, message, severity });
   const unavailable = () => ({
@@ -88,11 +86,20 @@ export function priceFoundationReinforcementModel(model, basis = {}, supportsRes
   const hours = multiply(pricedFeet, basis.labor_hours_per_ft, "linear_labor_hours")
     + multiply(modelConnections, basis.labor_hours_per_connection, "connection_labor_hours");
   const labor = multiply(hours, basis.labor_rate_per_hour, "labor_cost");
+  // O-011 Phase-B -- optional authored supports amount. A finite, nonnegative
+  // `supports_cost` records the priced rebar-support line (chairs/dobies); its
+  // absence keeps the support path unresolved (steel-only cannot replace the
+  // estimate) rather than minting a silent zero.
+  const supportsCost = basis.supports_cost == null ? null : nonnegative(basis.supports_cost) ? basis.supports_cost : null;
+  if (basis.supports_cost != null && supportsCost === null) {
+    issue("supports_cost", "reinforcement_support_cost_input_invalid", "Use an explicit finite nonnegative supports cost; zero is allowed.");
+  }
   const amounts = {
     geometry_feet: feet, priced_feet: pricedFeet, connection_count: modelConnections,
     material_cost: material, labor_hours: hours, labor_cost: labor, steel_cost: material + labor,
     priced_weight_lbs: weight == null ? null : multiply(pricedFeet, weight, "priced_weight_lbs"),
     geometry_weight_lbs: weight == null ? null : multiply(feet, weight, "geometry_weight_lbs"),
+    supports_cost: supportsCost,
   };
   if (issues.some(i => i.severity === "error")) return unavailable();
   if (Object.values(amounts).some(value => value !== null && !Number.isFinite(value))) {
@@ -102,10 +109,12 @@ export function priceFoundationReinforcementModel(model, basis = {}, supportsRes
   if (override != null && !close(pricedFeet, feet)) issue("quantity_override_ft", "reinforcement_priced_quantity_differs",
     "The explicit aggregate priced quantity differs from geometric steel; it was not scaled again by foundation quantity.", "warning");
   if (weight == null) issue("weight_lb_per_ft", "reinforcement_weight_unknown", "Steel weight is unknown, not zero; BOM/handoff compatibility still requires resolution.", "warning");
-  const supportsReady = model.supports?.status === "not_required"
-    || (model.supports?.status === "off_explained" && model.supports.count === 0
+  const supportsReady = (model.supports?.status === "off_explained" && model.supports.count === 0
       && typeof model.supports.reason === "string" && Boolean(model.supports.reason.trim()))
-    || (model.supports?.status === "modeled" && supportsResolution?.status === "resolved");
+    // A priced supports line resolves the path the same way an explained-off
+    // design does -- the estimate replaces steel-only once supports are either
+    // explicitly costed or explicitly excluded with a reason.
+    || (supportsCost != null && Number.isFinite(supportsCost));
   if (!supportsReady) issue("supports", "reinforcement_support_cost_unknown", "Support quantities/costs are unresolved; steel-only pricing cannot replace the estimate.", "warning");
   const connectionUnverified = model.issues?.some(i =>
     ["reinforcement_connection_unverified", "reinforcement_tie_path_only"].includes(i.code));
