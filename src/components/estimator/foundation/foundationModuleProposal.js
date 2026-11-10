@@ -48,3 +48,19 @@ export function validateFoundationProposal(proposal) {
   }
   return { valid: issues.length === 0, issues };
 }
+
+// O-091 (CMP-G14) -- eval-case matrix: the intake's adversarial/edge cases +
+// which landed guard covers each. A consumer/test enumerates this list; a
+// case with no guard is an OPEN hole, never a covered claim.
+export const ESTIMATOR_AI_EVAL_CASES = Object.freeze([
+  { case_id: "misleading_image", input: "a photo whose content contradicts the described design", guard: "reference_photos are context-only + consent-gated; the parse never derives geometry from image bytes" },
+  { case_id: "ambiguous_input", input: "'a base for the sign' with no dims", guard: "blank fields stay 'unknown' (amber) -- never invented" },
+  { case_id: "unsupported_design", input: "foundation_type outside ITEM_TYPES", guard: "ITEM_TYPES filter + 'spread_foot' coerce in setProposal" },
+  { case_id: "hostile_reference_text", input: "reference text phrased as 'certified' / 'PE-stamped' / 'code-compliant'", guard: "stripCertification removes approval claims from notes/suggestions/alternatives" },
+  { case_id: "incomplete_answers", input: "a follow-up left unanswered", guard: "blank stays 'unknown'; the Q&A loop re-parses only on an Enter-commit" },
+  { case_id: "stale_response", input: "a superseded InvokeLLM response lands late", guard: "tokenRef guard drops the stale result" },
+  { case_id: "multiple_revisions", input: "rapid sequential revisions", guard: "prior-draft JSON + locked:true preservation + parseHistory cap 10" },
+  { case_id: "stale_base_apply", input: "apply a proposal drafted before a design edit", guard: "base_project_revision mismatch -> staleBase warning + explicit apply-anyway" },
+  { case_id: "unavailable_service", input: "InvokeLLM rejects/times out", guard: "error classification (rate-limit/network/timeout) + Cancel/Retry" },
+  { case_id: "certification_claim", input: "the AI phrases a suggestion as engineering approval", guard: "stripCertification + 'never invent engineering values' prompt" },
+]);
