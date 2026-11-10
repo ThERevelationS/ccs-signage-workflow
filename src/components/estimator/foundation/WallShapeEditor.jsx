@@ -75,6 +75,7 @@ export default function WallShapeEditor({ shape, onChange }) {
     l: formatFoundationDimension(96),
     w: formatFoundationDimension(48),
   }));
+  const [legThick, setLegThick] = useState("");
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const gridId = `wallGrid-${uid}`;
   const rectLId = `rectL-${uid}`;
@@ -118,10 +119,16 @@ export default function WallShapeEditor({ shape, onChange }) {
   const presetOutline = (kind) => {
     if (!rectL.ok || !rectW.ok) return;
     const l = rectL.inches, w = rectW.inches;
+    // O-044 (CMP-D01) -- parameterized leg thickness: authored `legT` when
+    // finite-positive-and-fits, else the original half-dimension default.
+    const legT =
+      Number.isFinite(Number(legThick)) && Number(legThick) > 0 && Number(legThick) <= Math.min(l, w) / 2
+        ? Number(legThick)
+        : Math.min(l, w) / 2;
     const hl = l / 2, hw = w / 2;
     const shapes = {
-      l: [{ x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: hw }, { x: hl, z: hw }, { x: hl, z: w }, { x: 0, z: w }],
-      u: [{ x: 0, z: w }, { x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: w }, { x: l - hl, z: w }, { x: l - hl, z: hw }, { x: hl, z: hw }, { x: hl, z: w }],
+      l: [{ x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: legT }, { x: legT, z: legT }, { x: legT, z: w }, { x: 0, z: w }],
+      u: [{ x: 0, z: w }, { x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: w }, { x: l - legT, z: w }, { x: l - legT, z: legT }, { x: legT, z: legT }, { x: legT, z: w }],
     };
     const pts = shapes[kind];
     if (!pts) return;
@@ -189,6 +196,20 @@ export default function WallShapeEditor({ shape, onChange }) {
           aria-describedby={!rectShape ? rectErrId : undefined}>
           <Square className="w-4 h-4" aria-hidden="true" /> Use rectangle
         </Button>
+        {/* O-044 (CMP-D01) -- optional authored leg thickness: a finite
+            positive value (<= min(rect L,W)/2) parameterizes the L/U leg
+            thickness; blank falls back to the original half-dimension. */}
+        <label className="text-[10px] text-gray-500">
+          Leg thickness (in)
+          <input
+            type="number" min="0" step="0.25"
+            value={legThick}
+            onChange={(e) => setLegThick(e.target.value)}
+            placeholder="half"
+            className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+            aria-label="L/U leg thickness (inches)"
+          />
+        </label>
         <Button variant="outline" size="sm" onClick={() => presetOutline("l")} disabled={!rectShape}>
           L shape
         </Button>
