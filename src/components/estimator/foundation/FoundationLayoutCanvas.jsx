@@ -148,18 +148,24 @@ const LAYER_ROWS = [
 // drawn from saved inches — no derived/estimated placement.
 const ELEV_DEPTH_IN = 96; // profile window: 8 ft of vertical space
 const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect }) => {
+  // O-032 -- front/side toggle: side projects at x/length (looking along +z);
+  // front projects at z/width (looking along +x). Same vertical profile
+  // (depth below grade / offset above / pole+sign heights), different axis.
+  const [view, setView] = useState("side");
+  const hx = (o) => Number(view === "front" ? o?.z_inches : o?.x_inches) || 0;
+  const hw = (o) => Number(view === "front" ? o?.width_inches : (o?.length_inches ?? o?.diameter)) || 0;
   const itemsDrawn = (items || []).map((item, i) => ({
     item, i,
     key: layoutItemKey(item, i),
-    x: Number(item.x_inches) || 0,
-    w: Number(item.length_inches ?? item.diameter) || 0,
+    x: hx(item),
+    w: hw(item),
     depth: Number(item.depth_inches) || 0,
     off: Number(item.grade_offset_inches) || 0,
   })).filter((d) => d.w > 0 || d.depth > 0);
   const polesDrawn = (poles || []).map((pole, i) => ({
     pole, i,
     key: layoutItemKey(pole, i),
-    x: Number(pole.x_inches) || 0,
+    x: hx(pole),
     h: Number(pole.height_inches) || 0,
     embed: Number(pole.embedment_inches ?? pole.y_offset_inches) || 0,
   }));
@@ -171,10 +177,10 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
     let x = null;
     if (cab?.mount === "pole") {
       const rec = poleById.get(cab?.pole_component_id);
-      if (rec) x = Number(rec.p.x_inches) || 0;
+      if (rec) x = hx(rec.p);
     } else if (cab?.mount === "foundation") {
       const rec = itemById.get(cab?.foundation_component_id);
-      if (rec) x = (Number(rec.it.x_inches) || 0) + (Number(rec.it.length_inches ?? rec.it.diameter) || 0) / 2;
+      if (rec) x = hx(rec.it) + hw(rec.it) / 2;
     }
     if (x === null) return null;
     return {
@@ -189,7 +195,7 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
   // authored dims only (unresolved heights/widths draw nothing).
   const signsDrawn = [];
   (poles || []).forEach((pole, i) => {
-    const x = Number(pole.x_inches) || 0;
+    const x = hx(pole);
     (pole.signs || []).forEach((s, si) => {
       const w = Number(s?.width_inches), h = Number(s?.height_inches), mh = Number(s?.mount_height_inches) || 0;
       if (!(w > 0) || !(h > 0)) return;
@@ -204,7 +210,16 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
   const scaleY = H / (maxUp + maxDepth);
   const scaleX = (v) => (v / (widthIn || 480)) * 100;
   return (
-    <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" className="mt-1 h-16 w-full rounded-sm border border-gray-200 bg-gray-50" data-elevation-strip="true">
+    <div data-elevation-view={view}>
+      <div className="mt-1 flex gap-1">
+        {["side", "front"].map((v) => (
+          <button key={v} type="button" onClick={() => setView(v)}
+            className={`h-4 px-1.5 rounded-sm text-[9px] ${view === v ? "bg-violet-600 text-white" : "border border-gray-300 text-gray-500"}`}>
+            {v === "side" ? "Side (x)" : "Front (z)"}
+          </button>
+        ))}
+      </div>
+      <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" className="mt-0.5 h-16 w-full rounded-sm border border-gray-200 bg-gray-50" data-elevation-strip="true">
       <line x1="0" y1={gradeY} x2="100" y2={gradeY} stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 2" vectorEffect="non-scaling-stroke" />
       {itemsDrawn.map((d) => (
         <rect
@@ -256,7 +271,8 @@ const ElevationStrip = ({ items, poles, cabinets = [], selIds, widthIn, onSelect
           strokeWidth="1" vectorEffect="non-scaling-stroke"
         />
       ))}
-    </svg>
+      </svg>
+    </div>
   );
 };
 
