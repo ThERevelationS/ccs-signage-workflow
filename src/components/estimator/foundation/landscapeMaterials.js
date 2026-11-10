@@ -60,6 +60,17 @@ export const LANDSCAPE_COUNT_OBJECTS = [
 ];
 export const countObjectByKey = (key) => LANDSCAPE_COUNT_OBJECTS.find((o) => o.key === key);
 
+// O-069 (CMP-F02) -- linear-entry borders: edge/border types priced by linear
+// feet (`cost_per_ft`) — a discrete linear entry, not a cell coverage. Blank
+// `linear_feet` = "not recorded" (the line holds, never a silent $0).
+export const LANDSCAPE_BORDER_TYPES = [
+  { key: "steel_edging", label: "Steel edging", cost_per_ft: 4.50 },
+  { key: "plastic_edging", label: "Plastic edging", cost_per_ft: 1.75 },
+  { key: "brick_border", label: "Brick border", cost_per_ft: 8.00 },
+  { key: "concrete_curb", label: "Concrete curb", cost_per_ft: 12.00 },
+];
+export const borderTypeByKey = (key) => LANDSCAPE_BORDER_TYPES.find((b) => b.key === key);
+
 export const GRID_COLS = 24;
 export const GRID_ROWS = 16;
 
@@ -218,12 +229,31 @@ export const landscapeSummary = (landscape) => {
     };
   });
   const objectsTotal = objectLines.length === 0 ? 0 : objectLines.every((l) => l.cost !== null) ? objectLines.reduce((s, l) => s + l.cost, 0) : null;
-  const total = laborInvalid || objectsTotal === null || materialsTotal === null
+  // O-069 (CMP-F02) -- linear-entry borders: `landscape.borders[]` rows
+  // {type, linear_feet} price linear_feet x the border type's cost_per_ft -- a
+  // discrete linear entry, not a cell coverage. A malformed row (unknown
+  // type, non-positive feet) holds its line -- never a silent $0.
+  const borderLines = (Array.isArray(landscape?.borders) ? landscape.borders : []).map((b) => {
+    const type = borderTypeByKey(b?.type);
+    const feet = Number(b?.linear_feet);
+    const validFeet = Number.isFinite(feet) && feet > 0;
+    const rate = type ? Number(type.cost_per_ft) : null;
+    return {
+      key: b?.type || "unknown",
+      label: type?.label || (b?.type || "Border"),
+      linear_feet: validFeet ? feet : null,
+      cost_per_ft: rate,
+      cost: validFeet && rate !== null ? feet * rate : null,
+      invalid: !type || !validFeet || rate === null,
+    };
+  });
+  const bordersTotal = borderLines.length === 0 ? 0 : borderLines.every((l) => l.cost !== null) ? borderLines.reduce((s, l) => s + l.cost, 0) : null;
+  const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null
     ? null
-    : materialsTotal + (labor === null ? 0 : labor) + objectsTotal;
+    : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal;
   return {
-    lines, object_lines: objectLines, total,
-    materials_total: materialsTotal, objects_total: objectsTotal,
+    lines, object_lines: objectLines, border_lines: borderLines, total,
+    materials_total: materialsTotal, objects_total: objectsTotal, borders_total: bordersTotal,
     labor_cost: labor, plant_count: plantCount, issues: landscapeInputIssues(landscape),
   };
 };
