@@ -471,6 +471,9 @@ function LayoutContent({ children }) {
           el.style.height = `${r.height}px`;
           el.style.margin = "0";
           // The drag source becomes the fixed ghost — keep it above siblings.
+          // .ccs-drag-src exempts it from the frozen transform-strip so its
+          // translate still follows the pointer.
+          el.classList.toggle("ccs-drag-src", el === dragEl);
           el.style.zIndex = el === dragEl ? "5000" : "1";
         });
       }
@@ -481,6 +484,7 @@ function LayoutContent({ children }) {
         dropEl.classList.remove(FROZEN);
         if (dropEl.__ccsSavedStyle) Object.assign(dropEl.style, dropEl.__ccsSavedStyle);
         for (const el of dropEl.querySelectorAll("[data-rfd-draggable-id]")) {
+          el.classList.remove("ccs-drag-src");
           if (el.__ccsSavedStyle) { Object.assign(el.style, el.__ccsSavedStyle); el.__ccsSavedStyle = null; }
         }
         for (const a of dropEl.__ccsAnchors || []) {
@@ -1215,6 +1219,15 @@ function LayoutContent({ children }) {
            hide it; combine + folder-list targets give the feedback. */
         .ccs-nav-frozen [data-rfd-placeholder-context-id] {
           display: none !important;
+        }
+
+        /* The library still publishes displaced-model transforms to non-source
+           pills mid-drag ("dodging"). Kill them at the paint layer — render
+           timing made a style-prop strip unreliable — so parked pills are
+           exactly where the pointer-up hit-test reads them. The drag source
+           keeps its transform: it IS the pointer-following ghost. */
+        .ccs-nav-frozen [data-rfd-draggable-id]:not(.ccs-drag-src) {
+          transform: none !important;
         }
 
         .ccs-focus-pause-glass {
