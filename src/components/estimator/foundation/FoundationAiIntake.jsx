@@ -102,6 +102,12 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
           .filter(f => f && typeof f === "object" && typeof f.question === "string")
           .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
+        // W-016 -- the proposal carries the shared proposal-shape metadata so
+        // a future applyModuleProposal can validate revision + allowlisted
+        // operations; the intake's rows are its operations.
+        schema_version: 1, module_key: "foundation",
+        proposal_id: `prop_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        base_project_revision: project?.updated_date ?? null,
       });
     } catch (e) {
       setError(e?.message || "The description could not be parsed.");
