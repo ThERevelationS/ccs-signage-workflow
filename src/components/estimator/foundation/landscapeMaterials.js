@@ -15,13 +15,18 @@ export const LANDSCAPE_MATERIALS = [
   // need a count-priced model -- they are intentionally absent rather than
   // billed per square foot.
   { key: "pavers", label: "Pavers", color: "#a8a29e", cost_per_sqft: 12 },
-  { key: "flagstone", label: "Flagstone", color: "#b45309", cost_per_sqft: 16 },
-  { key: "river_rock", label: "River Rock", color: "#78716c", cost_per_sqft: 3.5 },
-  { key: "sod", label: "Sod (installed)", color: "#16a34a", cost_per_sqft: 1.5 },
-  { key: "artificial_turf", label: "Artificial Turf", color: "#059669", cost_per_sqft: 11 },
-  { key: "ground_cover", label: "Ground Cover", color: "#65a30d", cost_per_sqft: 4 },
-  { key: "planting_bed", label: "Planting Bed", color: "#7c3f00", cost_per_sqft: 6 },
+  { key: "flagstone", label: "Flagstone", color: "#b45309", cost_per_sqft: 16, pattern: "stone" },
+  { key: "river_rock", label: "River Rock", color: "#78716c", cost_per_sqft: 3.5, pattern: "pebble" },
+  { key: "sod", label: "Sod (installed)", color: "#16a34a", cost_per_sqft: 1.5, pattern: "grass" },
+  { key: "artificial_turf", label: "Artificial Turf", color: "#059669", cost_per_sqft: 11, pattern: "turf" },
+  { key: "ground_cover", label: "Ground Cover", color: "#65a30d", cost_per_sqft: 4, pattern: "foliage" },
+  { key: "planting_bed", label: "Planting Bed", color: "#7c3f00", cost_per_sqft: 6, pattern: "soil" },
 ];
+
+// O-068 (CMP-F01) -- realistic-material hint: `material.pattern` records a
+// texture hint (stone/pebble/grass/turf/foliage/soil/paver) a designer
+// surfaces alongside the flat color -- a visual distinction, never a price.
+export const patternForKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key)?.pattern ?? null;
 
 export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
 
