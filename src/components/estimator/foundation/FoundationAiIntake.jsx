@@ -116,15 +116,26 @@ export default function FoundationAiIntake({ onApply, disabled }) {
       {proposal && (
         <div className="mt-2 rounded-sm border border-gray-200 bg-white p-2" data-ai-proposal="true">
           {proposal.items.map((it, i) => (
-            <div key={i} className="grid grid-cols-6 gap-1 mb-1 items-center">
-              <select value={it.foundation_type} onChange={(e) => setField("items", i, "foundation_type", e.target.value)}
-                className="col-span-2 h-5 px-1 text-[10px] border border-gray-200 rounded-sm">
-                {ITEM_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
-              </select>
-              {["quantity", "length_inches", "width_inches", "depth_inches"].map(k => (
-                <input key={k} value={it[k]} onChange={(e) => setField("items", i, k, e.target.value)}
-                  placeholder={k.split("_")[0]} className="h-5 px-1 text-[10px] border border-gray-200 rounded-sm" />
-              ))}
+            <div key={i} className="mb-1">
+              <div className="grid grid-cols-6 gap-1 items-center">
+                <select value={it.foundation_type} onChange={(e) => setField("items", i, "foundation_type", e.target.value)}
+                  className="col-span-2 h-5 px-1 text-[10px] border border-gray-200 rounded-sm">
+                  {ITEM_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
+                </select>
+                {["quantity", "length_inches", "width_inches", "depth_inches"].map(k => (
+                  <input key={k} value={it[k]} onChange={(e) => setField("items", i, k, e.target.value)}
+                    placeholder={it[k] === "" ? "unknown" : k.split("_")[0]}
+                    className={`h-5 px-1 text-[10px] border rounded-sm ${it[k] === "" ? "border-amber-300 bg-amber-50/40" : "border-gray-200"}`} />
+                ))}
+              </div>
+              {/* O-083 -- a blank field is concept-only progress: it stays
+                  unknown (never invented), flagged amber, with the reason it
+                  matters stated. "I don't know" is an honest answer. */}
+              <p className="text-[9px] text-amber-700/80 mt-0.5">
+                {[it.quantity === "" && "qty", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean).join(" · ")
+                  ? `Unknown: ${[it.quantity === "" && "quantity", it.length_inches === "" && "length", it.width_inches === "" && "width", it.depth_inches === "" && "depth"].filter(Boolean).join(", ")} -- needed for concrete volume and bearing.`
+                  : ""}
+              </p>
             </div>
           ))}
           {proposal.poles.map((p, i) => (
