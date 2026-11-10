@@ -288,6 +288,40 @@ export default function WallShapeEditor({ shape, onChange }) {
         )}
       </svg>
 
+      {/* O-045 (CMP-D02) -- typed point editing: each vertex's x/z is
+          editable; a malformed field holds that point (never a silent drop). */}
+      {points.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+          {points.map((p, i) => (
+            <div key={i} className="flex items-center gap-1 text-[10px] text-gray-500">
+              <span className="w-5">P{i + 1}</span>
+              <input
+                type="number" step="0.25" placeholder="x in"
+                value={p.x ?? ""}
+                onChange={(e) => {
+                  const n = [...points];
+                  n[i] = { ...n[i], x: e.target.value === "" ? undefined : Number(e.target.value) };
+                  emit(n, closed);
+                }}
+                className="w-14 h-6 rounded-sm border border-gray-300 px-1 text-[11px]"
+                aria-label={`Vertex ${i + 1} x (inches)`}
+              />
+              <input
+                type="number" step="0.25" placeholder="z in"
+                value={p.z ?? ""}
+                onChange={(e) => {
+                  const n = [...points];
+                  n[i] = { ...n[i], z: e.target.value === "" ? undefined : Number(e.target.value) };
+                  emit(n, closed);
+                }}
+                className="w-14 h-6 rounded-sm border border-gray-300 px-1 text-[11px]"
+                aria-label={`Vertex ${i + 1} z (inches)`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       {wallShapeIssues(points, closed).map((msg) => (
         <div key={msg} role="status" className="text-xs text-amber-600">{msg}</div>
       ))}
