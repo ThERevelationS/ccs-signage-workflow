@@ -218,6 +218,17 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   aria-label={`Object ${oi + 1} elevation inches`}
                   title="Object elevation above grade (inches)"
                 />
+                {/* O-070 (CMP-F03) -- setback: the object's setback from the
+                    foundation edge (`setback_inches`); blank = "not recorded",
+                    never an invented setback. */}
+                <input
+                  type="number" min="0" step="1" placeholder="setback"
+                  value={o.setback_inches ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, setback_inches: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-5 w-14 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                  aria-label={`Object ${oi + 1} setback inches`}
+                  title="Setback from the foundation edge (inches)"
+                />
                 <input
                   type="text" placeholder="grp"
                   aria-label={`Object ${oi + 1} group`}
