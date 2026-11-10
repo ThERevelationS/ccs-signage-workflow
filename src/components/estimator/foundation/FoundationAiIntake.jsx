@@ -120,7 +120,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         response_json_schema: {
           type: "object",
           properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" },
-            alternatives: { type: "array", items: { type: "object", properties: { label: { type: "string" }, cost_impact: { type: "string" }, sensitivity: { type: "string" } } } },
+            alternatives: { type: "array", items: { type: "object", properties: { label: { type: "string" }, cost_impact: { type: "string" }, sensitivity: { type: "string" },
+              // O-117 (CMP-I16) -- numeric sensitivity bound: `sensitivity_pct`
+              // carries the ±% swing on the alternative's cost for the named
+              // uncertain input -- a numeric bound, not just a text note.
+              sensitivity_pct: { type: "number" } } } },
             follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } },
             // O-083 (CMP-G06) -- a `concept_only` flag on the proposal
             // records whether the draft is a concept (fields still missing)
@@ -154,7 +158,8 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         // up to 4 {label, cost_impact} rows alongside the free-text suggestion.
         alternatives: (Array.isArray(parsed.alternatives) ? parsed.alternatives : [])
           .filter(a => a && typeof a === "object" && typeof a.label === "string")
-          .slice(0, 4).map(a => ({ label: stripCertification(a.label), cost_impact: typeof a.cost_impact === "string" ? stripCertification(a.cost_impact) : "", sensitivity: typeof a.sensitivity === "string" ? stripCertification(a.sensitivity) : "" })),
+          .slice(0, 4).map(a => ({ label: stripCertification(a.label), cost_impact: typeof a.cost_impact === "string" ? stripCertification(a.cost_impact) : "", sensitivity: typeof a.sensitivity === "string" ? stripCertification(a.sensitivity) : "",
+            sensitivity_pct: Number.isFinite(Number(a.sensitivity_pct)) ? Number(a.sensitivity_pct) : undefined })),
         followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
           .filter(f => f && typeof f === "object" && typeof f.question === "string")
           .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
@@ -342,6 +347,10 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
               {proposal.alternatives.map((a, i) => (
                 <p key={i} className="text-[10px] text-sky-700 mt-0.5">
                   {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
+                  {/* O-117 (CMP-I16) -- numeric sensitivity bound: the
+                      alternative's ±% cost swing on the named uncertain
+                      input renders alongside the text note. */}
+                  {Number.isFinite(a.sensitivity_pct) && <span className="text-sky-600 font-semibold"> [±{a.sensitivity_pct}%]</span>}
                   {a.sensitivity && <span className="text-sky-500 italic"> ({a.sensitivity})</span>}
                 </p>
               ))}
