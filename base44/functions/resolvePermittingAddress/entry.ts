@@ -224,9 +224,37 @@ function constantTimeEqual(a, b) {
   return diff === 0;
 }
 
+// base44/shared/ownerRole.ts
+var normEmail = (v) => String(v || "").trim().toLowerCase();
+var DEFAULT_OWNER_EMAILS = ["brett@cincisigns.com"];
+function ownerEmails() {
+  try {
+    const raw = (typeof Deno !== "undefined" ? Deno.env.get("APP_OWNER_EMAILS") : "") || "";
+    const parsed = raw.split(",").map(normEmail).filter(Boolean);
+    return parsed.length ? parsed : DEFAULT_OWNER_EMAILS;
+  } catch {
+    return DEFAULT_OWNER_EMAILS;
+  }
+}
+function isOwnerEmail(email) {
+  return ownerEmails().includes(normEmail(email));
+}
+function isOwnerRecord(row) {
+  if (!row || typeof row !== "object") return false;
+  return row.is_owner === true || isOwnerEmail(row.email);
+}
+function applyOwnerCapabilities(row) {
+  if (!isOwnerRecord(row) || !row) return row;
+  row.role = "admin";
+  row.is_owner = true;
+  row.is_full_admin = true;
+  row.role_label = "Owner";
+  return row;
+}
+
 // base44/shared/signShopSession.ts
 var sessionAuthCache = /* @__PURE__ */ new Map();
-var SESSION_AUTH_CACHE_MS = 6e4;
+var SESSION_AUTH_CACHE_MS = 15e3;
 function b64urlEncode(str) {
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -284,7 +312,14 @@ async function authenticateSignShopSession(base44, token) {
   };
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
+  if (cachedAuth && cachedAuth.expires > Date.now()) {
+    const cachedUser = applyOwnerCapabilities(stripExpiredGrant(cachedAuth.user));
+    const cachedNotBefore = Date.parse(String(cachedUser?.session_not_before || ""));
+    if (Number.isFinite(cachedNotBefore) && cachedNotBefore > 0 && issuedAt < cachedNotBefore) {
+      throw Object.assign(new Error("Authentication required"), { status: 401 });
+    }
+    return cachedUser;
+  }
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
@@ -301,7 +336,7 @@ async function authenticateSignShopSession(base44, token) {
   } catch (e) {
     if (e?.status === 401) throw e;
   }
-  const user = stripExpiredGrant(users[0]);
+  const user = applyOwnerCapabilities(stripExpiredGrant(users[0]));
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
   sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ""));
@@ -382,7 +417,7 @@ function summarizeMatchedLocalityAuthority(locality) {
 // base44/shared/permittingSpatialResolution.mjs
 var CENSUS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb";
 var LOCATION_SOURCES = { county: `${CENSUS}/State_County/MapServer/1`, place: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/4`, township: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/1`, oh_city: "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0", oh_township: "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3", ky_city: "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0" };
-var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
+var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township|twp\.?|twp)$/, "").replace(/\s+/g, " ");
 var loose = (value) => norm(value).replace(/\bst\.?\b/g, "saint").replace(/\bft\.?\b/g, "fort").replace(/\bmt\.?\b/g, "mount").replace(/[^a-z0-9]/g, "");
 var sameJ = (a, b) => {
   const x = norm(a), y = norm(b);
@@ -445,6 +480,8 @@ function applyResolutionRules(rules, { enteredCity, enteredAddr, state, countyNa
     if (hit) return { pick: hit, rule: r };
     if (target && sameJ(target.name, r.jurisdiction_name)) return { pick: target, rule: r };
     if (/county/i.test(String(r.jurisdiction_type || "")) && sameJ(r.jurisdiction_name, countyName)) return { pick: { name: countyName, type: "county" }, rule: r };
+    if ((rt === "address_override" || rt === "postal_name_map") && r.jurisdiction_name)
+      return { pick: { name: r.jurisdiction_name, state, type: r.jurisdiction_type || "municipality", county: countyName || r.county || "", geoid: String(r.geoid || ""), resolved_by: "resolution_rule" }, rule: r };
   }
   return null;
 }
@@ -730,6 +767,15 @@ function traceDelay(kind, ms, retry = false) {
 }
 
 // base44/shared/entityRateLimitRetry.ts
+var isolateEntityStats = {
+  calls: 0,
+  // total entity API attempts (incl. retries)
+  retries: 0,
+  // attempts that were 429 retries (not new logical calls)
+  paced_waits: 0,
+  // times a caller waited on the paceMs queue
+  since: (/* @__PURE__ */ new Date()).toISOString()
+};
 function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
   if (!client?.asServiceRole?.entities) return client;
   let queue = Promise.resolve();
@@ -755,7 +801,12 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
       if (typeof value !== "function") return value;
       return async (...args) => {
         for (let attempt = 0; ; attempt++) {
-          if (paceMs) await reserveRequest();
+          if (paceMs) {
+            isolateEntityStats.paced_waits++;
+            await reserveRequest();
+          }
+          isolateEntityStats.calls++;
+          if (attempt > 0) isolateEntityStats.retries++;
           try {
             return await value.apply(target, args);
           } catch (e) {
@@ -876,7 +927,26 @@ function indexWrite(base44, entry) {
   })().catch(() => {
   });
 }
-function buildIndexEntry({ address, point, resolution, geocode, revision, fingerprint, source = "resolver", ttlDays = 30 }) {
+function officeRefs(offices) {
+  const out = [];
+  for (const o of Array.isArray(offices) ? offices : []) {
+    const roles = (o?.authority_roles || []).filter(Boolean);
+    if (!roles.length) continue;
+    out.push({
+      office_id: o?.id || "",
+      name: o?.name || "",
+      office_type: o?.office_type || "",
+      roles,
+      verification: o?.authority_verification_status || "",
+      contact_phone: o?.contact_phone || "",
+      contact_email: o?.contact_email || "",
+      contact_website: o?.contact_website || "",
+      contact_address: o?.contact_address || ""
+    });
+  }
+  return out.slice(0, 12);
+}
+function buildIndexEntry({ address, point, resolution, geocode, revision, fingerprint, source = "resolver", ttlDays = 30, offices = null }) {
   const target = resolution?.target || {};
   const status = resolution?.status === "location_verified" ? "verified" : resolution?.status === "invalid_input" ? "rejected" : null;
   if (!status) return null;
@@ -906,7 +976,7 @@ function buildIndexEntry({ address, point, resolution, geocode, revision, finger
       reason: resolution?.reason || "",
       corroborated_by: resolution?.corroborated_by || ""
     },
-    office_refs: [],
+    office_refs: officeRefs(offices),
     lookup_revision: revision || "",
     ruleset_fingerprint: fingerprint || "",
     source,
