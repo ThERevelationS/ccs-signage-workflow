@@ -11,7 +11,7 @@ import {
 import { foundationLayoutFootprint, layoutPositionInches } from "./foundationLayoutModel";
 
 // O-093 (CMP-H02): linear-dimension fields take feet/inches entry through the
-// shared dimension field â€” same verbatim-draft contract as the CMP-A08
+// shared dimension field  -  same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const poleDimMeta = (field) => foundationDimensionFieldMeta("pole", field);
@@ -19,12 +19,12 @@ const signDimMeta = (field) => foundationDimensionFieldMeta("sign", field);
 
 // CMP-E01/O-056: the project-level poles list below is the single priced
 // representation. Items can still carry pre-consolidation pole fields; they
-// surface here as an advisory (never priced â€” no double charge) and move onto
+// surface here as an advisory (never priced  -  no double charge) and move onto
 // the canonical list only through the explicit onMigrateItemPole callback.
-// CMP-E02/O-057: the inputs keep the five distinct quantities separate â€”
+// CMP-E02/O-057: the inputs keep the five distinct quantities separate  - 
 // height above grade, embedment below grade (canonical `embedment_inches`;
 // a legacy row's `y_offset_inches` migrates into it on edit), vertical base
-// offset, and explicit total stock length â€” with the actual shape carried on
+// offset, and explicit total stock length  -  with the actual shape carried on
 // `pole_shape`.
 export default function FoundationPolesPanel({ poles = [], options = [], items = [], onChange, polePricing = [], onMigrateItemPole }) {
   const patchPole = (index, changes) =>
@@ -51,7 +51,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
         <div>
           <h2 className="font-semibold text-gray-900">Poles</h2>
           <p className="text-xs text-gray-500">
-            Priced on billed length â€” an explicit total stock length, or height above grade plus embedment.
+            Priced on billed length  -  an explicit total stock length, or height above grade plus embedment.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={addPole} disabled={options.length === 0}>
@@ -61,12 +61,12 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
 
       {options.length === 0 && (
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-          Pole catalog unavailable â€” existing rows remain editable; new poles cannot be added.
+          Pole catalog unavailable  -  existing rows remain editable; new poles cannot be added.
         </div>
       )}
       {consolidated.legacyPoles.length > 0 && (
         <div role="status" className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 space-y-1">
-          <p className="font-semibold">Legacy item-pole data â€” not priced</p>
+          <p className="font-semibold">Legacy item-pole data  -  not priced</p>
           {consolidated.legacyPoles.map((d) => (
             <div key={d.source_item_component_id || `item-${d.source_item_index}`} className="flex items-center justify-between gap-2">
               <span>
@@ -81,7 +81,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
             </div>
           ))}
           {consolidated.overlaps.length > 0 && (
-            <p>A project pole already sits on the same foundation â€” verify it is not the same physical pole before migrating.</p>
+            <p>A project pole already sits on the same foundation  -  verify it is not the same physical pole before migrating.</p>
           )}
         </div>
       )}
@@ -113,7 +113,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                     aria-describedby={fieldIssue("pole_id") ? describedBy : undefined}
                     onChange={(e) => patchPole(index, { pole_id: e.target.value })}
                   >
-                    <option value="">Select poleâ€¦</option>
+                    <option value="">Select pole...</option>
                     {pole.pole_id && !options.some((o) => o.id === pole.pole_id) && (
                       <option value={pole.pole_id} disabled>{`Catalog pole unavailable (${pole.pole_id})`}</option>
                     )}
@@ -160,7 +160,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   >
                     <option value="">Unassigned</option>
                     {pole.foundation_component_id && !items.some((it) => it.component_id === pole.foundation_component_id) && (
-                      <option value={pole.foundation_component_id} disabled>{`Missing foundation (${String(pole.foundation_component_id).slice(0, 18)}â€¦)`}</option>
+                      <option value={pole.foundation_component_id} disabled>{`Missing foundation (${String(pole.foundation_component_id).slice(0, 18)}...)`}</option>
                     )}
                     {items.map((it, i) => (
                       <option key={it.component_id || i} value={it.component_id || ""}>
@@ -241,7 +241,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                 </label>
                 <div className="flex items-center gap-3 text-xs text-gray-600">
                   {geometry && Number.isFinite(geometry.required_length_inches) && (
-                    <span title={`Required ${geometry.required_length_inches} in${Number.isFinite(pole.stock_pieces) ? ` Â· ${pole.stock_pieces} stock ${pole.stock_pieces === 1 ? "piece" : "pieces"}` : ""}${geometry.pole_shape ? ` Â· ${geometry.pole_shape}` : ""}${geometry.base_offset_inches > 0 ? ` Â· base +${geometry.base_offset_inches} in` : ""}`}>
+                    <span title={`Required ${geometry.required_length_inches} in${Number.isFinite(pole.stock_pieces) ? `  -  ${pole.stock_pieces} stock ${pole.stock_pieces === 1 ? "piece" : "pieces"}` : ""}${geometry.pole_shape ? `  -  ${geometry.pole_shape}` : ""}${geometry.base_offset_inches > 0 ? `  -  base +${geometry.base_offset_inches} in` : ""}`}>
                       {geometry.required_length_inches} in req
                     </span>
                   )}
@@ -259,7 +259,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   {issues.map((issue) => <p key={`${issue.field}-${issue.code}`}>{issue.message}</p>)}
                 </div>
               )}
-              {/* O-060 (CMP-E08) — editable sign list on the pole: each sign
+              {/* O-060 (CMP-E08)  -  editable sign list on the pole: each sign
                   carries its own dims + mount height; the assembly model
                   normalizes component_ids. */}
               <div className="mt-2 border-t border-gray-100 pt-2">
@@ -404,7 +404,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   const all = costs.every((c) => Number.isFinite(c) && c >= 0) && costs.length > 0;
                   return (
                     <div className="text-right text-[11px] text-gray-600 mt-1">
-                      Signs total: {all ? <span className="font-semibold text-gray-900">{money(costs.reduce((a, b) => a + b, 0))}</span> : <span className="text-amber-700">Not saved — record a cost on every sign</span>}
+                      Signs total: {all ? <span className="font-semibold text-gray-900">{money(costs.reduce((a, b) => a + b, 0))}</span> : <span className="text-amber-700">Not saved  -  record a cost on every sign</span>}
                     </div>
                   );
                 })()}
