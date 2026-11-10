@@ -71,9 +71,14 @@ export default function NavFlyoutMenu({
       setOpen(false);
     };
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setOpen(false);
+      // Escape during a nav drag cancels the drag itself — closing here would
+      // additionally unmount the folder-list droppable mid-flight and trip the
+      // library's "Cannot find droppable entry" invariant, so defer the close.
+      if (event.key === "Escape" && !window.__ccsNavDragging) setOpen(false);
     };
-    const close = () => setOpen(false);
+    // Scroll/resize churn during a nav drag (auto-scroll, freeze restore)
+    // must not unmount the menu — the drag may be aiming at it right now.
+    const close = () => { if (!window.__ccsNavDragging) setOpen(false); };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("scroll", close, true);
