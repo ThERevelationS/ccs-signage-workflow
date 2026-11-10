@@ -278,6 +278,13 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Frost depth", db.frost_depth],
             ["Groundwater", db.groundwater],
             ["Wind", db.wind],
+            // O-110 (CMP-I09) -- concrete/rebar/cover/durability fields:
+            // authored material assumptions travel to the field alongside the
+            // soil/frost/wind rows; blank = "not recorded".
+            ["Concrete", db.concrete],
+            ["Rebar", db.rebar],
+            ["Cover", db.cover],
+            ["Durability", db.durability],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
