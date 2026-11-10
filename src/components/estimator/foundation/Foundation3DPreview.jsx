@@ -337,7 +337,10 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   const stateRef = useRef({});
   const [solid, setSolid] = useState(true);
   const [showGround, setShowGround] = useState(true);
-  const [visible, setVisible] = useState(true);
+  // O-076 (CMP-F09) -- lazy 3D: default `visible` false so the WebGL scene +
+  // geometry build defers until the operator clicks "Show 3D View" (the heavy
+  // payload stays out of the initial render).
+  const [visible, setVisible] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [glFailed, setGlFailed] = useState(false);
   const [exploded, setExploded] = useState(false);
