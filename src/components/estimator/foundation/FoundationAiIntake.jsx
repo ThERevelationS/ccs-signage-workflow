@@ -121,7 +121,12 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
           type: "object",
           properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" }, suggestions: { type: "string" },
             alternatives: { type: "array", items: { type: "object", properties: { label: { type: "string" }, cost_impact: { type: "string" }, sensitivity: { type: "string" } } } },
-            follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } } },
+            follow_ups: { type: "array", items: { type: "object", properties: { topic: { type: "string" }, question: { type: "string" } } } },
+            // O-083 (CMP-G06) -- a `concept_only` flag on the proposal
+            // records whether the draft is a concept (fields still missing)
+            // vs a complete spec -- the concept-only progress carries the
+            // flag to the review so it isn't presented as verified data.
+            concept_only: { type: "boolean" } },
         },
       });
       if (token !== tokenRef.current) return; // superseded -- discard
@@ -153,6 +158,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         followUps: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
           .filter(f => f && typeof f === "object" && typeof f.question === "string")
           .slice(0, 6).map(f => ({ topic: f.topic || "Detail", question: f.question })),
+        // O-083 (CMP-G06) -- a `concept_only` flag on the proposal records
+        // whether the draft is a concept (fields still missing) vs a
+        // complete spec -- the concept-only progress carries the flag to the
+        // review so it isn't presented as verified data.
+        concept_only: parsed.concept_only === true ? true : undefined,
         // W-016 -- the proposal carries the shared proposal-shape metadata so
         // a future applyModuleProposal can validate revision + allowlisted
         // operations; the intake's rows are its operations.
@@ -370,6 +380,14 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
             <button type="button" onClick={() => setProposal(null)} className="h-6 px-2 text-[10px] border border-gray-300 rounded-sm">Discard</button>
             <button type="button" onClick={apply} className="h-6 px-2 text-[10px] bg-violet-600 text-white rounded-sm font-semibold">Apply to design</button>
           </div>
+          {/* O-083 (CMP-G06) -- a `concept_only` flag surfaces the draft's
+              partial state -- a concept (fields still missing) vs a
+              complete spec, never presented as verified data. */}
+          {proposal?.concept_only === true && (
+            <div className="mt-1 rounded-sm border border-sky-200 bg-sky-50 px-1.5 py-1 text-[10px] text-sky-800">
+              Concept draft -- the intake still lacks required fields. Review the flagged fields before applying.
+            </div>
+          )}
           {/* W-017 -- stale-base warning + an explicit apply-anyway. */}
           {staleBase && (
             <div className="mt-1 flex items-center gap-2 rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-1 text-[10px] text-amber-800">
