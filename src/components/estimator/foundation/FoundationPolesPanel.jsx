@@ -460,6 +460,30 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           />
                         </label>
                       )}
+                      {/* O-066 (CMP-E11) -- quote/job-link preservation: the
+                          sign's `quote_link`/`job_link` references ride the
+                          row through `patchSign` edits (the O-005 id-preserving
+                          patch) so a scene edit never silently drops a
+                          recorded quote/job link. */}
+                      {s.display_only === true && (
+                        <label className="text-[10px] text-gray-500" title="The sign's quote/job links (preserved through edits)">
+                          Quote / job
+                          <input
+                            type="text" placeholder="quote id"
+                            value={s.quote_link ?? ""}
+                            onChange={(e) => patchSign({ quote_link: e.target.value === "" ? undefined : e.target.value })}
+                            className="ml-1 h-5 w-16 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} quote link`}
+                          />
+                          <input
+                            type="text" placeholder="job id"
+                            value={s.job_link ?? ""}
+                            onChange={(e) => patchSign({ job_link: e.target.value === "" ? undefined : e.target.value })}
+                            className="ml-0.5 h-5 w-16 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} job link`}
+                          />
+                        </label>
+                      )}
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
                         <input
