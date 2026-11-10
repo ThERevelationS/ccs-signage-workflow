@@ -685,6 +685,11 @@ export default function EstimatorQueues() {
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-3">
+        {/* Sticky queue header — toolbar, status pills, filters and sort stay
+            pinned at the top of the scroll container while rows scroll under.
+            Negative margins bleed to the page padding edge so the band is
+            flush when stuck; inner padding restores the visual offset. */}
+        <div className="sticky top-0 z-20 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 sm:px-6 pt-4 sm:pt-6 pb-2 space-y-3 bg-rose-50/95 backdrop-blur-sm border-b border-rose-100/60">
         <div className="bg-white px-4 py-3 flex items-center gap-2">
           <ListFilter className="w-4 h-4 text-red-500" aria-hidden="true" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
@@ -799,6 +804,7 @@ export default function EstimatorQueues() {
             <button type="button" onClick={() => setTrashError("")} className="text-red-500 font-bold">Dismiss</button>
           </div>
         )}
+        </div>
 
         <div className="bg-white">
           {loading ? (
