@@ -223,6 +223,16 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
         </div>
       </Section>
 
+      {/* O-100 (CMP-H09) -- equipment + installation notes: the authored
+          equipment/installation fields the field crew reads; "not recorded"
+          when blank (never an invented note). */}
+      <Section title="Equipment + installation">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-[11px]">
+          <div className="flex justify-between"><span className="text-gray-500">Equipment</span><span className="tabular-nums">{project?.equipment ?? "not recorded"}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Installation notes</span><span className="tabular-nums">{project?.installation_notes ?? "not recorded"}</span></div>
+        </div>
+      </Section>
+
       {land.lines.length > 0 && (
         <Section title="Landscape materials">
           <table className="w-full">
