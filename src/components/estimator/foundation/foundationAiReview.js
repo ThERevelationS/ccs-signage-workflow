@@ -85,6 +85,10 @@ export function prepareFoundationAiReview(project) {
       sign_count: Array.isArray(pole.signs) ? pole.signs.length : null,
     })),
     concrete_mix_label: scalar(project.project_concrete_type, "Concrete mix"),
+    // O-079 -- operator-supplied reference photos, treated as context only;
+    // the model never derives engineering truth from an image URL.
+    reference_photos: (Array.isArray(project.reference_photos) ? project.reference_photos : [])
+      .map((p, i) => ({ number: i + 1, url: scalar(typeof p === "string" ? p : p?.url, `Photo ${i + 1}`), caption: scalar(p?.caption, `Photo ${i + 1} caption`) })),
     information_not_verified: [
       "Site-specific wind criteria, exposure, code jurisdiction and design standard",
       "Soil bearing, lateral resistance, groundwater and frost depth",
