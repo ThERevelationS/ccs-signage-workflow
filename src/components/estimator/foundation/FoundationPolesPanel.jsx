@@ -359,6 +359,22 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           aria-label={`Pole ${index + 1} sign ${si + 1} unit cost`}
                         />
                       </label>
+                      {/* O-066 (CMP-E11) - optional authored cost components:
+                          each blank = $0, authored must be finite nonnegative
+                          or the whole sign's total holds. */}
+                      {[["hardware_cost", "Hardware $"], ["labor_cost", "Labor $"], ["paint_cost", "Paint $"], ["waste_cost", "Waste $"]].map(([f, label]) => (
+                        <label key={f} className="text-[10px] text-gray-500">
+                          {label}
+                          <input
+                            type="number" min="0" step="0.01"
+                            value={s[f] ?? ""}
+                            placeholder="0"
+                            onChange={(e) => patchSign({ [f]: e.target.value === "" ? undefined : Number(e.target.value) })}
+                            className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} ${f}`}
+                          />
+                        </label>
+                      ))}
                       <label className="text-[10px] text-gray-500">
                         Faces
                         <select
@@ -400,8 +416,19 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   );
                 })}
                 {(pole.signs || []).length > 0 && (() => {
-                  const costs = (pole.signs || []).map((s) => Number(s?.unit_cost));
-                  const all = costs.every((c) => Number.isFinite(c) && c >= 0) && costs.length > 0;
+                  const costs = (pole.signs || []).map((s) => {
+                    const unit = Number(s?.unit_cost);
+                    if (!(Number.isFinite(unit) && unit >= 0)) return null;
+                    let t = unit;
+                    for (const p of [s?.hardware_cost, s?.labor_cost, s?.paint_cost, s?.waste_cost]) {
+                      if (p == null || p === "") continue;
+                      const n = Number(p);
+                      if (!(Number.isFinite(n) && n >= 0)) return null;
+                      t += n;
+                    }
+                    return t;
+                  });
+                  const all = costs.every((c) => c !== null) && costs.length > 0;
                   return (
                     <div className="text-right text-[11px] text-gray-600 mt-1">
                       Signs total: {all ? <span className="font-semibold text-gray-900">{money(costs.reduce((a, b) => a + b, 0))}</span> : <span className="text-amber-700">Not saved  -  record a cost on every sign</span>}
