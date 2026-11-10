@@ -73,6 +73,14 @@ export const LANDSCAPE_COUNT_OBJECTS = [
   { key: "shrub", label: "Shrub", unit_cost: 45, height_inches: 18, radius_inches: 12 },
   { key: "light", label: "Light", unit_cost: 120, height_inches: 72, radius_inches: 2 },
   { key: "boulder", label: "Boulder", unit_cost: 180, height_inches: 30, radius_inches: 18 },
+  // O-069 (CMP-F02) -- additional placed-object types: grass clumps / flower
+  // beds / small rocks / a fountain bill by authored unit_cost per placed
+  // object (count-priced, NOT sqft coverage -- the same count-priced model
+  // the base objects use).
+  { key: "grass_clump", label: "Grass clump", unit_cost: 12, height_inches: 12, radius_inches: 6 },
+  { key: "flower_bed", label: "Flower bed", unit_cost: 65, height_inches: 14, radius_inches: 10 },
+  { key: "small_rock", label: "Small rock", unit_cost: 25, height_inches: 10, radius_inches: 8 },
+  { key: "fountain", label: "Fountain", unit_cost: 850, height_inches: 54, radius_inches: 22 },
 ];
 export const countObjectByKey = (key) => LANDSCAPE_COUNT_OBJECTS.find((o) => o.key === key);
 
