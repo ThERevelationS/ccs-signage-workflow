@@ -614,8 +614,10 @@ function LayoutContent({ children }) {
     const onPointerUp = (event) => {
       window.__ccsNavDropFolder = "";
       window.__ccsNavDropPage = "";
+      window.__ccsNavDropAfter = false;
       if (window.__ccsNavDragging) {
         let page = "";
+        let pageRect = null;
         for (const el of document.querySelectorAll("[data-rfd-draggable-id]")) {
           // The drag ghost always contains the release point — skip it or it
           // shadows the real target (self-combine no-ops the drop).
@@ -629,9 +631,12 @@ function LayoutContent({ children }) {
               ? tokenFolderId(id) : id.slice("sfolder:".length);
             break;
           }
-          if (!page && (id?.startsWith("top-") || id?.startsWith("side-"))) page = id;
+          if (!page && (id?.startsWith("top-") || id?.startsWith("side-"))) { page = id; pageRect = r; }
         }
         window.__ccsNavDropPage = page;
+        // Release in the target's right/bottom half = insert AFTER it — the
+        // displaced gap preview the user aimed at decides the slot.
+        if (pageRect) window.__ccsNavDropAfter = event.clientX > pageRect.left + pageRect.width / 2;
       }
       resetDragUI();
       unfreezeAll();
@@ -730,7 +735,11 @@ function LayoutContent({ children }) {
       const { order, folders } = removeUrlEverywhere(state.order, state.folders, url);
       const entries = resolveTopLevel(order, folders, barPageUrls);
       const at = entries.findIndex((e) => e.type === "page" && e.url === targetUrl);
-      entries.splice(at < 0 ? entries.length : at, 0, { type: "page", url });
+      // Pointer released in the target's right half lands after it — matches
+      // the shift-to-make-room gap the user actually aimed at.
+      const insertAt = (at < 0 ? entries.length : at) + (window.__ccsNavDropAfter ? 1 : 0);
+      window.__ccsNavDropAfter = false;
+      entries.splice(insertAt, 0, { type: "page", url });
       persistNavState(mergeHiddenTail(entriesToOrder(entries)), folders);
       return;
     }
