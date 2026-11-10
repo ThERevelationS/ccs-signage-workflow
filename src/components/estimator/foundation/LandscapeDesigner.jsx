@@ -332,6 +332,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   aria-label={`Bed ${bi + 1} sqft`}
                   value={b?.sqft ?? ""}
                   onChange={(e) => onChange({ ...landscape, beds: (landscape.beds || []).map((r, j) => j === bi ? { ...r, sqft: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-6 w-20 rounded-sm border border-gray-300 px-0.5 text-[10px]" />
                   {/* O-069 (CMP-F02) -- bed region vs cell paint: `cells`
                       records WHICH grid cells the named bed covers ("x,y;x,y"
                       cell coordinates) -- a bed polygon's authored region vs
