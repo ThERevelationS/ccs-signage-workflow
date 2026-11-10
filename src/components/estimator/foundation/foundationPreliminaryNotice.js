@@ -55,6 +55,21 @@ export function ensurePreliminaryNotice(notes) {
   return `${PRELIMINARY_NOTICE_TEXT}\n\n${notes}`;
 }
 
+// O-119 (CMP-I18) -- handoff text builder: a plain-text export for the
+// field/engineer handoff carrying the canonical notice at the top -- the
+// notice persists on handoff text, not only the print-block banners.
+export function buildFoundationHandoffText(project, { notes = "" } = {}) {
+  const lines = [PRELIMINARY_NOTICE_TEXT, ""];
+  const name = project?.name ?? project?.project_name;
+  if (name) lines.push(`Project: ${name}`);
+  if (project?.updated_date) lines.push(`Saved revision: ${project.updated_date}`);
+  const items = Array.isArray(project?.items) ? project.items.length : 0;
+  const poles = Array.isArray(project?.poles) ? project.poles.length : 0;
+  if (items || poles) lines.push(`Scope: ${items} foundation${items === 1 ? "" : "s"}${poles ? `, ${poles} pole${poles === 1 ? "" : "s"}` : ""}`);
+  if (notes && notes.trim() !== "") lines.push("", "Notes:", notes.trim());
+  return lines.join("\n");
+}
+
 // Standing per-concept notice bar. `dismissible` opts a VIEW into per-view
 // dismissal (internal state only — remount restores it, and record-level
 // stamps are what keep the notice persistent per concept).
