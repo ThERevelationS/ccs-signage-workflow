@@ -64,7 +64,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
     if (!strokeRef.current) return;
     // Preserve the authored cell size verbatim — never mint a guessed 12 over
     // a missing value; an absent/malformed size stays flagged until recorded.
-    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: strokeRef.current });
+    onChange({ ...landscape, cell_size_inches: landscape?.cell_size_inches, cells: strokeRef.current });
     strokeRef.current = null;
     setStrokeCells(null);
   };
@@ -78,7 +78,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
     const next = { ...(strokeRef.current ?? cells) };
     for (let x = 0; x < GRID_COLS; x++) { next[`${x},0`] = brush; next[`${x},${GRID_ROWS - 1}`] = brush; }
     for (let y = 0; y < GRID_ROWS; y++) { next[`0,${y}`] = brush; next[`${GRID_COLS - 1},${y}`] = brush; }
-    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
+    onChange({ ...landscape, cell_size_inches: landscape?.cell_size_inches, cells: next });
   };
 
   const flood = (x, y) => {
@@ -98,7 +98,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
     }
     const next = { ...cells };
     region.forEach((k) => { if (brush === "dirt") delete next[k]; else next[k] = brush; });
-    onChange({ cell_size_inches: landscape?.cell_size_inches, cells: next });
+    onChange({ ...landscape, cell_size_inches: landscape?.cell_size_inches, cells: next });
   };
 
   return (
@@ -129,6 +129,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               onChange={(e) => {
                 setCellDraft(e.target.value);
                 onChange({
+                  ...landscape,
                   cell_size_inches: foundationDimensionDraftValue(e.target.value),
                   cells,
                 });
@@ -142,6 +143,21 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               </span>
             )}
           </label>
+          {/* O-073 (CMP-F06) -- authored bed depth / waste / labor fields; each
+              blank = "not recorded" (depth/volume and labor hold in the summary,
+              waste scales to 0), never a silent zero on the design. */}
+          {[["bed_depth_inches", "Bed depth (in)", "4"], ["waste_fraction", "Waste (0-1)", "0.1"], ["labor_cost", "Labor $", "0"]].map(([f, label, ph]) => (
+            <label key={f} className="text-[10px] text-gray-500">
+              {label}
+              <input
+                type="number" min="0" step="0.01" placeholder={ph}
+                value={landscape?.[f] ?? ""}
+                onChange={(e) => onChange({ ...landscape, [f]: e.target.value === "" ? undefined : Number(e.target.value) })}
+                className="ml-1 h-7 w-14 rounded-sm border border-gray-300 px-1 text-[11px]"
+                aria-label={`Landscape ${label}`}
+              />
+            </label>
+          ))}
           <button type="button"
             onClick={() => setFillMode((v) => !v)}
             aria-pressed={fillMode}
@@ -162,7 +178,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           <button type="button"
             onClick={() => {
               if (!window.confirm("Clear all landscaping from the canvas?")) return;
-              onChange({ cell_size_inches: 12, cells: {} });
+              onChange({ ...landscape, cell_size_inches: 12, cells: {} });
             }}
             className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-600 hover:bg-gray-50"
           >
