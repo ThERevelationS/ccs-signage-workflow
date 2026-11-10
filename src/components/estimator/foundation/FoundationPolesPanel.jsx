@@ -593,6 +593,18 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         className="text-[10px]"
                         aria-label={`Pole ${index + 1} sign ${si + 1} artwork upload`}
                       />
+                      {/* O-061 (CMP-E06) -- clear artwork: removes the
+                          authored `artwork_url`/`artwork_name` (the
+                          undo/replace surface -- re-pick uploads a new
+                          image; clear drops the reference). */}
+                      {s.artwork_url && (
+                        <button
+                          type="button"
+                          onClick={() => patchSign({ artwork_url: undefined, artwork_name: undefined, artwork_fit: undefined, artwork_scale: undefined })}
+                          className="text-[9px] text-red-600 hover:underline"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} clear artwork`}
+                        >Clear artwork</button>
+                      )}
                       {s.artwork_url && (
                         <>
                           {/* O-061 (CMP-E06) -- artwork crop/fit: the
