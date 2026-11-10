@@ -153,6 +153,20 @@ export default function FoundationBOM({
           saved: true,
         });
       }
+      // O-064 (CMP-E09) -- per-sign BOM rows: each authored sign row lists its
+      // own unit_cost + optional hardware/labor/paint/waste, so a multi-sign
+      // pole shows every sign (count + placement per sign row).
+      (Array.isArray(p.signs) ? p.signs : []).forEach((s, si) => {
+        const extras = ["hardware_cost", "labor_cost", "paint_cost", "waste_cost"]
+          .map((k) => Number(s?.[k]) || 0)
+          .reduce((a, b) => a + b, 0);
+        out.push({
+          material: `${label} — sign ${si + 1}${s?.name ? ` (${s.name})` : ""}`,
+          quantity: `1 sign${s?.faces ? ` x ${s.faces} faces` : ""}`,
+          cost: hasFoundationCostSnapshot(s?.unit_cost) ? Number(s.unit_cost) + extras : "Not saved",
+          saved: true,
+        });
+      });
     });
 
     out.push(...foundationWallBomRows(walls, inventory, wallPricing));
