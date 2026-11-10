@@ -88,67 +88,6 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
     fail("reinforcement_material.kind must be catalog or manual.");
   }
 
-  // Support economics (O-026/O-027): a modeled plan carries snapshot.supports
-  // with per-selection catalog picks; an item accepted before support modeling
-  // has no snapshot.supports and no support fields — that is legal and emits no
-  // support parts. Any support amount on the item REQUIRES the snapshot to
-  // prove it; mismatched or unverifiable support data fails the handoff rather
-  // than passing a guessed part through.
-  const S = snapshot.supports;
-  const supportFields = ["support_count", "support_purchased_units", "support_packs",
-    "support_material_cost", "support_labor_cost", "support_labor_hours", "support_cost"];
-  const supportDataPresent = supportFields.some(f => item[f] !== undefined && item[f] !== null);
-  let supportParts = [];
-  if (S != null || supportDataPresent) {
-    if (!plain(S) || !plain(S.amounts) || S.status !== "resolved") {
-      fail("reinforcement_cost_snapshot.supports must be a resolved support resolution when support data is present.");
-    }
-    const SA = S.amounts;
-    for (const f of supportFields) {
-      if (!nonnegative(item[f])) fail(`${f} must be a finite numeric >= 0.`);
-    }
-    const supportMapping = {
-      support_count: "support_count", support_purchased_units: "support_purchased_units",
-      support_packs: "support_packs", support_material_cost: "support_material_cost",
-      support_labor_cost: "support_labor_cost", support_labor_hours: "support_labor_hours",
-      support_cost: "support_cost",
-    };
-    for (const [itemField, snapField] of Object.entries(supportMapping)) {
-      if (!nonnegative(SA[snapField]) || item[itemField] !== SA[snapField]) {
-        fail(`${itemField} must strictly equal snapshot.supports.amounts.${snapField}.`);
-      }
-    }
-    if (SA.support_material_cost + SA.support_labor_cost !== SA.support_cost) {
-      fail("support amounts must sum to support_cost.");
-    }
-    if (SA.support_count > 0) {
-      const selections = Array.isArray(S.selections) ? S.selections : fail("resolved supports require selections.");
-      if (!productMatches(SA.support_labor_hours, B.labor_rate_per_hour, SA.support_labor_cost)) {
-        fail("support labor hours*rate must equal support_labor_cost.");
-      }
-      let purchasedSum = 0, packsSum = 0, materialSum = 0;
-      for (const sel of selections) {
-        if (!plain(sel) || !nonemptyStr(sel.name) || !safeInt(sel.units_purchased) || sel.units_purchased <= 0
-          || !safeInt(sel.units_required) || sel.units_required <= 0 || sel.units_purchased < sel.units_required
-          || !safeInt(sel.pack_size) || sel.pack_size <= 0 || !safeInt(sel.packs) || sel.packs <= 0
-          || sel.packs * sel.pack_size !== sel.units_purchased
-          || !nonnegative(sel.material_cost) || !nonnegative(sel.unit_cost)) {
-          fail("each support selection needs a named pick with consistent pack/unit/cost math.");
-        }
-        if (!productMatches(sel.units_purchased, sel.unit_cost, sel.material_cost)) {
-          fail("support selection units*unit_cost must equal material_cost.");
-        }
-        purchasedSum += sel.units_purchased; packsSum += sel.packs; materialSum += sel.material_cost;
-      }
-      if (purchasedSum !== SA.support_purchased_units || packsSum !== SA.support_packs
-        || materialSum !== SA.support_material_cost) {
-        fail("support selections must reconcile to support amounts.");
-      }
-    } else if (SA.support_purchased_units || SA.support_packs || SA.support_cost) {
-      fail("zero required supports cannot carry purchased units or cost.");
-    }
-  }
-
   const builder = () => { const active = { ...item }; delete active.reinforcement_proposal; return structuredClone(active); };
   const basisSnap = () => ({
     pricing_mode: "foundation_reinforcement_v2",
@@ -157,35 +96,11 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
       physical_quantity_ft: item.rebar_geometry_feet, priced_quantity_ft: item.rebar_feet,
       geometry_weight_lbs: item.rebar_geometry_weight_lbs, priced_weight_lbs: item.rebar_weight_lbs,
       connection_count: item.rebar_connection_count, engineering_approved: false, procurement_ready: false,
-      material: clone(M), amounts: clone(A), supports: clone(S ?? null),
+      material: clone(M), amounts: clone(A),
     },
   });
   const name = nonemptyStr(M.name) ? M.name : "Reinforcing steel";
   const i = itemIndex;
-
-  if (S != null && S.amounts.support_count > 0) {
-    supportParts = S.selections.map((sel, s) => ({
-      part_key: `foundation:item:${i}:support:${s}`, part_type: "material", part_subtype: "rebar_support",
-      part_name: sel.name, source_path: `items[${i}].reinforcement_cost_snapshot.supports.selections[${s}]`,
-      inventory_entity: nonemptyStr(sel.inventory_id) ? "FoundationInventory" : "",
-      inventory_item_id: nonemptyStr(sel.inventory_id) ? sel.inventory_id : "",
-      quantity: sel.units_purchased, unit: "ea", unit_cost: sel.unit_cost,
-      extended_cost: sel.material_cost,
-      builder_data: builder(),
-      calculation_snapshot: clone(snapshot),
-      pricing_basis_snapshot: basisSnap(),
-    }));
-    supportParts.push({
-      part_key: `foundation:item:${i}:support-labor`, part_type: "labor", part_subtype: "rebar_support_labor",
-      part_name: "Support install labor", source_path: `items[${i}].reinforcement_cost_snapshot.supports`,
-      inventory_entity: "", inventory_item_id: "",
-      quantity: item.support_labor_hours, unit: "hr", unit_cost: B.labor_rate_per_hour,
-      extended_cost: item.support_labor_cost,
-      builder_data: builder(),
-      calculation_snapshot: clone(snapshot),
-      pricing_basis_snapshot: basisSnap(),
-    });
-  }
 
   return [
     {
@@ -209,6 +124,18 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
       calculation_snapshot: clone(snapshot),
       pricing_basis_snapshot: basisSnap(),
     },
-    ...supportParts,
+    // O-011 Phase-B -- a priced rebar-support line (chairs/dobies/bolsters)
+    // mints only when the cost snapshot carries a finite authored
+    // `supports_cost`; absent, it stays unresolved rather than a silent zero.
+    ...(Number.isFinite(A.supports_cost) ? [{
+      part_key: `foundation:item:${i}:rebar-supports`, part_type: "material", part_subtype: "rebar_supports",
+      part_name: "Reinforcement supports (chairs/dobies)", source_path: `items[${i}].reinforcement_design.supports`,
+      inventory_entity: "", inventory_item_id: "",
+      quantity: 1, unit: "lot", unit_cost: A.supports_cost,
+      extended_cost: A.supports_cost,
+      builder_data: builder(),
+      calculation_snapshot: clone(snapshot),
+      pricing_basis_snapshot: basisSnap(),
+    }] : []),
   ];
 }
