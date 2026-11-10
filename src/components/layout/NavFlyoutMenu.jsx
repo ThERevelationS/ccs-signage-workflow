@@ -36,6 +36,18 @@ export default function NavFlyoutMenu({
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
+  // Mid-drag auto-open: an armed nav drag lingering on this pill dispatches
+  // ccs-nav-open-folder so the menu mounts while the drag is still in flight
+  // and its folder-list droppable can take the drop.
+  useEffect(() => {
+    if (!folderId) return undefined;
+    const onOpen = (event) => {
+      if (event.detail?.folderId === folderId) setOpen(true);
+    };
+    window.addEventListener("ccs-nav-open-folder", onOpen);
+    return () => window.removeEventListener("ccs-nav-open-folder", onOpen);
+  }, [folderId]);
+
   useLayoutEffect(() => {
     if (!open) return;
     const rect = triggerRef.current?.getBoundingClientRect();
