@@ -1,6 +1,7 @@
 import { money } from "./foundationCalc";
 import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
 import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
+import { buildFoundationPlanSvg } from "./foundationPlanExport";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -34,13 +35,15 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
   const land = landscapeSummary(project?.landscape);
   // Design notes: the same scene diagnostics the canvas reports, surfaced
   // on the production sheet so unresolved flags travel to the field.
-  const diags = foundationSceneDiagnostics({
+  const scene = {
     items: calc?.items || [],
     poles: calc?.poles || [],
     walls: calc?.walls || [],
     wall_caps: calc?.wallCaps || [],
     signage_cabinets: project?.signage_cabinets || [],
-  }) || [];
+  };
+  const diags = foundationSceneDiagnostics(scene) || [];
+  const planSvg = buildFoundationPlanSvg(scene, { width: 480, depth: 320 });
   const flags = [];
   if (pricingUnavailable) flags.push("Customer pricing is blocked - resolve highlighted inputs before production.");
   if (project?.engineering_approved === false) flags.push("Preliminary estimate - structural engineering review required before construction.");
@@ -222,6 +225,10 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
           })()}
         </Section>
       )}
+
+      <Section title="Plan view">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-1" dangerouslySetInnerHTML={{ __html: planSvg }} />
+      </Section>
 
       <Section title={`Design notes (${diags.length})`}>
         {diags.length === 0 ? (
