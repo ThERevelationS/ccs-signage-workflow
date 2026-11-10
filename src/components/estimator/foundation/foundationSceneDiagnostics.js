@@ -14,6 +14,7 @@ import {
   resolveSceneNode,
 } from "./foundationSceneSelection";
 import { reparentParentOf } from "./foundationReparentModel";
+import { visualObjectByKey } from "./landscapeMaterials.js";
 
 const PLAN_W = 480, PLAN_D = 320;
 const KIND_LABEL = {
@@ -71,6 +72,7 @@ export function foundationSceneDiagnostics(scene) {
     findings.push({ severity, kind, message, nodeIds: nodeIds.filter(Boolean) });
   const items = scene?.items || [], poles = scene?.poles || [];
   const walls = scene?.walls || [], caps = scene?.wall_caps || [], cabinets = scene?.signage_cabinets || [];
+  const landscape = scene?.landscape || null;
 
   // -- item bounds + pairwise clash -------------------------------------
   const rects = items.map((item, i) => ({ item, index: i, rect: itemRect(item, i) }));
@@ -287,6 +289,26 @@ export function foundationSceneDiagnostics(scene) {
       push("warning", "unsupported-span", `${wName}: ${uncovered} of ${tested} segments span beyond any footing.`, [wallId]);
     }
   });
+
+  // O-068 -- visual-object setback: a decorative landscape object (tree,
+  // shrub, light, boulder) painted on a cell that overlaps a foundation
+  // footprint sits on a footing -- flag the planting-vs-structure conflict.
+  const lcs = Number(landscape?.cell_size_inches) || 0;
+  if (landscape?.cells && lcs > 0) {
+    Object.entries(landscape.cells).forEach(([key, mat]) => {
+      const vobj = visualObjectByKey(mat);
+      if (!vobj) return;
+      const [gx, gy] = String(key).split(",").map(Number);
+      if (!Number.isFinite(gx) || !Number.isFinite(gy)) return;
+      const wx = (gx + 0.5) * lcs, wz = (gy + 0.5) * lcs;
+      const target = rects.find(({ rect }) => rect && pointInRect(wx, wz, rect));
+      if (target) {
+        push("warning", "visual-object-on-foundation",
+          `${vobj.label || "Visual object"} at (${wx.toFixed(0)}, ${wz.toFixed(0)}) sits on ${itemRowName(target.item, target.index)} -- a footing can't carry plantings/decor.`,
+          [sceneNodeId.item(layoutItemKey(target.item, target.index))]);
+      }
+    });
+  }
 
   const order = { error: 0, warning: 1, info: 2 };
   findings.sort((a, b) => order[a.severity] - order[b.severity]);
