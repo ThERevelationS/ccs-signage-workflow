@@ -127,6 +127,17 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
                     onChange={(e) => update(i, "notes", e.target.value)}
                     placeholder="Notes for the review"
                     className="mt-0.5 w-full h-5 px-1 text-[10px] border border-gray-100 rounded-sm bg-white" />
+                  {/* O-084 (CMP-G07) -- reported dims: the photo's claimed
+                      dimensions (e.g. "48x48x36") ride the row for the
+                      contradiction check -- a photo claiming different
+                      dims than the scene flags the contradiction vs
+                      silently accepting the photo as context. */}
+                  <input value={p?.reported_dims ?? ""} disabled={disabled}
+                    onChange={(e) => update(i, "reported_dims", e.target.value)}
+                    placeholder="Reported dims (optional, e.g. 48x48x36 in)"
+                    aria-label={`Photo ${i + 1} reported dims`}
+                    title="The photo's claimed dimensions -- flagged when they contradict the scene"
+                    className="mt-0.5 w-full h-5 px-1 text-[10px] border border-gray-100 rounded-sm bg-white" />
                   <p className="text-[9px] text-gray-500 mt-px">
                     {p?.purpose ? p.purpose.replace(/_/g, " ") : "context"}{p?.state ? ` - ${p.state}` : ""}
                   </p>
