@@ -165,6 +165,16 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
           if (fi) face.rotation.y = ang;
           tag(face, s.component_id, "pole_sign_face");
           group.add(face);
+          // O-033 (CMP-C02) -- back-face panel on a 2-face sign: a
+          // `face_count >= 2` sign carries a face on the box's back (-z) too —
+          // the face count surfaces on both faces, not just the front.
+          if (faces >= 2) {
+            const backFace = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), faceMat.clone());
+            backFace.position.set(box.position.x, box.position.y, box.position.z - sd / 2 - 0.5);
+            backFace.rotation.y = Math.PI + (fi ? ang : 0);
+            tag(backFace, s.component_id, "pole_sign_face_back");
+            group.add(backFace);
+          }
         }
       }
     });
