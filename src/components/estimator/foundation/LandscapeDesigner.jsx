@@ -331,8 +331,9 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         </div>
 
         <div
-          className="relative flex-1 overflow-auto rounded-sm border border-gray-300 bg-[#a1866f] p-1 select-none"
+          className="relative flex-1 overflow-auto rounded-sm border border-gray-300 bg-[#a1866f] p-1 select-none touch-none"
           onMouseLeave={endStroke}
+          onPointerLeave={endStroke}
         >
           {landscape?.backdrop_url && (
             <img
@@ -361,9 +362,21 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                       setPainting(true);
                       paint(x, y);
                     }}
+                    onPointerDown={(e) => {
+                      // O-098 (CMP-H07) -- touch/stylus editing: pointer events
+                      // mirror the mouse path so touch paints/selects cells.
+                      if (e.pointerType === "mouse") return;
+                      if (selectMode) { setSelectedCell({ x, y }); return; }
+                      if (fillMode) { flood(x, y); return; }
+                      e.currentTarget.setPointerCapture?.(e.pointerId);
+                      setPainting(true);
+                      paint(x, y);
+                    }}
                     onMouseEnter={() => { setHoverCell({ x, y }); if (painting && !fillMode) paint(x, y); }}
                     onMouseLeave={() => setHoverCell(null)}
                     onMouseUp={endStroke}
+                    onPointerUp={endStroke}
+                    onPointerCancel={endStroke}
                     className="aspect-square cursor-crosshair"
                     style={{
                       background: mat ? mat.color : "rgba(0,0,0,0.06)",
