@@ -109,9 +109,17 @@ N-table reads-per-invoke with a single maintained snapshot read.
       now runs in one tab and broadcasts; followers apply the result.
       Leader releases on hide/unmount for fast handoff. Kills the N-tabs
       multiplier on the hottest ambient poll.
-- [ ] Mount bootstrap: consolidate the 16-24 mount calls into the existing
+- [~] Mount bootstrap: consolidate the 16-24 mount calls into the existing
       `entities:` batch + a single "app bootstrap" payload (session verify +
       prefs + counts + feed head) — one invoke instead of a burst.
+      **v1 shipped 2026-11-09:** new `appBootstrap` function returns session
+      identity + workspace prefs/profiles + notification unread in ONE
+      invoke; `primeReadResponse(fn,payload,data)` seeds the read-lane TTL
+      cache so `prefs_get` and `unread_count` callers resolve client-side.
+      WorkspacePreferencesProvider consumes it at ~3-5s with a prefs_get
+      fallback. Remaining v2 candidates: announcements active_feed (70s gate
+      outlives TTL — needs longer TTL or event-driven invalidate), roster
+      head for kiosks, attention_feed head for AttentionBell's 15s gate.
 - [x] Read-lane audit 2026-11-09 (PUBLISHED): every frontend-invoked gateway
       classified. `queueFeed` (pure feed, no actions) added to unconditional
       reads; `manageSops` (bootstrap/list/get/ack_report) and `manageTraining`
