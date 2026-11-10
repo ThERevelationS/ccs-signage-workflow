@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 import { money } from "./foundationCalc";
+import { suggestFeasibleDimensions } from "./poleCalculator";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
 import { FoundationDimensionInput } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
@@ -277,6 +278,21 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   {issues.map((issue) => <p key={`${issue.field}-${issue.code}`}>{issue.message}</p>)}
                 </div>
               )}
+              {/* O-115 (CMP-I14) -- feasible candidate dims inside the documented
+                  method domain (embedment = h/3 engineering guidance, shaft dia
+                  = 2x pole dia shop clearance) -- a traceable alternative, not a
+                  "bigger" multiplier. Advisory only. */}
+              {(() => {
+                const s = suggestFeasibleDimensions(pole);
+                if (!s.available) return null;
+                return (
+                  <p className="mt-1 text-[9px] text-gray-400 italic">
+                    Feasible dims: embedment &ge;{s.embedment_inches}&Prime;
+                    {s.shaft_diameter_inches ? `, shaft dia &ge;${s.shaft_diameter_inches}&Prime;` : ""}
+                    {" "}({s.governing})
+                  </p>
+                );
+              })()}
               {/* O-060 (CMP-E08)  -  editable sign list on the pole: each sign
                   carries its own dims + mount height; the assembly model
                   normalizes component_ids. */}
