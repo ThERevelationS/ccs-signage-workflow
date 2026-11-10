@@ -26,7 +26,11 @@ export function loadNavOrder(userEmail) {
 
 export function saveNavOrder(userEmail, order) {
   try {
-    localStorage.setItem(orderKey(userEmail), JSON.stringify(order));
+    // Dedupe defensively: a write that lost entries (truncated server order,
+    // raced drop) is healed back by resolveTopLevel's append pass, which can
+    // leave the same url twice in storage — every write self-cleans.
+    const clean = Array.isArray(order) ? order.filter((v, i) => order.indexOf(v) === i) : [];
+    localStorage.setItem(orderKey(userEmail), JSON.stringify(clean));
   } catch {
     // Storage may be unavailable; the in-memory order still applies for this session.
   }
