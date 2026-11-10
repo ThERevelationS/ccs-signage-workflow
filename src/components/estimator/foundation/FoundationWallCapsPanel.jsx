@@ -292,6 +292,33 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           >
             Cap all walls
           </Button>
+          {/* O-054 (CMP-D11) -- bulk re-anchor: re-anchors every dangling cap
+              (an unresolved `segment_component_id`) to its wall's first
+              available segment — a bulk fix vs per-cap manual re-anchor; a
+              cap with no wall's segments stays dangling (never an invented
+              anchor). */}
+          {(() => {
+            const dangling = caps.filter((c) => {
+              const w = walls.find((x) => x.component_id === c?.wall_component_id);
+              const segs = w?.shape?.segments || [];
+              return c?.segment_component_id && !segs.some((s) => s?.component_id === c.segment_component_id);
+            });
+            return dangling.length > 0 && (
+              <Button variant="outline" size="sm"
+                title={`Re-anchor ${dangling.length} dangling cap${dangling.length === 1 ? "" : "s"} to their wall's first available segment`}
+                onClick={() => onChange(caps.map((c) => {
+                  const w = walls.find((x) => x.component_id === c?.wall_component_id);
+                  const segs = w?.shape?.segments || [];
+                  if (c?.segment_component_id && !segs.some((s) => s?.component_id === c.segment_component_id)) {
+                    return { ...c, segment_component_id: segs[0]?.component_id || c.segment_component_id, segment_index: 0 };
+                  }
+                  return c;
+                }))}
+              >
+                Re-anchor {dangling.length}
+              </Button>
+            );
+          })()}
           {/* O-054 (CMP-D11) -- rebuild preview: before a regeneration runs,
               surface which caps hold their segment (locked) vs free for
               regeneration (unlocked) -- the rebuild's effect is visible
