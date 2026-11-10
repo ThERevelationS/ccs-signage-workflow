@@ -59,6 +59,10 @@ export function WorkspacePreferencesProvider({ children }) {
             primeReadResponse("notificationAction", { session_token: token, action: "unread_count" },
               { success: true, action: "unread_count", unread_count: payload.unread_count });
           }
+          if (payload.notification_prefs && typeof payload.notification_prefs === "object") {
+            primeReadResponse("notificationAction", { session_token: token, action: "get_preferences" },
+              { success: true, action: "get_preferences", preferences: payload.notification_prefs, exists: true });
+          }
         }
       } catch {
         // Composed read failed — fall back to the plain prefs read so a dead
