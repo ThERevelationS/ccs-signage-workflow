@@ -109,11 +109,25 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
         `cut length (${cutLength} in) exceeds the selected stock length (${stockLength} in). Choose longer stock or separate pieces; no extra quantity is assumed.`);
     }
     if (issues.length !== firstIssue) return held(cap);
+    // O-055 (CMP-D12) -- optional authored installation-supplies + cut-labor
+    // cost lines on the cap. Absent = $0 (a cap may have no extras); any
+    // authored value must be finite nonnegative or the whole cap's cost holds.
+    let extras = 0;
+    let extrasInvalid = false;
+    for (const p of [cap?.supplies_cost, cap?.cut_labor_cost]) {
+      if (p == null || p === "") continue;
+      const n = Number(p);
+      if (!(Number.isFinite(n) && n >= 0)) { extrasInvalid = true; break; }
+      extras += n;
+    }
+    if (extrasInvalid) return held(cap);
     return {
       ...cap,
       cap_name: inv.material_name || "",
       stock_length_inches: stockLength,
-      cost: rate,
+      supplies_cost: cap?.supplies_cost != null && cap.supplies_cost !== "" ? Number(cap.supplies_cost) : undefined,
+      cut_labor_cost: cap?.cut_labor_cost != null && cap.cut_labor_cost !== "" ? Number(cap.cut_labor_cost) : undefined,
+      cost: rate + extras,
       // O-053 (CMP-D10) -- the reusable offcut after the cut: stockLength -
       // cutLength. Informational only -- the priced contract stays full-stock
       // per cut; the offcut surfaces for the reuse alternative, never priced.
