@@ -193,6 +193,20 @@ export function foundationSceneDiagnostics(scene) {
     } else if (!parent?.componentId) {
       push("error", "unmounted-cap", `Wall cap ${i + 1} isn't bound to a wall or wall segment -- it won't be billed to any wall.`, [capId]);
     }
+    // O-055 (CMP-D12) -- cap-to-segment fit: the cap's authored
+    // position + cut_length must not overrun its bound segment's length
+    // (held advisory -- a cap over-position is a cut-list error, not an
+    // invented segment bound).
+    const capWall = walls.find((w) => w?.component_id === parent?.componentId);
+    const capSeg = capWall?.shape?.segments?.find((s) => s?.component_id === cap?.segment_component_id)
+      ?? (Number.isInteger(cap?.segment_index) ? capWall?.shape?.segments?.[cap.segment_index] : null);
+    const segLen = Number(capSeg?.length);
+    const capPos = Number(cap?.position_along_segment_inches);
+    const capLen = Number(cap?.length_inches ?? cap?.cut_length_inches);
+    if (Number.isFinite(segLen) && segLen > 0 && Number.isFinite(capPos) && capPos >= 0
+        && Number.isFinite(capLen) && capLen > 0 && capPos + capLen > segLen + 0.01) {
+      push("warning", "wall-cap-over-position", `Wall cap ${i + 1} overruns its segment (position ${capPos}" + ${capLen}" > ${Math.round(segLen)}").`, [capId]);
+    }
   });
   cabinets.forEach((cab, i) => {
     const cabId = sceneNodeId.cabinet(layoutItemKey(cab, i));
