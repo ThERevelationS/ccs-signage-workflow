@@ -200,7 +200,15 @@ export default function FoundationBOM({
 
     out.push(...foundationWallBomRows(walls, inventory, wallPricing));
 
-    (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty));
+    (totals.wall_caps_by_material || []).forEach((g) => {
+      // O-050 (CMP-D07) -- BOM preview notes: the cap's authored
+      // profile/slope/end_treatment/supplies/cut_labor extras surface on the
+      // row's note — "what's in the cap" reads honest provenance vs a bare
+      // qty x cost row.
+      const notes = [g.profile, g.slope, g.end_treatment].filter(Boolean).join(", ");
+      const extras = [g.supplies_cost > 0 ? "supplies" : null, g.cut_labor_cost > 0 ? "cut labor" : null].filter(Boolean).join(" + ");
+      add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty, [notes, extras].filter(Boolean).join("; ") || null);
+    });
 
     // Signage cabinets â€” a priced row lists at the acknowledged unit cost Ã—
     // quantity; a held row lists its saved state like the blocked foundation
