@@ -42,16 +42,21 @@ export default function FoundationAiIntake({ onApply, disabled }) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
   const [proposal, setProposal] = useState(null);
+  const [revisionText, setRevisionText] = useState("");
 
-  const parse = async () => {
-    const t = text.trim();
+  // O-088 -- a revision feeds the current proposal + the natural-language
+  // edit back to the parser, so "add a pole" / "wider base" modify the
+  // in-flight draft instead of discarding it. Fresh text (no proposal)
+  // parses the whole description.
+  const parse = async (revision = null) => {
+    const t = (revision ?? text).trim();
     if (!t || running) return;
     setRunning(true);
     setError("");
-    setProposal(null);
     try {
+      const prior = revision && proposal ? `Current draft: ${JSON.stringify({ items: proposal.items, poles: proposal.poles })}. Apply this revision, keep unmentioned rows: ${t}` : `Description: ${t}`;
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Parse this sign-foundation description into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. Description: ${t}`,
+        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. ${prior}`,
         response_json_schema: PARSE_SCHEMA,
       });
       const parsed = typeof res === "string" ? JSON.parse(res) : res;
@@ -131,7 +136,12 @@ export default function FoundationAiIntake({ onApply, disabled }) {
             </div>
           ))}
           {proposal.notes && <p className="text-[10px] text-gray-500 italic">{proposal.notes}</p>}
-          <div className="flex gap-1.5 justify-end mt-1">
+          <div className="flex gap-1.5 items-center mt-1">
+            <input value={revisionText} onChange={(e) => setRevisionText(e.target.value)} disabled={running}
+              placeholder="Revise: 'add a pole', 'wider base'..."
+              className="flex-1 h-6 px-1.5 text-[10px] border border-gray-200 rounded-sm bg-white" />
+            <button type="button" onClick={() => { parse(revisionText); setRevisionText(""); }} disabled={running || !revisionText.trim()}
+              className="h-6 px-2 text-[10px] border border-gray-300 rounded-sm disabled:opacity-50">Revise</button>
             <button type="button" onClick={() => setProposal(null)} className="h-6 px-2 text-[10px] border border-gray-300 rounded-sm">Discard</button>
             <button type="button" onClick={apply} className="h-6 px-2 text-[10px] bg-violet-600 text-white rounded-sm font-semibold">Apply to design</button>
           </div>
