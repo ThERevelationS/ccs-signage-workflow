@@ -121,6 +121,17 @@ export function foundationSceneDiagnostics(scene) {
         `Pole ${i + 1} sits inside ${inside.length} overlapping foundations -- mount it to pick one.`,
         [poleId, ...inside.map((r) => sceneNodeId.item(layoutItemKey(r.item, r.index)))]);
     }
+    // Mounted-off-foundation: the mount resolves to a specific item but the
+    // pole's x/z sits outside that item's footprint -- the link and the
+    // geometry disagree, so the pole is not really on its claimed footing.
+    if (parent?.componentId) {
+      const target = rects.find((r) => r.item?.component_id === parent.componentId);
+      if (target?.rect && !pointInRect(px, pz, target.rect)) {
+        push("warning", "mounted-off-foundation",
+          `Pole ${i + 1} is mounted to ${itemRowName(target.item, target.index)} but its position lies outside that footing -- move it onto the footing or remount it.`,
+          [poleId, sceneNodeId.item(layoutItemKey(target.item, target.index))]);
+      }
+    }
     // O-065 impossible-fit: a pole-mounted sign whose top (mount height +
     // face height) rises past the pole top can't physically fit -- flag it
     // rather than render a floating box. Pole top = base offset + height.
