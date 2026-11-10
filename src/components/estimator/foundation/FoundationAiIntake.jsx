@@ -328,7 +328,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
           {parseHistory.slice(-3).map((h, i) => (
             <span key={i}>
               {h.revision ? "revision: " : "parse: "}{h.description}
-              {i < Math.min(3, parseHistory.length) - 1 ? " · " : ""}
+              {i < Math.min(3, parseHistory.length) - 1 ? ", " : ""}
             </span>
           ))}
         </div>
