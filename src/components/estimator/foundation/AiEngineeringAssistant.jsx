@@ -53,7 +53,14 @@ export default function AiEngineeringAssistant({ project, onResult }) {
       if (accepted === false) setError("The review could not be attached. No review changes were applied.");
     } catch (e) {
       if (!mountedRef.current || token !== tokenRef.current) return;
-      setError(e.message || "The preliminary review could not run.");
+      const msg = String(e?.message || "");
+      // O-089 — classify the failure so the operator knows whether to wait,
+      // retry, or fix connectivity rather than re-reading a raw error string.
+      const cls = /rate.?limit|429|too many/i.test(msg) ? "Rate limited -- wait a moment and retry."
+        : /network|fetch|ECONN|ENOTFOUND|offline|Failed to fetch/i.test(msg) ? "Network error -- check connectivity and retry."
+        : /timeout|timed out|abort/i.test(msg) ? "The review timed out -- retry on a stable connection."
+        : msg || "The preliminary review could not run.";
+      setError(cls);
     } finally {
       if (mountedRef.current && token === tokenRef.current) {
         busyRef.current = false;
