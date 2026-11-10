@@ -334,6 +334,14 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Pillar bar", db.pillar_bar],
             ["Base plate", db.base_plate],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
+            // O-118 (CMP-I17) -- site/signs-loads/geometry/open-questions +
+            // quantity/cost-revision fields: the remaining design-basis rows
+            // travel to the field/engineer handoff; blank = "not recorded".
+            ["Site", db.site],
+            ["Signs/loads", db.signs_loads],
+            ["Geometry", db.geometry],
+            ["Open questions", db.open_questions],
+            ["Qty/cost revision", db.quantity_cost_revision],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
           return rows.length === 0 ? (
