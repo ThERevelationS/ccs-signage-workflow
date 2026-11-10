@@ -73,6 +73,21 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
       return held(cap);
     }
     const inv = matches[0];
+    // O-050 (CMP-D07) -- supported-profile validation: authored profile/slope/
+    // end_treatment must be in the supported set; anything else surfaces an
+    // advisory issue (never held -- the profile is metadata, not geometry).
+    const SUPPORTED_PROFILES = ["flat", "sloped", "beveled", "rounded"];
+    const SUPPORTED_SLOPES = ["flat", "single", "double"];
+    const SUPPORTED_END_TREATMENTS = ["straight", "mitered", "returned"];
+    if (cap?.profile != null && cap.profile !== "" && !SUPPORTED_PROFILES.includes(cap.profile)) {
+      issue("profile", "wall_cap_profile_unsupported", `profile ${JSON.stringify(cap.profile)} is not a supported cap profile (${SUPPORTED_PROFILES.join(", ")}).`);
+    }
+    if (cap?.slope != null && cap.slope !== "" && !SUPPORTED_SLOPES.includes(cap.slope)) {
+      issue("slope", "wall_cap_slope_unsupported", `slope ${JSON.stringify(cap.slope)} is not a supported cap slope (${SUPPORTED_SLOPES.join(", ")}).`);
+    }
+    if (cap?.end_treatment != null && cap.end_treatment !== "" && !SUPPORTED_END_TREATMENTS.includes(cap.end_treatment)) {
+      issue("end_treatment", "wall_cap_end_treatment_unsupported", `end treatment ${JSON.stringify(cap.end_treatment)} is not a supported cap end treatment (${SUPPORTED_END_TREATMENTS.join(", ")}).`);
+    }
     if (inv.material_type !== "wall_cap") {
       issue("cap_inventory_id", "catalog_item_type_mismatch", "the selected catalog material is not a wall cap.");
       return held(cap);
