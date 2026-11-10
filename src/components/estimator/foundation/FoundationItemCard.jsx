@@ -136,7 +136,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
           <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
           {item.component_id && (
-            <span className="ml-1.5 text-[10px] text-gray-400 font-mono" title={`Scene node id: ${item.component_id}`}>({item.component_id})</span>
+            <span className="ml-1.5 text-[10px] text-gray-500 font-mono" title={`Scene node id: ${item.component_id}`}>({item.component_id})</span>
           )}
           <select
             value={item.foundation_type || ""}
@@ -154,13 +154,13 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         </div>
         <div className="text-right">
           <div className="font-bold text-gray-900">{amt(item.item_total_cost)}</div>
-          <div className="text-[11px] text-gray-400">
+          <div className="text-[11px] text-gray-500">
             {num2(item.concrete_volume_cy)} CY concrete
           </div>
         </div>
         <div className="flex items-center gap-2">
           {onDuplicate && (
-            <button type="button" onClick={() => onDuplicate(index)} className="text-gray-400 hover:text-blue-600" title="Duplicate">
+            <button type="button" onClick={() => onDuplicate(index)} className="text-gray-500 hover:text-blue-600" title="Duplicate">
               <Copy className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
@@ -169,7 +169,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
               if (!window.confirm(`Remove Foundation #${index + 1}?`)) return;
               onRemove(index);
             }}
-            className="text-gray-400 hover:text-red-600"
+            className="text-gray-500 hover:text-red-600"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" aria-hidden="true" />
@@ -360,7 +360,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             ["Excavation", item.excavation_cost],
           ].map(([label, value]) => (
             <div key={label} className="px-1">
-              <div className="text-gray-400">{label}</div>
+              <div className="text-gray-500">{label}</div>
               <div className="font-semibold text-gray-800">{amt(value)}</div>
             </div>
           ))}
