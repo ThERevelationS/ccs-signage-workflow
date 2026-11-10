@@ -393,6 +393,22 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         />
                         Linked
                       </label>
+                      {/* O-063 (CMP-E08) -- linked-product reference: the
+                          display-only sign records which linked sign product
+                          it represents (`linked_product_id`); blank = "not
+                          recorded" (never an invented product). */}
+                      {s.display_only === true && (
+                        <label className="text-[10px] text-gray-500" title="The linked sign product this display-only sign represents">
+                          Linked product
+                          <input
+                            type="text" placeholder="product id/name"
+                            value={s.linked_product_id ?? ""}
+                            onChange={(e) => patchSign({ linked_product_id: e.target.value === "" ? undefined : e.target.value })}
+                            className="ml-1 h-5 w-20 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            aria-label={`Pole ${index + 1} sign ${si + 1} linked product`}
+                          />
+                        </label>
+                      )}
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
                         <input
