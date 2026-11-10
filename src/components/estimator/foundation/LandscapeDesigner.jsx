@@ -10,6 +10,7 @@ import {
   landscapeSummary,
   materialByKey,
   visualObjectByKey,
+  verificationForKey,
 } from "./landscapeMaterials";
 import { money } from "./foundationCalc";
 import {
@@ -405,7 +406,11 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           {(() => {
             const key = viewCells[`${selectedCell.x},${selectedCell.y}`];
             const mat = key ? (materialByKey(key) || visualObjectByKey(key)) : null;
-            return `Selected cell ${selectedCell.x},${selectedCell.y}${mat ? ` - ${mat.label}` : " (empty)"}`;
+            // O-077 (CMP-F10) -- the asset-verification state on the selected
+            // material (procedural-fallback / verified-scale from the manifest).
+            const ver = key ? verificationForKey(key) : null;
+            const verNote = ver ? ` [${ver.scale === "verified" ? "verified scale" : "scale unverified"}]` : "";
+            return `Selected cell ${selectedCell.x},${selectedCell.y}${mat ? ` - ${mat.label}${verNote}` : " (empty)"}`;
           })()}
           <button
             type="button"
