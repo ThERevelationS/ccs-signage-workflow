@@ -63,6 +63,19 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
   const brickPitch = unitL + (isConcrete ? 0 : mortar);
 
   const totalLinearInches = wallShape.segments.reduce((s, seg) => s + seg.length, 0);
+  const grossSqFt = (totalLinearInches * wallHeightInches) / 144;
+
+  // O-045 (CMP-D02) -- authored wall openings deduct their area from masonry
+  // quantities. Each opening must carry finite positive width+height; a
+  // malformed row holds the WHOLE deduction (never a partial subtraction).
+  const openings = Array.isArray(wall?.openings) ? wall.openings : [];
+  const openingsValid = openings.every((o) => {
+    const ow = Number(o?.width_inches), oh = Number(o?.height_inches);
+    return Number.isFinite(ow) && ow > 0 && Number.isFinite(oh) && oh > 0;
+  });
+  const openSqFt = !openingsValid
+    ? 0
+    : openings.reduce((s, o) => s + (Number(o.width_inches) * Number(o.height_inches)) / 144, 0);
 
   let totalBricks = 0;
   if (isConcrete) {
@@ -75,6 +88,13 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
       totalBricks += bricksThisCourse * numCoursesRounded;
     });
   }
+  // O-045 -- openings deduct their equivalent quantity on either basis.
+  if (isConcrete) {
+    totalBricks -= (openSqFt * (unitW / 12)) / 27;
+  } else {
+    const bricksPerSqFt = grossSqFt > 0 ? totalBricks / grossSqFt : 0;
+    totalBricks = Math.max(0, totalBricks - Math.ceil(openSqFt * bricksPerSqFt));
+  }
   // O-047 -- waste scales the quantity on either basis: CY stays fractional,
   // a unit count rounds up to whole pieces.
   totalBricks = isConcrete ? totalBricks * (1 + waste) : Math.ceil(totalBricks * (1 + waste));
@@ -82,7 +102,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
   const finalBricks = wallMaterial.custom_outer_material_qty !== undefined && wallMaterial.custom_outer_material_qty !== null ? wallMaterial.custom_outer_material_qty : totalBricks;
   const materialCost = finalBricks * (wallMaterial.custom_cost_per_unit !== undefined && wallMaterial.custom_cost_per_unit !== null ? wallMaterial.custom_cost_per_unit : (wallMaterial.cost_per_unit || 0));
 
-  const surfaceAreaSqFtSingleSide = ((totalLinearInches * wallHeightInches) / 144) * (1 + waste); // O-047 waste/cut factor
+  const surfaceAreaSqFtSingleSide = Math.max(0, grossSqFt - openSqFt) * (1 + waste); // O-045 openings + O-047 waste/cut factor
 
   let mortarCost = 0;
   let mortarBags = 0;
