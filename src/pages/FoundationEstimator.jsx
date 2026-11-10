@@ -31,6 +31,7 @@ import FoundationPolesPanel from "@/components/estimator/foundation/FoundationPo
 import FoundationToolbar from "@/components/estimator/foundation/FoundationToolbar";
 import FoundationSectionBanner from "@/components/estimator/foundation/FoundationSectionBanner";
 import AiEngineeringAssistant from "@/components/estimator/foundation/AiEngineeringAssistant";
+import FoundationPhotoIntake from "@/components/estimator/foundation/FoundationPhotoIntake";
 import Foundation3DPreview from "@/components/estimator/foundation/Foundation3DPreview";
 import FoundationTemplateDialog from "@/components/estimator/foundation/FoundationTemplateDialog";
 import FoundationSyncConflictDialog, { FoundationSyncRetryAction, useFoundationBuilderSyncRetry, useFoundationSyncConflict } from "@/components/estimator/foundation/FoundationSyncConflictDialog";
@@ -1615,6 +1616,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
               <TabsContent value="foundations" className="space-y-3">
                 <AiEngineeringAssistant project={project} onResult={patch} />
+                <FoundationPhotoIntake project={project} onChange={patch} />
 
                 {calc.items.length === 0 ? (
                   <div className="bg-white rounded-sm border border-dashed border-gray-300 p-6">
