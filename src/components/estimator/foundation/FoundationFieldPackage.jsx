@@ -271,6 +271,13 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Code edition", db.code_edition],
             ["Jurisdiction", db.jurisdiction],
             ["Basis source", db.basis_source],
+            // O-109 (CMP-I08) -- soil/groundwater/frost/wind assumption fields:
+            // authored site assumptions travel to the field; blank = "not
+            // recorded" (never an invented geotech number).
+            ["Soil", db.soil],
+            ["Frost depth", db.frost_depth],
+            ["Groundwater", db.groundwater],
+            ["Wind", db.wind],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
