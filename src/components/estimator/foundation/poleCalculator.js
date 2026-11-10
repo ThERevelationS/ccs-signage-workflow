@@ -1,29 +1,29 @@
-// Pole + pole-painting math — ported VERBATIM from SignEstimate Pro
+// Pole + pole-painting math â€” ported VERBATIM from SignEstimate Pro
 // (NewFoundationEstimate.jsx: polesTotal / calcPolePaintingCost /
 //  getPolePaintingSizeMultiplier). Poles are PROJECT-level, not per foundation item.
 //
 // Availability hardening: a missing price, malformed dimension, or invalid
-// painting setting is not a free pole — the row is held with its acknowledged
+// painting setting is not a free pole â€” the row is held with its acknowledged
 // snapshot amounts and reported instead of silently repricing to $0.
 //
 // CMP-E01/O-056 consolidation: project-level `poles[]` is the single priced
 // representation. The legacy per-item pole fields (`selected_pole_id`,
 // `pole_total_height_inches`, `pole_offset_from_bottom_inches`, item-level
 // `include_pole_painting`, and the dead `pole_cost`/`pole_painting_cost`
-// snapshots) are NEVER priced — they derive advisory `legacy_item` rows via
+// snapshots) are NEVER priced â€” they derive advisory `legacy_item` rows via
 // consolidateFoundationPoles and move onto the canonical list only through the
 // explicit migrateLegacyItemPole step. A row marked pole_origin "legacy_item"
 // that reaches the priced path is held, never silently repriced.
 //
 // CMP-E02/O-057 geometry: foundationPoleGeometry resolves five DISTINCT
-// quantities that used to be conflated into height_inches + y_offset_inches —
+// quantities that used to be conflated into height_inches + y_offset_inches â€”
 // height above grade, embedment below grade (canonical `embedment_inches`,
 // legacy `y_offset_inches` is the same quantity's old spelling), vertical base
-// offset above grade (`base_offset_inches`, placement only — never material
+// offset above grade (`base_offset_inches`, placement only â€” never material
 // length), plan offset (x_inches/z_inches), and the explicit total stock
 // length (`total_length_inches`, the billed length when recorded; otherwise
 // the billed length is height + embedment). The actual cross-section shape
-// (`pole_shape`, authored then catalog) is carried distinctly — the priced
+// (`pole_shape`, authored then catalog) is carried distinctly â€” the priced
 // math below is unchanged for rows that record none of the new fields.
 
 const assignedId = value => (typeof value === "string" && value.trim() !== "")
@@ -32,17 +32,17 @@ const assignedId = value => (typeof value === "string" && value.trim() !== "")
 // Inventory normalization boundary (CMP-A08): the canonical settings pick and
 // price/dimension/measurement kernels live in
 // masterInventory/inventoryNormalization.
-//   poleSettingValue      — explicit-0-respecting pick (same semantics as wallSettingValue)
-//   polePriceNumber       — catalog/customer price basis: finite, nonnegative
+//   poleSettingValue      â€” explicit-0-respecting pick (same semantics as wallSettingValue)
+//   polePriceNumber       â€” catalog/customer price basis: finite, nonnegative
 //                           (explicit 0 is a valid free price)
-//   poleDimensionNumber   — positive finite dimension in inches/feet (height
+//   poleDimensionNumber   â€” positive finite dimension in inches/feet (height
 //                           above grade, stock length, pole width)
-//   poleOffsetNumber      — finite nonnegative measurement (depth in ground may
+//   poleOffsetNumber      â€” finite nonnegative measurement (depth in ground may
 //                           legitimately be zero; negatives are not lengths)
-//   poleSettingNumber / polePositiveSettingNumber — setting compositions;
+//   poleSettingNumber / polePositiveSettingNumber â€” setting compositions;
 //                           missing/blank settings keep the module default,
 //                           recorded values must parse on the basis.
-//   poleFiniteNumber      — finite signed basis (legacy field presence checks)
+//   poleFiniteNumber      â€” finite signed basis (legacy field presence checks)
 import {
   inventorySettingValue as poleSettingValue,
   inventoryNonnegativeNumber as polePriceNumber,
@@ -52,7 +52,7 @@ import {
   inventoryPositiveSettingNumber as polePositiveSettingNumber,
   inventoryFiniteNumber as poleFiniteNumber,
 } from "@/components/masterInventory/inventoryNormalization";
-// O-009 tail: the catalog lifecycle classifier is the single contract —
+// O-009 tail: the catalog lifecycle classifier is the single contract â€”
 // a resolved-but-inactive/deleted pole row now flags catalog_item_inactive /
 // catalog_item_deleted instead of silently repricing; the acknowledged
 // snapshot still holds through the unchanged issues channel.
@@ -98,10 +98,10 @@ export const calcPolePaintingCost = (p, inv, settings) => {
   return heightFt * (paintCostPerLf + paintLaborPerLf) * sizeMult;
 };
 
-// ─── Canonical pole geometry (CMP-E02 / O-057) ──────────────────────────────
+// â”€â”€â”€ Canonical pole geometry (CMP-E02 / O-057) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Known cross-section values; a recorded string outside this set is still
-// carried verbatim (shape is geometry metadata, not yet a priced quantity) —
+// carried verbatim (shape is geometry metadata, not yet a priced quantity) â€”
 // only a non-string recording is malformed authored data and holds the row.
 export const POLE_SHAPE_VALUES = ["round", "square", "rectangular", "elliptical", "other"];
 
@@ -110,28 +110,28 @@ export const POLE_SHAPE_VALUES = ["round", "square", "rectangular", "elliptical"
 const recorded = (v) => v !== undefined && v !== null && v !== "";
 
 // Resolve the distinct pole quantities into one model. Returns:
-//   height_above_grade_inches — pole dimension above finished grade (required)
-//   embedment_inches          — depth below grade; canonical embedment_inches,
+//   height_above_grade_inches â€” pole dimension above finished grade (required)
+//   embedment_inches          â€” depth below grade; canonical embedment_inches,
 //                               legacy y_offset_inches is the same quantity
-//   base_offset_inches        — pole base above grade (wall/pier mounting);
+//   base_offset_inches        â€” pole base above grade (wall/pier mounting);
 //                               placement metadata, never material length
-//   plan_offset_inches        — plan position x/z (lenient finite-or-0, the
+//   plan_offset_inches        â€” plan position x/z (lenient finite-or-0, the
 //                               same basis the layout canvas/preview consume)
-//   total_length_inches       — explicit billed/purchased stock length override
-//   required_length_inches    — billed material length: explicit total, else
+//   total_length_inches       â€” explicit billed/purchased stock length override
+//   required_length_inches    â€” billed material length: explicit total, else
 //                               height + embedment (the unchanged ported basis)
-//   pole_shape                — actual cross-section (authored > catalog), or
-//                               null when unspecified — never invented
-//   cross_section             — catalog width/depth/wall-thickness for shape
-//   sources                   — which field supplied each quantity
-//   problems                  — [{field, code, message}] for the caller to map
+//   pole_shape                â€” actual cross-section (authored > catalog), or
+//                               null when unspecified â€” never invented
+//   cross_section             â€” catalog width/depth/wall-thickness for shape
+//   sources                   â€” which field supplied each quantity
+//   problems                  â€” [{field, code, message}] for the caller to map
 //                               onto held-row issues (never repriced silently)
 export function foundationPoleGeometry(pole, inv = null) {
   const p = pole ?? {};
   const problems = [];
   const add = (field, code, message) => problems.push({ field, code, message });
 
-  // Height above grade — a distinct, always-required quantity.
+  // Height above grade â€” a distinct, always-required quantity.
   const height = poleDimensionNumber(p.height_inches);
   const heightSource = height !== null ? "height_inches" : "unavailable";
   if (height === null) {
@@ -139,10 +139,10 @@ export function foundationPoleGeometry(pole, inv = null) {
       "record a positive, finite height above grade in inches before repricing");
   }
 
-  // Embedment below grade — canonical embedment_inches; y_offset_inches is
+  // Embedment below grade â€” canonical embedment_inches; y_offset_inches is
   // the legacy spelling of the SAME quantity (the panel labeled it "depth in
   // ground" and the priced length has always included it). Both recorded and
-  // resolving differently is ambiguous authored data — held, never picked.
+  // resolving differently is ambiguous authored data â€” held, never picked.
   const canonEmbedRaw = p.embedment_inches;
   const legacyEmbedRaw = p.y_offset_inches;
   const canonEmbedPresent = recorded(canonEmbedRaw);
@@ -170,7 +170,7 @@ export function foundationPoleGeometry(pole, inv = null) {
       }
     } else if (embedment !== null && legacy !== null && legacy !== embedment) {
       add("embedment_inches", "pole_embedment_conflict",
-        "embedment and legacy depth-in-ground record different values — clear one before repricing");
+        "embedment and legacy depth-in-ground record different values â€” clear one before repricing");
     }
   }
   if (!canonEmbedPresent && !legacyEmbedPresent) {
@@ -178,7 +178,7 @@ export function foundationPoleGeometry(pole, inv = null) {
       "record a finite, nonnegative depth in ground in inches before repricing");
   }
 
-  // Vertical base offset — where the pole's base sits relative to grade
+  // Vertical base offset â€” where the pole's base sits relative to grade
   // (e.g. wall-top mounting). Placement metadata only: it never contributes
   // to required material length.
   const baseRaw = p.base_offset_inches;
@@ -194,7 +194,7 @@ export function foundationPoleGeometry(pole, inv = null) {
     }
   }
 
-  // Explicit total stock length — the purchased/billed stick length. When
+  // Explicit total stock length â€” the purchased/billed stick length. When
   // recorded it is the billed length; it must cover height + embedment or the
   // pole cannot physically reach its recorded embedment.
   const totalRaw = p.total_length_inches;
@@ -210,21 +210,21 @@ export function foundationPoleGeometry(pole, inv = null) {
     }
   }
 
-  // Billed material length — the unchanged ported basis (height + embedment)
+  // Billed material length â€” the unchanged ported basis (height + embedment)
   // unless an explicit total stock length overrides it.
   let required = null;
   if (totalSource === "total_length_inches" && total !== null) {
     required = total;
     if (height !== null && embedment !== null && total < height + embedment) {
       add("total_length_inches", "pole_total_length_conflict",
-        "total stock length is shorter than height above grade plus embedment — lengthen it or clear it before repricing");
+        "total stock length is shorter than height above grade plus embedment â€” lengthen it or clear it before repricing");
     }
   } else if (height !== null && embedment !== null) {
     required = height + embedment;
   }
 
-  // Actual cross-section — authored pole_shape wins over the catalog row's
-  // pole_shape; an unspecified shape stays null (unspecified is legitimate —
+  // Actual cross-section â€” authored pole_shape wins over the catalog row's
+  // pole_shape; an unspecified shape stays null (unspecified is legitimate â€”
   // the renderers assume round today and no claim otherwise is made). A
   // recorded non-string is malformed authored data and holds the row.
   const authoredShapePresent = recorded(p.pole_shape);
@@ -235,7 +235,7 @@ export function foundationPoleGeometry(pole, inv = null) {
   if (recorded(shapeRaw)) {
     if (typeof shapeRaw !== "string") {
       add("pole_shape", "pole_shape_unavailable",
-        "recorded pole shape must be a value like round or square — clear or correct it before repricing");
+        "recorded pole shape must be a value like round or square â€” clear or correct it before repricing");
     } else {
       shape = shapeRaw.trim().toLowerCase();
       shapeSource = authoredShapePresent ? "pole_shape" : "catalog";
@@ -249,7 +249,7 @@ export function foundationPoleGeometry(pole, inv = null) {
     wall_thickness_inches: poleOffsetNumber(inv.pole_wall_thickness_inches),
   };
 
-  // Plan offset — the same finite-or-0 basis the layout canvas and preview
+  // Plan offset â€” the same finite-or-0 basis the layout canvas and preview
   // consume (placement only, never material length).
   const planOffset = {
     x_inches: poleFiniteNumber(p.x_inches) ?? 0,
@@ -277,11 +277,11 @@ export function foundationPoleGeometry(pole, inv = null) {
   };
 }
 
-// ─── Legacy item-pole consolidation (CMP-E01 / O-056) ───────────────────────
+// â”€â”€â”€ Legacy item-pole consolidation (CMP-E01 / O-056) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // The single priced representation is project.poles. Item rows can still carry
 // the pre-CMP fields below; they are ghost data (rendered in the 3D preview,
-// never priced — item_total_cost has no pole term and sumPole reads only
+// never priced â€” item_total_cost has no pole term and sumPole reads only
 // project poles). These helpers expose them as advisory derived rows and move
 // them onto the canonical list only through the explicit migrate step, so a
 // physical pole is never billed twice and never silently loses geometry.
@@ -295,7 +295,7 @@ export const LEGACY_ITEM_POLE_FIELDS = [
 const isCostSnapshot = (v) => typeof v === "number" && Number.isFinite(v);
 
 // An item "carries" a legacy pole when any pole field departs from the
-// blankItem defaults — including the dead pole_cost/pole_painting_cost
+// blankItem defaults â€” including the dead pole_cost/pole_painting_cost
 // snapshots, which prove a pole once existed even if the selection was lost.
 export function itemHasLegacyPole(item) {
   if (!item || typeof item !== "object") return false;
@@ -310,10 +310,10 @@ export function itemHasLegacyPole(item) {
   return false;
 }
 
-// Advisory derived view of one item's legacy pole fields — marked
+// Advisory derived view of one item's legacy pole fields â€” marked
 // pole_origin "legacy_item" so it can never enter the priced list silently.
 // `height_inches` is null when the legacy total height is absent/malformed;
-// embedment is intentionally absent (not derivable — see migrate below).
+// embedment is intentionally absent (not derivable â€” see migrate below).
 export function deriveLegacyItemPole(item, index = 0) {
   if (!itemHasLegacyPole(item)) return null;
   const height = poleFiniteNumber(item.pole_total_height_inches);
@@ -334,13 +334,13 @@ export function deriveLegacyItemPole(item, index = 0) {
 }
 
 // Consolidated pole model for one project (or any {items, poles} source):
-//   poles       — the canonical, priced list (same row refs, never mutated)
-//   legacyPoles — advisory rows derived from item-level fields
-//   overlaps    — [{derivedIndex, poleIndex, ...}] where a project pole is
+//   poles       â€” the canonical, priced list (same row refs, never mutated)
+//   legacyPoles â€” advisory rows derived from item-level fields
+//   overlaps    â€” [{derivedIndex, poleIndex, ...}] where a project pole is
 //                 already assigned to the same foundation; surfaced for review
 //                 rather than silently deduplicated (two poles on one footing
 //                 are legitimate)
-//   issues      — advisory-only; `severity: "advisory"` keeps them out of the
+//   issues      â€” advisory-only; `severity: "advisory"` keeps them out of the
 //                 priced-issue channels that gate save/handoff
 export function consolidateFoundationPoles(source = {}) {
   const items = Array.isArray(source?.items) ? source.items : [];
@@ -356,10 +356,10 @@ export function consolidateFoundationPoles(source = {}) {
     issues.push({
       kind: "pole", severity: "advisory", code: "legacy_item_pole_fields",
       componentId: item?.component_id ?? null, field: "selected_pole_id",
-      message: `Foundation ${index + 1} carries legacy item-pole fields that are not priced — migrate them into the Poles section or clear them.`,
+      message: `Foundation ${index + 1} carries legacy item-pole fields that are not priced â€” migrate them into the Poles section or clear them.`,
     });
     poles.forEach((p, poleIndex) => {
-      // Overlap = this project pole is assigned to this foundation item —
+      // Overlap = this project pole is assigned to this foundation item â€”
       // by component id when both sides carry one, otherwise by the
       // foundation_idx slot (which is itself an assignment signal even when
       // the component id side is missing).
@@ -384,7 +384,7 @@ export function consolidateFoundationPoles(source = {}) {
       kind: "pole", severity: "advisory", code: "pole_representation_overlap",
       componentId: legacyPoles[derivedIndex]?.source_item_component_id ?? null,
       field: "selected_pole_id",
-      message: `Foundation ${itemIndex + 1} has legacy item-pole fields and ${count} project pole(s) on the same foundation — verify they describe different physical poles before migrating.`,
+      message: `Foundation ${itemIndex + 1} has legacy item-pole fields and ${count} project pole(s) on the same foundation â€” verify they describe different physical poles before migrating.`,
     });
   }
   return { poles, legacyPoles, overlaps, issues };
@@ -392,7 +392,7 @@ export function consolidateFoundationPoles(source = {}) {
 
 // The explicit consolidation step: build the canonical project-pole row from
 // an item's legacy fields plus the patch that clears them. The returned pole
-// deliberately leaves embedment unrecorded — pole_offset_from_bottom_inches is
+// deliberately leaves embedment unrecorded â€” pole_offset_from_bottom_inches is
 // ambiguous (offset above the footing bottom, not a depth in ground), so it is
 // preserved verbatim as legacy_pole_offset_from_bottom_inches and the priced
 // row holds on pole_depth_unavailable until a real embedment is recorded.
@@ -421,7 +421,7 @@ export function migrateLegacyItemPole(item, index = 0, { createId } = {}) {
     pole_total_height_inches: 0,
     pole_offset_from_bottom_inches: 0,
     include_pole_painting: false,
-    // The dead item-level snapshots clear too — leaving them would keep the
+    // The dead item-level snapshots clear too â€” leaving them would keep the
     // item flagged as carrying a legacy pole after its explicit migration.
     pole_cost: undefined,
     pole_painting_cost: undefined,
@@ -430,7 +430,7 @@ export function migrateLegacyItemPole(item, index = 0, { createId } = {}) {
 }
 
 // Resolves the catalog row and every value the pricing formulas read, on a
-// normalized calculation copy — authored rows and settings are never mutated.
+// normalized calculation copy â€” authored rows and settings are never mutated.
 function polePricing(pole, inventory = [], index = 0, settings = {}) {
   const issues = [];
   const id = pole?.pole_id;
@@ -441,11 +441,11 @@ function polePricing(pole, inventory = [], index = 0, settings = {}) {
     message: `Pole ${index + 1}: ${message}.`,
   });
   // Fail closed on the legacy representation: a row marked legacy_item must
-  // never reach the priced list — migrate it through migrateLegacyItemPole or
+  // never reach the priced list â€” migrate it through migrateLegacyItemPole or
   // it stays held (a silent price here would double-charge the ghost pole).
   if (pole?.pole_origin === POLE_ORIGIN_LEGACY_ITEM) {
     add("pole_origin", "pole_legacy_representation",
-      "legacy item-pole data cannot price here — migrate it into the Poles section or remove it");
+      "legacy item-pole data cannot price here â€” migrate it into the Poles section or remove it");
     return { issues, inv: null, geometry: null, painting: false, rate: null, stockLengthInches: null, widthInches: null, paint };
   }
   let inv = null;
@@ -468,15 +468,15 @@ function polePricing(pole, inventory = [], index = 0, settings = {}) {
       if (availability !== "active") {
         add("pole_id", availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
           availability === "deleted"
-            ? "selected catalog material is marked deleted — pick a replacement"
-            : "selected catalog material is inactive — reactivate it or pick a replacement");
+            ? "selected catalog material is marked deleted â€” pick a replacement"
+            : "selected catalog material is inactive â€” reactivate it or pick a replacement");
       } else {
         inv = matches[0];
       }
     }
   }
   // Distinct authored/calculated quantities (CMP-E02). The height and
-  // depth-in-ground checks map onto the geometry problems unchanged — same
+  // depth-in-ground checks map onto the geometry problems unchanged â€” same
   // codes and messages as the pre-consolidation checks.
   const geometry = foundationPoleGeometry(pole, inv);
   for (const problem of geometry.problems) add(problem.field, problem.code, problem.message);
@@ -556,7 +556,7 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
       : pole;
     const result = { ...pole };
     if (explicitSnapshot) {
-      // Calculated snapshot fields only — authored fields ride on the spread.
+      // Calculated snapshot fields only â€” authored fields ride on the spread.
       for (const field of ["pole_name", "pole_cost", "pole_painting_cost", "total_cost",
         "required_length_inches", "stock_pieces"]) {
         if (acknowledged && Object.prototype.hasOwnProperty.call(acknowledged, field)) result[field] = acknowledged[field];
@@ -582,7 +582,7 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
       }
       // The guarded path reuses the ported painting math on the normalized
       // calculation copy, so valid inputs price identically to the original.
-      // The painted length is the billed required length — the whole stick.
+      // The painted length is the billed required length â€” the whole stick.
       const paintingCost = check.painting
         ? calcPolePaintingCost(
             { include_pole_painting: true, height_inches: requiredInches, y_offset_inches: 0 },
@@ -593,6 +593,17 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
               [polePaintMultiplierKey(widthInches)]: paint.sizeMultiplier,
             })
         : 0;
+      // O-066 -- authored sign costs land exactly once in the pole total.
+      // Every sign must carry a finite nonnegative `unit_cost`; any blank or
+      // invalid cost holds the whole signs total (never a silent 0, never a
+      // partial sum that drops one sign's money).
+      const signRows = Array.isArray(pole?.signs) ? pole.signs : [];
+      const signCosts = signRows.map((s) => Number(s?.unit_cost));
+      const signTotal =
+        !signRows.length ? 0
+        : signCosts.every((c) => Number.isFinite(c) && c >= 0)
+          ? signCosts.reduce((a, b) => a + b, 0)
+          : null;
       return {
         ...pole,
         // Resolved-geometry snapshots (CMP-E02): the canonical embedment
@@ -607,7 +618,8 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
         pole_name: inv.material_name || "",
         pole_cost: poleCost,
         pole_painting_cost: paintingCost,
-        total_cost: poleCost + paintingCost,
+        total_sign_cost: signTotal,
+        total_cost: poleCost + paintingCost + (signTotal ?? 0),
       };
     }),
     polePricing: results.map((check) => ({
