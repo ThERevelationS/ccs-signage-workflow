@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { money, calcSignageCabinetPricing } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
+import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 import { foundationReinforcementBOMRows } from "./foundationReinforcementBOMRows";
 import { foundationWallBomRows } from "./wallCalculator";
 import { landscapeSummary } from "./landscapeMaterials";
@@ -237,6 +238,10 @@ export default function FoundationBOM({
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h3 className="font-semibold text-gray-900 mb-3">Bill of Materials</h3>
+      {/* O-119 (CMP-I18) -- preliminary notice on the BOM print block:
+          the BOM carries "Preliminary estimating only - final engineering
+          required" like every other structural concept surface. */}
+      <PreliminaryNotice />
       {listedPricingUnavailable && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
           <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable â€” saved quantities may be outdated.</p>
