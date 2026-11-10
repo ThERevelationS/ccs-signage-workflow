@@ -70,6 +70,19 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
             <option value="other">Other (engineering review)</option>
           </select>
         </label>
+        {/* O-062 (CMP-E07) -- catalog hardware model: the specific hardware
+            model the typed mount references (`mount_hardware_model`); blank =
+            "not recorded" (never an invented model). */}
+        <label className="text-[10px] text-gray-500">
+          Hardware model
+          <input
+            type="text" placeholder="model/SKU"
+            value={cabinet.mount_hardware_model ?? ""}
+            onChange={(e) => onChange({ mount_hardware_model: e.target.value === "" ? undefined : e.target.value })}
+            className="block w-full h-7 rounded-sm border border-gray-300 px-1 text-[11px]"
+            aria-label="Cabinet mount hardware model"
+          />
+        </label>
         <Field label="Qty" type="number" value={cabinet.quantity ?? 1} onChange={num("quantity")} />
         <Field label="Unit cost" type="number" value={cabinet.unit_cost ?? 0} onChange={num("unit_cost")} />
       </div>
