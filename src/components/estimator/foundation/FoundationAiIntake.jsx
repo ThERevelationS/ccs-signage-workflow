@@ -63,6 +63,18 @@ const stripCertification = (s) => typeof s === "string"
   ? s.replace(/\b(certified|code-compliant|code compliant|engineer-approved|engineer approved|stamped|PE-stamped|PE stamped|structurally approved)\b/gi, "[certification claim removed]")
   : s;
 
+// W-015 (AI-04) -- per-topic cost/scope implication: why a follow-up fact
+// matters to the estimate (deterministic, never AI-invented).
+const TOPIC_IMPLICATIONS = Object.freeze({
+  "sign style": "sign style drives face count + artwork complexity",
+  "sign weight": "sign weight drives footing size + embedment",
+  "sign size": "sign size drives pole height + wind load",
+  mounting: "mount type drives hardware + labor",
+  "site constraints": "site constraints drive access + equipment",
+  scope: "scope drives the line-item count + total",
+  budget: "budget constrains the assembly choice",
+});
+
 export default function FoundationAiIntake({ project, catalog, onApply, disabled }) {
   const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
@@ -307,6 +319,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
                 <div key={i} className="mt-0.5">
                   <p className="text-[10px] text-gray-600">
                     <span className="font-medium text-gray-700">{f.topic}:</span> {f.question}
+                    {/* W-015 (AI-04) -- per-question cost/scope implication:
+                        why the fact matters to the estimate. */}
+                    {TOPIC_IMPLICATIONS[f.topic?.toLowerCase()] && (
+                      <span className="ml-1 text-gray-400 italic">({TOPIC_IMPLICATIONS[f.topic.toLowerCase()]})</span>
+                    )}
                   </p>
                   {/* O-082 -- an answer appends to the description and re-parses;
                       the Q&A loop enriches the draft instead of starting over. */}
