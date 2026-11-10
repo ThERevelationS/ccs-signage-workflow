@@ -37,7 +37,14 @@ const PARSE_SCHEMA = {
 
 const ITEM_TYPES = ["spread_foot", "drilled_pier", "continuous", "pillar"];
 
-export default function FoundationAiIntake({ onApply, disabled }) {
+const sceneSummary = (project) => {
+  const items = Array.isArray(project?.items) ? project.items : [];
+  const poles = Array.isArray(project?.poles) ? project.poles : [];
+  const dims = items.map(i => `${i.foundation_type || "?"} ${i.length_inches || "?"}x${i.width_inches || "?"}x${i.depth_inches || "?"}in`).slice(0, 8).join("; ");
+  return `${items.length} foundations (${dims || "none"}) and ${poles.length} poles currently in the design`;
+};
+
+export default function FoundationAiIntake({ project, onApply, disabled }) {
   const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
@@ -55,9 +62,14 @@ export default function FoundationAiIntake({ onApply, disabled }) {
     setError("");
     try {
       const prior = revision && proposal ? `Current draft: ${JSON.stringify({ items: proposal.items, poles: proposal.poles })}. Apply this revision, keep unmentioned rows: ${t}` : `Description: ${t}`;
+      // O-084 -- the current scene feeds the parse so the LLM can flag where
+      // the description contradicts the design ("says 2 poles but 3 exist").
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. ${prior}`,
-        response_json_schema: PARSE_SCHEMA,
+        prompt: `Parse this sign-foundation input into a structured draft. Return only the schema fields -- quantities/dimensions as finite inches, foundation_type one of ${ITEM_TYPES.join("/")} (guess "spread_foot" if unstated). Never invent engineering values; omit fields the text does not state. The design currently has ${sceneSummary(project)} -- flag any contradiction between the input and that design in "contradictions" (empty string if none). ${prior}`,
+        response_json_schema: {
+          type: "object",
+          properties: { ...PARSE_SCHEMA.properties, contradictions: { type: "string" } },
+        },
       });
       const parsed = typeof res === "string" ? JSON.parse(res) : res;
       setProposal({
@@ -70,6 +82,7 @@ export default function FoundationAiIntake({ onApply, disabled }) {
           height_inches: p.height_inches ?? "", description: p.description ?? "",
         })),
         notes: typeof parsed.notes === "string" ? parsed.notes : "",
+        contradictions: typeof parsed.contradictions === "string" ? parsed.contradictions : "",
       });
     } catch (e) {
       setError(e?.message || "The description could not be parsed.");
@@ -148,6 +161,11 @@ export default function FoundationAiIntake({ onApply, disabled }) {
             </div>
           ))}
           {proposal.notes && <p className="text-[10px] text-gray-500 italic">{proposal.notes}</p>}
+          {proposal.contradictions && (
+            <p className="mt-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-sm px-1.5 py-0.5">
+              Contradiction: {proposal.contradictions}
+            </p>
+          )}
           {/* O-086 -- apply preview: what lands + what drops, before the
               operator commits. Rows with no dimension are dropped; the
               proposal APPENDS to the existing design, never replaces. */}
