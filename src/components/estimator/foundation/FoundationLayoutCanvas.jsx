@@ -1389,7 +1389,9 @@ export default function FoundationLayoutCanvas({
               const w = Number(s?.width_inches), d = Number(s?.depth_inches);
               if (!(w > 0) || !(d > 0)) return [];
               const off = Number(s?.horizontal_offset_inches) || 0;
-              const offs = s?.twin === true ? [off, -off] : [off];
+              // A twin mirrored across the pole at ±offset -- a centered twin
+              // (offset 0) is the same box, so only one renders.
+              const offs = s?.twin === true && off !== 0 ? [off, -off] : [off];
               return offs.map((o, oi) => (
                 <div
                   key={`sign-${pole.component_id || pole.x_inches}-${si}-${oi}`}
