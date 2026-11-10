@@ -651,3 +651,34 @@ export function calcPoles(poles = [], inventory = [], settings = {}, options = {
     })),
   };
 }
+// O-115 (CMP-I14) -- feasible candidate dimensions inside the documented
+// method domain, not an unexplained "bigger than current" multiplier. Each
+// suggestion names the governing preliminary check (embedment-rule or
+// diameter-clearance) so the alternative is traceable, not a guessed bump.
+export const FOUNDATION_METHOD_DOMAIN = Object.freeze({
+  // The documented embedment domain: embedment is a third of the exposed pole
+  // height (engineering guidance minimum, never a universal claim) and the
+  // shaft diameter clears twice the pole diameter (a shop-assumption clearance,
+  // not a code number).
+  embedment_min_ratio: 1 / 3,
+  shaft_diameter_min_ratio: 2,
+  domain: "sign-pole embedment inside engineering guidance; shop-assumption diameter clearance",
+});
+
+export const suggestFeasibleDimensions = (pole) => {
+  const height = Number(pole?.height_inches) || 0;
+  const poleDia = Number(pole?.diameter_inches) || Number(pole?.cross_section?.diameter) || null;
+  if (!(height > 0)) return { available: false, reason: "a positive exposed pole height is required before a feasible-dimension estimate" };
+  const embedment = Math.ceil(height * FOUNDATION_METHOD_DOMAIN.embedment_min_ratio);
+  const out = {
+    available: true,
+    height_inches: height,
+    embedment_inches: embedment,
+    governing: "embedment = exposed height / 3 (engineering guidance minimum)",
+  };
+  if (poleDia != null && poleDia > 0) {
+    out.shaft_diameter_inches = Math.ceil(poleDia * FOUNDATION_METHOD_DOMAIN.shaft_diameter_min_ratio);
+    out.governing += "; shaft diameter >= 2x pole diameter (shop-assumption clearance)";
+  }
+  return out;
+};
