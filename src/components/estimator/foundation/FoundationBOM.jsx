@@ -260,8 +260,8 @@ export default function FoundationBOM({
                     type="button"
                     onClick={() => onSelectIssue(i)}
                     className="ml-1 text-[9px] text-amber-800 underline hover:text-amber-900"
-                    aria-label={`Select ${i.kind || "item"} ${i.index != null ? i.index + 1 : ""}`}
-                  >(select)</button>
+                    aria-label={`Select ${i.kind || "item"} ${i.index != null ? i.index + 1 : ""}${i.field ? ` field ${i.field}` : ""}`}
+                  >(select{i.field ? ` ${i.field}` : ""})</button>
                 )}
               </p>
             ))
