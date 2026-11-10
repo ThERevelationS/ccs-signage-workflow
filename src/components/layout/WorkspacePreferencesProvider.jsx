@@ -77,7 +77,10 @@ export function WorkspacePreferencesProvider({ children }) {
           return;
         }
       }
-      const merged = migratePrefs(serverPrefs);
+      // No server blob (new user or a backend reset) must not flatten the
+      // local seed back to defaults — keep local until the first successful
+      // write makes the server authoritative again.
+      const merged = migratePrefs(serverPrefs || local?.prefs);
       // Server-authoritative nav order, but only when it is newer than the
       // order this device last wrote (last-write-wins across devices).
       const serverAt = merged.navigation.orderUpdatedAt || "";
@@ -107,6 +110,9 @@ export function WorkspacePreferencesProvider({ children }) {
     pendingRef.current = false;
     setSaving(true);
     try {
+      // Keep the local copy current even when the server write fails — a
+      // failed flush used to lose the change entirely on reload.
+      localSavePrefs(email, snapshot, snapshotProfiles);
       await base44.functions.invoke("workspacePrefsAction", {
         action: "prefs_update",
         session_token: sessionToken(),
@@ -115,7 +121,6 @@ export function WorkspacePreferencesProvider({ children }) {
         profiles: snapshotProfiles,
       });
       setSaveError("");
-      localSavePrefs(email, snapshot, snapshotProfiles);
     } catch (e) {
       pendingRef.current = true; // retry on next flush
       setSaveError(String(e?.message || "Save failed — will retry."));
