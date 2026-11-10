@@ -6,6 +6,7 @@ import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembersh
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
+import { assertSafeExternalUrl, safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -11884,9 +11885,10 @@ Deno.serve(async (req) => {
       // sync. Fire-and-forget; failures never block the confirmed punch.
       const url = typeof body.url === 'string' ? body.url.trim() : '';
       if (!url || !/^https:\/\//.test(url)) return Response.json({ success: false, error: 'A valid https:// webhook URL is required.' }, { status: 400 });
+      try { await assertSafeExternalUrl(url); } catch (e: any) { return Response.json({ success: false, error: String(e?.message || 'Webhook URL is not allowed.') }, { status: 400 }); }
       const payload = { event: 'timeclock_punch', employee: publicEmployee(target), action_type: String(body.punch_action || ''), at: new Date().toISOString(), entry_id: body.entry_id || null };
       try {
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
+        await safeExternalFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 3, (candidate: URL) => candidate.protocol === 'https:').catch(() => null);
       } catch {}
       return Response.json({ success: true });
     }
