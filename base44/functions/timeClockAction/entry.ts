@@ -46,7 +46,7 @@ async function hmacSign(message: string, secret: string) {
 }
 
 const tcSessionAuthCache = new Map<string, { user: any; expires: number }>();
-const TC_SESSION_AUTH_CACHE_MS = 60_000;
+const TC_SESSION_AUTH_CACHE_MS = 15_000;
 
 async function verifySessionToken(token: string, secret: string, authorized: any) {
   if (!token || !secret) return null;
@@ -72,9 +72,13 @@ async function verifySessionToken(token: string, secret: string, authorized: any
 
   // payloadStr uniquely identifies this token's claims (email+iat+exp) —
   // safe as a cache key. Mirrors signShopSession.ts: cached auth skips the
-  // per-invoke roster read; revocation lags <=60s, same as every gateway.
+  // per-invoke roster read; revocation lags <=15s, same as every gateway.
   const cachedAuth = tcSessionAuthCache.get(payloadStr);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return cachedAuth.user;
+  if (cachedAuth && cachedAuth.expires > Date.now()) {
+    const hitNotBefore = Date.parse(String(cachedAuth.user?.session_not_before || ''));
+    if (Number.isFinite(hitNotBefore) && hitNotBefore > 0 && issuedAt < hitNotBefore) return null;
+    return cachedAuth.user;
+  }
 
   const rows = await authorized.filter({ email: String(payload.email).trim().toLowerCase() });
   if (!Array.isArray(rows) || rows.length !== 1) return null;
