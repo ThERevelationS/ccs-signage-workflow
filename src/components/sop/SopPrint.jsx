@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, X, AlertTriangle } from "lucide-react";
@@ -82,7 +83,7 @@ export default function SopPrint({ sop, settings, onClose }) {
                   {step.body && (
                     <div
                       className="text-sm leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
-                      dangerouslySetInnerHTML={{ __html: step.body }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(step.body) }}
                     />
                   )}
                   {Array.isArray(step.images) && step.images.length > 0 && (

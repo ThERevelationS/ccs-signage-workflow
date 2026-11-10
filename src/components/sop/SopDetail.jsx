@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +156,7 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
                 {step.body && (
                   <div
                     className="mt-1 text-sm text-slate-700 leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1"
-                    dangerouslySetInnerHTML={{ __html: step.body }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(step.body) }}
                   />
                 )}
                 <StepMedia step={step} onImageClick={(images, index) => setLightbox({ images, index })} />

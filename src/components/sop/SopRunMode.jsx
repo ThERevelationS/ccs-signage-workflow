@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -52,7 +53,7 @@ export default function SopRunMode({ sop, settings, onClose }) {
             {step.body && (
               <div
                 className="mt-3 text-lg leading-relaxed text-white/90 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
-                dangerouslySetInnerHTML={{ __html: step.body }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(step.body) }}
               />
             )}
             {Array.isArray(step.images) && step.images.length > 0 && (
