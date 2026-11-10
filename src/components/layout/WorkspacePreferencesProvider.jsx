@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, primeReadResponse } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
   defaultPrefs, migratePrefs, deepMerge, setPath, getPath, SECTION_PATHS,
@@ -40,30 +40,55 @@ export function WorkspacePreferencesProvider({ children }) {
     // localStorage already seeded the UI — the server hydrate can afford to
     // land a few seconds late, outside the mount-burst invoke window.
     const hydrateTimer = setTimeout(() => (async () => {
+      let serverPrefs = null;
+      let serverProfiles = [];
       try {
-        const res = await base44.functions.invoke("workspacePrefsAction", { action: "prefs_get", session_token: sessionToken() });
-        const serverPrefs = res?.data?.prefs ?? res?.prefs ?? null;
-        const serverProfiles = res?.data?.profiles ?? res?.profiles ?? [];
-        const merged = migratePrefs(serverPrefs);
-        // Server-authoritative nav order, but only when it is newer than the
-        // order this device last wrote (last-write-wins across devices).
-        const serverAt = merged.navigation.orderUpdatedAt || "";
-        const localAt = localOrderStamp(email);
-        if (serverAt && serverAt > localAt && merged.navigation.order.length) {
-          saveNavOrder(email, merged.navigation.order);
-          saveOrderStamp(email, serverAt);
-        } else if (!serverAt && merged.navigation.order.length) {
-          saveNavOrder(email, merged.navigation.order);
+        // One composed invoke carries prefs + profiles + the unread badge —
+        // priming the read lanes so the bell's first poll and any other prefs
+        // consumer resolve without a second POST this mount.
+        const res = await base44.functions.invoke("appBootstrap", { session_token: sessionToken() });
+        const payload = res?.data || res || {};
+        if (payload?.success === false) throw new Error(payload?.error || "bootstrap failed");
+        serverPrefs = payload.prefs ?? null;
+        serverProfiles = Array.isArray(payload.profiles) ? payload.profiles : [];
+        const token = sessionToken();
+        if (token) {
+          primeReadResponse("workspacePrefsAction", { action: "prefs_get", session_token: token },
+            { success: true, action: "prefs_get", prefs: serverPrefs, profiles: serverProfiles });
+          if (typeof payload.unread_count === "number") {
+            primeReadResponse("notificationAction", { session_token: token, action: "unread_count" },
+              { success: true, action: "unread_count", unread_count: payload.unread_count });
+          }
         }
-        if (merged.navigation.order.length) window.dispatchEvent(new Event("ccs-nav-order-sync"));
-        setPrefs(merged);
-        setProfiles(Array.isArray(serverProfiles) ? serverProfiles : []);
-        localSavePrefs(email, merged, serverProfiles);
-      } catch (e) {
-        setSaveError(String(e?.message || "Could not load workspace preferences."));
-      } finally {
-        setLoaded(true);
+      } catch {
+        // Composed read failed — fall back to the plain prefs read so a dead
+        // bootstrap can never take the preference layer down with it.
+        try {
+          const res = await base44.functions.invoke("workspacePrefsAction", { action: "prefs_get", session_token: sessionToken() });
+          serverPrefs = res?.data?.prefs ?? res?.prefs ?? null;
+          serverProfiles = res?.data?.profiles ?? res?.profiles ?? [];
+        } catch (e) {
+          setSaveError(String(e?.message || "Could not load workspace preferences."));
+          setLoaded(true);
+          return;
+        }
       }
+      const merged = migratePrefs(serverPrefs);
+      // Server-authoritative nav order, but only when it is newer than the
+      // order this device last wrote (last-write-wins across devices).
+      const serverAt = merged.navigation.orderUpdatedAt || "";
+      const localAt = localOrderStamp(email);
+      if (serverAt && serverAt > localAt && merged.navigation.order.length) {
+        saveNavOrder(email, merged.navigation.order);
+        saveOrderStamp(email, serverAt);
+      } else if (!serverAt && merged.navigation.order.length) {
+        saveNavOrder(email, merged.navigation.order);
+      }
+      if (merged.navigation.order.length) window.dispatchEvent(new Event("ccs-nav-order-sync"));
+      setPrefs(merged);
+      setProfiles(Array.isArray(serverProfiles) ? serverProfiles : []);
+      localSavePrefs(email, merged, serverProfiles);
+      setLoaded(true);
     })(), 3000 + Math.floor(Math.random() * 2000));
     return () => clearTimeout(hydrateTimer);
   }, [currentUser, email]);
