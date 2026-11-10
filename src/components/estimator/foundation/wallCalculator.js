@@ -1,5 +1,5 @@
 // Ported verbatim from SignEstimate Pro (src/utils/wallCalculator.js).
-// Do not re-derive this math — outer wall + optional internal (fill) wall
+// Do not re-derive this math  -  outer wall + optional internal (fill) wall
 // brick counts, mortar bags, labor and totals.
 
 export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includeInternalWall, wallHeightInches, internalWallHeightInches, mortarGapInches, internalMortarGapInches, wasteFraction, settings }) {
