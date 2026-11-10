@@ -111,7 +111,7 @@ export default function FoundationToolbar({
         <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
           Auto-save
         </span>
-        <span className="text-[11px] text-gray-400">
+        <span className="text-[11px] text-gray-500">
           {saving ? "Savingâ€¦" : dirty ? "Not yet saved" : "All changes saved"}{!saving && !dirty && lastSavedAt ? ` Â· Last saved ${new Date(lastSavedAt).toLocaleString()}` : ""}
         </span>
         <button
