@@ -146,6 +146,14 @@ export function foundationSceneDiagnostics(scene) {
             `Pole ${i + 1} sign ${si + 1} rises to ${Math.round(mh + sh)}in but the pole tops out at ${Math.round(poleTop)}in -- lower the mount height or shorten the sign.`,
             [poleId]);
         }
+        // O-060 (CMP-E05) -- sign-level diagnostic: a letters-panel sign mounts
+        // each letter individually (a different load path than a continuous
+        // cabinet/panel face). Advisory only.
+        if (s?.panel_shape === "letters") {
+          push("info", "sign-letter-mount",
+            `Pole ${i + 1} sign ${si + 1} is a letters panel -- each letter mounts individually rather than as a continuous face.`,
+            [poleId]);
+        }
       });
     }
   });
