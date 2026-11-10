@@ -30,20 +30,30 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
     try {
       const added = [];
       for (const file of incoming) {
-        if (!file.type?.startsWith("image/")) { setError(`${file.name} is not an image.`); continue; }
+        // W-021 (AI-10) -- bounded types: raster `image/*` + vector
+        // `image/svg+xml` + document `application/pdf` are the consented
+        // upload types (bounded, no script execution, no remote fetch).
+        const isImage = file.type?.startsWith("image/");
+        const isDocument = file.type === "application/pdf";
+        if (!isImage && !isDocument) { setError(`${file.name} is not an image or document.`); continue; }
         if (file.size > MAX_BYTES) { setError(`${file.name} exceeds ${MAX_BYTES / 1048576} MB.`); continue; }
-        // W-021 (AI-10) -- EXIF/metadata strip: the image decodes to a bitmap
-        // and re-encodes through a canvas, dropping EXIF/GPS/camera metadata
-        // before the external upload. On failure the original file uploads.
+        // W-021 (AI-10) -- EXIF/metadata strip: a raster image decodes to a
+        // bitmap and re-encodes through a canvas, dropping EXIF/GPS/camera
+        // metadata before the external upload. A vector (SVG) or document
+        // (PDF) can't re-encode through the raster canvas — it uploads as-is
+        // (the EXIF-strip is a raster concern). On failure the original
+        // uploads.
         let uploadFile = file;
-        try {
-          const bmp = await createImageBitmap(file);
-          const c = document.createElement("canvas");
-          c.width = bmp.width; c.height = bmp.height;
-          c.getContext("2d").drawImage(bmp, 0, 0);
-          const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.92));
-          if (blob) uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
-        } catch { /* re-encode unavailable -- the original uploads */ }
+        if (isImage && file.type !== "image/svg+xml") {
+          try {
+            const bmp = await createImageBitmap(file);
+            const c = document.createElement("canvas");
+            c.width = bmp.width; c.height = bmp.height;
+            c.getContext("2d").drawImage(bmp, 0, 0);
+            const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.92));
+            if (blob) uploadFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+          } catch { /* re-encode unavailable -- the original uploads */ }
+        }
         // W-013 -- SHA-256 content hash for provenance/dedup (computed from
         // the original file bytes; the upload may re-encode to JPEG).
         let hash = null;
@@ -106,7 +116,7 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
         <input type="checkbox" checked={consented} onChange={(e) => setConsented(e.target.checked)} className="mt-0.5" disabled={disabled} />
         <span>I confirm these photos may be sent to external AI processing for design context.</span>
       </label>
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden"
+      <input ref={inputRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
         onChange={(e) => add(e.target.files)} disabled={disabled || uploading || !consented} />
       {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
       {photos.length > 0 && (
