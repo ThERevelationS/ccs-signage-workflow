@@ -135,6 +135,9 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         <div className="flex items-center gap-2">
           <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
           <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
+          {item.component_id && (
+            <span className="ml-1.5 text-[10px] text-gray-400 font-mono" title={`Scene node id: ${item.component_id}`}>({item.component_id})</span>
+          )}
           <select
             value={item.foundation_type || ""}
             onChange={(e) => set({ foundation_type: e.target.value })}
