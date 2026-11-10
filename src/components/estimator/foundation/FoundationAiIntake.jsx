@@ -241,7 +241,7 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
               <p className="text-[10px] font-semibold text-sky-800">Alternatives</p>
               {proposal.alternatives.map((a, i) => (
                 <p key={i} className="text-[10px] text-sky-700 mt-0.5">
-                  {a.label}{a.cost_impact ? ` — ${a.cost_impact}` : ""}
+                  {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
                 </p>
               ))}
             </div>
