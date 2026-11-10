@@ -218,6 +218,14 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                   aria-label={`Object ${oi + 1} elevation inches`}
                   title="Object elevation above grade (inches)"
                 />
+                <input
+                  type="text" placeholder="grp"
+                  aria-label={`Object ${oi + 1} group`}
+                  title="Group key -- objects sharing a group move/price together"
+                  value={o.group ?? ""}
+                  onChange={(e) => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, group: e.target.value === "" ? undefined : e.target.value } : r) })}
+                  className="h-5 w-8 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                />
                 <button
                   type="button"
                   onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).filter((_, j) => j !== oi) })}
