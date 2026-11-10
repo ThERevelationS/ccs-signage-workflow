@@ -25,6 +25,14 @@ export const LANDSCAPE_MATERIALS = [
 
 export const materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
 
+// O-077 (CMP-F10) -- the manifest's `verification` map by material/object key;
+// a UI consumer surfaces the verification state without re-deriving it.
+export const verificationForKey = (key) => {
+  const m = LANDSCAPE_ASSET_MANIFEST?.materials?.find((e) => e.key === key)
+    || LANDSCAPE_ASSET_MANIFEST?.visual_objects?.find((e) => e.key === key);
+  return m?.verification ?? null;
+};
+
 // O-073 (CMP-F06) -- decorative, UNPRICED objects painted with a "visual:"
 // prefix. They render on the designer but are excluded from the billed
 // summary and never fabricate a cost; an unknown visual key is flagged like
