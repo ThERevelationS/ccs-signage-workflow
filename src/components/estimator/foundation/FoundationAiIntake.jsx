@@ -80,7 +80,10 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
     setRunning(true);
     setError("");
     try {
-      const prior = revision && proposal ? `Current draft: ${JSON.stringify({ items: proposal.items, poles: proposal.poles })}. Apply this revision, keep unmentioned rows: ${t}` : `Description: ${t}`;
+      // O-088 (CMP-G11) -- locked items carry `locked: true` in the prior-draft
+      // JSON; the revision prompt tells the LLM to preserve locked rows'
+      // positions/dimensions so a manual placement survives a revision.
+      const prior = revision && proposal ? `Current draft: ${JSON.stringify({ items: proposal.items, poles: proposal.poles })}. Apply this revision, keep unmentioned rows; items with locked:true keep their position/dimensions unchanged: ${t}` : `Description: ${t}`;
       // O-084 -- the current scene feeds the parse so the LLM can flag where
       // the description contradicts the design ("says 2 poles but 3 exist").
       // O-085 -- the real catalog feeds the parse so any assembly proposal
@@ -103,6 +106,9 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
           foundation_type: ITEM_TYPES.includes(i.foundation_type) ? i.foundation_type : "spread_foot",
           quantity: i.quantity ?? "", length_inches: i.length_inches ?? "", width_inches: i.width_inches ?? "",
           diameter: i.diameter ?? "", depth_inches: i.depth_inches ?? "",
+          // O-088 -- a locked item carries locked:true through the revision so
+          // the LLM preserves its position/dimensions.
+          locked: i.locked === true ? true : undefined,
         })),
         poles: (parsed.poles || []).filter(p => p && typeof p === "object").map(p => ({
           height_inches: p.height_inches ?? "", description: p.description ?? "",
@@ -193,6 +199,18 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
                     placeholder={it[k] === "" ? "unknown" : k.split("_")[0]}
                     className={`h-5 px-1 text-[10px] border rounded-sm ${it[k] === "" ? "border-amber-300 bg-amber-50/40" : "border-gray-200"}`} />
                 ))}
+                {/* O-088 -- a locked item keeps its position/dimensions across a
+                    revision (the prior-draft JSON carries locked:true). */}
+                <label className="flex items-center gap-0.5 text-[9px] text-gray-500" title="Keep this item's position/dimensions unchanged across a revision">
+                  <input
+                    type="checkbox"
+                    checked={it.locked === true}
+                    onChange={(e) => setField("items", i, "locked", e.target.checked ? true : undefined)}
+                    className="h-3 w-3"
+                    aria-label={`Lock item ${i + 1}`}
+                  />
+                  Lock
+                </label>
               </div>
               {/* O-083 -- a blank field is concept-only progress: it stays
                   unknown (never invented), flagged amber, with the reason it
