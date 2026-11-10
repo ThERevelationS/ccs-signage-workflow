@@ -91,6 +91,16 @@ export default function FoundationBOM({
       add("Shop/user contingency", qty(1, "allowance"), contingency, 1, "A disclosed shop/user contingency allowance -- not a calculated baseline quantity.", "contingency");
     }
 
+    // O-116 (CMP-I15) -- a published-minimum row separate from the
+    // calculated + contingency rows: `project.published_min_cost` (the
+    // published engineering minimum's authored amount, never an invented
+    // price) surfaces as a "published_minimum" cost_class row so the
+    // minimum-vs-baseline-vs-contingency separation is honest.
+    const pubMin = num(project?.published_min_cost);
+    if (pubMin > 0) {
+      add("Published minimum", qty(1, "published"), pubMin, 1, "The published engineering-minimum authored amount -- a minimum bound, not a calculated baseline or a contingency.", "published_minimum");
+    }
+
     blocked.forEach((i) => {
       const label = `Foundation ${i.component_id ?? "?"} (saved)`;
       {
