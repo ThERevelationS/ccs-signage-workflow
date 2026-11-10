@@ -377,10 +377,17 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                           value={s.artwork_url ?? ""}
                           placeholder="image URL or file ref"
                           onChange={(e) => patchSign({ artwork_url: e.target.value === "" ? undefined : e.target.value })}
-                          className="block w-32 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px] font-mono"
                           aria-label={`Pole ${index + 1} sign ${si + 1} artwork URL`}
                         />
                       </label>
+                      {s.artwork_url && (
+                        <img
+                          src={s.artwork_url}
+                          alt={`Sign ${si + 1} artwork`}
+                          className="h-7 w-7 self-end rounded-sm border border-gray-200 object-cover"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => patchPole(index, { signs: (pole.signs || []).filter((_, j) => j !== si) })}
