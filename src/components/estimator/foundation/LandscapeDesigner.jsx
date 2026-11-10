@@ -277,6 +277,43 @@ export default function LandscapeDesigner({ landscape, onChange }) {
               className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
             >+Border</button>
           </label>
+          {/* O-068 (CMP-F01) -- named-bed entries: `landscape.beds[]` rows
+              {material, sqft} bill an authored coverage (a bed polygon's area
+              the operator records) vs cell paint -- a discrete bed entry. */}
+          <label className="text-[10px] text-gray-500 flex items-center gap-1">
+            Beds
+            {(landscape?.beds || []).map((b, bi) => (
+              <span key={bi} className="flex items-center gap-0.5">
+                <select
+                  aria-label={`Bed ${bi + 1} material`}
+                  value={b?.material || ""}
+                  onChange={(e) => onChange({ ...landscape, beds: (landscape.beds || []).map((r, j) => j === bi ? { ...r, material: e.target.value } : r) })}
+                  className="h-5 rounded-sm border border-gray-300 text-[9px]"
+                >
+                  <option value="">-</option>
+                  {LANDSCAPE_MATERIALS.filter((m) => m.key !== "dirt").map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+                </select>
+                <input
+                  type="number" min="0" step="0.5" placeholder="sqft"
+                  aria-label={`Bed ${bi + 1} sqft`}
+                  value={b?.sqft ?? ""}
+                  onChange={(e) => onChange({ ...landscape, beds: (landscape.beds || []).map((r, j) => j === bi ? { ...r, sqft: e.target.value === "" ? undefined : Number(e.target.value) } : r) })}
+                  className="h-5 w-10 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove bed ${bi + 1}`}
+                  onClick={() => onChange({ ...landscape, beds: (landscape.beds || []).filter((_, j) => j !== bi) })}
+                  className="text-[9px] text-red-600"
+                >x</button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange({ ...landscape, beds: [...(landscape?.beds || []), { material: "", sqft: "" }] })}
+              className="h-5 px-1 rounded-sm border border-gray-300 text-[9px] text-gray-600 hover:bg-gray-50"
+            >+Bed</button>
+          </label>
           {/* O-072 (CMP-F05) -- site-photo/plan backdrop: `backdrop_url` +
               `backdrop_opacity` render a reference image behind the grid. The
               authored `cell_size_inches` IS the scale contract -- the operator
