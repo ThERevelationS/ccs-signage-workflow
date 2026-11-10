@@ -51,6 +51,14 @@ export default function FoundationTotals({ totals, pricingUnavailable = false })
           <span>Total</span>
           <span className="text-red-600">{pricingUnavailable ? <span className="text-amber-700">Pricing unavailable</span> : money(totals.grand_total)}</span>
         </div>
+        {/* O-116 (CMP-I16) -- sensitivity note: when inputs are uncertain
+            (unpriced/held), the total is sensitive -- actual costs come from
+            the catalog or a disclosed allowance, not this estimate. */}
+        {pricingUnavailable && (
+          <p className="mt-1 text-[10px] text-amber-700/80">
+            Total is sensitive to unpriced inputs; actual costs come from the catalog or a disclosed allowance.
+          </p>
+        )}
       </div>
     </div>
   );
