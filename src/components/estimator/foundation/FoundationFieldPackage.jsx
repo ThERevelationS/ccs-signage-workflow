@@ -297,6 +297,11 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Sign wind", db.sign_wind],
             ["Footing basis", db.footing_basis],
             ["Shaft basis", db.shaft_basis],
+            // O-111 (CMP-I10) -- pillar-bar/base-plate fields: authored
+            // pillar/base-plate basis travels to the field alongside the
+            // method rows; blank = "not recorded".
+            ["Pillar bar", db.pillar_bar],
+            ["Base plate", db.base_plate],
             ["Basis locked", db.basis_locked === true ? "Yes" : db.basis_locked === false ? "No" : null],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
