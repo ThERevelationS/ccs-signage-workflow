@@ -364,6 +364,19 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                         />
                         Twin
                       </label>
+                      {/* O-063 (CMP-E08) -- linked display-only sign: excluded
+                          from fabrication/installation charges (no double-
+                          charge on a linked sign product); still renders. */}
+                      <label className="flex items-center gap-1 text-[10px] text-gray-500 self-end pb-1" title="Linked sign -- display only, excluded from sign cost">
+                        <input
+                          type="checkbox"
+                          checked={s.display_only === true}
+                          onChange={(e) => patchSign({ display_only: e.target.checked ? true : undefined })}
+                          className="h-3.5 w-3.5"
+                          aria-label={`Pole ${index + 1} sign ${si + 1} linked display-only`}
+                        />
+                        Linked
+                      </label>
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
                         <input
