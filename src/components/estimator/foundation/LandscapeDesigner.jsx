@@ -578,6 +578,15 @@ export default function LandscapeDesigner({ landscape, onChange }) {
             <span>Landscape total</span>
             <span className={Number.isFinite(summary.total) ? "" : "text-amber-700"}>{costLabel(summary.total)}</span>
           </div>
+          {/* O-073 (CMP-F06) -- plant counts + bed volume: the informational
+              counts the field/production surface reads (visual-cell count +
+              authored sqft x depth volume); "not recorded" when absent. */}
+          {(Number.isFinite(summary.plant_count) || Number.isFinite(summary.bed_volume_cy)) && (
+            <div className="flex justify-between text-[10px] text-gray-500">
+              <span>{Number.isFinite(summary.plant_count) ? `${summary.plant_count} decorative object${summary.plant_count === 1 ? "" : "s"}` : "—"}</span>
+              <span>{Number.isFinite(summary.bed_volume_cy) ? `${summary.bed_volume_cy.toFixed(1)} CY bed material` : ""}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
