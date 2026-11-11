@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 const MAX_BACKUP_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -211,7 +212,7 @@ async function createOrGetFolder(folderName, parentId, accessToken) {
       ? `name='${folderName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
       : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
-    const searchRes = await fetch(
+    const searchRes = await boundedFetch(
       `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&spaces=drive&fields=files(id,name)&pageSize=1`,
       {
         headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -234,7 +235,7 @@ async function createOrGetFolder(folderName, parentId, accessToken) {
       metadata.parents = [parentId];
     }
 
-    const createRes = await fetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
+    const createRes = await boundedFetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
