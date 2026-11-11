@@ -655,10 +655,24 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
         }).filter((n) => n !== null && n > 0);
         if (!offcuts.length) return null;
         const total = offcuts.reduce((a, b) => a + b, 0);
+        // O-053 (CMP-D10) -- reuse detail: purchased pieces / waste / labor /
+        // price delta on the offcut-reuse view (informational only -- the
+        // priced contract stays full-stock per cut; the offcut is never
+        // priced and never a silent zero).
+        const purchased = (caps || []).length;
+        const labor = (caps || []).reduce((a, c) => a + (wallCapInputNumber(c?.cut_labor_cost) || 0), 0);
         return (
-          <p className="text-[11px] text-gray-500 mt-1">
-            Offcuts: {offcuts.length} piece{offcuts.length === 1 ? "" : "s"} totaling {Math.round(total)}&quot; reusable -- not billed (full-stock pricing already charged).
-          </p>
+          <details className="text-[11px] text-gray-500 mt-1">
+            <summary className="cursor-pointer hover:text-gray-700">
+              Offcuts: {offcuts.length} piece{offcuts.length === 1 ? "" : "s"} totaling {Math.round(total)}&quot; reusable -- not billed (full-stock pricing already charged).
+            </summary>
+            <ul className="mt-0.5 list-disc pl-4">
+              <li>Purchased pieces: {purchased} (one stock row per cut piece)</li>
+              <li>Waste: {Math.round(total)}&quot; reusable offcut across {offcuts.length} piece{offcuts.length === 1 ? "" : "s"}</li>
+              <li>Cut labor: {labor > 0 ? `$${labor.toFixed(2)}` : "not recorded"}</li>
+              <li>Price delta: $0 -- offcut reuse is informational; full-stock pricing already charged</li>
+            </ul>
+          </details>
         );
       })()}
     </div>
