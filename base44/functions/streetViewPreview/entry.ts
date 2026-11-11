@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 /**
  * Street View site preview for work orders / install locations.
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
       || Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim();
     if (!apiKey) return Response.json({ error: 'Street View key not configured' }, { status: 503 });
 
-    const metaResp = await fetch(`${META}?location=${encodeURIComponent(address)}&source=outdoor&key=${apiKey}`);
+    const metaResp = await boundedFetch(`${META}?location=${encodeURIComponent(address)}&source=outdoor&key=${apiKey}`);
     const meta = await metaResp.json().catch(() => null);
     if (!metaResp.ok || !meta) {
       console.error('streetViewPreview metadata error', metaResp.status);
@@ -39,7 +40,7 @@ Deno.serve(async (req) => {
     }
 
     const loc = `${meta.location.lat},${meta.location.lng}`;
-    const imgResp = await fetch(`${IMG}?location=${encodeURIComponent(loc)}&size=640x360&source=outdoor&fov=90&key=${apiKey}`);
+    const imgResp = await boundedFetch(`${IMG}?location=${encodeURIComponent(loc)}&size=640x360&source=outdoor&fov=90&key=${apiKey}`);
     if (!imgResp.ok) {
       console.error('streetViewPreview image error', imgResp.status);
       return Response.json({ error: 'Street View image unavailable' }, { status: 502 });
