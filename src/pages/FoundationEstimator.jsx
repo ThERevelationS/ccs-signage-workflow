@@ -1846,6 +1846,15 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     if (!key) return;
                     sceneSelection.select({ id: sceneNodeId[nodeKind](key) });
                     setMainTab("foundations");
+                    // O-097 (CMP-H06) -- per-field focus/scroll: after the tab
+                    // renders, focus + scroll the named field's input (the
+                    // issue's `field` hint names the field to fix).
+                    if (typeof issue.field === "string" && issue.field) {
+                      setTimeout(() => {
+                        const el = document.querySelector(`[data-field="${issue.field}"], #field-${issue.field}`);
+                        if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus?.(); }
+                      }, 0);
+                    }
                   }}
                   items={calc.items}
                   poles={calc.poles}
