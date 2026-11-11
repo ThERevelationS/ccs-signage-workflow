@@ -136,6 +136,22 @@ export function foundationSceneDiagnostics(scene) {
         `Photo ${pi + 1}'s reported units ("${rd.units}") contradict the scene's inches-units -- review the photo's scale claim.`,
         []);
     }
+    // O-084 (CMP-G07) -- photo-mount-mismatch: a photo's `reported_dims.mount_type`
+    // conflicting with a sign's authored `mount_type` -- the photo's claimed
+    // mount is recorded vs trusted (the photo is context-only).
+    const claimMount = typeof rd.mount_type === "string" && rd.mount_type ? rd.mount_type : null;
+    if (claimMount) {
+      (poles || []).forEach((pole, pi2) => {
+        (pole.signs || []).forEach((s, si) => {
+          const realMount = typeof s?.mount_type === "string" && s.mount_type ? s.mount_type : "pole";
+          if (claimMount !== realMount) {
+            push("warning", "photo-mount-mismatch",
+              `Photo ${pi + 1}'s reported mount ("${claimMount}") contradicts pole ${pi2 + 1} sign ${si + 1}'s authored mount ("${realMount}") -- review the photo's claim.`,
+              []);
+          }
+        });
+      });
+    }
   });
 
   // -- item bounds + pairwise clash -------------------------------------
