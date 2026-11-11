@@ -10296,33 +10296,56 @@ Deno.serve(async (req) => {
       if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
 
       const syncLateClockInPunchCase = async (record: any, approvalAuditId: string) => {
-        if (!record?.punch_exception_id) return true;
-        const punchCase = await punchExceptionEntity.get(record.punch_exception_id).catch(() => null);
-        if (!punchCase?.id || !['late_clock_in', 'missed_shift'].includes(String(punchCase.exception_type || ''))) return true;
-        if (String(punchCase.time_entry_id || '') !== record.id || asEmail(punchCase.user_email) !== target.email) return false;
-        const expectedCaseStatus = decision === 'approve' ? 'resolved' : 'pending_manager_review';
-        if (String(punchCase.status || '') === expectedCaseStatus &&
-            (decision !== 'approve' || String(punchCase.resolution_audit_id || '') === String(approvalAuditId || ''))) return true;
-        const updated = await punchExceptionEntity.updateMany(
-          { id: punchCase.id, time_entry_id: record.id, user_email: target.email },
-          { $set: {
-            status: expectedCaseStatus,
-            ...(decision === 'approve' ? {
-              resolution_audit_id: approvalAuditId,
-              resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
-                ? 'Manager approved the completed shift reported as entirely missed.'
-                : 'Manager approved the completed shift reconstructed from the employee-reported missed Clock In.',
-            } : {
-              resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
-                ? 'Manager returned the reported missed shift to Needs Review.'
-                : 'Manager returned the reconstructed missed Clock In shift to Needs Review.',
-            }),
-          } },
-        );
-        if (!updated || typeof updated.updated !== 'number') return false;
-        const verified = await punchExceptionEntity.get(punchCase.id).catch(() => null);
-        return Boolean(verified?.id && String(verified.status || '') === expectedCaseStatus &&
-          (decision !== 'approve' || String(verified.resolution_audit_id || '') === String(approvalAuditId || '')));
+        const syncOneCase = async (punchCase: any) => {
+          const expectedCaseStatus = decision === 'approve' ? 'resolved' : 'pending_manager_review';
+          if (String(punchCase.status || '') === expectedCaseStatus &&
+              (decision !== 'approve' || String(punchCase.resolution_audit_id || '') === String(approvalAuditId || ''))) return true;
+          const updated = await punchExceptionEntity.updateMany(
+            { id: punchCase.id, time_entry_id: record.id, user_email: target.email },
+            { $set: {
+              status: expectedCaseStatus,
+              ...(decision === 'approve' ? {
+                resolution_audit_id: approvalAuditId,
+                resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
+                  ? 'Manager approved the completed shift reported as entirely missed.'
+                  : 'Manager approved the completed shift reconstructed from the employee-reported missed Clock In.',
+              } : {
+                resolution_note: String(punchCase.exception_type || '') === 'missed_shift'
+                  ? 'Manager returned the reported missed shift to Needs Review.'
+                  : 'Manager returned the reconstructed missed Clock In shift to Needs Review.',
+              }),
+            } },
+          );
+          if (!updated || typeof updated.updated !== 'number') return false;
+          const verified = await punchExceptionEntity.get(punchCase.id).catch(() => null);
+          return Boolean(verified?.id && String(verified.status || '') === expectedCaseStatus &&
+            (decision !== 'approve' || String(verified.resolution_audit_id || '') === String(approvalAuditId || '')));
+        };
+        if (record?.punch_exception_id) {
+          const punchCase = await punchExceptionEntity.get(record.punch_exception_id).catch(() => null);
+          if (punchCase?.id && ['late_clock_in', 'missed_shift'].includes(String(punchCase.exception_type || ''))) {
+            if (String(punchCase.time_entry_id || '') !== record.id || asEmail(punchCase.user_email) !== target.email) return false;
+            if (!await syncOneCase(punchCase)) return false;
+          }
+        }
+        // entry.punch_exception_id is single-linked and later exceptions
+        // (missed_clock_out recovery, worked_through) repoint it, so approval
+        // must also sweep sibling late_clock_in/missed_shift cases still open
+        // on this entry or they linger in the manager queue forever.
+        if (decision === 'approve') {
+          const siblings = await punchExceptionEntity.filter({
+            time_entry_id: record.id,
+            status: { $in: ['open', 'pending_manager_review'] },
+          }).catch(() => null);
+          if (!Array.isArray(siblings)) return false;
+          for (const sib of siblings) {
+            if (!sib?.id || String(sib.id) === String(record?.punch_exception_id || '')) continue;
+            if (!['late_clock_in', 'missed_shift'].includes(String(sib.exception_type || ''))) continue;
+            if (asEmail(sib.user_email) !== target.email) return false;
+            if (!await syncOneCase(sib)) return false;
+          }
+        }
+        return true;
       };
       const correctionAuditMatchesRecord = (appliedAudit: any, record: any, correctionRequestId = '') => {
         const corrected = appliedAudit?.details?.corrected || {};
