@@ -101,4 +101,9 @@ export const FOUNDATION_AI_OUTPUT_CONTRACT = Object.freeze({
   // Lane C -- backend_dispatched: whether the proposal's apply was dispatched
   // to the backend rides the meta (never a fabricated dispatch).
   meta: ["schema_version", "module_key", "proposal_id", "base_project_revision", "brief", "evidence_refs", "user_locks", "exclusions", "model_policy_version", "backend_dispatched"],
+  // Lane C -- operations/issues: the apply's operation list + the validation's
+  // issue list ride the contract's top-level shape (the proposal's apply +
+  // validation contract surfaces; never a fabricated operation/issue).
+  operations: "[{kind, target, payload}] allowlisted discriminated union",
+  issues: "[{field, code, message}] structured validation issues",
 });
