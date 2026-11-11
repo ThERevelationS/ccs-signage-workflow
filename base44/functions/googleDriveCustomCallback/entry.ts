@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { verifyOAuthState } from '../../shared/oauthState.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
     const redirectUri = `${url.origin}/functions/googleDriveCustomCallback`;
 
     // Exchange code for token
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    const tokenResponse = await boundedFetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
