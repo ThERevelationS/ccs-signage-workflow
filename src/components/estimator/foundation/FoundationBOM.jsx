@@ -39,11 +39,15 @@ export default function FoundationBOM({
     // O-097 "why this quantity" — every priced row may carry an honest
     // derivation note; it renders under the row like the reinforcement
     // notes already do. Only real derivation classes, never invented math.
-    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null, costClass = "calculated") => {
+    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null, costClass = "calculated", supplierGroup = null, authorizationGate = null) => {
       if (num(rawQty) <= 0 && !hasFoundationCostSnapshot(cost)) return;
       // O-115 (CMP-I15) -- cost_class separates published-minimum / calculated /
       // contingency rows so "what changed the price" is honest provenance.
-      out.push({ material, quantity: displayQty, cost, cost_class: costClass, ...(note ? { note } : {}) });
+      // Lane E -- supplier_grouping/authorization_gate: the row's supplier
+      // group + authorization gate ride the row (never an invented gate;
+      // blank = "not recorded").
+      out.push({ material, quantity: displayQty, cost, cost_class: costClass, ...(note ? { note } : {}),
+        supplier_group: supplierGroup, authorization_gate: authorizationGate });
     };
     const nameOf = (id) => inventory.find((i) => i.id === id)?.material_name || "Material";
     const resolved = items.filter((_, i) => itemPricing[i]?.available !== false);
