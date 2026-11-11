@@ -1211,6 +1211,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               latestFenceRecord = fenceRecord;
               const drift = analyzeSalesQuickEditDrift(fenceRecord, { expectedFields, guardFields, changes });
               drift.applied.forEach((field) => appliedFields.add(field));
+              if (drift.supersededStamps.length) {
+                // The stored activity clock is already at/past what this edit
+                // would write — keep the newer stamp and drop ours, never
+                // surfacing it as a conflict.
+                drift.supersededStamps.forEach((field) => {
+                  delete changes[field];
+                  delete expectedFields[field];
+                  historyFieldsAtSave.delete(field);
+                  if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][field];
+                  if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][field];
+                  pendingHistoryFieldsRef.current[orderId]?.delete?.(field);
+                });
+              }
               if (drift.conflicted.length) {
                 // A field this edit targets was changed by another writer, so
                 // that field's save is rejected before it can overwrite. Drop
@@ -1239,9 +1252,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 // validators still decide whether the patch may apply.
                 drift.guardDrift.forEach((field) => { guardFields[field] = fenceRecord[field] ?? null; });
               }
-              if (Object.keys(changes).length && Object.keys(changes).every((field) => appliedFields.has(field))) {
-                // Identical values already reached the record — adopt it
-                // without writing or claiming the earlier write as ours.
+              if (!Object.keys(changes).length || Object.keys(changes).every((field) => appliedFields.has(field))) {
+                // Nothing left to write (superseded stamps only), or identical
+                // values already reached the record — adopt it without writing
+                // or claiming the earlier write as ours.
                 saved = fenceRecord;
                 break;
               }
@@ -1268,9 +1282,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 guardFields: {},
                 changes: queuedNow,
               });
-              queuedDrift.applied.forEach((f) => {
-                // Already holding the target value — drop the queued edit
-                // silently; the desired state is on the record.
+              [...queuedDrift.applied, ...queuedDrift.supersededStamps].forEach((f) => {
+                // Already holding the target value or a newer activity stamp —
+                // drop the queued edit silently; the desired state is on the record.
                 if (pendingChangesRef.current[orderId]) delete pendingChangesRef.current[orderId][f];
                 if (pendingBaselinesRef.current[orderId]) delete pendingBaselinesRef.current[orderId][f];
                 pendingHistoryFieldsRef.current[orderId]?.delete?.(f);
