@@ -314,6 +314,19 @@ export function foundationSceneDiagnostics(scene) {
         && Number.isFinite(capLen) && capLen > 0 && capPos + capLen > segLen + 0.01) {
       push("warning", "wall-cap-over-position", `Wall cap ${i + 1} overruns its segment (position ${capPos}" + ${capLen}" > ${Math.round(segLen)}").`, [capId]);
     }
+    // Lane D -- cap_miter_angle/cap_joint_width: a cap's miter angle + joint
+    // width are unrecorded -- held states (the cap's cut-list can't carry a
+    // miter angle; blank = "not recorded").
+    if (cap?.miter_angle_deg == null) {
+      push("info", "cap-miter-held",
+        `Wall cap ${i + 1}'s miter angle is not recorded -- record the miter cut (degrees) for the cut-list.`,
+        [capId]);
+    }
+    if (cap?.joint_width_inches == null) {
+      push("info", "cap-joint-held",
+        `Wall cap ${i + 1}'s joint width is not recorded -- record the cap joint (inches) for the cut-list.`,
+        [capId]);
+    }
   });
   cabinets.forEach((cab, i) => {
     const cabId = sceneNodeId.cabinet(layoutItemKey(cab, i));
