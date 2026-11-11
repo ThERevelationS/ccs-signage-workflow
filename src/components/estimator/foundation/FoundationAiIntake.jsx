@@ -262,6 +262,15 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       setError(issues[0]?.message || "The proposal cannot be applied.");
       return;
     }
+    // O-087 (CMP-G10) -- explicit base-version match: a proposal's
+    // `schema_version` must match the record's `assembly_schema_version`
+    // when both are present -- a proposal drafted against a different schema
+    // version can't merge (a structural mismatch, not a stale timestamp).
+    if (!force && proposal.schema_version != null && project?.assembly_schema_version != null
+      && Number(proposal.schema_version) !== Number(project.assembly_schema_version)) {
+      setError(`Proposal schema version ${proposal.schema_version} doesn't match the record's assembly schema ${project.assembly_schema_version} -- re-parse against the current record.`);
+      return;
+    }
     // W-017 -- base-revision verification: a proposal drafted against a stale
     // base (project.updated_date moved) flags a stale-draft warning before the
     // merge -- the operator confirms the revision-aware apply.
