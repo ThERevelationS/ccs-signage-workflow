@@ -23,6 +23,7 @@ import FoundationTotals from "@/components/estimator/foundation/FoundationTotals
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationFieldPackage from "@/components/estimator/foundation/FoundationFieldPackage";
+import FoundationDesignBasis from "@/components/estimator/foundation/FoundationDesignBasis";
 import FoundationBulkMaterialPanel from "@/components/estimator/foundation/FoundationBulkMaterialPanel";
 import FoundationGuidedSteps from "@/components/estimator/foundation/FoundationGuidedSteps";
 import { diffFoundationProjects, summarizeFoundationDiff } from "@/components/estimator/foundation/foundationRevisionDiff";
@@ -1887,6 +1888,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   landscape={project.landscape}
                   landscapePricing={calc.landscapePricing}
                   pricingUnavailable={pricingBlocked}
+                />
+                <FoundationDesignBasis
+                  project={project}
+                  onChange={(patch) => setProject((prev) => prev ? { ...prev, ...patch } : prev)}
                 />
                 <FoundationFieldPackage
                   project={project}
