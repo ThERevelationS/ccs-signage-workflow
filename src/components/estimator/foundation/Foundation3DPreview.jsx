@@ -408,6 +408,10 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
   // O-037 reinforcement-inspection — gates the concrete-local steel/supports
   // group without touching the concrete render.
   const [showRebar, setShowRebar] = useState(true);
+  // O-043 (CMP-C12) -- presentation render: a concept-only view hiding the
+  // construction details (rebar/supports/grid) -- an attractive concept
+  // render separate from the construction doc.
+  const [presentation, setPresentation] = useState(false);
   // O-037 vertical cutaway — a side clip in plan-X inches (null = off); it
   // composes with the elevation section rather than replacing it.
   const [cutawayX, setCutawayX] = useState(null);
@@ -584,10 +588,14 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
       st.scene.remove(st.modelGroup);
       disposeObject(st.modelGroup);
     }
-    st.modelGroup = buildScene(st.scene, project, solid, showGround, new Set(highlightComponentIds), exploded, showRebar);
+    // O-043 (CMP-C12) -- presentation render: a concept-only view hiding the
+    // construction details (rebar/supports/grid); `showRebar`/`showGround`
+    // gate on `!presentation` so the render stays a concept render, never a
+    // construction doc.
+    st.modelGroup = buildScene(st.scene, project, solid, showGround && !presentation, new Set(highlightComponentIds), exploded, showRebar && !presentation);
     st.invalidate?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- highlightKey serializes the id set for the rebuild
-  }, [project, solid, showGround, visible, highlightKey, exploded, showRebar]);
+  }, [project, solid, showGround, visible, highlightKey, exploded, showRebar, presentation]);
 
   // Section clip plane — a global renderer plane keeps everything below the
   // chosen elevation (negative inches = below grade); no geometry is edited.
@@ -654,6 +662,10 @@ export default function Foundation3DPreview({ project, highlightComponentIds = [
             <ToolBtn onClick={() => setSection((v) => (v === null ? -6 : null))} active={section !== null}>Section</ToolBtn>
             <ToolBtn onClick={() => setSectionBelow((v) => !v)} active={sectionBelow} title="Show only below-grade geometry">Below</ToolBtn>
             <ToolBtn onClick={() => setShowRebar((v) => !v)} active={!showRebar} title="Toggle reinforcement steel/supports">Rebar</ToolBtn>
+            {/* O-043 (CMP-C12) -- presentation render toggle: a concept-only
+                view hiding the construction details (rebar/supports/grid) --
+                an attractive concept render separate from the construction doc. */}
+            <ToolBtn onClick={() => setPresentation((v) => !v)} active={presentation} title="Concept-only render (hides rebar, supports, and the grid)">Presentation</ToolBtn>
             <ToolBtn onClick={() => setCutawayX((v) => (v === null ? 120 : null))} active={cutawayX !== null} title="Cut away everything right of the X position">Cutaway</ToolBtn>
             {cutawayX !== null && (
               <span className="flex items-center gap-1 text-[11px] text-gray-600">
