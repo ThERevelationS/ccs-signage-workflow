@@ -1,16 +1,6 @@
 import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
 import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
 
-// O-009 tail: catalog row lifecycle — a missing or soft-deleted row is
-// "deleted", a row hidden from the foundation picker (`show_in_foundation ===
-// false`) is "inactive", anything else is "active". Callers map the three
-// states to catalog_item_deleted / catalog_item_inactive hold codes.
-export function foundationCatalogRowAvailability(record) {
-  if (!record || record.deleted === true || record.deleted_at) return "deleted";
-  if (record.show_in_foundation === false) return "inactive";
-  return "active";
-}
-
 export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   const issues = [];
   const add = (field, id, label, code = "catalog_item_unavailable") => issues.push({
@@ -32,6 +22,11 @@ export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
       return;
     }
     if (!row || !types.includes(row.material_type)) {
+      // O-009 (CMP-A09) -- deleted vs filtered: a missing row is unavailable --
+      // the query-filtered-inactive-indistinguishable-from-deleted hole means a
+      // missing row could be deleted OR filtered out of the query; the code
+      // names the ambiguity (`catalog_item_unavailable`) rather than claiming a
+      // deleted row.
       add(field, id, label, row ? "catalog_item_type_mismatch" : "catalog_item_unavailable");
     }
   };
