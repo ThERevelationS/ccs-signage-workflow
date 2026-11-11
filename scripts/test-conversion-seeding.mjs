@@ -271,6 +271,15 @@ eq(p1.fulfillment_state, 'none', 'fulfillment_state default intact');
   eq(legacy.length, 3, 'legacy parts resolve through builder_product_id fallback');
   eq(legacy.some((p) => p.id === 'pt-x'), false, 'unrelated product parts excluded');
   eq((await loadEstimateConversionParts(estimate, { entity: {} })).length, 0, 'missing entity → empty pool');
+
+  // O-014 B-4: a transient filter failure propagates (fail-closed) rather than
+  // silently seeding a conversion parts pool missing rows.
+  const failingEntity = { filter: async () => { throw new Error('transient 500'); } };
+  await assert.rejects(
+    loadEstimateConversionParts(estimate, { entity: failingEntity }),
+    /transient 500/,
+    'transient filter failure propagates instead of silently returning an empty pool',
+  );
 }
 
 // --- B-14/D-06: converted WO fields ---------------------------------------------
