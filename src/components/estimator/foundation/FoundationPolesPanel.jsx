@@ -483,7 +483,8 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                             aria-label={`Pole ${index + 1} sign ${si + 1} job link`}
                           />
                         </label>
-                        {/* O-059 (CMP-E04) -- multipole sign spanning: `spans`
+                      )}
+                      {/* O-059 (CMP-E04) -- multipole sign spanning: `spans`
                             records which poles (comma-separated pole indexes)
                             the sign spans -- a multipole sign's authored span
                             vs the pole.signs[] per-pole mount. */}
@@ -515,7 +516,6 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                             <option value="foundation">foundation</option>
                           </select>
                         </label>
-                      )}
                       <label className="text-[10px] text-gray-500">
                         Weight (lb)
                         <input
