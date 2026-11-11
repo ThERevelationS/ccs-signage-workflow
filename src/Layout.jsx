@@ -329,9 +329,10 @@ function LayoutContent({ children }) {
     () => new Set(effectiveFolders.flatMap((f) => f.items)),
     [effectiveFolders]
   );
-  // Pages eligible for top-level: not inside a folder, not hidden.
+  // Pages eligible for top-level: every routable nav page not inside a folder
+  // and not hidden — including folder-native pages pulled out to the bar.
   const barPageUrls = useMemo(
-    () => new Set(navigationItems.map((i) => i.url).filter((u) => !folderMemberUrls.has(u) && !navHidden.includes(u))),
+    () => new Set([...ALL_NAV_PAGES.keys()].filter((u) => !folderMemberUrls.has(u) && !navHidden.includes(u))),
     [folderMemberUrls, navHidden]
   );
   const topEntries = useMemo(
@@ -1903,7 +1904,7 @@ function LayoutContent({ children }) {
                             </Fragment>
                           );
                         }
-                        const item = barItemByUrl.get(entry.url);
+                        const item = styledPage(entry.url);
                         if (!item) return null;
                         return (
                           <Fragment key={dndId}>
@@ -2103,7 +2104,7 @@ function LayoutContent({ children }) {
                                 </Fragment>
                               );
                             }
-                            const item = barItemByUrl.get(entry.url);
+                            const item = styledPage(entry.url);
                             if (!item) return null;
                             return (
                               <Fragment key={dndId}>
