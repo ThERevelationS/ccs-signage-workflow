@@ -93,6 +93,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   // abortable; the server call completes but its result is discarded.
   const tokenRef = useRef(0);
   const cancel = () => { tokenRef.current += 1; setRunning(false); };
+  // W-019 (AI-08) -- request-rate limit: a `parse` call inside the minimum
+  // interval is skipped -- the InvokeLLM call isn't free; a rate limit bounds
+  // the request cadence (never a silent drop -- a skip surfaces as an error).
+  const lastParseRef = useRef(0);
+  const PARSE_MIN_INTERVAL_MS = 2000;
 
   // O-088 -- a revision feeds the current proposal + the natural-language
   // edit back to the parser, so "add a pole" / "wider base" modify the
@@ -101,6 +106,15 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
   const parse = async (revision = null) => {
     const t = (revision ?? text).trim();
     if (!t || running) return;
+    // W-019 (AI-08) -- request-rate limit: a `parse` call inside the minimum
+    // interval is skipped -- the InvokeLLM call isn't free; a skip surfaces
+    // as an error, never a silent drop.
+    const now = Date.now();
+    if (now - lastParseRef.current < PARSE_MIN_INTERVAL_MS) {
+      setError("Slow down -- a parse was just submitted. Wait a moment before parsing again.");
+      return;
+    }
+    lastParseRef.current = now;
     const token = ++tokenRef.current;
     setRunning(true);
     setError("");
@@ -249,7 +263,11 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       setError(`Pole ${badRef + 1} mounts to item ${poles[badRef].mounts_to} -- no item lands at that index (only ${items.length} land). Fix the mount reference or remove it.`);
       return;
     }
-    onApply({ foundations: items, poles });
+    // W-019 (AI-08) -- idempotent apply receipt: `apply_receipt_id` records a
+    // keyed receipt on the apply payload -- a consumer records the receipt so
+    // a duplicate apply (a double-click/retry) doesn't double-land.
+    const apply_receipt_id = `receipt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    onApply({ foundations: items, poles, apply_receipt_id });
     setProposal(null);
     setText("");
   };
