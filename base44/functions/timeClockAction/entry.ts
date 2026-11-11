@@ -8018,6 +8018,46 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, entry: updated });
     }
 
+    if (action === 'admin_repair_state') {
+      // Repairs a stuck TimeClockEmployeeState whose active row link no longer
+      // resolves — the 409 "Stored clock state does not match the active
+      // TimeEntry" path otherwise has no exit and blocks the employee's clock.
+      // Clears to clocked_out under CAS + audit; it never creates or alters a
+      // TimeEntry — the missing shift stays missing for manager review.
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to repair clock state.' }, { status: 403 });
+      const stateId = String(body?.state_id || '').trim();
+      const expected = String(body?.expected_updated_date || '').trim();
+      const reason = String(body?.reason || '').slice(0, 300);
+      if (!stateId || !expected) return Response.json({ success: false, error: 'state_id and expected_updated_date are required.' }, { status: 400 });
+      const row = await stateEntity.get(stateId).catch(() => null);
+      if (!row?.id) return Response.json({ success: false, error: 'Employee state was not found.' }, { status: 404 });
+      if (String(row.updated_date || '') !== expected) {
+        return Response.json({ success: false, error: 'The state changed since it was loaded. Reload and retry.' }, { status: 409 });
+      }
+      const linkedEntry = row.active_entry_id ? await entryEntity.get(row.active_entry_id).catch(() => null) : null;
+      const entryBroken = !row.active_entry_id || !linkedEntry?.id || linkedEntry.status !== 'clocked_in' || linkedEntry.archived_admin === true || linkedEntry.archived_test_data === true || asEmail(linkedEntry.user_email) !== asEmail(row.user_email);
+      const linkedBreak = row.active_break_id ? await breakEntity.get(row.active_break_id).catch(() => null) : null;
+      const breakBroken = !row.active_break_id || !linkedBreak?.id;
+      const linkedPause = row.active_work_pause_id ? await workPauseEntity.get(row.active_work_pause_id).catch(() => null) : null;
+      const pauseBroken = !row.active_work_pause_id || !linkedPause?.id;
+      if (row.status === 'clocked_in' && !entryBroken && !breakBroken && !pauseBroken) {
+        return Response.json({ success: false, error: 'The stored state looks healthy — nothing to repair. Reload status first.' }, { status: 409 });
+      }
+      const repaired = await stateEntity.update(stateId, {
+        status: 'clocked_out', active_entry_id: null, pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        last_request_id: null, last_request_payload_hash: null,
+      });
+      await auditEntity.create({
+        action: 'admin_repair_state', request_id: requestId, time_entry_id: String(row.active_entry_id || ''),
+        user_email: row.user_email || '', actor_email: actorEmail,
+        details: { reason, expected_updated_date: expected, prior_status: row.status, missing_entry_id: row.active_entry_id || null, entry_broken: entryBroken, break_broken: breakBroken, pause_broken: pauseBroken },
+      }).catch(() => null);
+      return Response.json({ success: true, state: repaired });
+    }
+
     if (action === 'my_labor_history') {
       // Employee self-service: distinct recent labor allocations for quick-pick.
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view labor history.' }, { status: 403 });
