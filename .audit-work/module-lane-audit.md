@@ -36,6 +36,12 @@ pricing lanes against the prior `*-hardening` passes and the current remote.
   vinyl 14/0 · brick — Save/Save-As-Copy blocked while held, saved totals
   shown, clean paths save.
 
+### Browser verifiers (real-Chromium, network blocked) — all PASS
+
+- channel 4/0 · cnc 6/0 · laser 6/0 · metal 4/0 · painting 4/0 ·
+  maintenance 4/0 · vinyl 4/0 · brick 4/0 — desktop + mobile held-mount,
+  save-blocked-zero-writes. 36 checks total.
+
 ### Availability-layer remote md5 parity vs hardened candidates
 
 | Layer | Remote md5 == candidate |
