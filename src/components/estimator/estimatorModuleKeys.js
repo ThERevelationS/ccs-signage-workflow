@@ -55,3 +55,18 @@ export const INTAKE_SHELL_CONTRACT = {
   ai_path: "Start with AI",
   contract_version: "1.0.0",
 };
+
+// `MODULE_QUESTION_MAP` — the per-module question-map scaffold. Each module's
+// intake asks its module-specific questions (the foundation module's map is
+// the reference); a queued module's map is a scaffold — the questions name the
+// module's required facts without an implemented intake shell.
+export const MODULE_QUESTION_MAP = {
+  foundation: ["sign style/weight", "mounting", "site constraints", "scope", "budget"],
+  channel_letters: ["letter height", "mounting type", "power supply", "site access", "budget"],
+  maintenance: ["service interval", "scope (cleaning/repair/lamp)", "access", "budget"],
+  painting: ["surface area", "prep level", "coating type", "site access", "budget"],
+  laser: ["material", "thickness", "detail level", "quantity", "budget"],
+  cnc: ["material", "thickness", "detail level", "quantity", "budget"],
+  neon: ["letter height", "tube color", "mounting type", "site access", "budget"],
+  vinyl: ["surface area", "vinyl type", "print vs cut", "site access", "budget"],
+};
