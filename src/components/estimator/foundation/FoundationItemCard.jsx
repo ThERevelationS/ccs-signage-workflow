@@ -331,6 +331,16 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
               <Field label="Layers" type="number" value={item.rebar_layers ?? 1} onChange={numSet("rebar_layers")} />
             </>
           )}
+          {/* O-111 (CMP-I10) -- support-basis field: `support_class` records the
+              support type (chair/bolster/stand class) the reinforcement rides
+              on -- the register's support taxonomy names the classes; blank =
+              "not recorded" (never an invented support). */}
+          <Field
+            label="Support class"
+            value={item.support_class ?? ""}
+            onChange={(e) => set({ support_class: e.target.value === "" ? undefined : e.target.value })}
+            placeholder="chair / bolster / dobie"
+          />
           <div className="col-span-2 sm:col-span-4 text-xs text-gray-500">
             {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft Â·{" "}
             {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs Â·{" "}
