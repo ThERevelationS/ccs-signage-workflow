@@ -76,6 +76,11 @@ export default function WallShapeEditor({ shape, onChange }) {
     w: formatFoundationDimension(48),
   }));
   const [legThick, setLegThick] = useState("");
+  // O-044 (CMP-D01) -- wing lengths: the L/U preset's horizontal + vertical
+  // wing lengths parameterize independently of the bounding rect — authored
+  // `wingL`/`wingW` when finite-positive-and-fits, else the rect's full dims.
+  const [wingL, setWingL] = useState("");
+  const [wingW, setWingW] = useState("");
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const gridId = `wallGrid-${uid}`;
   const rectLId = `rectL-${uid}`;
@@ -125,10 +130,17 @@ export default function WallShapeEditor({ shape, onChange }) {
       Number.isFinite(Number(legThick)) && Number(legThick) > 0 && Number(legThick) <= Math.min(l, w) / 2
         ? Number(legThick)
         : Math.min(l, w) / 2;
+    // O-044 (CMP-D01) -- parameterized wing lengths: authored `wingL`/`wingW`
+    // when finite-positive-and-fits (≤ the bounding rect's dims), else the
+    // rect's full dims — the wings never exceed the bounding rect.
+    const wingLi =
+      Number.isFinite(Number(wingL)) && Number(wingL) > 0 && Number(wingL) <= l ? Number(wingL) : l;
+    const wingWi =
+      Number.isFinite(Number(wingW)) && Number(wingW) > 0 && Number(wingW) <= w ? Number(wingW) : w;
     const hl = l / 2, hw = w / 2;
     const shapes = {
-      l: [{ x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: legT }, { x: legT, z: legT }, { x: legT, z: w }, { x: 0, z: w }],
-      u: [{ x: 0, z: w }, { x: 0, z: 0 }, { x: l, z: 0 }, { x: l, z: w }, { x: l - legT, z: w }, { x: l - legT, z: legT }, { x: legT, z: legT }, { x: legT, z: w }],
+      l: [{ x: 0, z: 0 }, { x: wingLi, z: 0 }, { x: wingLi, z: legT }, { x: legT, z: legT }, { x: legT, z: wingWi }, { x: 0, z: wingWi }],
+      u: [{ x: 0, z: wingWi }, { x: 0, z: 0 }, { x: wingLi, z: 0 }, { x: wingLi, z: wingWi }, { x: wingLi - legT, z: wingWi }, { x: wingLi - legT, z: legT }, { x: legT, z: legT }, { x: legT, z: wingWi }],
     };
     const pts = shapes[kind];
     if (!pts) return;
@@ -208,6 +220,31 @@ export default function WallShapeEditor({ shape, onChange }) {
             placeholder="half"
             className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
             aria-label="L/U leg thickness (inches)"
+          />
+        </label>
+        {/* O-044 (CMP-D01) -- optional authored wing lengths: finite positive
+            values (<= the bounding rect's dims) parameterize the L/U wings;
+            blank falls back to the rect's full dims. */}
+        <label className="text-[10px] text-gray-500">
+          Wing L (in)
+          <input
+            type="number" min="0" step="0.25"
+            value={wingL}
+            onChange={(e) => setWingL(e.target.value)}
+            placeholder="rect"
+            className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+            aria-label="L/U horizontal wing length (inches)"
+          />
+        </label>
+        <label className="text-[10px] text-gray-500">
+          Wing W (in)
+          <input
+            type="number" min="0" step="0.25"
+            value={wingW}
+            onChange={(e) => setWingW(e.target.value)}
+            placeholder="rect"
+            className="block w-16 h-7 rounded-sm border border-gray-300 px-1.5 text-[11px]"
+            aria-label="L/U vertical wing length (inches)"
           />
         </label>
         <Button variant="outline" size="sm" onClick={() => presetOutline("l")} disabled={!rectShape}>
