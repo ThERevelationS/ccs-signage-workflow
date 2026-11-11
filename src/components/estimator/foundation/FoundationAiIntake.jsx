@@ -57,6 +57,30 @@ const catalogNames = (catalog) => {
   return names.slice(0, 24);
 };
 
+// O-085 (CMP-G08) -- priced alternatives: a deterministic catalog lookup
+// matching the alternative's label against the catalog's priced entries --
+// `computed_cost`/`matched_stock`/`matched_unit` record the priced match when
+// the alternative's label names a catalog stock (never an invented price;
+// an unmatched alternative stays `computed_cost: null` -- the described
+// `cost_impact` text still surfaces).
+const pricedAlternative = (label, catalog) => {
+  if (typeof label !== "string" || !label) return { computed_cost: null };
+  const lname = label.toLowerCase();
+  for (const rows of Object.values(catalog || {})) {
+    for (const r of rows || []) {
+      const n = r?.material_name || r?.name || r?.service_name;
+      if (!n || !lname.includes(String(n).toLowerCase())) continue;
+      const unit = r?.cost_per_unit ?? r?.unit_price ?? r?.cost_per_sqft ?? null;
+      return {
+        computed_cost: Number.isFinite(unit) ? unit : null,
+        matched_stock: n,
+        matched_unit: r?.unit || "unit",
+      };
+    }
+  }
+  return { computed_cost: null };
+};
+
 // W-018 (AI-07) -- certification strip: drop certification/approval claims
 // from AI text so a suggestion never reads as engineering approval.
 const stripCertification = (s) => typeof s === "string"
@@ -372,16 +396,26 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
           {proposal.alternatives?.length > 0 && (
             <div className="mt-1 rounded-sm border border-sky-200 bg-sky-50 px-1.5 py-1">
               <p className="text-[10px] font-semibold text-sky-800">Alternatives</p>
-              {proposal.alternatives.map((a, i) => (
-                <p key={i} className="text-[10px] text-sky-700 mt-0.5">
-                  {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
-                  {/* O-117 (CMP-I16) -- numeric sensitivity bound: the
-                      alternative's ±% cost swing on the named uncertain
-                      input renders alongside the text note. */}
-                  {Number.isFinite(a.sensitivity_pct) && <span className="text-sky-600 font-semibold"> [±{a.sensitivity_pct}%]</span>}
-                  {a.sensitivity && <span className="text-sky-500 italic"> ({a.sensitivity})</span>}
-                </p>
-              ))}
+              {proposal.alternatives.map((a, i) => {
+                // O-085 (CMP-G08) -- priced alternative: a deterministic
+                // catalog lookup on the alternative's label surfaces the
+                // computed cost when the label names a catalog stock (never
+                // an invented price; unmatched stays silent).
+                const priced = pricedAlternative(a.label, catalog);
+                return (
+                  <p key={i} className="text-[10px] text-sky-700 mt-0.5">
+                    {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
+                    {Number.isFinite(priced.computed_cost) && (
+                      <span className="text-sky-800 font-semibold"> [@${priced.computed_cost}/{priced.matched_unit} {priced.matched_stock}]</span>
+                    )}
+                    {/* O-117 (CMP-I16) -- numeric sensitivity bound: the
+                        alternative's ±% cost swing on the named uncertain
+                        input renders alongside the text note. */}
+                    {Number.isFinite(a.sensitivity_pct) && <span className="text-sky-600 font-semibold"> [±{a.sensitivity_pct}%]</span>}
+                    {a.sensitivity && <span className="text-sky-500 italic"> ({a.sensitivity})</span>}
+                  </p>
+                );
+              })}
             </div>
           )}
           {proposal.followUps?.length > 0 && (
