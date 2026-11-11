@@ -620,7 +620,8 @@ Deno.serve(async (req) => {
       // be an owner. Email-anchored owners (the ownerRole bootstrap list)
       // cannot be revoked or demoted through the app — that anchor is what
       // guarantees at least one privileged account always exists.
-      if (Object.prototype.hasOwnProperty.call(desired, 'is_owner')) {
+      if (Object.prototype.hasOwnProperty.call(desired, 'is_owner')
+          && desired.is_owner !== isOwnerRecord(current)) {
         if (!isOwnerRecord(actor)) {
           return Response.json({ error: 'Only an owner can grant or revoke the Owner role.' }, { status: 403 });
         }
