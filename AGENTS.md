@@ -61,6 +61,7 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 - `node scripts/validate-opportunity-workspace.mjs` — contract checks (backend-only entities, guarded handoff, idempotent creates, routing, feature presence).
 - Hardening suites (esbuild-bundled under Node): `node scripts/test-aio-pricing.mjs`, `test-quote-lifecycle.mjs`, `test-customer-quote.mjs`, `test-customer-pricing.mjs`, `test-entity-persistence.mjs`, `test-estimate-cas.mjs`, `test-estimate-lifecycle.mjs`, `test-estimate-save-recovery.mjs`, `test-builder-persistence.mjs`, `test-module-registry.mjs`, `test-sales-activity.mjs`, `test-builder-service.mjs`, `test-builder-recovery.mjs`, `test-quick-price-persistence.mjs`, `test-customer-persistence.mjs` — all print `PASS <name>`.
 - JSX/TS syntax: `npx esbuild <file> --loader:.jsx=jsx --outfile=NUL` (TS files need no loader flag).
+- Module-lane harnesses (`.audit-work/<module>-hardening/`): `verify-<m>-model.mjs` / `-consumers` / `-page` run under plain Node; `verify-<m>-browser.mjs` needs `playwright-core` (`npm i --no-save playwright-core` — no package.json change) + cached Chromium `~/AppData/Local/ms-playwright/chromium-1248`. Modules: channel-letter, cnc, laser, metal, painting, maintenance, vinyl, brick-stone. Pricing-wire fixtures: `node scripts/test-<m>-pricing-wire.mjs` (+ `test-channel-cost-ownership.mjs`, `test-module-wire-ownership.mjs`) — also run on the remote sandbox (`sandbox run "node scripts/..."`).
 
 ## Conventions
 
