@@ -252,6 +252,10 @@ export default function TimeClockAdmin({ view = "entries" }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [repairConfirm, setRepairConfirm] = useState(null);
+  const [repairBusy, setRepairBusy] = useState(false);
+  const [repairError, setRepairError] = useState("");
+  const [repairRequestId, setRepairRequestId] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
   const [correctionReason, setCorrectionReason] = useState("");
   const [correctionRequestId, setCorrectionRequestId] = useState("");
@@ -936,6 +940,60 @@ export default function TimeClockAdmin({ view = "entries" }) {
       await loadData({ silent: true });
     } finally {
       setDeleteBusy(false);
+    }
+  };
+
+  const openRepairState = (state) => {
+    setRepairError("");
+    const recoveredRequestId = storedAdminRequestId("admin_repair_state", state?.id);
+    const requestId = recoveredRequestId || newRequestId();
+    if (!recoveredRequestId && state?.id) persistAdminRequestId("admin_repair_state", state.id, requestId);
+    setRepairRequestId(requestId);
+    setRepairConfirm(state);
+  };
+
+  const handleRepairState = async () => {
+    const state = repairConfirm;
+    if (!state?.id || repairBusy) return;
+    if (!sessionToken) {
+      setRepairError("Your administrator session is not available. Sign in again before repairing clock state.");
+      return;
+    }
+    const requestId = repairRequestId || storedAdminRequestId("admin_repair_state", state.id) || newRequestId();
+    setRepairBusy(true);
+    try {
+      if (!repairRequestId) {
+        setRepairRequestId(requestId);
+        persistAdminRequestId("admin_repair_state", state.id, requestId);
+      }
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_repair_state",
+        session_token: sessionToken,
+        request_id: requestId,
+        state_id: state.id,
+        expected_updated_date: state.updated_date,
+        reason: "Admin panel repair: stored clock state did not match its active records.",
+      });
+      const data = functionData(response);
+      if (!data?.success) throw adminActionError(data, "The clock state repair was not confirmed by the server.");
+      clearAdminRequestId("admin_repair_state", state.id, requestId);
+      setRepairRequestId("");
+      setRepairConfirm(null);
+      setRepairError("");
+      await loadData({ silent: true });
+    } catch (err) {
+      console.error("Error repairing clock state:", err);
+      const message = err?.response?.data?.error || err?.message || "This clock state changed in another session and was not repaired.";
+      const retainRequest = shouldRetainAdminRequest(err);
+      setRepairError(message);
+      if (!retainRequest) {
+        clearAdminRequestId("admin_repair_state", state.id, requestId);
+        setRepairRequestId("");
+        setRepairConfirm(null);
+      }
+      await loadData({ silent: true });
+    } finally {
+      setRepairBusy(false);
     }
   };
 
@@ -1951,6 +2009,10 @@ export default function TimeClockAdmin({ view = "entries" }) {
               const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
               const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
               const validWorkPauseStarted = workPauseStarted && !Number.isNaN(workPauseStarted.getTime());
+              const missingEntryLink = state.status === "clocked_in" && (!state.active_entry_id || !entry);
+              const missingBreakLink = state.break_status === "on_break" && !breakRow;
+              const missingPauseLink = state.work_pause_status === "paused" && !workPauseRow;
+              const stateLinkIssue = missingEntryLink || missingBreakLink || missingPauseLink;
               return (
                 <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1974,11 +2036,23 @@ export default function TimeClockAdmin({ view = "entries" }) {
                     {state.work_pause_status === "paused" && !workPauseRow && (
                       <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record -- review required.</p>
                     )}
+                    {missingEntryLink && (
+                      <p className="text-xs text-red-600 mt-1">Clocked-in state is missing its active TimeEntry record -- review required.</p>
+                    )}
                     {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
                       <p className="text-xs text-blue-700 mt-1 capitalize">
                         Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
                         {laborRow.work_order_id ? <>{" - "}<a href={`/MainWorkflow?wo=${laborRow.work_order_id}`} className="underline hover:text-blue-900" title="Open this work order">{laborRow.client_name || laborRow.work_order_title || "WorkOrder"}</a></> : ""}
                       </p>
+                    )}
+                    {stateLinkIssue && (
+                      <div className="mt-2">
+                        <Button type="button" size="sm" variant="outline"
+                          className="h-7 px-2 text-xs border-red-300 text-red-700 hover:bg-red-50"
+                          onClick={() => openRepairState(state)}>
+                          <RotateCcw className="w-3 h-3 mr-1" /> Repair clock state
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
@@ -2400,6 +2474,29 @@ export default function TimeClockAdmin({ view = "entries" }) {
               disabled={deleteBusy || archiveReason.trim().length < 3}
             >
               {deleteBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Archiving...</> : "Archive Time Entry"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!repairConfirm} onOpenChange={(open) => { if (!open && !repairBusy) { setRepairConfirm(null); setRepairError(""); } }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Repair Clock State?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Clear {repairConfirm?.user_name || repairConfirm?.user_email || "this employee"}'s stored clock state back to clocked out? Use this only when the state points at a missing or already-closed record and the employee cannot clock in or out. The time record itself is not changed, and the repair is written to the audit trail.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {repairError ? <p className="text-sm text-red-600">{repairError}</p> : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={repairBusy}>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              onClick={handleRepairState}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={repairBusy}
+            >
+              {repairBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Repairing...</> : "Repair Clock State"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
