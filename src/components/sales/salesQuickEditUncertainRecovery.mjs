@@ -50,14 +50,34 @@ export function classifySalesQuickEditSaveError(error) {
   return 'uncertain';
 }
 
+// Derived monotonic stamps — never user data. Every Sales-field save injects
+// a fresh client timestamp, so its baseline goes stale whenever an earlier
+// save commits between this edit's queueing and dispatch (two edits inside
+// one save window). A newer incoming stamp is a benign forward move and must
+// write; a stored stamp already ≥ the desired one means the record holds a
+// newer/equal activity marker — adopt it and drop ours without writing.
+export const SALES_MONOTONIC_STAMP_FIELDS = new Set([
+  'sales_last_activity_at', 'sales_stage_changed_at', 'sales_quote_sent_verified_at',
+]);
+
 // Compare a freshly-read record against the baselines a save was about to
 // CAS on. Buckets fields so the caller can keep still-valid pending edits,
 // drop genuinely conflicted ones, and detect "someone already saved the
 // same values" (applied — nothing to redo, nothing to report as lost).
+// supersededStamps are dropped like conflicts but never named to the user.
 export function analyzeSalesQuickEditDrift(record,{expectedFields={},guardFields={},changes={}}={}) {
-  const applied=[],conflicted=[],guardDrift=[];
-  if(!record||typeof record!=='object')return {applied,conflicted,guardDrift,unavailable:true};
+  const applied=[],conflicted=[],guardDrift=[],supersededStamps=[];
+  if(!record||typeof record!=='object')return {applied,conflicted,guardDrift,supersededStamps,unavailable:true};
   for(const field of Object.keys(expectedFields)) {
+    if(SALES_MONOTONIC_STAMP_FIELDS.has(field)) {
+      const recMs=Date.parse(String(record[field]??''));
+      const nextMs=Date.parse(String(changes[field]??''));
+      if(Number.isFinite(recMs)&&Number.isFinite(nextMs)) {
+        if(nextMs>recMs)continue;      // forward stamp — writable regardless of stale baseline
+        supersededStamps.push(field);  // server already holds a newer/equal stamp — adopt it
+        continue;
+      }
+    }
     if(salesEquivalent(record[field],changes[field]))applied.push(field);
     else if(!salesEquivalent(record[field],expectedFields[field]))conflicted.push(field);
   }
@@ -65,5 +85,5 @@ export function analyzeSalesQuickEditDrift(record,{expectedFields={},guardFields
     if(Object.prototype.hasOwnProperty.call(expectedFields,field))continue;
     if(!salesEquivalent(record[field],guardFields[field]))guardDrift.push(field);
   }
-  return {applied,conflicted,guardDrift,unavailable:false};
+  return {applied,conflicted,guardDrift,supersededStamps,unavailable:false};
 }
