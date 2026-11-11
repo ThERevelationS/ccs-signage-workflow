@@ -1334,7 +1334,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         beautify_data_url: project.beautify_data_url,
         pricing_engine: project.pricing_engine,
       };
-      const signature = JSON.stringify(baseData);
+      const signature = JSON.stringify({
+        ...baseData,
+        // revision_history[*].at is minted per payload() call (Date.now()) and
+        // would rotate the signature on every retry — defeating the held key.
+        revision_history: (baseData.revision_history || []).map(({ at, ...entry }) => entry),
+      });
       if (copyAttemptRef.current.signature !== signature) {
         const { components } = cloneFoundationComponents(
           {
