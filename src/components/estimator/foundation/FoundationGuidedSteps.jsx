@@ -20,7 +20,13 @@ function stepState(project, calc, savedSourceProject) {
     { label: "Review/Save", tab: "summary", done: !!savedSourceProject, hint: "saved revision" },
   ];
   const firstPending = steps.findIndex((s) => !s.done);
-  return steps.map((s, i) => ({ ...s, active: i === firstPending }));
+  // Lane E -- step_state/step_complete: the step's named state (done/active/
+  // pending) + completion boolean ride the step data -- the wizard's step
+  // contract surfaces (never a fabricated state).
+  return steps.map((s, i) => {
+    const active = i === firstPending;
+    return { ...s, active, step_state: s.done ? "done" : active ? "active" : "pending", step_complete: !!s.done };
+  });
 }
 
 export default function FoundationGuidedSteps({ project, calc, savedSourceProject, onStepClick }) {
