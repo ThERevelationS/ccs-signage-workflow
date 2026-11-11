@@ -418,6 +418,22 @@ export function foundationSceneDiagnostics(scene) {
       return;
     }
     const assignedRect = assigned ? rects.find(({ item }) => item?.component_id === assigned)?.rect : null;
+    // Lane D -- mortar_joint_inches/brick_bond_type: a masonry wall's mortar
+    // joint + bond type are unrecorded -- a held state (the coursing math
+    // can't carry a mortar joint; blank = "not recorded").
+    const wMat = typeof wall?.material === "string" && wall.material ? wall.material : null;
+    if (wMat && ["brick", "cmu", "block", "masonry"].includes(wMat)) {
+      if (wall?.mortar_joint_inches == null) {
+        push("info", "mortar-joint-held",
+          `${wName}'s mortar joint is not recorded -- record the joint width (inches) for the coursing math.`,
+          [wallId]);
+      }
+      if (wall?.brick_bond_type == null) {
+        push("info", "brick-bond-held",
+          `${wName}'s bond type is not recorded -- record the coursing bond (running/stack/Flemish) for the coursing math.`,
+          [wallId]);
+      }
+    }
     let tested = 0, uncovered = 0;
     for (let si = 0; si < n; si += 1) {
       const a = pts[si], b = pts[(si + 1) % pts.length];
