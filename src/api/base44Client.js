@@ -266,6 +266,20 @@ const authProxy = new Proxy(rawClient.auth, {
   },
 });
 
+// A staff-session invoke rejected as unauthenticated may mean the stored
+// session expired or was revoked in another tab — hand the signal to
+// EmailGate's one-shot reverifier, which ends the session only when the
+// token is genuinely dead (a transient failure keeps it). Without this an
+// expired session 401s on every call with no recovery until a reload.
+// Dynamic import: EmailGate already imports this module, so a static edge
+// would cycle at module-init time.
+function reportSessionRejection(payload, err) {
+  const status = Number(err?.response?.status ?? err?.status ?? err?.originalError?.response?.status);
+  if (status !== 401 && status !== 409) return;
+  if (typeof payload?.session_token !== "string" || !payload.session_token) return;
+  import("@/components/auth/EmailGate").then((m) => m.notifySessionRejected?.()).catch(() => {});
+}
+
 const functionsProxy = new Proxy(rawClient.functions, {
   get(t, prop) {
     const value = Reflect.get(t, prop);
@@ -287,7 +301,11 @@ const functionsProxy = new Proxy(rawClient.functions, {
         // they must not each note the same 429.
         const tracked = () => exec().then(
           (r) => { noteRateLimitSuccess(); return r; },
-          (e) => { if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 60000)); throw e; },
+          (e) => {
+            if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 60000));
+            reportSessionRejection(payload, e);
+            throw e;
+          },
         );
         if (read) {
           const key = `fn:${fnName}:${JSON.stringify(payload ?? null)}`;
