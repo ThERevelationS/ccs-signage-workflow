@@ -115,3 +115,29 @@ export function summarizeFoundationDiff(rows) {
   (rows || []).forEach((r) => { counts[r.change] = (counts[r.change] || 0) + 1; });
   return counts;
 }
+
+// O-099 (CMP-H08) -- revision-pair compare: `revisionSnapshotDiff` diffs two
+// `revision_history` rows' `snapshot` fields ({item_count, wall_count,
+// pole_count, cap_count, cabinet_count}) -- a pair-compare between any two
+// stored revisions without a full record copy.
+const SNAPSHOT_FIELDS = [
+  ["item_count", "Foundations"],
+  ["wall_count", "Walls"],
+  ["pole_count", "Poles"],
+  ["cap_count", "Caps"],
+  ["cabinet_count", "Cabinets"],
+];
+export function revisionSnapshotDiff(older, newer) {
+  const o = older?.snapshot || {};
+  const n = newer?.snapshot || {};
+  const rows = [];
+  SNAPSHOT_FIELDS.forEach(([key, label]) => {
+    const ov = Number(o[key]) || 0;
+    const nv = Number(n[key]) || 0;
+    if (ov !== nv) {
+      rows.push({ section: "snapshot", change: "changed", label, detail: `${ov} -> ${nv}` });
+    }
+  });
+  if (rows.length === 0) return [{ section: "snapshot", change: "unchanged", label: "Revisions", detail: "identical counts" }];
+  return rows;
+}
