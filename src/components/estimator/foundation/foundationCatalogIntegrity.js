@@ -1,6 +1,19 @@
 import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
 import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
 
+// O-009 tail: the single catalog lifecycle classification every consumer
+// (items, poles, walls, caps, equipment, attachments) shares — existence is
+// checked by the caller, this answers "what kind of row did we resolve?".
+// Soft-deleted inventory rows (`deleted === true`) classify as deleted; a
+// present row hidden from the foundation pickers is inactive. Declared as a
+// function so the module cycle with the calculators stays eval-safe.
+export function foundationCatalogRowAvailability(row) {
+  if (!row) return "unavailable";
+  if (row.deleted === true) return "deleted";
+  if (row.show_in_foundation === false) return "inactive";
+  return "active";
+}
+
 export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   const issues = [];
   const add = (field, id, label, code = "catalog_item_unavailable") => issues.push({
