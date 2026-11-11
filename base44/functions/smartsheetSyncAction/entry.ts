@@ -2132,7 +2132,7 @@ async function pushDataset(
     ? records.filter((record: any) =>
         salesPushSnapshotNeedsReview(record, sheetId, buildSnapshot(record, bindings, 'sales')))
     : [];
-  const { findMissingSalesLinks } = await import('../../shared/smartsheetSalesMissingRows.ts');
+  const { findMissingSalesLinks } = await import('./smartsheetSalesMissingRows.ts');
   const missingSalesRows = await findMissingSalesLinks(snapshotReviewRecords, sheetId, bindings,
     async (path: string) => (await smartsheetGet(path, token)).body, verifiedSalesPreviewColumn);
   records = records.filter((record: any) => !missingSalesRows.has(String(record.id)));
@@ -5473,7 +5473,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     }
 
     if (action === 'debug_dates') {
-      const { smartsheetDateDiagnostic } = await import('../../shared/smartsheetDateDiagnostic.ts');
+      const { smartsheetDateDiagnostic } = await import('./smartsheetDateDiagnostic.ts');
       const { config } = await loadSyncConfig(base44);
       return await smartsheetDateDiagnostic({ base44, config, token, smartsheetGet, normalizeSheetRows, cleanText });
     }
