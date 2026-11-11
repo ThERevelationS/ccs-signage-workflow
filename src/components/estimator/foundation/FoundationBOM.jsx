@@ -29,6 +29,7 @@ export default function FoundationBOM({
   landscape,
   landscapePricing,
   pricingUnavailable = false,
+  project = null,
 }) {
   const cabinetRows = useMemo(() => calcSignageCabinetPricing(cabinets), [cabinets]);
   const rows = useMemo(() => {
