@@ -78,9 +78,31 @@ export function foundationSceneDiagnostics(scene) {
   // `reported_dims` (the photo's claimed dimensions) vs the scene's authored
   // dims -- a claimed dim that conflicts with a real dim surfaces as an
   // advisory (the photo is context-only; the claim is recorded, not trusted).
+  // O-084 (CMP-G07) -- catalog-match contradiction: a photo's
+  // `reported_type`/`reported_material` (the photo's claimed foundation type
+  // or material) vs the item's authored `foundation_type` -- a claimed type
+  // that conflicts with a real type surfaces as an advisory.
   const photos = Array.isArray(scene?.reference_photos) ? scene.reference_photos : [];
   photos.forEach((p, pi) => {
     const rd = p?.reported_dims;
+    if (rd && typeof rd === "object") {
+      items.forEach((item, i) => {
+        const claimType = typeof rd.foundation_type === "string" && rd.foundation_type ? rd.foundation_type : null;
+        const realType = typeof item.foundation_type === "string" && item.foundation_type ? item.foundation_type : null;
+        if (claimType && realType && claimType !== realType) {
+          push("warning", "photo-catalog-mismatch",
+            `Photo ${pi + 1}'s reported foundation type ("${claimType}") contradicts ${itemRowName(item, i)}'s authored type ("${realType}") -- review the photo's claim.`,
+            [sceneNodeId.item(layoutItemKey(item, i))]);
+        }
+        const claimMat = typeof rd.material === "string" && rd.material ? rd.material : null;
+        const realMat = typeof item.material_type === "string" && item.material_type ? item.material_type : null;
+        if (claimMat && realMat && claimMat !== realMat) {
+          push("warning", "photo-catalog-mismatch",
+            `Photo ${pi + 1}'s reported material ("${claimMat}") contradicts ${itemRowName(item, i)}'s authored material ("${realMat}") -- review the photo's claim.`,
+            [sceneNodeId.item(layoutItemKey(item, i))]);
+        }
+      });
+    }
     if (!rd || typeof rd !== "object") return;
     items.forEach((item, i) => {
       const claimL = Number(rd.length_inches), claimW = Number(rd.width_inches);
