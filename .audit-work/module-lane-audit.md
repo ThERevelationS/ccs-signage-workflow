@@ -25,6 +25,17 @@ pricing lanes against the prior `*-hardening` passes and the current remote.
 - cnc 97/0 · laser 248 · metal 93/0 · painting 167/0 · maintenance 123/0 ·
   vinyl 47/0 · brick-stone 121/0 · channel 85/0
 
+### Consumer verifiers (import-edge checks) — all PASS
+
+- channel 46 inputs/17 candidates · cnc 4/2 · laser 4/2 · metal 4/2 ·
+  painting 5/3 · maintenance 12/5 · vinyl 24/13 · brick 8/4 — all exit 0.
+
+### Page verifiers (real-page Save proofs) — all PASS
+
+- channel 17/0 · cnc · laser · metal (11 scenarios) · painting · maintenance ·
+  vinyl 14/0 · brick — Save/Save-As-Copy blocked while held, saved totals
+  shown, clean paths save.
+
 ### Availability-layer remote md5 parity vs hardened candidates
 
 | Layer | Remote md5 == candidate |
