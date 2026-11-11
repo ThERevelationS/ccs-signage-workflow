@@ -1898,6 +1898,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   landscape={project.landscape}
                   landscapePricing={calc.landscapePricing}
                   pricingUnavailable={pricingBlocked}
+                  project={project}
                 />
                 <FoundationDesignBasis
                   project={project}
