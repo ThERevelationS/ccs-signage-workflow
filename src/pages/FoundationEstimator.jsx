@@ -1009,6 +1009,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           pole_count: Array.isArray(project.poles) ? project.poles.length : 0,
           cap_count: Array.isArray(project.wall_caps) ? project.wall_caps.length : 0,
           cabinet_count: Array.isArray(project.signage_cabinets) ? project.signage_cabinets.length : 0,
+          // O-099 (CMP-H08) -- cost-delta numbers: the superseded revision's
+          // total cost rides the snapshot so a pair-compare surfaces the
+          // cost delta per change (never an invented total; held = null).
+          total_cost: Number.isFinite(calc?.totals?.total) ? calc.totals.total : null,
         },
       }] : []),
     ],
