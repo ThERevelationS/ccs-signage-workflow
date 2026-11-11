@@ -58,6 +58,13 @@ export function validateFoundationProposal(proposal) {
   if (!items.length && !poles.length) {
     issue("proposal", "proposal_empty", "The proposal has no foundations or poles to apply.");
   }
+  // Lane C -- stale_policy: the proposal's `meta.policy_version` mismatches
+  // the current review policy -- a stale-policy flag (the review may be
+  // affected by a method update; never a silent re-run).
+  const metaPolicy = proposal?.meta?.policy_version;
+  if (typeof metaPolicy === "string" && metaPolicy && metaPolicy !== "foundation-review-v1") {
+    issue("meta.policy_version", "stale_policy", `The proposal's policy_version "${metaPolicy}" is stale (current: foundation-review-v1) -- a method update may affect this review.`);
+  }
   return { valid: issues.length === 0, issues };
 }
 
