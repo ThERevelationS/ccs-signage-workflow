@@ -125,6 +125,7 @@ export default function EstimatorQueues() {
   const [sort, setSort] = useState(params.get("sort") || "newest");
   const [trashBusyId, setTrashBusyId] = useState("");
   const [trashError, setTrashError] = useState("");
+  const [quoteDefaultsFailed, setQuoteDefaultsFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkStatus, setBulkStatus] = useState("sent");
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -175,8 +176,8 @@ export default function EstimatorQueues() {
   };
   const loadQuoteDefaultsLegacy = () =>
     staffEntities.QuoteDefaults.filter({ config_name: "default" }, undefined, 1)
-      .then((rows) => applyQuoteDefaults(Array.isArray(rows) ? rows[0] : null))
-      .catch(() => {});
+      .then((rows) => { setQuoteDefaultsFailed(false); applyQuoteDefaults(Array.isArray(rows) ? rows[0] : null); })
+      .catch(() => setQuoteDefaultsFailed(true));
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
     const next = new Set(prev);
@@ -798,6 +799,12 @@ export default function EstimatorQueues() {
           />
         </div>
 
+        {quoteDefaultsFailed && (
+          <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 flex items-center justify-between gap-3">
+            <span>Custom statuses could not be loaded — showing default statuses only.</span>
+            <button type="button" onClick={() => { setQuoteDefaultsFailed(false); loadQuoteDefaultsLegacy(); }} className="text-amber-700 font-bold">Retry</button>
+          </div>
+        )}
         {trashError && (
           <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700 flex items-center justify-between gap-3">
             <span>{trashError}</span>
