@@ -1950,3 +1950,11 @@ export const FOUNDATION_SOURCE_INDEX = Object.freeze(
     rule_id, authority_class,
   }))
 );
+
+// Lane A -- FOUNDATION_METHOD_DOMAIN: the method-domain names (the held
+// METHOD-* seeds' domains) — a consumer/test enumerates this list; a domain
+// with no seed is an OPEN hole, never a covered claim.
+export const FOUNDATION_METHOD_DOMAIN = Object.freeze([
+  "method.sign_wind", "method.footing_bearing", "method.shaft", "method.lateral",
+  "method.frost_depth", "method.pillar_bar", "method.base_plate",
+]);
