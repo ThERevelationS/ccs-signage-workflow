@@ -13,7 +13,7 @@ const MAX_POLE_MESHES = 64;
 const MAX_WALL_SEGMENTS = 96;
 const MAX_MOUNTED_MESHES = 64;
 
-function buildScene(scene, project, solid, showGround, highlight, exploded, showRebar = true) {
+export function buildScene(scene, project, solid, showGround, highlight, exploded, showRebar = true) {
   const group = new THREE.Group();
 
   const concreteMat = solid
@@ -79,7 +79,21 @@ function buildScene(scene, project, solid, showGround, highlight, exploded, show
         mesh = new THREE.Mesh(new THREE.BoxGeometry(l, depth, w), concreteMat);
       }
       const offset = (Number(item.grade_offset_inches) || 0) * IN;
-      mesh.position.set(cursorX + footprint / 2, -depth / 2 + offset, 0);
+      // O-032 (CMP-C01): an authored plan anchor wins over sequential packing —
+      // `x_inches`/`z_inches` is the item's top-left corner in plan inches
+      // (canvas contract), so the mesh center lands at corner + half-footprint
+      // in the SAME measured space the poles/walls/elevations already use.
+      // Quantity copies spread right from the anchor; the packing cursor only
+      // serves items with no recorded position at all.
+      const anchorX = Number(item.x_inches), anchorZ = Number(item.z_inches);
+      if (Number.isFinite(anchorX) && Number.isFinite(anchorZ)) {
+        const halfL = item.foundation_type === "pillar" ? footprint / 2 : ((Number(item.length_inches) || 0) / 2) * IN;
+        const halfW = item.foundation_type === "pillar" ? footprint / 2 : ((Number(item.width_inches) || 0) / 2) * IN;
+        mesh.position.set(anchorX * IN + halfL + i * (footprint + 2), -depth / 2 + offset, anchorZ * IN + halfW);
+        cursorX = Math.max(cursorX, mesh.position.x + footprint / 2);
+      } else {
+        mesh.position.set(cursorX + footprint / 2, -depth / 2 + offset, 0);
+      }
       mesh.rotation.y = ((Number(item.rotation_degrees) || 0) * Math.PI) / 180;
       if (!itemFirstPos.has(itemIndex)) itemFirstPos.set(itemIndex, { x: mesh.position.x, z: mesh.position.z });
       tag(mesh, item.component_id, "item");
