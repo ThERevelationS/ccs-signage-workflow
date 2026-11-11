@@ -68,8 +68,25 @@ const pointInRect = (px, pz, r) => {
 // Main entry -- returns findings sorted error -> warning -> info.
 export function foundationSceneDiagnostics(scene) {
   const findings = [];
+  // Lane E -- issue_severity/issue_fix_hint: the finding's contract surfaces
+  // carry the severity alias + a per-kind fix hint (the click-to-fix
+  // consumer's hint; never a fabricated fix).
+  const FIX_HINTS = {
+    "pole-edge-clearance": "raise the mount height above the base offset",
+    "sign-mount-mismatch": "change the sign's mount_type to pole or move it off the pole",
+    "anchor-assembly-held": "record the anchor-bolt pattern (count/circle/embedment)",
+    "mortar-joint-held": "record the mortar joint width (inches)",
+    "brick-bond-held": "record the coursing bond (running/stack/Flemish)",
+    "cap-miter-held": "record the cap miter cut (degrees)",
+    "cap-joint-held": "record the cap joint width (inches)",
+    "landscape-waste-held": "record a valid waste_fraction (0..1)",
+    "impossible-fit": "lower the mount height or shorten the sign",
+    "unresolvable-mount": "remount or detach the object",
+    "unmounted-cap": "bind the cap to a wall or wall segment",
+    "wall-cap-over-position": "shorten the cap or reposition it within the segment",
+  };
   const push = (severity, kind, message, nodeIds) =>
-    findings.push({ severity, kind, message, nodeIds: nodeIds.filter(Boolean) });
+    findings.push({ severity, kind, message, nodeIds: nodeIds.filter(Boolean), issue_severity: severity, issue_fix_hint: FIX_HINTS[kind] || null });
   const items = scene?.items || [], poles = scene?.poles || [];
   const walls = scene?.walls || [], caps = scene?.wall_caps || [], cabinets = scene?.signage_cabinets || [];
   const landscape = scene?.landscape || null;
