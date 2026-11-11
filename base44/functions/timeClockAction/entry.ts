@@ -12130,15 +12130,55 @@ Deno.serve(async (req) => {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required for bulk imports.' }, { status: 403 });
       const rows = Array.isArray(body.rows) ? body.rows.slice(0, 500) : [];
       if (!rows.length) return Response.json({ success: false, error: 'rows[] is required.' }, { status: 400 });
-      let imported = 0; const errors = [];
+      const rosterRows = await authorized.filter({ timeclock_enabled: true }).catch(() => []);
+      const rosterEmails = new Set(
+        (Array.isArray(rosterRows) ? rosterRows : [])
+          .filter((u: any) => u.archived_test_data !== true && u.is_active !== false)
+          .map((u: any) => asEmail(u.email)),
+      );
+      const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' }).catch(() => []);
+      const entriesByEmail = new Map<string, any[]>();
+      const existingFor = async (email: string) => {
+        if (!entriesByEmail.has(email)) {
+          const existing = await entryEntity.filter({
+            user_email: email,
+            status: { $in: ['clocked_in', 'clocked_out', 'needs_resolution'] },
+            archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+          }).catch(() => []);
+          entriesByEmail.set(email, Array.isArray(existing) ? existing : []);
+        }
+        return entriesByEmail.get(email) || [];
+      };
+      let imported = 0; let reused = 0; const errors = [];
       for (const [i, r] of rows.entries()) {
         const email = asEmail(r.user_email);
-        if (!email || !r.clock_in || !r.clock_out) { errors.push(`row ${i + 1}: needs user_email, clock_in, clock_out`); continue; }
-        const hrs = Math.max(0, (new Date(r.clock_out) - new Date(r.clock_in)) / 3600000);
-        const created = await entryEntity.create({ user_email: email, user_name: String(r.user_name || email), clock_in: r.clock_in, clock_out: r.clock_out, status: 'clocked_out', total_hours: Math.round(hrs * 100) / 100, clock_source: 'bulk_import', notes: String(r.notes || '') }).catch(() => null);
-        if (created?.id) imported += 1; else errors.push(`row ${i + 1}: create failed`);
+        const inDate = new Date(String(r.clock_in || ''));
+        const outDate = new Date(String(r.clock_out || ''));
+        if (!email || !Number.isFinite(inDate.getTime()) || !Number.isFinite(outDate.getTime())) { errors.push(`row ${i + 1}: needs user_email, clock_in, clock_out`); continue; }
+        if (outDate.getTime() <= inDate.getTime()) { errors.push(`row ${i + 1}: clock_out must be after clock_in`); continue; }
+        if (!rosterEmails.has(email)) { errors.push(`row ${i + 1}: ${email} is not an active Time Clock employee`); continue; }
+        const importDay = dateKeyInCompanyTime(inDate.toISOString());
+        if (importDay && (Array.isArray(finalizedPeriods) ? finalizedPeriods : []).some((p: any) => {
+          const s = validDateKey(p.start_date); const e = validDateKey(p.end_date);
+          return s && e && s <= e && importDay >= s && importDay <= e;
+        })) { errors.push(`row ${i + 1}: falls inside a finalized pay period`); continue; }
+        const existing = await existingFor(email);
+        const exact = existing.find((row: any) =>
+          String(row.clock_source || '') === 'bulk_import' &&
+          new Date(String(row.clock_in || '')).getTime() === inDate.getTime() &&
+          new Date(String(row.clock_out || '')).getTime() === outDate.getTime());
+        if (exact) { reused += 1; continue; }
+        const clash = existing.find((row: any) => {
+          const sIn = new Date(String(row.clock_in || '')).getTime();
+          const sOut = new Date(String(row.clock_out || row.clock_in || '')).getTime() || Number.MAX_SAFE_INTEGER;
+          return Number.isFinite(sIn) && sIn < outDate.getTime() && sOut > inDate.getTime();
+        });
+        if (clash) { errors.push(`row ${i + 1}: overlaps an existing shift for ${email}`); continue; }
+        const hrs = Math.max(0, (outDate.getTime() - inDate.getTime()) / 3600000);
+        const created = await entryEntity.create({ user_email: email, user_name: String(r.user_name || email), clock_in: inDate.toISOString(), clock_out: outDate.toISOString(), status: 'clocked_out', total_hours: Math.round(hrs * 100) / 100, clock_source: 'bulk_import', notes: String(r.notes || '') }).catch(() => null);
+        if (created?.id) { imported += 1; existing.push(created); } else errors.push(`row ${i + 1}: create failed`);
       }
-      return Response.json({ success: true, imported, errors: errors.slice(0, 20) });
+      return Response.json({ success: true, imported, reused, errors: errors.slice(0, 20) });
     }
 
     if (action === 'my_data_export') {
