@@ -117,6 +117,15 @@ export function foundationSceneDiagnostics(scene) {
           `Photo ${pi + 1}'s reported width (${claimW}") contradicts ${itemRowName(item, i)}'s authored width (${realW}") -- review the photo's claim.`,
           [sceneNodeId.item(layoutItemKey(item, i))]);
       }
+      // O-084 (CMP-G07) -- photo-quantity-mismatch: a photo's reported_dims
+      // `quantity` conflicting with an item's authored `quantity` -- the
+      // photo's claim is recorded vs trusted (the photo is context-only).
+      const claimQty = Number(rd.quantity), realQty = Number(item.quantity);
+      if (Number.isFinite(claimQty) && Number.isFinite(realQty) && claimQty !== realQty) {
+        push("warning", "photo-quantity-mismatch",
+          `Photo ${pi + 1}'s reported quantity (${claimQty}) contradicts ${itemRowName(item, i)}'s authored quantity (${realQty}) -- review the photo's claim.`,
+          [sceneNodeId.item(layoutItemKey(item, i))]);
+      }
     });
   });
 
