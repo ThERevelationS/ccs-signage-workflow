@@ -3,6 +3,8 @@
 // returns field/object issues and never touches project state; a valid
 // proposal then applies through `commit`, which carries the schema-valid +
 // undo contract itself.
+import { estimatorModuleKey } from "../estimatorModuleKeys";
+
 const ITEM_TYPES = ["spread_foot", "drilled_pier", "continuous", "pillar"];
 const DIMENSION_KEYS = ["length_inches", "width_inches", "diameter", "depth_inches"];
 
@@ -13,8 +15,18 @@ export function validateFoundationProposal(proposal) {
     issue("proposal", "proposal_malformed", "The proposal is malformed.");
     return { valid: false, issues };
   }
-  if (proposal.module_key !== "foundation") {
+  // W-012 (AI-01) -- module-key registry: the proposal's `module_key` MUST
+  // name a registered estimator module; `estimatorModuleKey` resolves the
+  // registry row. A foundation proposal MUST carry `module_key: "foundation"`
+  // AND that module's intake_shell MUST be `implemented` (a queued module's
+  // intake shell is not implemented — the foundation shell is the reference).
+  const moduleRow = estimatorModuleKey(proposal.module_key);
+  if (!moduleRow) {
+    issue("module_key", "module_key_unknown", "The proposal's module_key is not a registered estimator module.");
+  } else if (proposal.module_key !== "foundation") {
     issue("module_key", "module_key_mismatch", "This proposal is for a different module.");
+  } else if (moduleRow.intake_shell !== "implemented") {
+    issue("module_key", "module_intake_shell_queued", "The foundation module's intake shell is not implemented.");
   }
   if (!Number.isInteger(proposal.schema_version) || proposal.schema_version < 1) {
     issue("schema_version", "schema_version_invalid", "A supported schema_version is required.");
