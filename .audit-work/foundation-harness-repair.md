@@ -230,3 +230,21 @@ copy-signature `at`) are fixed and transported.
 - Both tests now `mkdirSync` their `.audit-work` output dirs so they
   run on a bare remote tree; `calculator-loss-repro.json` fixture
   transported for the remote catalog-integrity run.
+
+## Final consolidated tally (post all repairs)
+
+70 estimator-scoped scripts: **64 effectively PASS** —
+59 grep-PASS + 5 fleet race TAP suites (node:test output, `pass N/fail 0`).
+6 non-pass, all classified non-regression:
+- foundation-assembly 27/28 — 1 frozen deep-equal (identity-metadata
+  normalization post-freeze)
+- test-automation-builder-browser — admin-module surface, own mocks
+  stale (out of estimator scope)
+- test-sop-module, test-training-module — other modules (scope ban)
+- fleet browser x2 — missing D:\tmp\fleet-browser-check playwright
+  install (environment, not code)
+
+In-scope base44/functions scan (ensureEstimateCustomer/LifecycleRevision/
+OpenEstimateRevision, ensureNewCustomer/Estimate, fleetRepairEstimateAction,
+invoicingAction, queueFeed, recordEstimateAcceptance/QuoteDelivery,
+updateEstimateRevisionAudit, zzCleanupAction): CLEAN.
