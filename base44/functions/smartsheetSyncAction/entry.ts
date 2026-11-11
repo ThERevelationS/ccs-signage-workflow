@@ -94,38 +94,6 @@ const MAX_RESPONSE_BYTES = 2_000_000;
 const SETTING_KEY = 'smartsheetSyncConfig';
 const ORDER_REQUEST_TYPES_SETTING_KEY = 'orderRequestTypes';
 
-// Linked-record pull projection: every field the pull→compare→write path can
-// touch. Sync-critical blobs stay (smartsheet_sync_snapshot is the drift
-// baseline; create_attempt drives duplicate-risk review); the fat
-// production/narrative fields the sync never reads stay in storage, which
-// keeps a large share of row bytes out of the entity-read volume budget.
-// Coverage was verified against every smartsheet shared module: mappable keys,
-// configured bindings, sync metadata, and every record.* field read.
-const SYNC_PULL_SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by', 'created_by_id'];
-const SYNC_PULL_META_FIELDS = [
-  'deleted', 'deleted_at', 'deleted_by',
-  'smartsheet_sheet_id', 'smartsheet_row_id', 'smartsheet_parent_row_id',
-  'smartsheet_last_synced_at', 'smartsheet_sync_snapshot', 'smartsheet_create_attempt',
-  'smartsheet_pending_local_sync', 'sales_import_snapshot', 'sales_import_source_id',
-  'sales_import_last_synced_at', 'duplicate_review_status', 'automation_deadline_fired',
-];
-const SYNC_PULL_SIDE_FIELDS = [
-  '_salesTaskAdoption', '_salesStageTransition', '_salesAssigneeNeedsReview',
-  'title', 'client_name', 'customer_name', 'customer_id', 'description', 'in_pipeline',
-  'current_stage', 'sales_status', 'sales_stage_changed_at', 'corbridge_invoice_number',
-  'est_inv_at', 'work_order_id', 'row_number',
-  'close_date', 'follow_up_date', 'lost_reason',
-  'sales_last_activity_at', 'sales_neutral_closed_at', 'sales_quote_sent_verified_at',
-];
-function syncPullFields(dataset: string, bindingsObj: any): string[] {
-  const mappable = getMappableFields(dataset === 'orders' ? 'orders' : 'sales')
-    .map((f: any) => String(f?.key || '').trim())
-    .filter(Boolean)
-    .map((k: string) => (k === 'notes_serialized' ? 'work_notes' : k));
-  const bound = Object.keys(bindingsObj || {}).map((k) => (k === 'notes_serialized' ? 'work_notes' : k));
-  return [...new Set([...SYNC_PULL_SYSTEM_FIELDS, ...SYNC_PULL_META_FIELDS, ...SYNC_PULL_SIDE_FIELDS, ...mappable, ...bound])];
-}
-
 function normalizeOrderRequestTypes(value: unknown): string[] {
   const source = Array.isArray(value) ? value : [];
   const seen = new Set<string>();
@@ -203,9 +171,7 @@ function detectConflict(
       if (actual !== expected) return true;
       continue;
     }
-    const current = cell.display_value != null && String(cell.display_value) !== '' ? String(cell.display_value)
-      : (cell.displayValue != null && String(cell.displayValue) !== '' ? String(cell.displayValue)
-      : (cell.value == null ? '' : String(cell.value)));
+    const current = cell.display_value != null ? String(cell.display_value) : (cell.displayValue != null ? String(cell.displayValue) : (cell.value == null ? '' : String(cell.value)));
     const last = snapshot[colId];
     const lastStr = last == null ? '' : String(last);
     if (current.trim() !== lastStr.trim()) return true;
@@ -290,9 +256,17 @@ async function pullDataset(
   sheetPageGuard.assertComplete();
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
-  // Both datasets examine the full sheet to establish permanent-ID matches
-  // and then cap actual proposed Base44 writes (never the read-only
-  // downloaded row count — a large sheet with a small change set must sync).
+  // Sales retains its existing sheet-size guard. An Order-only pull must
+  // examine the full sheet to establish permanent-ID matches and then cap
+  // actual proposed Base44 updates (never the read-only downloaded row count).
+  if (dataset === 'sales' && allRows.length > massLimit) {
+    return {
+      dataset,
+      direction: 'pull',
+      skipped: true,
+      reason: `${allRows.length} Smartsheet rows exceed the mass-change hard stop of ${massLimit}. Raise the limit in settings.`,
+    };
+  }
 
   // Load existing Base44 records already linked to this Smartsheet sheet.
   // Filtering by smartsheet_sheet_id returns only synced records, avoiding the
@@ -304,7 +278,6 @@ async function pullDataset(
       entity: base44.asServiceRole.entities.WorkOrder,
       query: { smartsheet_sheet_id: sheetId },
       sort: 'id',
-      fields: syncPullFields(dataset, bindings),
       label: 'Sales Smartsheet pull linked WorkOrders',
     });
   } else {
@@ -354,18 +327,6 @@ async function pullDataset(
 
   let orderUnlinkedRowCount = 0;
   let orderUnlinkedRowIds: string[] = [];
-  // Trailing fully-empty rows are routine Smartsheet residue, not evidence a
-  // human must reconcile. They are excluded from the unlinked review flag and
-  // from the create classifier below; a row holding any cell value — even
-  // obvious placeholder text — still flags for review on every run.
-  const orderEmptyRemoteRowIds = new Set(
-    (dataset === 'orders' ? allRows : [])
-      .filter((row: any) => !Array.isArray(row?.cells) ||
-        row.cells.every((cell: any) => cell?.value == null || String(cell.value).trim() === ''))
-      .map((row: any) => String(row?.id || '').trim())
-      .filter(Boolean),
-  );
-  let orderEmptyRowsIgnored = 0;
   // Order-only date preflight: do not mutate any Order if a legacy cell has
   // an untranslatable date or a duplicate permanent Base44 row link.
   // A received text choice is valid; an impossible date is not.
@@ -374,21 +335,8 @@ async function pullDataset(
       ? allRows.filter((row: any) => !deletedOrderLinkedRowIds.has(String(row?.id || '')))
       : allRows;
     const audit = auditOrderDateParity(existingRecords, activeAuditRows, bindings, sheetId);
-    const orderLinkedRemoteRowIds = new Set(
-      existingRecords
-        .filter((order: any) => order && order.deleted !== true &&
-          String(order?.smartsheet_sheet_id) === String(sheetId))
-        .map((order: any) => cleanText(order?.smartsheet_row_id, 40))
-        .filter((id: string) => /^\d+$/.test(id) && id !== '0'),
-    );
-    const unlinkedEmptyRemoteRowCount = activeAuditRows.filter((row: any) => {
-      const rowId = String(row?.id || '').trim();
-      return orderEmptyRemoteRowIds.has(rowId) && !orderLinkedRemoteRowIds.has(rowId);
-    }).length;
-    orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows - unlinkedEmptyRemoteRowCount;
-    orderUnlinkedRowIds = audit.samples.unlinked_rows
-      .map((sample: any) => String(sample.row_id))
-      .filter((rowId: string) => !orderEmptyRemoteRowIds.has(String(rowId)));
+    orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows;
+    orderUnlinkedRowIds = audit.samples.unlinked_rows.map((sample: any) => sample.row_id);
     if (audit.counts.invalid_date_values || audit.counts.duplicate_base44_links) {
       return { dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
         reason: 'Order Request date translation or permanent row links require review before pull. No Orders were changed.',
@@ -752,7 +700,6 @@ async function pullDataset(
     } else if (dataset === 'orders' && profile?.create_base44_from_smartsheet === true) {
       // Only a fully populated unlinked Order row may auto-create. Sparse,
       // blank/placeholder, and duplicate-looking rows stay flagged for review.
-      if (orderEmptyRemoteRowIds.has(String(rowId))) { orderEmptyRowsIgnored++; continue; }
       if (orderToCreate.length >= ORDER_PULL_CREATE_LIMIT) {
         orderCreatesHeldForReview.push({
           row_id: rowId, kind: 'create_cap_reached',
@@ -785,20 +732,6 @@ async function pullDataset(
       itemLabel: `Compared ${allRows.length} Order Request rows`,
       detail: `${toUpdate.length} linked Orders queued for update; ${unchangedSkipped} already matched`,
     });
-  }
-  if (dataset === 'sales') {
-    // Same contract as the Order pull below: cap real proposed writes after
-    // the diff, not the downloaded sheet size. A large sheet whose linked
-    // records all still match yields zero proposed writes and must sync.
-    const proposedWrites = toUpdate.length + toCreate.length;
-    if (proposedWrites > massLimit) return {
-      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
-      reason: `${proposedWrites} Smartsheet-driven Sales changes exceed the mass-change hard stop of ${massLimit}. Raise the limit in settings.`,
-      rows_examined: allRows.length,
-      planned_updates: toUpdate.length,
-      planned_creates: toCreate.length,
-      mass_change_limit_count: massLimit,
-    };
   }
   if (dataset === 'orders') {
     // This preflight precedes every Order business-field, snapshot and date
@@ -1195,7 +1128,6 @@ async function pullDataset(
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { smartsheet_sheet_id: sheetId },
         sort: 'id',
-        fields: syncPullFields(dataset, bindings),
         label: 'Sales pull business-field verification',
       });
       const verifiedSalesById = new Map(
@@ -1437,7 +1369,6 @@ async function pullDataset(
           : base44.asServiceRole.entities.Order,
         query: { smartsheet_sheet_id: sheetId },
         sort: 'id',
-        ...(dataset === 'sales' ? { fields: syncPullFields(dataset, bindings) } : {}),
         label: dataset === 'sales'
           ? 'Sales Smartsheet sync metadata verification'
           : 'Order Form sync metadata verification',
@@ -1565,7 +1496,6 @@ async function pullDataset(
       orders_created_from_smartsheet: orderVerifiedCreatedRowIds.size,
       order_creates_held_for_review: orderCreatesHeldForReview.length,
       order_creates_held_reasons: orderCreatesHeldForReview.slice(0, 10).map((item: any) => `${item.row_id}: ${item.reason}`),
-      blank_rows_ignored: orderEmptyRowsIgnored,
       create_verification_failures: orderCreateVerificationFailures,
       missing_permanent_row_links: orderMissingPermanentRows.length,
       missing_permanent_row_record_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.record.id),
@@ -2015,13 +1945,12 @@ async function saveSyncStatusForRun(base44: any, status: any, startedAt: string,
 // permanent WorkOrder link. Incomplete paged reads fail closed.
 async function readSalesCreateRowClaims(base44: any, sheetId: string, rowId: string) {
   const entity = base44.asServiceRole.entities.WorkOrder;
-  const claimsFields = syncPullFields('sales', {});
   const [linked, allAttempts] = await Promise.all([
     // A legacy linked row with a missing sheet ID is still a competing claim.
     loadAllEntityRows({entity,query:{smartsheet_row_id:rowId},
-      sort:'id',fields:claimsFields,label:'Sales create permanent-row linked owner verification'}),
+      sort:'id',label:'Sales create permanent-row linked owner verification'}),
     loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},
-      sort:'id',fields:claimsFields,label:'Sales create permanent-row durable attempt verification'}),
+      sort:'id',label:'Sales create permanent-row durable attempt verification'}),
   ]);
   const attempts = allAttempts.filter((candidate: any) =>
     (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
@@ -2096,14 +2025,12 @@ async function pushDataset(
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: { $in: requestedRecordIds } },
           sort: 'id',
-          fields: syncPullFields(dataset, bindings),
           label: 'Sales Pipeline targeted Save & Sync WorkOrders',
         })
       : await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { in_pipeline: true },
           sort: 'id',
-          fields: syncPullFields(dataset, bindings),
           label: 'Sales Pipeline full Smartsheet push WorkOrders',
         });
   } else {
@@ -2168,9 +2095,14 @@ async function pushDataset(
       reason: `${requestedRecordIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
       records_examined: records.length };
   }
-  // The mass-change hard stop applies to records that actually differ from
-  // their stored snapshot (pendingRecords below) — never the loaded candidate
-  // set. A large pipeline with a small real change set must remain syncable.
+  if (records.length > massLimit) {
+    return {
+      dataset,
+      direction: 'push',
+      skipped: true,
+      reason: `${records.length} records exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
+    };
+  }
 
   // Direct WorkOrder edits can introduce a competing permanent-row claim
   // outside the selected Sales push population. Check exact row ownership
@@ -2221,16 +2153,6 @@ async function pushDataset(
       ? records.filter((record: any) => !orderPushRecordUnchanged(record, sheetId, buildSnapshot(record, bindings, 'orders')))
       : records;
   const unchangedSkipped = records.length - pendingRecords.length;
-  if (pendingRecords.length > massLimit) {
-    return {
-      dataset,
-      direction: 'push',
-      skipped: true,
-      reason: `${pendingRecords.length} changed ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
-      records_examined: records.length,
-      unchanged_skipped: unchangedSkipped,
-    };
-  }
   if (dataset === 'sales' && pendingRecords.length === 0) {
     return { dataset, direction: 'push', sheet_id: sheetId, records_examined: records.length, ...preservedSalesReview,
       created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
@@ -2731,11 +2653,6 @@ async function pushDataset(
             return result.body;
           },
           makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
-          isMarkerRowAbsent: async (markerRowId: any) => {
-            const res = await smartsheetGet(`/sheets/${sheetId}?` + new URLSearchParams({
-              rowIds: String(markerRowId), exclude: 'nonexistentCells' }), token);
-            return String(res.body?.id ?? '') === sheetId && normalizeSheetRows(res.body).length === 0;
-          },
           verifyCreatedRow: async ({ rowId, expectedSnapshot, record: verifyRecord, recovered }: any) => {
             await reportOrderProgress({
               phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length,
@@ -2838,7 +2755,6 @@ async function pushDataset(
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: record.id },
           sort: 'id',
-          fields: syncPullFields(dataset, bindings),
           label: 'Sales push sync metadata verification',
         });
         const metadataFailures = findUnverifiedSyncMetadata([expectedMetadata], verifiedMetadataRows);
@@ -2872,7 +2788,6 @@ async function pushDataset(
       const recent = await loadAllEntityRows({
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { id: { $in: approvalIds } }, sort: 'id',
-        fields: syncPullFields(dataset, bindings),
         label: 'Approved Sales review version preflight',
       });
       const latestById = new Map(recent.map((row: any) => [String(row.id), row]));
@@ -2956,7 +2871,6 @@ async function pushDataset(
         const fresh = await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: { $in: ids } }, sort: 'id',
-          fields: syncPullFields(dataset, bindings),
           label: 'Sales remote PUT local revision preflight',
         });
         const latestById = new Map(fresh.map((row: any) => [String(row.id), row]));
@@ -3150,7 +3064,6 @@ async function pushDataset(
         const current = await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: {id: {$in: batch.map(([id]) => id)}}, sort: 'id',
-          fields: syncPullFields(dataset, bindings),
           label: 'Sales rate-limited PUT fresh WorkOrder verification',
         });
         const latest = new Map(current.map((record: any) => [String(record.id), record]));
@@ -3616,7 +3529,6 @@ async function pushDataset(
             entity: base44.asServiceRole.entities.WorkOrder,
             query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
             sort: 'id',
-            fields: syncPullFields(dataset, bindings),
             label: 'Sales push sync metadata verification',
           });
           const metadataFailures = findUnverifiedSyncMetadata(verifiedSalesUpdates, verifiedRecords);
@@ -3739,7 +3651,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const backgroundSync = ['run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset'].includes(action);
-    const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0, maxRetries: 1 });
+    const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
     base44Instance = base44;
     const claimInvocationRun = async (status: any, dataset?: string) => {
       const claimed = await claimSyncRun(base44, status, dataset);
@@ -3777,26 +3689,23 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:(state,dataset)=>claimInvocationRun(state,dataset),finish:(state,start,dataset)=>saveSyncStatusForRun(base44,state,start,dataset),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:(start,dataset)=>assertSyncRunOwnership(base44,start,dataset)}));
     }
     if (action === 'status') {
-      const statusWarnings: string[] = [];
       const [orderStatusRecord, salesStatusRecord] = await Promise.all([
-        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.orders).catch((e: any) => { statusWarnings.push(`orders: ${String(e?.message || e)}`); return null; }),
-        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales).catch((e: any) => { statusWarnings.push(`sales: ${String(e?.message || e)}`); return null; }),
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.orders).catch(() => null),
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales).catch(() => null),
       ]);
       return Response.json({
         success: true,
         // Read-only deployment fingerprint. An absent marker means the active
         // backend has not yet picked up the Order run-scoped cleanup contract.
-        order_sync_backend_contract: 'order-run-scoped-cleanup-v2-marker-release',
+        order_sync_backend_contract: 'order-run-scoped-cleanup-v1',
         dataset_coordinators: 'per-dataset-v1',
-        deploy_marker: 'marker-absent-release-2026-11-05a',
         status_orders: orderStatusRecord?.setting_value || null,
         status_sales: salesStatusRecord?.setting_value || null,
-        status_warning: statusWarnings.length ? statusWarnings.join("; ") : undefined,
         configured,
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'recreate_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run', 'recover_stale_sales_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run', 'recover_stale_sales_run'],
         write_actions_available: true,
       });
     }
@@ -3985,13 +3894,10 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({success:false,error:'The configured Sales sheet identity could not be verified.'},{status:409});
       }
       const entity = base44.asServiceRole.entities.WorkOrder;
-      const ownershipFields = syncPullFields('sales', {});
       const [links,attempts] = await Promise.all([
         loadAllEntityRows({entity,query:{smartsheet_row_id:{$exists:true}},sort:'id',
-          fields:ownershipFields,
           label:'Sales permanent row ownership linked records'}),
         loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},sort:'id',
-          fields:ownershipFields,
           label:'Sales permanent row ownership durable attempt records'}),
       ]);
       return Response.json({success:true,dataset:'sales',
@@ -4017,7 +3923,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const attempts = await loadAllEntityRows({
         entity:base44.asServiceRole.entities.WorkOrder,
         query:{smartsheet_create_attempt:{$exists:true}},
-        sort:'id',fields:syncPullFields('sales', bindings),label:'Admin read-only Sales create attempts',
+        sort:'id',label:'Admin read-only Sales create attempts',
       });
       if (action === 'audit_sales_create_attempts') {
         return Response.json({success:true,read_only:true,writes_attempted:false,
@@ -4521,117 +4427,6 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         smartsheet_sheet_id: sheetId, fields_changed: false,
         relinked_by: cleanText(adminActor?.email, 320),
         message: 'Permanent Smartsheet row link updated. Order fields, snapshot, and pending-sync marker are unchanged; the next pull or Save & Sync reconciles values by the new permanent row ID.',
-      });
-    }
-
-    if (action === 'recreate_order_smartsheet_row') {
-      // Admin-only recovery for an Order whose stored permanent Smartsheet row
-      // was deleted and never recreated. Verifies the stored row is truly absent
-      // from the configured sheet, releases the dead permanent identity through
-      // one conditional Base44 write, then drives the same guarded create path
-      // Save & Sync uses: write-ahead reservation, single no-retry POST, verified
-      // permanent link. The row is built from the Order's current fields exactly
-      // like a first Save & Sync push; a crash between the release and the POST
-      // leaves the Order honestly unlinked, where the next Save & Sync recreates
-      // it — never a duplicate row.
-      if (!hasSessionToken || adminActor?.role !== 'admin') {
-        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
-      }
-      if (!configured) {
-        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
-      }
-      const orderId = cleanText(body?.order_id, 100);
-      const deadRowId = cleanText(body?.expected_current_row_id, 40);
-      if (!orderId || !/^\d+$/.test(deadRowId) || body?.confirm_recreate !== true) {
-        return Response.json({ success: false,
-          error: 'Recreate requires order_id, expected_current_row_id, and confirm_recreate:true.' }, { status: 400 });
-      }
-      const { config, duplicateCount } = await loadSyncConfig(base44);
-      const profile = config?.orders || {};
-      const sheetId = cleanText(profile.smartsheet_sheet_id, 40);
-      const bindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
-      if (duplicateCount !== 1 || !/^\d+$/.test(sheetId) || !Object.keys(bindings).length) {
-        return Response.json({ success: false,
-          error: 'The Order sheet configuration is missing or ambiguous. No link was changed.' }, { status: 409 });
-      }
-      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
-      if (!order?.id || order.deleted || String(order.smartsheet_sheet_id ?? '') !== sheetId) {
-        return Response.json({ success: false,
-          error: 'The Order does not exist or is not linked to the configured sheet. No link was changed.' }, { status: 409 });
-      }
-      if (String(order.smartsheet_row_id ?? '') !== deadRowId) {
-        return Response.json({ success: false,
-          error: 'The stored Smartsheet row link no longer matches. Reload the Order before recreating.',
-          stored_smartsheet_row_id: order.smartsheet_row_id ?? null }, { status: 409 });
-      }
-      const deadRowCheck = await smartsheetGet('/sheets/'+sheetId+'/rows/'+deadRowId, token).catch(() => null);
-      if (String(deadRowCheck?.body?.id ?? '') === deadRowId) {
-        return Response.json({ success: false,
-          error: 'The stored Smartsheet row still exists. Recreate only runs after that exact row is confirmed absent; no link was changed.' }, { status: 409 });
-      }
-      const claims = await base44.asServiceRole.entities.Order.filter({ smartsheet_row_id: deadRowId });
-      const extraClaims = (Array.isArray(claims) ? claims : claims ? [claims] : [])
-        .filter((record: any) => record?.id && String(record.id) !== orderId && record.deleted !== true);
-      if (extraClaims.length) {
-        return Response.json({ success: false,
-          error: 'Another active Order already links to that Smartsheet row. Review the duplicate permanent link before recreating.',
-          conflicting_order_ids: extraClaims.slice(0, 5).map((record: any) => String(record.id)) }, { status: 409 });
-      }
-      const cleared = await base44.asServiceRole.entities.Order.updateMany(
-        { id: orderId, smartsheet_row_id: deadRowId, updated_date: order.updated_date },
-        { $unset: { smartsheet_row_id: 1, smartsheet_sheet_id: 1 } },
-      );
-      if (!cleared || cleared.updated !== 1) {
-        return Response.json({ success: false,
-          error: 'The Order changed while its dead link was being released. Reload before retrying.' }, { status: 409 });
-      }
-      const released = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
-      if (!released || String(released.smartsheet_row_id ?? '') !== '' ||
-          String(released.smartsheet_sheet_id ?? '') !== '') {
-        return Response.json({ success: false,
-          error: 'The dead link could not be released. The Order was not recreated.' }, { status: 500 });
-      }
-      const createResult = await createOrderSmartsheetRowWithGuard({
-        entity: base44.asServiceRole.entities.Order,
-        record: released,
-        sheetId,
-        postRow: async (freshOrder: any) => {
-          const freshCells = buildCells(freshOrder, bindings, 'orders');
-          if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
-          const result = await smartsheetWriteNoTimeoutRetry('POST', '/sheets/'+sheetId+'/rows', token, [{
-            toTop: true,
-            cells: freshCells.map((c: any) => ({ columnId: c.columnId, value: c.value,
-              ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
-          }]);
-          return result.body;
-        },
-        makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
-        isMarkerRowAbsent: async (markerRowId: any) => {
-          const res = await smartsheetGet(`/sheets/${sheetId}?` + new URLSearchParams({
-            rowIds: String(markerRowId), exclude: 'nonexistentCells' }), token);
-          return String(res.body?.id ?? '') === sheetId && normalizeSheetRows(res.body).length === 0;
-        },
-        verifyCreatedRow: async ({ rowId, expectedSnapshot }: any) => {
-          const columnIds = [...new Set(Object.values(bindings)
-            .map((value: any) => cleanText(value, 40)).filter((value: string) => /^\d+$/.test(value)))];
-          const params = new URLSearchParams({
-            rowIds: String(rowId), columnIds: columnIds.join(','), exclude: 'nonexistentCells',
-          });
-          const result = await smartsheetGet('/sheets/'+sheetId+'?'+params.toString(), token);
-          if (String(result.body?.id ?? '') !== sheetId) return false;
-          const rows = normalizeSheetRows(result.body);
-          if (rows.length !== 1 || String(rows[0]?.id ?? '') !== String(rowId)) return false;
-          return !detectConflict(rows[0].cells, expectedSnapshot, bindings, 'orders');
-        },
-      });
-      return Response.json({
-        success: true, order_id: orderId,
-        previous_smartsheet_row_id: deadRowId,
-        smartsheet_row_id: createResult?.rowId ?? null,
-        smartsheet_sheet_id: sheetId,
-        recreated_by: cleanText(adminActor?.email, 320),
-        newer_local_edits_queued: createResult?.newerLocalEditsRemain === true,
-        message: 'A replacement Smartsheet row was created from the Order and permanently linked. The next pull or Save & Sync reconciles field values normally.',
       });
     }
 
@@ -5293,7 +5088,6 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { in_pipeline: true },
         sort: 'id',
-        fields: syncPullFields('sales', bindings),
         label: 'Sales snapshot preview full push population',
       });
       if (!Array.isArray(raw)) throw new Error('Sales snapshot preview could not verify its read window.');
@@ -5741,29 +5535,16 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         let lastOrderPullBatchEvidence: any = null;
         let completedSteps = 0;
         let datasetNeedsReview = false;
-        try {
-          await claimInvocationRun({
-            status: 'running',
-            started_at: runStartedAt,
-            action,
-            total_steps: steps.length,
-            completed_steps: 0,
-            current_step_label: steps[0]?.label || '',
-            order_pull_requested: dataset === 'orders' && wantPull,
-            results: [],
-          }, dataset);
-        } catch (claimError: any) {
-          // A stale coordinator blocks a new claim with 409. For a verified
-          // scheduled invocation that must not strike the scheduler's
-          // auto-disable counter, so report a skipped run with HTTP 200.
-          // Manual and admin calls keep the original 409.
-          if (scheduledRun && Number(claimError?.status) === 409) {
-            const reason = String(claimError?.message || claimError);
-            console.warn('[smartsheetSyncAction] scheduled run skipped:', reason);
-            return Response.json({ success: false, skipped: true, reason });
-          }
-          throw claimError;
-        }
+        await claimInvocationRun({
+          status: 'running',
+          started_at: runStartedAt,
+          action,
+          total_steps: steps.length,
+          completed_steps: 0,
+          current_step_label: steps[0]?.label || '',
+          order_pull_requested: dataset === 'orders' && wantPull,
+          results: [],
+        }, dataset);
         let activeDirection: 'pull' | 'push' | null = null;
         try {
           if (wantPull) {
