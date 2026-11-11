@@ -89,10 +89,17 @@ export default function AiEngineeringAssistant({ project, onResult }) {
   // different policy version flags affected-project recalculation rather than
   // silently reading as current.
   const policyMismatch = !!meta?.policy_version && meta.policy_version !== FOUNDATION_AI_REVIEW_POLICY;
+  // O-121 (CMP-I20) -- cross-project affected-list: `policy_outdated_on`
+  // records which records carry the outdated policy version -- the affected
+  // list the recalc action consumes (never silently re-run on a record whose
+  // pricing the client accepted).
+  const policyOutdatedOn = policyMismatch && Array.isArray(meta?.policy_outdated_on)
+    ? meta.policy_outdated_on.filter((r) => typeof r === "string" && r)
+    : [];
   const label = stale
     ? "Design changed since this note. Run a fresh review."
     : policyMismatch
-      ? `Policy ${meta.policy_version} (current: ${FOUNDATION_AI_REVIEW_POLICY}) - review may be affected by a method update`
+      ? `Policy ${meta.policy_version} (current: ${FOUNDATION_AI_REVIEW_POLICY}) - review may be affected by a method update${policyOutdatedOn.length ? `; affects: ${policyOutdatedOn.join(", ")}` : ""}`
       : samePolicy && meta?.source_key
       ? "Preliminary review"
       : "Historical / unverified AI note";
