@@ -458,9 +458,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             <div className="text-[10px] text-gray-400 pt-0.5">
               {compactOrderForm
                 ? orderScheduledPullEnabled
-                  ? "Order pull every 15 min · background push off · Save & Sync sends changes"
+                  ? "Order pull every 30 min · background push off · Save & Sync sends changes"
                   : "Automatic Order pull off · background push off · Save & Sync sends changes"
-                : "Auto-syncs every 15 min"}
+                : "Sales pull hourly · Order pull every 30 min"}
               {' · '}<Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Settings →</Link>
             </div>
           </div>
