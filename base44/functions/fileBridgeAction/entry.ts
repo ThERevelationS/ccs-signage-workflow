@@ -6,6 +6,7 @@ import {
   parseQualifiers, FB_HEALTHY_AGE_MS, FB_BULK_DELETE_CAP, mergeServerCopies,
 } from '../../shared/fileBridgeModel.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 // fileBridgeAction — session-authenticated staff API. Every staff-facing read
 // and queue-write for the File Bridge flows through here (entities are
@@ -204,10 +205,14 @@ Deno.serve(async (req) => {
     },
     queue_move: (b) => {
       const s = safeRelPath(String(b.src || ''));
-      const d = safeRelPath(String(b.dest_dir || ''));
+      const d = safeRelPath(String(b.dest_dir ?? b.dst ?? ''));
       if (!s.ok) return { err: s.error };
       if (!d.ok) return { err: d.error };
-      return { args: { root_key: String(b.root_key || ''), src: s.path, dest_dir: d.path } };
+      const new_name = String(b.new_name || '').trim();
+      if (new_name && (new_name.includes('/') || new_name.includes('\\') || new_name === '..' || new_name === '.' || new_name.length > 255)) {
+        return { err: 'new_name must be a plain filename' };
+      }
+      return { args: { root_key: String(b.root_key || ''), src: s.path, dest_dir: d.path, new_name: new_name || undefined } };
     },
     queue_delete: (b) => {
       const paths = Array.isArray(b.paths) ? b.paths.slice(0, FB_BULK_DELETE_CAP) : [b.path].filter(Boolean);
@@ -378,7 +383,7 @@ Deno.serve(async (req) => {
     if (size > SECURE_CAP) {
       return Response.json({ error: 'exceeds secure_download cap', needs_direct: true }, { status: 413 });
     }
-    const resp = await fetch(c.result.file_url).catch(() => null);
+    const resp = await boundedFetch(c.result.file_url).catch(() => null);
     if (!resp?.ok) return Response.json({ error: `upstream fetch ${resp?.status}` }, { status: 502 });
     const buf = new Uint8Array(await resp.arrayBuffer());
     if (buf.byteLength > SECURE_CAP) {
