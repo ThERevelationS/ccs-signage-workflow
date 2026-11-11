@@ -1,6 +1,16 @@
 import { foundationEquipmentCatalogIssues } from "./foundationEquipmentBindings";
 import { foundationWallCapCatalogIssues } from "./wallCapCalculator";
 
+// O-009 tail: catalog row lifecycle — a missing or soft-deleted row is
+// "deleted", a row hidden from the foundation picker (`show_in_foundation ===
+// false`) is "inactive", anything else is "active". Callers map the three
+// states to catalog_item_deleted / catalog_item_inactive hold codes.
+export function foundationCatalogRowAvailability(record) {
+  if (!record || record.deleted === true || record.deleted_at) return "deleted";
+  if (record.show_in_foundation === false) return "inactive";
+  return "active";
+}
+
 export function foundationItemCatalogIssues(item, inventory = [], index = 0) {
   const issues = [];
   const add = (field, id, label, code = "catalog_item_unavailable") => issues.push({
