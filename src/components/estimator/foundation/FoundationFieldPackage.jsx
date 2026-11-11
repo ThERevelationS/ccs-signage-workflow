@@ -392,13 +392,14 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
       </Section>
       <Section title={`Design notes (${diags.length})`}>
         {diags.length === 0 ? (
-          <p className="text-[11px] text-gray-500">No unresolved scene flags.</p>
+          <p className="text-[11px] text-gray-500" role="status">No unresolved scene flags.</p>
         ) : (
-          <ul className="space-y-1">
+          <ul className="space-y-1" role="list" aria-label="Design notes findings">
             {diags.map((d, i) => (
-              <li key={i} className="flex items-start gap-2 text-[11px]">
-                <span className={`font-semibold uppercase text-[10px] mt-px ${d.severity === "error" ? "text-red-600" : d.severity === "warning" ? "text-amber-600" : "text-gray-500"}`}>{d.severity}</span>
-                <span className="text-gray-700">{d.message}</span>
+              <li key={i} className="flex items-start gap-2 text-[11px]" role="listitem" tabIndex={0}
+                aria-label={`${d.severity}: ${d.message}${d.issue_fix_hint ? ` — ${d.issue_fix_hint}` : ""}`}>
+                <span className={`font-semibold uppercase text-[10px] mt-px ${d.severity === "error" ? "text-red-600" : d.severity === "warning" ? "text-amber-600" : "text-gray-500"}`} aria-hidden="true">{d.severity}</span>
+                <span className="text-gray-700">{d.message}{d.issue_fix_hint ? ` — ${d.issue_fix_hint}` : ""}</span>
               </li>
             ))}
           </ul>
