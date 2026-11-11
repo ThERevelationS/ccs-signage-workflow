@@ -95,6 +95,7 @@ export async function exchangeAuthorizationCode(base44, code, redirectUri) {
   const res = await fetch(AUTH_BASE + "/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({
       client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
       client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
@@ -220,6 +221,7 @@ export async function refreshAccessToken(base44, connection) {
       res = await fetch(AUTH_BASE + "/oauth/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
           client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
@@ -313,6 +315,7 @@ export async function callBouncieApi(base44, method, path, { query, body } = {})
       // Bouncie expects the RAW access token — no "Bearer " prefix.
       method,
       headers: { Authorization: accessToken, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(30_000),
       body: body ? JSON.stringify(body) : undefined
     });
 
@@ -344,7 +347,7 @@ export async function callBouncieApi(base44, method, path, { query, body } = {})
 }
 
 export async function fetchBouncieUser(base44, accessToken) {
-  const res = await fetch(API_BASE + "/v1/user", { headers: { Authorization: accessToken } });
+  const res = await fetch(API_BASE + "/v1/user", { headers: { Authorization: accessToken }, signal: AbortSignal.timeout(30_000) });
   if (!res.ok) return {};
   return await res.json();
 }
