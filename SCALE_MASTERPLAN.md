@@ -236,3 +236,26 @@ bucket as every user.
   advisory/config reads.
 - CAS contracts (`expected_updated_date`, creation_request_key, markers) are
   load-bearing — every optimization preserves them verbatim.
+
+## Incident log — 2026-11-10/11 Smartsheet freeze + recurring-restock fix
+
+- ~86h of zero scheduled runs traced to `insufficient_credits` — every
+  `workflows/runs` entry `cancelled` (Order sync, Sales sync, stale-shift,
+  fleet queue, File Bridge). Interactive invokes unaffected. Credits restored
+  → jobs resumed same hour.
+- Held row `2030447462973316` (CCS / Vinyl / 54" 8519 Luster Lam, needed
+  11/11): a real restock entered in the sheet, held by
+  `duplicate_looking_historical` because a *received* Sept order matched.
+  Recurring supply reorders would hold forever.
+- Fix: `smartsheetOrderLinkIntegrity.mjs` excludes `isFulfilledOrder` rows
+  from duplicate candidates — fulfilled = delivered, a same-text row is a
+  restock. Open-order duplicates still hold. Verified live: pull auto-created
+  Order `6af3bb38` (linked, received) at 00:47Z; banner cleared.
+- Deploy lesson: `functions deploy` fails on `../../shared/` refs missing from
+  the local tree — shared modules ship via checkpoint builds (or take effect
+  via file-tree resolution on cold isolates). See AGENTS.md.
+- Order classifier hold kinds: `duplicate_looking_historical` (normalized
+  customer+description match to an open linked order — resolved above),
+  `create_attempts_unresolved`, `row_id_already_claimed`, `create_cap_reached`.
+  Held rows have no approve-create API — resolution = fix/relocate the row or
+  let a corrected pull create it.
