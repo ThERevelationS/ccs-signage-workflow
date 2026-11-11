@@ -118,6 +118,20 @@ export default function AiEngineeringAssistant({ project, onResult }) {
           {running ? <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
           {running ? "Reviewingâ€¦" : "Review Foundation Inputs"}
         </button>
+        {/* O-121 (CMP-I20) -- explicit recalc action: a policy-mismatch note
+            gains a "Recalculate" trigger -- an explicit re-run on the affected
+            note (advisory; accepted client pricing is never touched). */}
+        {policyMismatch && (
+          <button
+            type="button"
+            onClick={run}
+            disabled={running || !prepared || typeof onResult !== "function"}
+            title="Recalculate this note under the current policy -- advisory, never changes accepted client pricing"
+            className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm bg-violet-100 text-violet-800 border border-violet-300 text-[12px] font-semibold hover:bg-violet-200 disabled:opacity-60 flex-shrink-0"
+          >
+            Recalculate
+          </button>
+        )}
         {running && (
           <button
             type="button"
