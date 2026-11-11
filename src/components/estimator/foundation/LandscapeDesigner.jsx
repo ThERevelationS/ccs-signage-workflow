@@ -214,23 +214,27 @@ export default function LandscapeDesigner({ landscape, onChange }) {
                 {/* O-071 (CMP-F04) -- object editing: nudge buttons move the
                     placed object (x by 1" steps, rotation by 15deg steps) --
                     the operator nudges a placed object instead of typing. */}
+                {/* O-071 (CMP-F04) -- group-move: when the nudged object
+                    carries a `group`, objects sharing that group move as a
+                    cohort (`j === oi || r.group === o.group`); a group-free
+                    object nudges alone. */}
                 <button
                   type="button"
-                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, x_inches: (Number(r.x_inches) || 0) - 1 } : r) })}
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => (j === oi || (o.group && r.group === o.group)) ? { ...r, x_inches: (Number(r.x_inches) || 0) - 1 } : r) })}
                   className="h-5 w-4 rounded-sm text-gray-500 hover:bg-gray-100 text-[9px]"
-                  aria-label={`Object ${oi + 1} nudge left`}
+                  aria-label={`Object ${oi + 1} nudge left${o.group ? ` (group ${o.group})` : ""}`}
                 >−</button>
                 <button
                   type="button"
-                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, x_inches: (Number(r.x_inches) || 0) + 1 } : r) })}
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => (j === oi || (o.group && r.group === o.group)) ? { ...r, x_inches: (Number(r.x_inches) || 0) + 1 } : r) })}
                   className="h-5 w-4 rounded-sm text-gray-500 hover:bg-gray-100 text-[9px]"
-                  aria-label={`Object ${oi + 1} nudge right`}
+                  aria-label={`Object ${oi + 1} nudge right${o.group ? ` (group ${o.group})` : ""}`}
                 >+</button>
                 <button
                   type="button"
-                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => j === oi ? { ...r, rotation_degrees: ((Number(r.rotation_degrees) || 0) + 15) % 360 } : r) })}
+                  onClick={() => onChange({ ...landscape, objects: (landscape.objects || []).map((r, j) => (j === oi || (o.group && r.group === o.group)) ? { ...r, rotation_degrees: ((Number(r.rotation_degrees) || 0) + 15) % 360 } : r) })}
                   className="h-5 rounded-sm px-0.5 text-gray-500 hover:bg-gray-100 text-[9px]"
-                  aria-label={`Object ${oi + 1} rotate 15`}
+                  aria-label={`Object ${oi + 1} rotate 15${o.group ? ` (group ${o.group})` : ""}`}
                   title="Rotate +15deg"
                 >↻</button>
                 <input
