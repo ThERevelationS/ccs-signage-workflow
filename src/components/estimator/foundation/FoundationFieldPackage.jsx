@@ -370,6 +370,10 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Geometry", db.geometry],
             ["Open questions", db.open_questions],
             ["Qty/cost revision", db.quantity_cost_revision],
+            // O-118 (CMP-I17) -- policy-sensitivity note: the design's
+            // sensitivity to the named uncertain input travels to the field/
+            // engineer handoff; blank = "not recorded".
+            ["Policy sensitivity", db.policy_sensitivity],
             ["Notes", db.basis_notes],
           ].filter(([, v]) => v != null && v !== "");
           return rows.length === 0 ? (
