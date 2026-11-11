@@ -10,10 +10,10 @@ import { suggestFeasibleFoundationDims } from "./poleCalculator";
 const amt = (v) => (hasFoundationCostSnapshot(v) ? money(v) : "Not saved");
 const num2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : "Not saved");
 
-const Field = ({ label, ...props }) => (
+const Field = ({ label, field, ...props }) => (
   <label className="text-xs text-gray-500">
     {label}
-    <Input {...props} />
+    <Input data-field={field} {...props} />
   </label>
 );
 
@@ -23,6 +23,7 @@ const Field = ({ label, ...props }) => (
 const DimField = ({ field, value, onCommit }) => (
   <FoundationDimensionInput
     {...foundationDimensionFieldMeta("foundation", field)}
+    data-field={field}
     value={value ?? ""}
     onCommit={onCommit}
   />
