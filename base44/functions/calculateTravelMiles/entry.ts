@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 /**
  * Round-trip driving miles between the shop and a job site.
@@ -15,7 +16,7 @@ const ROUTES_ENDPOINT = 'https://routes.googleapis.com/directions/v2:computeRout
 const cleanAddress = (v) => String(v || '').trim().replace(/\s+/g, ' ').slice(0, 500);
 
 async function routesApiMiles(shop, site, apiKey) {
-  const resp = await fetch(ROUTES_ENDPOINT, {
+  const resp = await boundedFetch(ROUTES_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
