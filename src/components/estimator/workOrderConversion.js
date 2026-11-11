@@ -65,12 +65,12 @@ export async function loadEstimateConversionParts(estimate = {}, { entity = null
     parts.push(row);
   };
   if (estimateId) {
-    (await Part.filter({ estimate_id: estimateId }, "created_date", 500).catch(() => []))
+    (await Part.filter({ estimate_id: estimateId }, "created_date", 500))
       .forEach(push);
   }
   for (const bpid of builderProductIds) {
     if (parts.some((p) => String(p?.builder_product_id || "").trim() === bpid)) continue;
-    (await Part.filter({ builder_product_id: bpid }, "created_date", 500).catch(() => []))
+    (await Part.filter({ builder_product_id: bpid }, "created_date", 500))
       .forEach(push);
   }
   return parts;
