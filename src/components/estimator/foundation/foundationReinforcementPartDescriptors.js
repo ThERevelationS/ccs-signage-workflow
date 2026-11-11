@@ -90,7 +90,7 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
 
   // Support economics (O-026/O-027): a modeled plan carries snapshot.supports
   // with per-selection catalog picks; an item accepted before support modeling
-  // has no snapshot.supports and no support fields — that is legal and emits no
+  // has no snapshot.supports and no support fields â€” that is legal and emits no
   // support parts. Any support amount on the item REQUIRES the snapshot to
   // prove it; mismatched or unverifiable support data fails the handoff rather
   // than passing a guessed part through.
@@ -154,6 +154,10 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
     pricing_mode: "foundation_reinforcement_v2",
     reinforcement: {
       version: 1, calculation_version: 2, component_id: item.component_id,
+      // O-011 (CMP-A11) -- accepted-design v2 part model: the part's
+      // `accepted_design_version` records the accepted design's version so a
+      // v2 part model's consumer reads the version, never a fabricated v1.
+      accepted_design_version: 2,
       physical_quantity_ft: item.rebar_geometry_feet, priced_quantity_ft: item.rebar_feet,
       geometry_weight_lbs: item.rebar_geometry_weight_lbs, priced_weight_lbs: item.rebar_weight_lbs,
       connection_count: item.rebar_connection_count, engineering_approved: false, procurement_ready: false,
