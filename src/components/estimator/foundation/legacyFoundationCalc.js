@@ -74,6 +74,71 @@ export const normalizeConcreteSupplier = (row) => ({
   _source: "labor_services",
 });
 
+// Restored setting-hardening block (was dropped in a refactor — `foundationCalc`
+// still imports `foundationItemSettingIssues`). A malformed consumed Settings
+// value is not a guessed rate — the item is held, the same contract as the
+// wall/pole setting checks.
+const supplierPriceNumber = (value) => {
+  if (typeof value !== "number" && (typeof value !== "string"
+    || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+};
+
+const foundationSettingNumber = (value, fallback) =>
+  supplierPriceNumber(value === 0 ? 0 : value || fallback);
+
+const itemSettingConsumption = (item) => {
+  const has = (v) => v !== undefined && v !== null;
+  const consumed = [["foundation_pouring_cost_per_cy", 15, "pouring labor cost per CY"]];
+  const laborDivides = Boolean(item?.include_finishing) && !has(item?.custom_finishing_hours);
+  if (!has(item?.custom_excavation_rate)
+    || item?.include_rebar
+    || (item?.include_finishing && (!has(item?.custom_finishing_rate) || !has(item?.custom_finishing_hours)))) {
+    consumed.push(["foundation_main_labor_rate", 60, laborDivides ? "positive main labor rate" : "main labor rate", laborDivides]);
+  }
+  if (item?.include_rebar) {
+    consumed.push(
+      ["foundation_rebar_time_cross_section", 0.05, "rebar time per intersection"],
+      ["foundation_rebar_time_linear_ft", 0.02, "rebar time per linear foot"],
+    );
+  }
+  if (item?.include_forming) {
+    consumed.push(
+      ["foundation_forming_cost_per_sqft", 2.5, "forming labor cost per sq ft"],
+      item?.foundation_type === "spread_foot"
+        ? ["foundation_forming_materials_spread_foot", 0.5, "spread-foot forming materials multiplier"]
+        : ["foundation_forming_materials_pillar", 0.75, "pillar forming materials multiplier"],
+    );
+  }
+  if (item?.include_finishing && !has(item?.custom_finishing_hours)) {
+    consumed.push(["foundation_finishing_cost_per_sqft", 1.25, "finishing labor cost per sq ft"]);
+  }
+  if (!has(item?.custom_excavation_hours)) {
+    consumed.push(
+      item?.excavation_method === "hand_dig" || !item?.excavation_method
+        ? ["foundation_hand_dig_time_per_cy", 2.0, "hand excavation time per CY"]
+        : ["foundation_equipment_excavation_time_per_cy", 0.5, "equipment excavation time per CY"],
+    );
+  }
+  return consumed;
+};
+
+export const foundationItemSettingIssues = (item, settings = {}, index = 0) => {
+  const issues = [];
+  for (const [key, fallback, label, positive] of itemSettingConsumption(item)) {
+    const number = foundationSettingNumber(settings?.[key], fallback);
+    if (number === null || (positive && number <= 0)) {
+      issues.push({
+        kind: "foundation", index, componentId: item?.component_id ?? null,
+        field: key, inventoryId: null, code: "foundation_setting_unavailable",
+        message: `Foundation ${index + 1}: record a finite, ${positive ? "positive" : "nonnegative"} ${label.replace(/^positive /, "")} in Estimator Settings before repricing.`,
+      });
+    }
+  }
+  return issues;
+};
+
 export const calcItemCost = (item, inventory = [], settings = {}) => {
   const getSetting = (key, def) => parseFloat(settings[key] || def);
 
