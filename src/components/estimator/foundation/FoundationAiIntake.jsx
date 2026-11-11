@@ -6,7 +6,7 @@
 import { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Cpu, Loader2 } from "lucide-react";
-import { validateFoundationProposal } from "./foundationModuleProposal";
+import { validateFoundationProposal, stripCertification } from "./foundationModuleProposal";
 import { ESTIMATOR_AI_MODEL } from "../../../../base44/shared/estimatorAiModelPolicy.js";
 
 const PARSE_SCHEMA = {
@@ -81,11 +81,8 @@ const pricedAlternative = (label, catalog) => {
   return { computed_cost: null };
 };
 
-// W-018 (AI-07) -- certification strip: drop certification/approval claims
-// from AI text so a suggestion never reads as engineering approval.
-const stripCertification = (s) => typeof s === "string"
-  ? s.replace(/\b(certified|code-compliant|code compliant|engineer-approved|engineer approved|stamped|PE-stamped|PE stamped|structurally approved)\b/gi, "[certification claim removed]")
-  : s;
+// W-018 (AI-07) -- certification strip moved to foundationModuleProposal.js
+// (the eval matrix's guards are executable from there); imported above.
 
 // W-015 (AI-04) -- per-topic cost/scope implication: why a follow-up fact
 // matters to the estimate (deterministic, never AI-invented).
