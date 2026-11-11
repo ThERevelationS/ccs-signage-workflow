@@ -21,6 +21,19 @@
 //  - rule_version is semver. Content changes bump the version instead of
 //    editing in place; O-121 consumes versions to find affected estimates.
 
+// O-120 (CMP-I19) -- source-license policy: the register's license
+// restrictions on the cited sources. Paid standards are citation markers
+// only — no content reproduced; public sources are verified vs candidate
+// (a candidate source cannot gate counts or pricing).
+export const FOUNDATION_SOURCE_LICENSE_POLICY = Object.freeze({
+  paid_standards_citation_only: true,
+  paid_standards_no_content_reproduction: true,
+  paid_standards_list: ["ACI 315", "ACI 318", "ACI 301", "CRSI MSP", "CRSI PRB", "CRSI RB4.1", "ASTM", "AASHTO"],
+  candidate_source_cannot_gate: true,
+  public_sources_verified_vs_candidate: true,
+  policy_version: "1.0.0",
+});
+
 const RULE_ID = /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/;
 const DOMAIN_ID = /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$/;
 const SEMVER = /^\d+\.\d+\.\d+$/;
