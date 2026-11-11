@@ -15,7 +15,7 @@ import WallShapeEditor from "./WallShapeEditor";
 // suggested-format placeholder from the field meta map (never stored defaults).
 const wallDimMeta = (field) => foundationDimensionFieldMeta("wall", field);
 
-function WallRow({ wall, index, options, pricing, onChange, onRemove }) {
+function WallRow({ wall, index, options, pricing, onChange, onRemove, items = [] }) {
   const c = wall.calculatedCosts || {};
   const set = (changes) => onChange(index, changes);
   // Settings-aware issues arrive from calcProject; the local re-derive covers
@@ -311,6 +311,7 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
             pricing={wallPricing[index]}
             onChange={patchWall}
             onRemove={removeWall}
+            items={items}
           />
         ))
       )}
