@@ -50,6 +50,7 @@ const toBuild = baselineMode ? { baseline: '.audit-work/foundation-save01/before
 for (const [key, entry] of Object.entries(toBuild)) {
   const out = await esbuild.build({ entryPoints: [path.resolve(entry)], bundle: true, format: 'esm', platform: 'node', write: false, plugins: [plugin], loader: { '.js': 'jsx', '.jsx': 'jsx' }, external: ['react', 'react-dom', 'react-test-renderer'] });
   const tmp = path.join('.audit-work', 'foundation-save01', `fe-${key}.bundle.mjs`);
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
   fs.writeFileSync(tmp, out.outputFiles[0].text);
   bundles[key] = (await import(pathToFileURL(tmp).href)).default;
 }
