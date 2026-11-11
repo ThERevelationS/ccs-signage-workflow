@@ -1602,6 +1602,28 @@ export const FOUNDATION_RULE_SEEDS = deepFreeze([
     unsupported: ["base-plate sizing; anchor layout"],
     rule_version: "0.0.0", status: "held",
   },
+  {
+    rule_id: "METHOD-LATERAL-HELD",
+    domain: "method.lateral",
+    statement: "Lateral-load/footing-lateral basis is held pending a real cited method; the design-basis field carries the operator's entry.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no lateral-load method is encoded; the authored lateral field carries the operator's basis"],
+    unsupported: ["lateral-load sizing; footing lateral resistance"],
+    rule_version: "0.0.0", status: "held",
+  },
+  {
+    rule_id: "METHOD-FROST-HELD",
+    domain: "method.frost_depth",
+    statement: "Frost-depth/footing-depth basis is held pending a real cited method; the design-basis field carries the operator's entry.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no frost-depth method is encoded; the authored frost_depth field carries the operator's basis"],
+    unsupported: ["frost-depth sizing; footing embedment"],
+    rule_version: "0.0.0", status: "held",
+  },
 ]);
 
 // ---------------------------------------------------------------------------
