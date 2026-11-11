@@ -1941,3 +1941,12 @@ export const FOUNDATION_SOURCE_CLASS_LABELS = Object.freeze({
 });
 export const foundationSourceClassLabel = (classKey) =>
   FOUNDATION_SOURCE_CLASS_LABELS[classKey] ?? null;
+
+// Lane A -- FOUNDATION_SOURCE_INDEX: the source-index entries (the AUTH-*-HELD
+// rule ids + their class + source_ref) — a consumer/test enumerates this list;
+// an entry with no class is an OPEN hole, never a covered claim.
+export const FOUNDATION_SOURCE_INDEX = Object.freeze(
+  Object.entries(SOURCE_AUTHORITY_CLASS).map(([rule_id, authority_class]) => ({
+    rule_id, authority_class,
+  }))
+);
