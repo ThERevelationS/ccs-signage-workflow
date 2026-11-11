@@ -67,6 +67,18 @@ function deepFreeze(value, seen = new Set()) {
 // `verified` here is the register entry's headline verification state; a seed
 // may tighten it (e.g. a candidate sub-fact inside a verified entry).
 // ---------------------------------------------------------------------------
+// O-102 (CMP-I01) -- topic-grouped index view: the register's sources grouped
+// by rule domain (support.placement.spacing / support.density / etc.) so a
+// consumer reads the register by topic, not a flat list.
+export const FOUNDATION_SOURCE_TOPIC_INDEX = Object.freeze({
+  "support.placement.spacing": "spacing/count ceilings per bearing mode",
+  "support.density": "density/count caps (never a universal entitlement)",
+  "support.compatibility": "member-type vs support-kind compatibility (pillar/base-plate/drilled-shaft)",
+  "support.catalog": "per-SKU catalog-row modeling rules",
+  "support.placement": "placement rules (bracing, plates, coatings)",
+  "authority": "citation/authority markers (paid standards, licensed-only)",
+});
+
 export const FOUNDATION_RULE_SOURCES = deepFreeze({
   "CMP-SUP-001": {
     authority: "Dayton Superior, manufacturer",
