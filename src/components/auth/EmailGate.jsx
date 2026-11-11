@@ -280,12 +280,13 @@ export function AuthProvider({ children }) {
       <LoginDialog
         open={showLogin && !currentUser}
         onLogin={loginWithCredentials}
+        onBrowse={() => { setBrowseOnly(true); setShowLogin(false); }}
       />
     </AuthContext.Provider>
   );
 }
 
-function LoginDialog({ open, onLogin }) {
+function LoginDialog({ open, onLogin, onBrowse }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -360,7 +361,14 @@ function LoginDialog({ open, onLogin }) {
           </Button>
         </form>
 
-
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full text-slate-500 hover:text-slate-700"
+          onClick={onBrowse}
+        >
+          <Eye className="w-4 h-4 mr-2" /> Continue browsing as guest
+        </Button>
       </DialogContent>
     </Dialog>
   );
