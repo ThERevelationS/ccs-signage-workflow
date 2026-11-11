@@ -404,7 +404,18 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
                 const priced = pricedAlternative(a.label, catalog);
                 return (
                   <p key={i} className="text-[10px] text-sky-700 mt-0.5">
+                    {/* Lane E -- alternative_elected/alternative_applied: the
+                        operator's election rides the alternative row (elected
+                        = the operator picked it; applied = it was applied to
+                        the design — never a silent apply). */}
+                    <label className="inline-flex items-center gap-1 mr-1">
+                      <input type="checkbox" checked={!!a.elected} onChange={(e) => { a.elected = e.target.checked; if (!e.target.checked) a.applied = false; setProposal({ ...proposal }); }}
+                        aria-label={`Elect alternative ${i + 1}: ${a.label}`} className="h-3 w-3" />
+                      <span className="sr-only">elect</span>
+                    </label>
                     {a.label}{a.cost_impact ? ` - ${a.cost_impact}` : ""}
+                    {a.elected && <span className="text-sky-800 font-semibold"> [elected]</span>}
+                    {a.applied && <span className="text-green-700 font-semibold"> [applied]</span>}
                     {Number.isFinite(priced.computed_cost) && (
                       <span className="text-sky-800 font-semibold"> [@${priced.computed_cost}/{priced.matched_unit} {priced.matched_stock}]</span>
                     )}
