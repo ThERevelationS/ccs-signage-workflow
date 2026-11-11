@@ -244,6 +244,15 @@ export function foundationSceneDiagnostics(scene) {
             `Pole ${i + 1} sign ${si + 1} is a letters panel -- each letter mounts individually rather than as a continuous face.`,
             [poleId]);
         }
+        // Lane D -- sign_mount_mismatch: a non-pole-mounted sign inside
+        // pole.signs[] claims a wall/ground mount but lives on a pole -- the
+        // mount type and the pole context disagree.
+        const signMount = typeof s?.mount_type === "string" && s.mount_type ? s.mount_type : "pole";
+        if (signMount !== "pole") {
+          push("warning", "sign-mount-mismatch",
+            `Pole ${i + 1} sign ${si + 1} claims a "${signMount}" mount but lives on a pole -- the mount type and the pole context disagree.`,
+            [poleId]);
+        }
       });
     }
     // O-065 (CMP-E10) -- horizontal clearance: two signs on the same pole whose
