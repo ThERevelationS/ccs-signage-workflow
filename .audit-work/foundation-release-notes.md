@@ -50,6 +50,40 @@ landed surfaces.
   it at build). Restored `supplierPriceNumber`/`foundationSettingNumber`/
   `itemSettingConsumption`/`foundationItemSettingIssues`.
 
+## Governance + audit (later pass)
+
+- **Dashboard fixtures (W-006–W-011)**: read-only `.audit-work/` fixtures —
+  status parser 6/6, dashboard views 4/4 (next-action/last-verified/
+  source-gap/lane-scenario), sandbox-complete-vs-published distinction,
+  lead+one-worker cap, dashboard-local/no-secret contract, hooks-preserved
+  (no always-running loops). All pass on the remote.
+- **Stage taxonomy (W-004)**: `.devin/estimator-stages.md` — the 5-stage
+  contract per ledger row.
+- **P-lane audit (P-01)**: `.audit-work/channel-lane-audit.md` — remote
+  `channelLetterPricingAvailability.js` md5-verified identical to the
+  hardened candidate; `verify-channel-model.mjs` 85/0; all 13 P-rows carry
+  `**Remaining:**` next-action tails naming the module-session grant.
+- **P-13 cost-ownership fixture**: `scripts/test-channel-cost-ownership.mjs`
+  — 30 asserts (key uniqueness, split-replaces-base, fab_config
+  conservation, labor XOR, qty-once, rollup exact-once), remote-run PASS.
+- **DONE-row evidence relabels**: 8 rows' checkpoint ids relabeled to the
+  `checkpoint \`<24-hex>\`` convention (21→13 checkpoint-id gaps; the rest
+  are honest pre-convention gaps, never fabricated).
+
+## Notable fixes (later pass)
+
+- **`foundationDraftRecovery` truncation restore** @`6af414f5`: the remote
+  module had regressed to a 165-line older revision — `summarizeFoundationDraftConflict`,
+  the `v.lost` tombstone read path, and the graceful-loss write marker were
+  missing and the remote `npm run build` was RED on the missing
+  `FoundationSyncConflictDialog` import. Restored the full 427-line module
+  with the O-004 `storage_${cls}` classification merged; remote build
+  exit 0.
+- **Local-tree drift repair**: the local `src/components/estimator/` tree
+  carried 19 stale files (severe truncations) + 9 remote-only files — the
+  stale-local-write class that caused the remote truncation. All 28 pulled
+  remote→local; local now mirrors the remote source of truth.
+
 ## Held / not-claimed
 
 - Licensed research corpora (O-106–O-112's cited sources) — NEEDS-OPERATOR
