@@ -39,15 +39,18 @@ export default function FoundationBOM({
     // O-097 "why this quantity" — every priced row may carry an honest
     // derivation note; it renders under the row like the reinforcement
     // notes already do. Only real derivation classes, never invented math.
-    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null, costClass = "calculated", supplierGroup = null, authorizationGate = null) => {
+    const add = (material, displayQty, cost, rawQty = num(displayQty), note = null, costClass = "calculated", supplierGroup = null, authorizationGate = null, sensitivityPct = null) => {
       if (num(rawQty) <= 0 && !hasFoundationCostSnapshot(cost)) return;
       // O-115 (CMP-I15) -- cost_class separates published-minimum / calculated /
       // contingency rows so "what changed the price" is honest provenance.
       // Lane E -- supplier_grouping/authorization_gate: the row's supplier
       // group + authorization gate ride the row (never an invented gate;
       // blank = "not recorded").
+      // O-117 (CMP-I16) -- sensitivity_pct: a per-line ±% bound rides the row
+      // (never an invented sensitivity; blank = "not recorded").
       out.push({ material, quantity: displayQty, cost, cost_class: costClass, ...(note ? { note } : {}),
-        supplier_group: supplierGroup, authorization_gate: authorizationGate });
+        supplier_group: supplierGroup, authorization_gate: authorizationGate,
+        ...(sensitivityPct != null ? { sensitivity_pct: sensitivityPct } : {}) });
     };
     const nameOf = (id) => inventory.find((i) => i.id === id)?.material_name || "Material";
     const resolved = items.filter((_, i) => itemPricing[i]?.available !== false);
@@ -330,6 +333,10 @@ export default function FoundationBOM({
                     {/* O-115 (CMP-I15) -- cost-class provenance tag. */}
                     {r.cost_class && r.cost_class !== "calculated" && (
                       <span className="ml-1 rounded-sm bg-gray-100 px-1 text-[9px] uppercase tracking-wide text-gray-500">{r.cost_class.replace(/_/g, " ")}</span>
+                    )}
+                    {/* O-117 (CMP-I16) -- per-line sensitivity bound. */}
+                    {r.sensitivity_pct != null && (
+                      <span className="ml-1 rounded-sm bg-blue-50 px-1 text-[9px] text-blue-700" title="Sensitivity bound on this row's cost">±{r.sensitivity_pct}%</span>
                     )}
                     {r.note && <p className="mt-1 text-[11px] leading-snug text-gray-500 break-words">{r.note}</p>}
                   </td>
