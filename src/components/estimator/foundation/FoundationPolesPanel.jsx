@@ -451,13 +451,27 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                       {s.display_only === true && (
                         <label className="text-[10px] text-gray-500" title="The linked sign product this display-only sign represents">
                           Linked product
-                          <input
-                            type="text" placeholder="product id/name"
+                          {/* O-063 (CMP-E08) -- pick list over the estimate's
+                              existing sign products (`items`): selecting one
+                              records its `component_id`; a stale recorded id
+                              stays visible as a disabled "Missing" row rather
+                              than silently clearing or minting a product. */}
+                          <select
                             value={s.linked_product_id ?? ""}
                             onChange={(e) => patchSign({ linked_product_id: e.target.value === "" ? undefined : e.target.value })}
-                            className="ml-1 h-5 w-20 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                            className="ml-1 h-5 w-24 rounded-sm border border-gray-300 px-0.5 text-[9px] bg-transparent"
                             aria-label={`Pole ${index + 1} sign ${si + 1} linked product`}
-                          />
+                          >
+                            <option value="">Not recorded</option>
+                            {s.linked_product_id && !items.some((it) => it.component_id === s.linked_product_id) && (
+                              <option value={s.linked_product_id} disabled>{`Missing product (${String(s.linked_product_id).slice(0, 14)}...)`}</option>
+                            )}
+                            {items.map((it, i) => (
+                              <option key={it.component_id || i} value={it.component_id || ""}>
+                                {it.description || `Item ${i + 1}`}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                       )}
                       {/* O-066 (CMP-E11) -- quote/job-link preservation: the
