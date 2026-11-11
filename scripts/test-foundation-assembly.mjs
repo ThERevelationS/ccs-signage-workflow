@@ -8,6 +8,7 @@ import TestRenderer, { act } from 'react-test-renderer';
 import { normalizeFoundationAssembly, foundationAssemblyIssues, cloneFoundationComponents } from '../src/components/estimator/foundation/foundationAssemblyModel.js';
 
 const calcBundle = await esbuild.build({ entryPoints: ['src/components/estimator/foundation/foundationCalc.js'], bundle: true, format: 'esm', platform: 'node', write: false, loader: { '.js': 'jsx', '.jsx': 'jsx' }, external: ['react', 'react-dom'] });
+fs.mkdirSync('.audit-work/foundation-assembly04', { recursive: true });
 fs.writeFileSync('.audit-work/foundation-assembly04/calc.bundle.mjs', calcBundle.outputFiles[0].text);
 const { calcProject } = await import(pathToFileURL(path.resolve('.audit-work/foundation-assembly04/calc.bundle.mjs')).href);
 
