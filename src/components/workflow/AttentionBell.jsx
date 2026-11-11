@@ -163,12 +163,12 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         className={`relative inline-flex items-center justify-center rounded-xl ${shellGlass ? "ccs-glass-control ccs-glass-neutral text-slate-100" : "clay-button border-2 text-gray-800 border-gray-200"} ${compact ? "h-7 w-7" : "h-9 w-9"}`}
       >
         <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
-        {count > 0 && (
-          <span className={`pointer-events-none absolute inline-flex items-center justify-center rounded-full bg-gradient-to-b from-red-500 to-red-600 font-bold leading-none tracking-tight tabular-nums text-white shadow-[0_1px_4px_rgba(220,38,38,0.45)] ring-2 ring-white/95 dark:ring-slate-900 ${compact ? "-right-1 -top-1 h-3.5 min-w-3.5 px-0.5 text-[8px]" : "-right-1.5 -top-1.5 h-[18px] min-w-[18px] px-1 text-[9px]"}`}>
-            {count > 99 ? "99+" : count}
-          </span>
-        )}
       </button>
+      {count > 0 && (
+        <span className={`pointer-events-none absolute inline-flex items-center justify-center rounded-full bg-gradient-to-b from-red-500 to-red-600 font-bold leading-none tracking-tight tabular-nums text-white shadow-[0_1px_4px_rgba(220,38,38,0.45)] ring-2 ring-white/95 dark:ring-slate-900 ${compact ? "-right-1 -top-1 h-3.5 min-w-3.5 px-0.5 text-[8px]" : "-right-1.5 -top-1.5 h-[18px] min-w-[18px] px-1 text-[9px]"}`}>
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
       <NotificationCenter open={open} onClose={() => setOpen(false)} onRefresh={runNow} />
       {/* Celebration/event toasts — new persisted notifications pop here on
           every page the bell renders on, including EstimatorQueues (#336). */}
