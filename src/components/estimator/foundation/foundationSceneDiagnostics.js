@@ -127,6 +127,15 @@ export function foundationSceneDiagnostics(scene) {
           [sceneNodeId.item(layoutItemKey(item, i))]);
       }
     });
+    // O-084 (CMP-G07) -- photo-scale-mismatch: a photo's `reported_dims.units`
+    // conflicting with the scene's inches-units -- the photo's claimed scale
+    // is recorded vs trusted (the photo is context-only).
+    const claimUnits = typeof rd.units === "string" && rd.units ? rd.units.toLowerCase() : null;
+    if (claimUnits && !["in", "inch", "inches", "\""].includes(claimUnits)) {
+      push("warning", "photo-scale-mismatch",
+        `Photo ${pi + 1}'s reported units ("${rd.units}") contradict the scene's inches-units -- review the photo's scale claim.`,
+        []);
+    }
   });
 
   // -- item bounds + pairwise clash -------------------------------------
