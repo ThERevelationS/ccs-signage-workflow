@@ -164,7 +164,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
       >
         <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         {count > 0 && (
-          <span className={`pointer-events-none absolute -right-1 -top-1 inline-flex items-center justify-center rounded-full bg-red-600 font-bold leading-none text-white ring-2 ring-white dark:ring-slate-900 ${compact ? "h-3.5 min-w-3.5 px-0.5 text-[8px]" : "h-4 min-w-4 px-1 text-[9px]"}`}>
+          <span className={`pointer-events-none absolute inline-flex items-center justify-center rounded-full bg-gradient-to-b from-red-500 to-red-600 font-bold leading-none tracking-tight tabular-nums text-white shadow-[0_1px_4px_rgba(220,38,38,0.45)] ring-2 ring-white/95 dark:ring-slate-900 ${compact ? "-right-1 -top-1 h-3.5 min-w-3.5 px-0.5 text-[8px]" : "-right-1.5 -top-1.5 h-[18px] min-w-[18px] px-1 text-[9px]"}`}>
             {count > 99 ? "99+" : count}
           </span>
         )}
