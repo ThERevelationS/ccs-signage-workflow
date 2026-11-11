@@ -564,7 +564,12 @@ Deno.serve(async (req) => {
       }
       const totals = computeTotals({ ...fields, line_items: lineItems });
       const invoiceNumber = clean(fields.invoice_number) || await nextInvoiceNumber(Invoice, base44.asServiceRole);
-      const invoiceKey = clean(body?.creation_request_key) || `invoice:${customerId}:${Date.now()}`;
+      // O-010 (CMP-A10) -- WO->invoice exact-once ownership: when the invoice
+      // carries a `work_order_id`, the creation key derives `invoice:wo:<woId>`
+      // (one invoice per WO, CAS-recoverable), not a per-call timestamp. The
+      // caller's explicit `creation_request_key` still wins.
+      const woKey = clean(fields.work_order_id) ? `invoice:wo:${clean(fields.work_order_id)}` : null;
+      const invoiceKey = clean(body?.creation_request_key) || woKey || `invoice:${customerId}:${Date.now()}`;
       const createdResult = await createFoundationRecordWithRecovery({
         entity: Invoice,
         data: {
