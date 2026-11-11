@@ -285,7 +285,6 @@ export default function EstimatorCustomers() {
   const workflowSyncRef = useRef(false);
   const pricingTierSaveRef = useRef(false);
   const inboxReloadRef = useRef(null);
-  const loadCustomersAndTiersRef = useRef(null);
   const importInputRef = useRef(null);
   const tierImportRef = useRef(null);
   const [importing, setImporting] = useState(false);
@@ -323,7 +322,6 @@ export default function EstimatorCustomers() {
         setLoading(false);
       }
     };
-    loadCustomersAndTiersRef.current = load;
     load().catch(() => {});
   }, []);
 
@@ -404,18 +402,18 @@ export default function EstimatorCustomers() {
         `Matching rows are resolved by create-if-missing — existing customers are not duplicated. Continue?`
       );
       if (!proceed) return;
-      let created = 0, skipped = preview.skip;
+      let created = 0, skipped = preview.skip, failed = 0;
       for (const { companyName, fields } of preview.rows) {
         try {
           const res = await base44.functions.invoke("ensureEstimateCustomer", { company_name: companyName, fields, session_token: sessionToken });
           const data = res?.data || res;
           if (data?.error) throw new Error(data.error);
           created++;
-        } catch { skipped++; }
+        } catch { failed++; }
       }
       const fresh = await loadAllCustomers().catch(() => null);
       if (fresh) setCustomers(fresh);
-      window.alert(`Import finished — ${created} customer${created === 1 ? "" : "s"} created or matched, ${skipped} row${skipped === 1 ? "" : "s"} skipped.`);
+      window.alert(`Import finished — ${created} customer${created === 1 ? "" : "s"} created or matched, ${skipped} row${skipped === 1 ? "" : "s"} skipped (no company name), ${failed} row${failed === 1 ? "" : "s"} failed to import.`);
     } catch (e) {
       window.alert(e?.message || "The CSV import failed.");
     } finally {
@@ -500,7 +498,7 @@ export default function EstimatorCustomers() {
         if (existing?.id) { await staffEntities.MarkupTier.update(existing.id, data); updated += 1; }
         else { await staffEntities.MarkupTier.create(data); created += 1; }
       }
-      await loadCustomersAndTiersRef.current?.();
+      await load();
       window.alert(`Pricing tiers imported — ${created} created, ${updated} updated.`);
     } catch (e) {
       window.alert(e?.message || "The tier JSON could not be imported.");
