@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 Deno.serve(async (req) => {
     try {
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
         }
 
         // Verify the token works by getting user profile
-        const profileResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+        const profileResponse = await boundedFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
