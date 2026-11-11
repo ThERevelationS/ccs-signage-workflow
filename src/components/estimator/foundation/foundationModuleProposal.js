@@ -96,5 +96,7 @@ export const FOUNDATION_AI_OUTPUT_CONTRACT = Object.freeze({
     follow_ups: "[{topic, question}] max 6",
     exclusions: "[string]",
   },
-  meta: ["schema_version", "module_key", "proposal_id", "base_project_revision", "brief", "evidence_refs", "user_locks", "exclusions"],
+  // Lane C -- model_policy_version: the model's policy version rides the meta
+  // (the review's model-policy version; never a fabricated version).
+  meta: ["schema_version", "module_key", "proposal_id", "base_project_revision", "brief", "evidence_refs", "user_locks", "exclusions", "model_policy_version"],
 });
