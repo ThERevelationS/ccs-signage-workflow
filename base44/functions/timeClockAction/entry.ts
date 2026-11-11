@@ -3777,10 +3777,17 @@ Deno.serve(async (req) => {
       }
       // No entries bucketed today but a live shift still counts toward today
       // when it is not anchored to an earlier combined workday.
-      if (entry && paidToday === 0 && elapsedToday === 0) {
-        const activeDayKey = String(entry.work_day_anchor_date || '').trim() || dateKeyInCompanyTime(entry.clock_in);
-        if (activeDayKey === todayKey) { paidToday = activePaid; elapsedToday = activeElapsed; }
+      const activeDayKey = entry
+        ? String(entry.work_day_anchor_date || '').trim() || dateKeyInCompanyTime(entry.clock_in)
+        : '';
+      if (entry && paidToday === 0 && elapsedToday === 0 && activeDayKey === todayKey) {
+        paidToday = activePaid; elapsedToday = activeElapsed;
       }
+      // Tracker display values: a live overnight shift anchored to its start
+      // day keeps counting in the pill even though payroll buckets it there.
+      const overnightActive = !!(entry && activeDayKey && todayKey && activeDayKey !== todayKey);
+      const trackerPaidToday = paidToday + (overnightActive ? activePaid : 0);
+      const trackerElapsedToday = elapsedToday + (overnightActive ? activeElapsed : 0);
       // Consecutive worked days ending today, and hours since the last punch out.
       let consecutiveDays = 0;
       if (todayKey) {
@@ -3848,6 +3855,8 @@ Deno.serve(async (req) => {
         clock_in: entry?.clock_in || null,
         paid_minutes_today: paidToday,
         elapsed_minutes_today: elapsedToday,
+        tracker_paid_minutes: trackerPaidToday,
+        tracker_elapsed_minutes: trackerElapsedToday,
         break_minutes: breakMinutes,
         paid_break_minutes: paidBreakMinutes,
         pause_minutes: pauseMinutes,
