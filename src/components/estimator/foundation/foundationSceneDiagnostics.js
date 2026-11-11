@@ -255,6 +255,14 @@ export function foundationSceneDiagnostics(scene) {
         }
       });
     }
+    // Lane D -- anchor_assembly: the pole's anchor-bolt pattern/embedment is
+    // unrecorded -- a held state (blank = "not recorded", never a silent
+    // default).
+    if (pole?.anchor_assembly == null || pole.anchor_assembly === "") {
+      push("info", "anchor-assembly-held",
+        `Pole ${i + 1}'s anchor-bolt pattern is not recorded -- record the assembly (bolt count/circle/embedment) for the field.`,
+        [poleId]);
+    }
     // O-065 (CMP-E10) -- horizontal clearance: two signs on the same pole whose
     // plan x-extents (offset +/- width/2) AND vertical bands (mount_height ..
     // +height) overlap physically collide. Skips unresolved dims (their own
