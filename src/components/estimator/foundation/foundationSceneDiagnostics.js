@@ -460,6 +460,15 @@ export function foundationSceneDiagnostics(scene) {
           `${vobj.label || "Visual object"} at (${wx.toFixed(0)}, ${wz.toFixed(0)}) sits on ${itemRowName(target.item, target.index)} -- a footing can't carry plantings/decor.`,
           [sceneNodeId.item(layoutItemKey(target.item, target.index))]);
       }
+      // Lane D -- landscape_waste_fraction: a cell's authored waste_fraction
+      // that's malformed (non-finite or negative) is a held state -- the cell
+      // can't carry a material-ordering waste factor.
+      const wf = vobj?.waste_fraction;
+      if (wf != null && (!Number.isFinite(Number(wf)) || Number(wf) < 0)) {
+        push("warning", "landscape-waste-held",
+          `${vobj.label || "Visual object"}'s waste_fraction (${wf}) is malformed -- the cell can't carry a material-ordering waste factor.`,
+          []);
+      }
     });
   }
 
