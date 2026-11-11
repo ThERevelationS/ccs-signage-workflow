@@ -217,3 +217,16 @@ CLEAN. 12 initial candidates all verified false positives by hand
 `.summary-row.machine` CSS classes inside <style> template literals).
 The three real bugs this class produced (WallRow `items`, BOM `project`,
 copy-signature `at`) are fixed and transported.
+
+## Remote-run evidence (sandbox `sandbox run node ...`)
+
+- test-foundation-save-handler: 58/58 PASS on remote (covers the
+  copy-signature idempotency fix)
+- test-foundation-catalog-integrity: 7/7 PASS on remote (covers the
+  FoundationWallsPanel `items` fix + FoundationBOM render path)
+- test-foundation-layout: 26/26 PASS on remote
+- test-foundation-assembly: 27/28 remote (same frozen deep-equal
+  residual as local)
+- Both tests now `mkdirSync` their `.audit-work` output dirs so they
+  run on a bare remote tree; `calculator-loss-repro.json` fixture
+  transported for the remote catalog-integrity run.
