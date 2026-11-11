@@ -96,10 +96,16 @@ export default function AiEngineeringAssistant({ project, onResult }) {
   const policyOutdatedOn = policyMismatch && Array.isArray(meta?.policy_outdated_on)
     ? meta.policy_outdated_on.filter((r) => typeof r === "string" && r)
     : [];
+  // O-121 (CMP-I20) -- affected_records: the affected records' ids/types
+  // ride the banner alongside `policy_outdated_on` (never silently re-run on a
+  // record whose pricing the client accepted).
+  const affectedRecords = policyMismatch && Array.isArray(meta?.affected_records)
+    ? meta.affected_records.filter((r) => r && typeof r === "object" && typeof r.id === "string")
+    : [];
   const label = stale
     ? "Design changed since this note. Run a fresh review."
     : policyMismatch
-      ? `Policy ${meta.policy_version} (current: ${FOUNDATION_AI_REVIEW_POLICY}) - review may be affected by a method update${policyOutdatedOn.length ? `; affects: ${policyOutdatedOn.join(", ")}` : ""}`
+      ? `Policy ${meta.policy_version} (current: ${FOUNDATION_AI_REVIEW_POLICY}) - review may be affected by a method update${policyOutdatedOn.length ? `; affects: ${policyOutdatedOn.join(", ")}` : ""}${affectedRecords.length ? `; records: ${affectedRecords.map((r) => `${r.id}${r.type ? ` (${r.type})` : ""}`).join(", ")}` : ""}`
       : samePolicy && meta?.source_key
       ? "Preliminary review"
       : "Historical / unverified AI note";
