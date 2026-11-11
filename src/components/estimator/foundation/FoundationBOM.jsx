@@ -105,6 +105,16 @@ export default function FoundationBOM({
       add("Published minimum", qty(1, "published"), pubMin, 1, "The published engineering-minimum authored amount -- a minimum bound, not a calculated baseline or a contingency.", "published_minimum");
     }
 
+    // O-116 (CMP-I15) -- a priced-alternative row separate from the
+    // calculated/contingency/published-minimum rows: `project.priced_alternative_cost`
+    // (an elected alternative's authored amount, never an invented price)
+    // surfaces as a "priced_alternative" cost_class row so "what the elected
+    // alternative costs" reads apart from the calculated baseline.
+    const pricedAlt = num(project?.priced_alternative_cost);
+    if (pricedAlt > 0) {
+      add("Priced alternative", qty(1, "alternative"), pricedAlt, 1, "An elected alternative's authored amount -- a priced-alternative estimate, not the calculated baseline.", "priced_alternative");
+    }
+
     blocked.forEach((i) => {
       const label = `Foundation ${i.component_id ?? "?"} (saved)`;
       {
