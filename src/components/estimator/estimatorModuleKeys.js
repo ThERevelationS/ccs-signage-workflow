@@ -37,3 +37,21 @@ export function estimatorModuleKey(key) {
 export function estimatorIntakeShellStatus(key) {
   return estimatorModuleKey(key)?.intake_shell || null;
 }
+
+// `INTAKE_SHELL_CONTRACT` — the shared intake shell's contract, the canonical
+// reference the queued modules adopt on rollout. The foundation shell
+// (`FoundationAiIntake`) is the reference implementation; a queued module's
+// intake shell MUST carry the same shape: free-text -> InvokeLLM parse ->
+// scene-fed contradiction check -> catalog-fed assembly proposal -> grouped
+// follow-ups -> editable proposal -> apply-preview -> schema-valid
+// commit-merge -> revision language; the empty-state mode chooser keeps "Use a
+// template" + "Build manually" always available alongside "Start with AI".
+export const INTAKE_SHELL_CONTRACT = {
+  schema_version: 1,
+  required_fields: ["schema_version", "module_key", "proposal_id", "base_project_revision", "brief", "operations", "assumptions", "questions", "issues", "evidence_refs"],
+  operations_kind: "allowlisted discriminated union — never arbitrary entity writes, executable code or tool instructions",
+  apply_contract: "schema-valid commit-merge via the module's apply path — never a silent apply",
+  manual_paths: ["Use a template", "Build manually"],
+  ai_path: "Start with AI",
+  contract_version: "1.0.0",
+};
