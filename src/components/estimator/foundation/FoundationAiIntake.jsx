@@ -186,6 +186,16 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
         // authored list the proposal carries (never silently dropped).
         user_locks: (parsed.items || []).map((i, ix) => i?.locked === true ? ix : null).filter(ix => ix !== null),
         exclusions: Array.isArray(parsed.exclusions) ? parsed.exclusions.filter(x => typeof x === "string") : [],
+        // O-081 (CMP-G04) -- structured brief's conversational half:
+        // photo_observations/preferences/conflicts/assumptions/questions_answered
+        // fields the operator/AI records on the proposal (the confirmed-facts
+        // + missing-inputs half is the brief; these are the conversational
+        // tracking fields).
+        photo_observations: Array.isArray(parsed.photo_observations) ? parsed.photo_observations.filter(x => typeof x === "string") : [],
+        preferences: Array.isArray(parsed.preferences) ? parsed.preferences.filter(x => typeof x === "string") : [],
+        conflicts: Array.isArray(parsed.conflicts) ? parsed.conflicts.filter(x => typeof x === "string") : [],
+        assumptions: Array.isArray(parsed.assumptions) ? parsed.assumptions.filter(x => typeof x === "string") : [],
+        questions_answered: Array.isArray(parsed.questions_answered) ? parsed.questions_answered.filter(x => typeof x === "string") : [],
       });
       // W-019 -- bounded parse history: the committed parse appends to the
       // capped trail (last 10), so the operator sees the revision path.
