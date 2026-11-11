@@ -87,6 +87,14 @@ export const ESTIMATOR_AI_EVAL_CASES = Object.freeze([
 // W-022 (AI-11) -- output contract: the fields the parse schema enforces and
 // the bounded extras. Deterministic, lead-authored; a consumer/test reads this
 // shape instead of inferring the contract from the prompt text.
+// W-018 (AI-07) -- certification strip: drop certification/approval claims
+// from AI text so a suggestion never reads as engineering approval. Lives
+// beside the eval matrix that names it (O-091 hostile_reference_text +
+// certification_claim guards are executable from here).
+export const stripCertification = (s) => typeof s === "string"
+  ? s.replace(/\b(certified|code-compliant|code compliant|engineer-approved|engineer approved|stamped|PE-stamped|PE stamped|structurally approved)\b/gi, "[certification claim removed]")
+  : s;
+
 export const FOUNDATION_AI_OUTPUT_CONTRACT = Object.freeze({
   items: { required: ["foundation_type"], optional: ["quantity", "length_inches", "width_inches", "diameter", "depth_inches", "locked"] },
   poles: { optional: ["height_inches", "description"] },
