@@ -6,6 +6,7 @@ import {
   baseName, extOf, kindOf, safeRelPath, dedupeKey, isExcluded,
   FB_SSE_HOLD_MS, FB_HEALTHY_AGE_MS, FB_REPLAY_WINDOW_MS,
 } from '../../shared/fileBridgeModel.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 // fileBridgeIngest — HMAC-authenticated agent API (outbound-only transport).
 // Agent holds NO Base44 credentials: it signs {key_id, ts, body} with a shared
@@ -113,10 +114,7 @@ const BUNDLE_REV = 'fb-ingest-2026-11-05a';
 async function stitchStaged(sr: any, cmd: any, ordered: any[], agentId: string, opts: { file_sha256?: string; name?: string }) {
   const parts: Uint8Array[] = [];
   for (const c of ordered) {
-    // Inline-staged chunks carry bytes on the row; legacy rows still fetch
-    // the UploadFile blob URL. Both resolve to the same bytes.
-    if (c.data_b64) { parts.push(Uint8Array.from(atob(String(c.data_b64)), (x: string) => x.charCodeAt(0))); continue; }
-    const resp = await fetch(String(c.file_url));
+    const resp = await boundedFetch(String(c.file_url));
     if (!resp.ok) return { ok: false as const, status: 503, body: { error: `chunk fetch ${c.seq} failed`, retry: true } };
     parts.push(new Uint8Array(await resp.arrayBuffer()));
   }
@@ -483,12 +481,12 @@ Deno.serve(async (req) => {
     const have = await sr.entities.FileBridgeChunk.filter({ command_id: cid }, 'seq', 64).catch(() => []);
     if (!(have || []).some((c: any) => c.seq === seq)) {
       const csha = String(body.sha256 || '') || await sha256Hex(bytes);
-      // Inline byte staging — chunk bytes ride the entity row (data_b64)
-      // instead of an UploadFile blob. One credit PER CHUNK was the burn.
+      const file = new File([bytes], `${cid}.part${seq}`);
+      const up = await sr.integrations.Core.UploadFile({ file });
       const created = await sr.entities.FileBridgeChunk.create({
-        command_id: cid, seq, data_b64: String(body.bytes_b64 || ''), bytes: bytes.length, sha256: csha, received_at: now(),
+        command_id: cid, seq, file_url: up.file_url, bytes: bytes.length, sha256: csha, received_at: now(),
       }).catch(() => null);
-      have.push({ id: created?.id, seq, data_b64: String(body.bytes_b64 || ''), bytes: bytes.length, sha256: csha });
+      have.push({ id: created?.id, seq, file_url: up.file_url, bytes: bytes.length, sha256: csha });
     }
     const received = (have || []).length;
     if (!isTerminal(cmd.status)) {
