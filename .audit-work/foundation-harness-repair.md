@@ -95,10 +95,25 @@ newlines — matching `sandbox read`'s normalization) across all 246
   (`cutInput` lookup — wall-cap UI evolved).
 - `verify-basis-key.mjs` — recovered PASS 22/22 via the `partSync.js`/
   `builderService.js` pulls (missing-export class).
+- `verify-coupled-page-recovery-safety.mjs` — recovered PASS via the
+  coupled-page fixture repairs (all six race/guard cases `ok`).
+- `verify-page-reinforcement.mjs` — five stacked infrastructure staleness
+  repairs: lucide stub icon set extended to the full page graph (44 icons);
+  `foundationRecordSavedTotal` added to the builderService stub (12-field
+  semantics); `FoundationAiIntake`/`FoundationPhotoIntake` added to stubbed
+  panels; `FoundationSyncConflictDialog` given a bespoke stub (its named
+  hooks `useFoundationSyncConflict`/`useFoundationBuilderSyncRetry`/
+  `FoundationSyncRetryAction` are imported by the page — generic `dummy()`
+  can't cover them); `@/lib/loadAllEntityRows` added alongside the legacy
+  alias stub; `document` no-op stub. The dialog's relative
+  `./foundationBuilderRecovery` import bypassed the alias-keyed stub —
+  the leak chain was dialog → builderMutationRecovery → base44Client.
+  PASS 8/8 (real CAS save, undo-after-save, infeasible-edit block,
+  proposal route-change guard, draft restore).
 
 ## Sweep results (116 model/page-tier verifiers)
 
-89 PASS / 27 FAIL. All 27 residuals classify as: (a) frozen-expectation
+91 PASS / 25 FAIL. All 25 residuals classify as: (a) frozen-expectation
 drift vs deliberate later hardening (the three documented above +
 reinforcement16/17 additive totals, same `+total_landscape_cost/
 +total_signage_cabinet_cost` diff), (b) fixture-env gaps vs new
