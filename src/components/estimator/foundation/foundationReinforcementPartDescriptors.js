@@ -149,6 +149,39 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
     }
   }
 
+  // O-011 (CMP-A11) -- v2 per-mat part model: the accepted snapshot's
+  // `cut_schedule` carries per-run lines tagged `mat_id`; project a per-mat
+  // feet breakdown so the part model decomposes steel by mat (non-mat steel
+  // keeps its role bucket). A snapshot accepted before the schedule carries
+  // no cut_schedule -- legal, emits the aggregate part. A present schedule
+  // must reconcile to geometry feet; malformed lines fail the handoff.
+  const CS = snapshot.cut_schedule;
+  let matParts = null;
+  if (CS != null) {
+    if (!plain(CS) || !Array.isArray(CS.cut_lines)) fail("cut_schedule requires cut_lines.");
+    const closeN = (a, b) => Math.abs(a - b) <= 64 * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b));
+    const buckets = new Map();
+    for (const line of CS.cut_lines) {
+      if (!plain(line) || !positive(line.cut_length_inches)
+        || !safeInt(line.quantity_total) || line.quantity_total <= 0) {
+        fail("each cut_schedule line needs a positive quantity_total and cut_length_inches.");
+      }
+      const isMat = nonemptyStr(line.mat_id);
+      if (!isMat && !nonemptyStr(line.role)) fail("a non-mat cut_schedule line requires a role.");
+      const key = isMat ? `mat:${line.mat_id}` : `role:${line.role}`;
+      const bucket = buckets.get(key) ?? { kind: isMat ? "mat" : "role", id: isMat ? line.mat_id : line.role, feet: 0 };
+      bucket.feet += line.cut_length_inches * line.quantity_total / 12;
+      buckets.set(key, bucket);
+    }
+    matParts = [...buckets.values()];
+    const feetSum = matParts.reduce((sum, m) => sum + m.feet, 0);
+    if (!closeN(feetSum, A.geometry_feet)) fail("cut_schedule feet must reconcile to snapshot.amounts.geometry_feet.");
+  }
+  const weightPerFt = nonnegative(B.weight_lb_per_ft) && B.weight_lb_per_ft > 0 ? B.weight_lb_per_ft : null;
+  const matPartsSnap = () => matParts == null ? [] : matParts.map((m) => ({
+    ...clone(m), weight_lbs: weightPerFt == null ? null : m.feet * weightPerFt,
+  }));
+
   const builder = () => { const active = { ...item }; delete active.reinforcement_proposal; return structuredClone(active); };
   const basisSnap = () => ({
     pricing_mode: "foundation_reinforcement_v2",
@@ -162,6 +195,7 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
       geometry_weight_lbs: item.rebar_geometry_weight_lbs, priced_weight_lbs: item.rebar_weight_lbs,
       connection_count: item.rebar_connection_count, engineering_approved: false, procurement_ready: false,
       material: clone(M), amounts: clone(A), supports: clone(S ?? null),
+      mat_parts: matPartsSnap(),
     },
   });
   const name = nonemptyStr(M.name) ? M.name : "Reinforcing steel";
@@ -191,18 +225,48 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
     });
   }
 
-  return [
-    {
-      part_key: `foundation:item:${i}:rebar`, part_type: "material", part_subtype: "rebar",
+  // Per-mat material parts replace the single aggregate steel part when the
+  // schedule exists AND priced feet equal geometry feet (a quantity override
+  // re-prices the aggregate -- splitting it per-mat would invent an
+  // allocation). Every per-mat part keeps subtype "rebar" so downstream
+  // subtype filters behave identically; the feet sum reconciles to the
+  // aggregate material cost exactly (rate is flat per foot).
+  const rebarPartBase = {
+    part_type: "material", part_subtype: "rebar",
+    inventory_entity: material.kind === "catalog" ? "FoundationInventory" : "",
+    inventory_item_id: material.kind === "catalog" ? M.inventory_id : "",
+    unit: "ft", unit_cost: item.rebar_rate,
+  };
+  const steelParts = matParts != null && A.priced_feet === A.geometry_feet
+    ? matParts.map((m, idx) => {
+      // Last bucket absorbs FP residue so part quantities sum EXACTLY to the
+      // aggregate's priced feet and extended sum to material_cost.
+      const last = idx === matParts.length - 1;
+      const feet = last ? A.geometry_feet - matParts.slice(0, -1).reduce((s, p) => s + p.feet, 0) : m.feet;
+      const extended = last ? A.material_cost - matParts.slice(0, -1).reduce((s, p) => s + p.feet * item.rebar_rate, 0) : m.feet * item.rebar_rate;
+      return {
+        ...rebarPartBase,
+        part_key: `foundation:item:${i}:rebar:${m.kind}:${m.id}`,
+        part_name: m.kind === "mat" ? `${name} — mat ${m.id}` : `${name} — ${m.role}`,
+        source_path: `items[${i}].reinforcement_cost_snapshot.cut_schedule`,
+        quantity: feet, extended_cost: extended,
+        builder_data: builder(),
+        calculation_snapshot: clone(snapshot),
+        pricing_basis_snapshot: basisSnap(),
+      };
+    })
+    : [{
+      ...rebarPartBase,
+      part_key: `foundation:item:${i}:rebar`,
       part_name: name, source_path: `items[${i}].reinforcement_material.inventory_id`,
-      inventory_entity: material.kind === "catalog" ? "FoundationInventory" : "",
-      inventory_item_id: material.kind === "catalog" ? M.inventory_id : "",
-      quantity: item.rebar_feet, unit: "ft", unit_cost: item.rebar_rate,
-      extended_cost: item.rebar_material_cost,
+      quantity: item.rebar_feet, extended_cost: item.rebar_material_cost,
       builder_data: builder(),
       calculation_snapshot: clone(snapshot),
       pricing_basis_snapshot: basisSnap(),
-    },
+    }];
+
+  return [
+    ...steelParts,
     {
       part_key: `foundation:item:${i}:rebar-labor`, part_type: "labor", part_subtype: "rebar_labor",
       part_name: "Reinforcement labor", source_path: `items[${i}].reinforcement_design`,
