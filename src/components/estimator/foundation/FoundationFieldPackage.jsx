@@ -4,6 +4,7 @@ import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscap
 import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
 import { buildFoundationPlanSvg, buildFoundationElevationSvg } from "./foundationPlanExport";
 import { foundationSourceAuthorityClass, foundationSourceClassLabel } from "./foundationRuleRegistry";
+import { revisionSnapshotDiff } from "./foundationRevisionDiff";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -73,6 +74,23 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             <p className="text-[9px] text-gray-400">
               Prior revisions: {project.revision_history.slice(-5).map(r => r.updated_date).join(", ")}
             </p>
+          )}
+          {/* O-099 (CMP-H08) -- revision-pair compare UI: a "Compare" control
+              on the revision-history surface renders `revisionSnapshotDiff`
+              between the two most-recent stored revisions -- the pair-compare
+              consumer the snapshot enables. */}
+          {Array.isArray(project?.revision_history) && project.revision_history.length >= 2 && (
+            <details className="text-[9px] text-gray-500">
+              <summary className="cursor-pointer hover:text-gray-700">Compare revisions</summary>
+              <ul className="mt-0.5 list-disc pl-4">
+                {revisionSnapshotDiff(
+                  project.revision_history[project.revision_history.length - 2],
+                  project.revision_history[project.revision_history.length - 1]
+                ).map((r, i) => (
+                  <li key={i}>{r.label}: {r.detail}</li>
+                ))}
+              </ul>
+            </details>
           )}
         </div>
         <button
