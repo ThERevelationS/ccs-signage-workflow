@@ -294,10 +294,13 @@ export interface VinylWireLine {
   workflow_id: string;
 }
 
-const lineKey = (item: Record<string, unknown>, index: number, workflowId = ''): string => {
+const lineKey = (item: Record<string, unknown>, index: number, workflowId = '', position?: number): string => {
   const explicit = firstField(item, LINE_KEY_FIELDS);
   if (explicit !== undefined && asString(explicit) !== '') return asString(explicit);
-  return workflowId ? `${workflowId}:${index}` : `idx-${index}`;
+  // Anonymous workflows' anonymous items would collide on `idx-${index}`
+  // (index is per-workflow) — the global line position keeps keys unique.
+  if (!workflowId) return `idx-${position ?? index}`;
+  return `${workflowId}:${index}`;
 };
 
 /**
@@ -322,7 +325,7 @@ export function vinylRecordLines(record: unknown): VinylWireLine[] {
 
   const origin: VinylWireLine['origin'] = flat.length ? 'items' : 'workflows';
   return source.map(({ item, index, workflowId }, position) => ({
-    key: lineKey(item, index, workflowId),
+    key: lineKey(item, index, workflowId, position),
     index: position,
     label: asString(firstField(item, LINE_LABEL_FIELDS)) || `Item ${position + 1}`,
     qty: num(firstField(item, LINE_QTY_FIELDS), 1),
