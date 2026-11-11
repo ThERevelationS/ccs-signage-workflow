@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 const MAX_INLINE_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
         }
 
         const driveListFiles = async (q) => {
-          const response = await fetch(
+          const response = await boundedFetch(
             `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,webViewLink,parents)&supportsAllDrives=true&includeItemsFromAllDrives=true`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
           );
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
           return Array.isArray(data?.files) ? data.files : [];
         };
         const driveCreateFolder = async (name, parents) => {
-          const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+          const response = await boundedFetch('https://www.googleapis.com/drive/v3/files', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents }),
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
           query += ` and '${safeFolderId}' in parents`;
         }
         
-        const response = await fetch(
+        const response = await boundedFetch(
           `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink,thumbnailLink,iconLink)&orderBy=folder,name&supportsAllDrives=true&includeItemsFromAllDrives=true`,
           {
             headers: {
@@ -175,7 +176,7 @@ Deno.serve(async (req) => {
           parents: safeFolderId ? [safeFolderId] : []
         };
 
-        const response = await fetch(
+        const response = await boundedFetch(
           'https://www.googleapis.com/drive/v3/files',
           {
             method: 'POST',
@@ -240,7 +241,7 @@ Deno.serve(async (req) => {
         body.set(part2, part1.length);
         body.set(part3, part1.length + part2.length);
 
-        const response = await fetch(
+        const response = await boundedFetch(
           'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink',
           {
             method: 'POST',
@@ -270,7 +271,7 @@ Deno.serve(async (req) => {
 
         // Resolve metadata on the server. The browser must never receive the
         // Google OAuth access token just to download a file.
-        const response = await fetch(
+        const response = await boundedFetch(
           `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?fields=id,name,mimeType,webViewLink,size`,
           {
             headers: {
@@ -300,7 +301,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const downloadResponse = await fetch(
+        const downloadResponse = await boundedFetch(
           `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?alt=media`,
           {
             headers: {
@@ -341,7 +342,7 @@ Deno.serve(async (req) => {
 
         const metadataUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?fields=id,name,modifiedTime,trashed&supportsAllDrives=true`;
         const readCurrentFile = async () => {
-          const currentResponse = await fetch(metadataUrl, {
+          const currentResponse = await boundedFetch(metadataUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
           if (currentResponse.status === 404) return null;
@@ -379,7 +380,7 @@ Deno.serve(async (req) => {
         const deleteUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?supportsAllDrives=true`;
         let deleteResponse;
         try {
-          deleteResponse = await fetch(deleteUrl, {
+          deleteResponse = await boundedFetch(deleteUrl, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
