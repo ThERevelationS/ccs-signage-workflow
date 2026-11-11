@@ -8,20 +8,28 @@ import { base44 } from "@/api/base44Client";
 export default function EstimateActivityPanel({ estimate, refreshKey }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
+  const [degraded, setDegraded] = useState("");
 
   useEffect(() => {
     let live = true;
     const load = async () => {
       setError("");
+      setDegraded("");
       try {
         const estimateId = estimate?.id;
         if (!estimateId) { setRows([]); return; }
-        const [activities, messages] = await Promise.all([
+        const feed = (label, promise) => promise.then(
+          (rows) => ({ label, rows, failed: false }),
+          () => ({ label, rows: [], failed: true }),
+        );
+        const feeds = await Promise.all([
           estimate?.opportunity_id
-            ? base44.entities.OpportunityActivity.filter({ opportunity_id: estimate.opportunity_id }, "-created_date", 100).catch(() => [])
-            : Promise.resolve([]),
-          base44.entities.PortalMessage.filter({ related_kind: "estimate", related_id: estimateId }, "-created_date", 100).catch(() => []),
+            ? feed("opportunity activity", base44.entities.OpportunityActivity.filter({ opportunity_id: estimate.opportunity_id }, "-created_date", 100))
+            : Promise.resolve({ label: "", rows: [], failed: false }),
+          feed("customer messages", base44.entities.PortalMessage.filter({ related_kind: "estimate", related_id: estimateId }, "-created_date", 100)),
         ]);
+        const activities = feeds[0].rows, messages = feeds[1].rows;
+        const failedFeeds = feeds.filter((f) => f.failed).map((f) => f.label);
         const activityRows = (Array.isArray(activities) ? activities : [])
           .filter((a) => {
             const d = a?.details || {};
@@ -39,7 +47,10 @@ export default function EstimateActivityPanel({ estimate, refreshKey }) {
           label: `${m?.author_side === "customer" ? "Customer" : "Staff"} ${String(m?.kind || "message").replaceAll("_", " ")}`,
           body: m?.body || "",
         }));
-        if (live) setRows([...activityRows, ...messageRows].sort((a, b) => String(b.ts).localeCompare(String(a.ts))).slice(0, 25));
+        if (live) {
+          setRows([...activityRows, ...messageRows].sort((a, b) => String(b.ts).localeCompare(String(a.ts))).slice(0, 25));
+          setDegraded(failedFeeds.length ? `${failedFeeds.join(" and ")} could not be loaded — this timeline may be incomplete.` : "");
+        }
       } catch (e) {
         if (live) { setError(e?.message || "Activity could not be loaded."); setRows([]); }
       }
@@ -55,6 +66,7 @@ export default function EstimateActivityPanel({ estimate, refreshKey }) {
         <History className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" /> ACTIVITY LOG
       </h3>
       {error && <div role="alert" className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+      {degraded && <div role="status" className="mt-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">{degraded}</div>}
       {rows === null ? (
         <div className="flex items-center justify-center py-8 text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />Loading activity…</div>
       ) : rows.length === 0 ? (
