@@ -3,6 +3,7 @@ import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 import { landscapeSummary, isVisualCellKey, visualObjectByKey } from "./landscapeMaterials";
 import { foundationSceneDiagnostics } from "./foundationSceneDiagnostics";
 import { buildFoundationPlanSvg, buildFoundationElevationSvg } from "./foundationPlanExport";
+import { foundationSourceAuthorityClass, foundationSourceClassLabel } from "./foundationRuleRegistry";
 import { wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-100 (CMP-H09) -- exportable field/production package. A print-friendly
@@ -302,6 +303,15 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Code edition", db.code_edition],
             ["Jurisdiction", db.jurisdiction],
             ["Basis source", db.basis_source],
+            // O-103 (CMP-I02) -- citation-class display: when `basis_source`
+            // names a register id (CMP-SUP-*), the source's authority class
+            // surfaces alongside (a shop assumption never reads as adopted code).
+            ["Basis source class", typeof db.basis_source === "string" && db.basis_source ? (() => {
+              try {
+                const cls = foundationSourceAuthorityClass(db.basis_source.trim());
+                return cls ? foundationSourceClassLabel(cls) : null;
+              } catch { return null; }
+            })() : null],
             // O-109 (CMP-I08) -- soil/groundwater/frost/wind assumption fields:
             // authored site assumptions travel to the field; blank = "not
             // recorded" (never an invented geotech number).
