@@ -1000,6 +1000,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       ...(project.updated_date ? [{
         updated_date: project.updated_date,
         at: Date.now(),
+        // Lane E -- revision_label/revision_approved_by: the superseded
+        // revision's authored label + approver ride the row (never a
+        // fabricated approver; blank = "not recorded").
+        revision_label: typeof project.revision_label === "string" && project.revision_label ? project.revision_label : null,
+        revision_approved_by: typeof project.revision_approved_by === "string" && project.revision_approved_by ? project.revision_approved_by : null,
         // O-099 (CMP-H08) -- lightweight snapshot: the superseded revision's
         // counts + dims ride the row so a pair-compare can diff any two
         // stored revisions without a full record copy (bounded — counts +
