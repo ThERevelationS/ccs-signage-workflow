@@ -996,7 +996,21 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     // list, so a revision-pair compare can diff any two stored revisions.
     revision_history: [
       ...(Array.isArray(project.revision_history) ? project.revision_history : []).slice(-11),
-      ...(project.updated_date ? [{ updated_date: project.updated_date, at: Date.now() }] : []),
+      ...(project.updated_date ? [{
+        updated_date: project.updated_date,
+        at: Date.now(),
+        // O-099 (CMP-H08) -- lightweight snapshot: the superseded revision's
+        // counts + dims ride the row so a pair-compare can diff any two
+        // stored revisions without a full record copy (bounded — counts +
+        // dims, not the whole scene).
+        snapshot: {
+          item_count: Array.isArray(project.items) ? project.items.length : 0,
+          wall_count: Array.isArray(project.walls) ? project.walls.length : 0,
+          pole_count: Array.isArray(project.poles) ? project.poles.length : 0,
+          cap_count: Array.isArray(project.wall_caps) ? project.wall_caps.length : 0,
+          cabinet_count: Array.isArray(project.signage_cabinets) ? project.signage_cabinets.length : 0,
+        },
+      }] : []),
     ],
     excavation_method: project.excavation_method,
     selected_concrete_id: project.selected_concrete_id,
