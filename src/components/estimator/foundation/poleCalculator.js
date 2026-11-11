@@ -709,3 +709,30 @@ export const suggestFeasibleFoundationDims = (item) => {
     governing: "wall height >= 6\" (shop-assumption minimum)",
   };
 };
+
+// O-114 (CMP-I13) -- worked examples: a documented worked example per method
+// domain (the domain's inputs -> the derivation -> the suggested output), so
+// a consumer reads the method's applied math, not just the domain constant.
+export const FOUNDATION_METHOD_WORKED_EXAMPLES = Object.freeze([
+  {
+    domain: "pole embedment",
+    inputs: { height_inches: 120, pole_diameter_inches: 8 },
+    derivation: "embedment = ceil(height * embedment_min_ratio); shaft_diameter = ceil(pole_dia * shaft_diameter_min_ratio)",
+    output: { embedment_inches: 42, shaft_diameter_inches: 10 },
+    note: "the domain's ratios applied to the authored height/diameter -- inside the documented domain, never an unexplained multiplier",
+  },
+  {
+    domain: "spread_foot depth",
+    inputs: { foundation_type: "spread_foot" },
+    derivation: "depth_inches = spread_foot_depth_min_inches (shop-assumption minimum)",
+    output: { depth_inches: 12 },
+    note: "the domain's minimum depth -- a shop-assumption floor, not a structural calc",
+  },
+  {
+    domain: "wall height",
+    inputs: { foundation_type: "wall" },
+    derivation: "height_inches = wall_height_min_inches (shop-assumption minimum)",
+    output: { height_inches: 6 },
+    note: "the domain's minimum height -- a shop-assumption floor, not a structural calc",
+  },
+]);
