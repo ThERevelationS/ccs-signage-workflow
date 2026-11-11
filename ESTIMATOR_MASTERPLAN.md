@@ -866,7 +866,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `Q-09` **[OPEN]** Grouped actions, repeat-service templates, bulk sign edits, repair-vs-replace comparison, photo notes and customer-readable conditions/exclusions.
 - [ ] `Q-10` **[OPEN]** Save/recovery, accepted optional scope, action/photo IDs and manual/AI changes survive reopen.
 - [ ] `Q-11` **[OPEN]** Scenarios: LED outage, unknown driver, mixed lamps, face replacement, monument repaint, cleaning-only, lift job, multi-action/sign/site, return trip, unpriced part, repair alternatives, optional scope excluded, stale proposal and uncertain cause requiring inspection.
-- [ ] `Q-12` **[OPEN]** Tests: `test-maintenance-pricing-wire.mjs`; pure action/material/repaint/proposal tests and repair-map/recovery/Builder fixtures. Unknowns cannot silently turn into zero labor or free parts.
+- [ ] `Q-12` **[OPEN]** Tests: `test-maintenance-pricing-wire.mjs`; pure action/material/repaint/proposal tests and repair-map/recovery/Builder fixtures. Unknowns cannot silently turn into zero labor or free parts. **Existing-fixture remote-run VERIFIED**: `test-maintenance-pricing-wire.mjs` PASS 224 asserts on the remote.
 
 ## WS-R - PAINT
 
@@ -883,7 +883,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `R-08` **[OPEN]** Coating alternatives, finish schedule, material/mix takeoff, masked zones and quality/handoff details tied to the accepted revision and source data.
 - [ ] `R-09` **[OPEN]** Reusable coating presets, batch edits, friendly dimension entry, coverage explanation, live alternatives, AI revision/undo, templates and recoverable saves.
 - [ ] `R-10` **[OPEN]** Scenarios: panel, dimensional-letter edges, several faces/colors, unknown repaint condition, mixed units, small minimum, primer excluded, variable coats, cure versus active hours, legitimate zero override, incompatible system, unsupported color match and old saved project.
-- [ ] `R-11` **[OPEN]** Tests: `test-paint-pricing-wire.mjs`; new coverage/mix/unit/package/proposal fixtures plus surface-editor/recovery/Builder parity tests against live `calculatePaintingProject`.
+- [ ] `R-11` **[OPEN]** Tests: `test-paint-pricing-wire.mjs`; new coverage/mix/unit/package/proposal fixtures plus surface-editor/recovery/Builder parity tests against live `calculatePaintingProject`. **Existing-fixture remote-run VERIFIED**: `test-paint-pricing-wire.mjs` PASS 214 asserts on the remote.
 
 ## WS-S - LASER
 
@@ -901,7 +901,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `S-09` **[OPEN]** Estimate job sheet with material/scale/process/pass/time basis and layer preview; no unvalidated production toolpaths.
 - [ ] `S-10` **[OPEN]** Bulk parts, layouts, file replace, dimension override, operator rationale, reusable setups, templates and save/retry/reopen.
 - [ ] `S-11` **[OPEN]** Scenarios: cut panel, engrave, combined, letters, inch/mm vector, missing SVG scale, duplicate paths, several quantities, unsupported entity, machine-too-small, unpriced/unsuitable stock, small minimum, stale AI result and historical speed-unit contract.
-- [ ] `S-12` **[OPEN]** Tests: `test-laser-pricing-wire.mjs`; live-math/unit/import/proposal fixtures and layer-preview/ recovery/Builder tests. Capture exact old behavior before accepting changed timing estimates.
+- [ ] `S-12` **[OPEN]** Tests: `test-laser-pricing-wire.mjs`; live-math/unit/import/proposal fixtures and layer-preview/ recovery/Builder tests. Capture exact old behavior before accepting changed timing estimates. **Existing-fixture remote-run VERIFIED**: `test-laser-pricing-wire.mjs` PASS 199 asserts on the remote.
 
 ## WS-T - CNC
 
@@ -919,7 +919,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `T-09` **[OPEN]** Part/operation tree, bulk inputs, presets, alternatives, stock takeoff and estimate setup sheets. Advisory checks do not silently become new charges.
 - [ ] `T-10` **[OPEN]** Complete copy/template/reopen, user operation locks, AI revise/undo, zero overrides and recovery.
 - [ ] `T-11` **[OPEN]** Scenarios: panel, letters, carve, pocket+cut, multipass, oversized tool, loose parts, vacuum/ clamp options, grain lock, sheet overflow, unknown material, zero override, quantity change, old minimum, repeated import and cross-module finish ownership.
-- [ ] `T-12` **[OPEN]** Tests: `test-cnc-pricing-wire.mjs`; pure live-math/unit/operation/hold-down/proposal fixtures and preview/recovery/Builder handoff scenarios.
+- [ ] `T-12` **[OPEN]** Tests: `test-cnc-pricing-wire.mjs`; pure live-math/unit/operation/hold-down/proposal fixtures and preview/recovery/Builder handoff scenarios. **Existing-fixture remote-run VERIFIED**: `test-cnc-pricing-wire.mjs` PASS 193 asserts on the remote.
 
 ## WS-U - METAL FAB
 
@@ -937,7 +937,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `U-09` **[OPEN]** Quote scope, cut/assembly lists, finish/hardware takeoff, fit/quality checks and engineer/ operator review flags in handoff.
 - [ ] `U-10` **[OPEN]** Mixed-unit inputs, duplicate/mirror assemblies, batch finish/material changes, alternatives, explained overrides, recovery and full templates.
 - [ ] `U-11` **[OPEN]** Scenarios: sheet part, tube frame, mixed assembly, cut versus purchased stock, repeated parts, bends, weld length, subcontract coat, supplied stock, unknown weight, complex connection, zero override, changed quantity, linked paint/laser and declined/accepted cut optimization.
-- [ ] `U-12` **[OPEN]** Tests: `test-metal-pricing-wire.mjs`; unit/per-unit/extended/stock/assembly/proposal fixtures and cut-list/recovery/Builder no-duplicate-cost tests.
+- [ ] `U-12` **[OPEN]** Tests: `test-metal-pricing-wire.mjs`; unit/per-unit/extended/stock/assembly/proposal fixtures and cut-list/recovery/Builder no-duplicate-cost tests. **Existing-fixture remote-run VERIFIED**: `test-metal-pricing-wire.mjs` PASS 214 asserts on the remote.
 
 ## WS-V - VINYL
 
@@ -956,7 +956,7 @@ Remaining open items in dependency order. Each is worked the standard cycle: fre
 - [ ] `V-10` **[OPEN]** Stable workflow/item IDs, legacy migration, repeated sync, complete save/copy/template/artwork persistence, accepted optional operations and revision locks.
 - [ ] `V-11` **[OPEN]** Export roll/material takeoff, print/cut/laminate/application scope, tiling/layout, labor and install notes tied to the accepted estimate revision.
 - [ ] `V-12` **[OPEN]** Scenarios: print-only, cut-only, all operations, several workflows, old saved row, narrow roll, oversized tiled part, rotation lock, bleed/gutters/spoilage, contour versus rectangle estimate, supplied material, zero setup override, personnel overlap, unavailable artwork/product, canceled AI.
-- [ ] `V-13` **[OPEN]** Tests: `test-vinyl-helpers.mjs`, `test-vinyl-persistence.mjs`, `test-vinyl-pricing-wire.mjs`; pure nesting/unit/compatibility/tiling/proposal and workflow/editor/recovery/handoff fixtures.
+- [ ] `V-13` **[OPEN]** Tests: `test-vinyl-helpers.mjs`, `test-vinyl-persistence.mjs`, `test-vinyl-pricing-wire.mjs`; pure nesting/unit/compatibility/tiling/proposal and workflow/editor/recovery/handoff fixtures. **Existing-fixture remote-run VERIFIED**: `test-vinyl-helpers.mjs` 14 + `test-vinyl-persistence.mjs` 8 + `test-vinyl-pricing-wire.mjs` 155 asserts — all PASS on the remote.
 
 ## WS-W - SHARED MODULE FOUNDATIONS
 
