@@ -1588,6 +1588,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               <li><b>3D preview</b> - left drag orbits, right drag pans, scroll zooms; Exploded spreads the rebar, Section cuts at an elevation.</li>
               <li><b>Cost Summary + BOM</b> - check the changes-vs-saved list, then the field/production package on the BOM tab prints a labeled sheet.</li>
             </ol>
+            {/* O-101 (CMP-H10) -- worked synthetic-project walkthrough: a
+                concrete example walking the flow, so the walkthrough isn't a
+                demo that only works for one screenshot. */}
+            <p className="pt-1 border-t border-blue-200/60">
+              <b>Worked example:</b> a 2-pole monument sign — add a 48&quot;x48&quot;x12&quot; spread footing under Foundation;
+              two 12&apos; poles on Walls &amp; Poles (Mount each onto the footing); a 4&apos;x6&quot; wall cap under Wall Caps;
+              the cabinet on Signage &amp; Landscape (Mount onto a pole at 8&apos;). The canvas selects the footing
+              (tree + breadcrumb); Diagnostics flags the pole off its footing until you Mount it; the 3D preview
+              shows the footing + poles + cap; Cost Summary prices concrete + rebar + labor; the BOM prints the
+              labeled field sheet.
+            </p>
           </div>
         )}
 
