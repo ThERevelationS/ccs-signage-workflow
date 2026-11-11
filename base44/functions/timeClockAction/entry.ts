@@ -8035,25 +8035,39 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'The state changed since it was loaded. Reload and retry.' }, { status: 409 });
       }
       const linkedEntry = row.active_entry_id ? await entryEntity.get(row.active_entry_id).catch(() => null) : null;
-      const entryBroken = !row.active_entry_id || !linkedEntry?.id || linkedEntry.status !== 'clocked_in' || linkedEntry.archived_admin === true || linkedEntry.archived_test_data === true || asEmail(linkedEntry.user_email) !== asEmail(row.user_email);
+      const entryHealthy = !!linkedEntry?.id && linkedEntry.status === 'clocked_in' && linkedEntry.archived_admin !== true && linkedEntry.archived_test_data !== true && asEmail(linkedEntry.user_email) === asEmail(row.user_email);
       const linkedBreak = row.active_break_id ? await breakEntity.get(row.active_break_id).catch(() => null) : null;
-      const breakBroken = !row.active_break_id || !linkedBreak?.id;
+      const breakActive = !!linkedBreak?.id && linkedBreak.status === 'active' && asEmail(linkedBreak.user_email) === asEmail(row.user_email);
       const linkedPause = row.active_work_pause_id ? await workPauseEntity.get(row.active_work_pause_id).catch(() => null) : null;
-      const pauseBroken = !row.active_work_pause_id || !linkedPause?.id;
-      if (row.status === 'clocked_in' && !entryBroken && !breakBroken && !pauseBroken) {
+      const pauseActive = !!linkedPause?.id && linkedPause.status === 'active' && asEmail(linkedPause.user_email) === asEmail(row.user_email);
+      if (entryHealthy) {
+        return Response.json({ success: false, error: 'The linked TimeEntry is still a live clocked-in shift — resolve the entry, do not clear the state.' }, { status: 409 });
+      }
+      const staleEntryLink = !!row.active_entry_id && !entryHealthy;
+      const staleBreakLink = !!row.active_break_id && !breakActive;
+      const stalePauseLink = !!row.active_work_pause_id && !pauseActive;
+      if (!staleEntryLink && !staleBreakLink && !stalePauseLink && row.status !== 'clocked_in') {
         return Response.json({ success: false, error: 'The stored state looks healthy — nothing to repair. Reload status first.' }, { status: 409 });
       }
-      const repaired = await stateEntity.update(stateId, {
-        status: 'clocked_out', active_entry_id: null, pending_started_at: null,
-        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
-        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
-        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
-        last_request_id: null, last_request_payload_hash: null,
-      });
+      const result = await stateEntity.updateMany(
+        { id: row.id, updated_date: expected },
+        { $set: {
+          status: 'clocked_out', active_entry_id: null, pending_started_at: null,
+          break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+          work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+          labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+          last_request_id: null, last_request_payload_hash: null,
+        } },
+      );
+      if (!result || typeof result.updated !== 'number') throw new Error('Employee state repair could not be verified.');
+      if (result.updated !== 1) {
+        return Response.json({ success: false, error: 'The state changed since it was loaded. Reload and retry.' }, { status: 409 });
+      }
+      const repaired = await stateEntity.get(row.id).catch(() => null);
       await auditEntity.create({
         action: 'admin_repair_state', request_id: requestId, time_entry_id: String(row.active_entry_id || ''),
         user_email: row.user_email || '', actor_email: actorEmail,
-        details: { reason, expected_updated_date: expected, prior_status: row.status, missing_entry_id: row.active_entry_id || null, entry_broken: entryBroken, break_broken: breakBroken, pause_broken: pauseBroken },
+        details: { reason, expected_updated_date: expected, prior_status: row.status, prior_active_entry_id: row.active_entry_id || null, stale_entry_link: staleEntryLink, stale_break_link: staleBreakLink, stale_pause_link: stalePauseLink },
       }).catch(() => null);
       return Response.json({ success: true, state: repaired });
     }
