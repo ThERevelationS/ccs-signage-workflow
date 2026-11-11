@@ -248,6 +248,17 @@ export const FOUNDATION_RULE_SOURCES = deepFreeze({
     url: null,
     verified: "candidate", // authority markers only; contents not retrieved, no paywall bypassed
   },
+  // O-103 (CMP-I02) -- shop_assumptions source: the shop's estimating-
+  // assumption corpus (the method-domain constants / shop-authored defaults
+  // the estimator carries). `verified: "candidate"` -- a shop assumption is
+  // never an external code or a verified engineering source.
+  "CMP-SUP-025": {
+    authority: "CCS shop estimating assumptions",
+    title: "Shop-authored estimating assumptions (method-domain constants, shop defaults)",
+    edition: "shop-authored",
+    url: null,
+    verified: "candidate", // a shop assumption -- never an external code or verified engineering source
+  },
 });
 
 // O-103 (CMP-I02) -- authority classes separate sources that are NOT
@@ -274,6 +285,7 @@ const SOURCE_AUTHORITY_CLASS = deepFreeze({
   "CMP-SUP-019": "engineering_guidance", "CMP-SUP-020": "manufacturer_instructions",
   "CMP-SUP-021": "manufacturer_instructions", "CMP-SUP-022": "manufacturer_instructions",
   "CMP-SUP-023": "structural_standard", "CMP-SUP-024": "structural_standard",
+  "CMP-SUP-025": "shop_assumptions",
 });
 
 const src = (register_id, section, verified) => {
