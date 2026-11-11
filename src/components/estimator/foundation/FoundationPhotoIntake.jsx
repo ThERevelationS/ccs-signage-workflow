@@ -76,6 +76,12 @@ export default function FoundationPhotoIntake({ project, onChange, disabled }) {
           scale: null, units: null,
           purpose: "ai_design_context", provenance: "operator_upload",
           consent: true, state: "accepted", uploaded_at: new Date().toISOString(),
+          // W-021 (AI-10) -- third-party photo processing: `third_party_processed`
+          // records that the upload went through an external processor (the
+          // UploadFile integration is a third-party service) -- the row marks
+          // the external processing, never a silent assumption that the image
+          // stayed local.
+          third_party_processed: true,
         });
       }
       if (added.length) onChange?.({ reference_photos: [...photos, ...added] });
