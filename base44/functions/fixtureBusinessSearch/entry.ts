@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 // Fixture-collection helper: wraps Google Places Text Search with the app's
 // server-side key so the address-pool builder can pull real small-town
@@ -20,7 +21,7 @@ Deno.serve(async (req) => {
 
     const payload: any = { textQuery: pagetoken ? undefined : query, pageSize: 20 };
     if (pagetoken) payload.pageToken = pagetoken;
-    const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    const r = await boundedFetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
