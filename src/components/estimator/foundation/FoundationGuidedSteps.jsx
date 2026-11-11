@@ -65,30 +65,58 @@ export default function FoundationGuidedSteps({ project, calc, savedSourceProjec
           </li>
         ))}
       </ol>
-      {/* O-092 -- wizard walk: the current step's label/hint + Prev/Next + a
-          tab jump; a bounded guided flow over the same step model. */}
+      {/* O-092 -- blocking multi-step modal: while the guide runs, a fixed
+          backdrop swallows pointer interaction with the estimator beneath;
+          the operator walks the steps and cannot edit until they finish or
+          exit the walk. */}
       {wizardActive && (
-        <div className="mt-1.5 flex items-center gap-2 rounded-sm border border-violet-200 bg-violet-50 px-2 py-1 text-[11px]">
-          <span className="font-semibold text-violet-800">
-            Step {wizardStep + 1}/{steps.length}: {steps[wizardStep].label}
-          </span>
-          <span className="text-violet-700">{steps[wizardStep].hint}</span>
-          <button
-            type="button"
-            onClick={() => onStepClick?.(steps[wizardStep].tab)}
-            className="rounded-sm border border-violet-300 px-1.5 py-0.5 text-[10px] text-violet-700 hover:bg-violet-100"
-          >Go to step</button>
-          <button
-            type="button"
-            onClick={() => setWizardStep((s) => (s ?? 0) - 1)}
-            disabled={wizardStep === 0}
-            className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-40"
-          >Back</button>
-          <button
-            type="button"
-            onClick={() => setWizardStep((s) => (s ?? 0) + 1 >= steps.length ? null : (s ?? 0) + 1)}
-            className="rounded-sm border border-violet-300 px-1.5 py-0.5 text-[10px] text-violet-700 hover:bg-violet-100"
-          >{wizardStep + 1 >= steps.length ? "Finish" : "Next"}</button>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Guided setup"
+          data-guided-modal="true"
+        >
+          <div className="w-full max-w-md rounded-sm border border-violet-200 bg-white p-4 shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-violet-800 text-[13px]">
+                Step {wizardStep + 1}/{steps.length}: {steps[wizardStep].label}
+              </span>
+              <span className={`ml-auto rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${steps[wizardStep].done ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                {steps[wizardStep].done ? "done" : "pending"}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-violet-700">{steps[wizardStep].hint}</p>
+            <ol className="mt-2 flex items-center gap-1">
+              {steps.map((s, i) => (
+                <li key={s.label} className={`h-1.5 flex-1 rounded-sm ${i < wizardStep ? "bg-violet-500" : i === wizardStep ? "bg-violet-300" : "bg-gray-200"}`} title={s.label} />
+              ))}
+            </ol>
+            <div className="mt-3 flex items-center gap-2 text-[11px]">
+              <button
+                type="button"
+                onClick={() => onStepClick?.(steps[wizardStep].tab)}
+                className="rounded-sm border border-violet-300 px-1.5 py-0.5 text-[10px] text-violet-700 hover:bg-violet-100"
+              >Go to step</button>
+              <span className="flex-1" />
+              <button
+                type="button"
+                onClick={() => setWizardStep(null)}
+                className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 hover:bg-gray-50"
+              >Exit guide</button>
+              <button
+                type="button"
+                onClick={() => setWizardStep((s) => (s ?? 0) - 1)}
+                disabled={wizardStep === 0}
+                className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-40"
+              >Back</button>
+              <button
+                type="button"
+                onClick={() => setWizardStep((s) => (s ?? 0) + 1 >= steps.length ? null : (s ?? 0) + 1)}
+                className="rounded-sm border border-violet-300 px-1.5 py-0.5 text-[10px] text-violet-700 hover:bg-violet-100"
+              >{wizardStep + 1 >= steps.length ? "Finish" : "Next"}</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
