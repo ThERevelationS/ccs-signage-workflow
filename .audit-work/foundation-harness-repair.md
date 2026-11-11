@@ -123,3 +123,28 @@ No source-level regression identified: every FAIL either shows the
 documented fail-closed direction or a fixture that predates a deliberate
 feature. The remote remains the verified source of truth; remote build
 exit 0.
+
+## verify-page-browser.mjs (SDK-boundary repair round)
+
+Five stacked boundary repairs to reach the mount stage:
+- `FoundationAiIntake`/`FoundationPhotoIntake` added to stubbed panels
+- bespoke `FoundationSyncConflictDialog` stub (named hook exports)
+- `@/lib/loadAllEntityRows` canonical-path stub (page migrated off the
+  old `@/components/estimator/` shim — the real loader's paged-read
+  guard otherwise fires the page's fail-closed "Builder unavailable" banner)
+- `foundationBuilderRecovery` stub (`loadFoundationBuilderRecovery`/
+  `verifyFoundationRecoverySource`) — this was the last SDK leak path:
+  page imports it directly, it imports `builderMutationRecovery`,
+  which reaches `base44Client`
+- permanent diagnostic: harness now names offending inputs on
+  sdk-boundary assert failure
+
+Result: bundle is SDK-clean (no `base44Client`, no
+`node_modules/@base44/` in metafile); page mounts through the full
+accept/undo/redo/save flow ("All changes saved" reached).
+Residual 2 functional/frozen diffs: BOM `rows.count()` 0 vs expected 3
+(seeded fixture row predates current BOM line sourcing post-hardening);
+React dev-mode "setState in render" warnings asserted as clean
+telemetry (synthetic-env artifact of the draft-restore path). Same
+class as the other residuals — no source regression indicated.
+Transported; remote markers verified.
