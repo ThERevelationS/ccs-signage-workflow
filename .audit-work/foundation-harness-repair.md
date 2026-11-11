@@ -184,3 +184,18 @@ Out-of-scope/environment: test-automation-builder-browser (admin
 surface, own mocks stale), test-sop-module, test-training-module
 (other modules), fleet browser tests x2 (missing
 D:\tmp\fleet-browser-check playwright install).
+
+## REAL BUG #3 — FoundationBOM undeclared `project`
+
+test-foundation-material-ui residuals were ReferenceError: project is
+not defined inside FoundationBOM's rows memo. O-116 added
+`project?.contingency_cost`/`published_min_cost`/`priced_alternative_cost`
+reads without adding `project` to the destructured props — ReferenceError
+on every BOM render (optional chaining does not guard undeclared
+identifiers), and the page never passed `project` either, so the O-116
+contingency/published-minimum/priced-alternative rows could never render.
+Fix: `project = null` prop + `project={project}` at the page call site.
+Both transported EXACT; remote build EXIT=0. Test now 8/10 — the 2
+residuals are frozen cell-text diffs (BOM cells now carry note text).
+Sibling scan for the same undeclared-prop pattern across all foundation
+.jsx components: clean (2 regex false positives verified by hand).
