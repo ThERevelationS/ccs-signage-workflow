@@ -27,6 +27,7 @@ export function WorkspacePreferencesProvider({ children }) {
   const profilesRef = useRef(profiles);
   const pendingRef = useRef(false);
   const timerRef = useRef(null);
+  const retryRef = useRef(0);
   const loadedForRef = useRef("");
   prefsRef.current = prefs;
   profilesRef.current = profiles;
@@ -80,11 +81,24 @@ export function WorkspacePreferencesProvider({ children }) {
       // No server blob (new user or a backend reset) must not flatten the
       // local seed back to defaults — keep local until the first successful
       // write makes the server authoritative again.
-      const merged = migratePrefs(serverPrefs || local?.prefs);
+      const serverMigrated = migratePrefs(serverPrefs || local?.prefs);
+      // Recency arbitration: local state wins while writes are pending (it
+      // is newer than anything the server could have stored yet), and the
+      // navigation section is local-won whenever this device wrote nav
+      // state after the server's last nav write — e.g. a drop whose flush
+      // never landed must not be reverted by the stale blob.
+      const serverAt = serverMigrated.navigation.orderUpdatedAt || "";
+      const localAt = localOrderStamp(email);
+      const pendingLocal = pendingRef.current;
+      const localNavNewer = !!localAt && (!serverAt || localAt > serverAt);
+      let merged = serverMigrated;
+      if (pendingLocal) {
+        merged = migratePrefs(deepMerge(serverMigrated, prefsRef.current));
+      } else if (localNavNewer) {
+        merged = migratePrefs({ ...serverMigrated, navigation: prefsRef.current.navigation });
+      }
       // Server-authoritative nav order, but only when it is newer than the
       // order this device last wrote (last-write-wins across devices).
-      const serverAt = merged.navigation.orderUpdatedAt || "";
-      const localAt = localOrderStamp(email);
       if (serverAt && serverAt > localAt && merged.navigation.order.length) {
         saveNavOrder(email, merged.navigation.order);
         saveOrderStamp(email, serverAt);
@@ -92,9 +106,10 @@ export function WorkspacePreferencesProvider({ children }) {
         saveNavOrder(email, merged.navigation.order);
       }
       if (merged.navigation.order.length) window.dispatchEvent(new Event("ccs-nav-order-sync"));
+      const nextProfiles = pendingLocal ? profilesRef.current : (Array.isArray(serverProfiles) ? serverProfiles : []);
       setPrefs(merged);
-      setProfiles(Array.isArray(serverProfiles) ? serverProfiles : []);
-      localSavePrefs(email, merged, serverProfiles);
+      setProfiles(nextProfiles);
+      localSavePrefs(email, merged, nextProfiles);
       setLoaded(true);
     })(), 3000 + Math.floor(Math.random() * 2000));
     return () => clearTimeout(hydrateTimer);
@@ -120,10 +135,20 @@ export function WorkspacePreferencesProvider({ children }) {
         prefs: snapshot,
         profiles: snapshotProfiles,
       });
+      retryRef.current = 0;
       setSaveError("");
     } catch (e) {
       pendingRef.current = true; // retry on next flush
       setSaveError(String(e?.message || "Save failed — will retry."));
+      // A failed write used to wait for the NEXT unrelated update before
+      // retrying — under the app's volume cap that could strand a change
+      // indefinitely. Bounded backoff covers transient 429s; persistent
+      // failure still defers to the next update.
+      if (retryRef.current < 4) {
+        retryRef.current += 1;
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(flush, WRITE_DEBOUNCE_MS * Math.pow(2, retryRef.current));
+      }
     } finally {
       setSaving(false);
     }
@@ -131,6 +156,7 @@ export function WorkspacePreferencesProvider({ children }) {
 
   const scheduleWrite = useCallback(() => {
     pendingRef.current = true;
+    retryRef.current = 0;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(flush, WRITE_DEBOUNCE_MS);
   }, [flush]);
