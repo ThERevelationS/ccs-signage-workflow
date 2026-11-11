@@ -148,3 +148,39 @@ React dev-mode "setState in render" warnings asserted as clean
 telemetry (synthetic-env artifact of the draft-restore path). Same
 class as the other residuals — no source regression indicated.
 Transported; remote markers verified.
+
+## scripts/test-* sweep round (70 estimator-scoped scripts)
+
+Sweep: 54 initial PASS / 16 FAIL (5 were TAP-format false-FAILs —
+fleet race tests pass 13-assert suites via node:test TAP output).
+
+Repairs + recoveries:
+- test-foundation-catalog-integrity: full boundary-stub set (@/lib
+  loader, foundationBuilderRecovery, FoundationSyncConflictDialog,
+  AI panels, foundationRecordSavedTotal, sourcePatchMatches,
+  document stub) -> 7/7 PASS. Surfaced REAL BUG #1: WallRow in
+  FoundationWallsPanel.jsx referenced undeclared `items` (lines
+  108-125) — ReferenceError on every wall row render. Source fix
+  transported EXACT.
+- test-foundation-save-handler: same boundary set + missing
+  .audit-work dir -> 58/58 PASS. Surfaced REAL BUG #2: copy
+  signature included revision_history[*].at (Date.now()) — rotated
+  every call so the retry-safe copyAttemptRef never engaged;
+  lost-reply retries minted fresh creation_request_keys (duplicate
+  -copy risk). Source fix in FoundationEstimator.jsx signature
+  (volatile `at` stripped) transported EXACT.
+- test-foundation-layout: window global + stopPropagation on
+  synthetic events -> 26/26 PASS.
+- test-foundation-assembly: created missing foundation-assembly04
+  dir + plugin @/ resolver now resolves extensions (plugin-resolved
+  paths get no extension probing) -> 27/28 (1 frozen deep-equal
+  residual: normalization strips identity metadata).
+- test-duplicate-estimate: isRetryableFunction + @base44/sdk +
+  axios-client aliases + window global -> PASS.
+- test-foundation-material-ui: lucide AlertTriangle/X -> 6/10
+  (4 functional/frozen residuals).
+
+Out-of-scope/environment: test-automation-builder-browser (admin
+surface, own mocks stale), test-sop-module, test-training-module
+(other modules), fleet browser tests x2 (missing
+D:\tmp\fleet-browser-check playwright install).
