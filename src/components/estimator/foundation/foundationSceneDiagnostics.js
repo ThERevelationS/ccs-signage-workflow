@@ -226,6 +226,16 @@ export function foundationSceneDiagnostics(scene) {
             `Pole ${i + 1} sign ${si + 1} rises to ${Math.round(mh + sh)}in but the pole tops out at ${Math.round(poleTop)}in -- lower the mount height or shorten the sign.`,
             [poleId]);
         }
+        // Lane D -- pole_edge_clearance: a sign's bottom edge (mount_height)
+        // dipping below the pole's base offset means the sign hangs below the
+        // pole's base -- a clearance violation (the sign's bottom edge is below
+        // the pole's footing line).
+        const baseOff = Number(pole.base_offset_inches) || 0;
+        if (Number.isFinite(mh) && mh < baseOff - 0.5) {
+          push("warning", "pole-edge-clearance",
+            `Pole ${i + 1} sign ${si + 1} mounts at ${Math.round(mh)}in but the pole's base offset is ${Math.round(baseOff)}in -- the sign hangs below the footing line.`,
+            [poleId]);
+        }
         // O-060 (CMP-E05) -- sign-level diagnostic: a letters-panel sign mounts
         // each letter individually (a different load path than a continuous
         // cabinet/panel face). Advisory only.
