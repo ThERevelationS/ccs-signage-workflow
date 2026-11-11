@@ -62,7 +62,19 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
   const numCourses = isConcrete ? 0 : wallHeightInches / courseH;
   const brickPitch = unitL + (isConcrete ? 0 : mortar);
 
-  const totalLinearInches = wallShape.segments.reduce((s, seg) => s + seg.length, 0);
+  // O-047 (CMP-D04) -- corner/return adjustment: at each corner vertex the
+  // returning run's units overlap the through-run's corner zone by ~one unit
+  // width, so the unit-count basis loses unitW per corner. A closed outline
+  // has one corner per segment; an open polyline has corners only at its
+  // interior vertices (a single straight run has none). The deduction is
+  // apportioned per segment and clamps at 0 — a short segment never prices
+  // a negative length.
+  const outerSegCount = wallShape.segments.length;
+  const isClosedOutline = wallShape.closed !== false;
+  const outerCorners = isClosedOutline ? outerSegCount : Math.max(0, outerSegCount - 1);
+  const outerReductionPerSeg = outerSegCount ? (unitW * outerCorners) / outerSegCount : 0;
+  const outerSegLength = (seg) => Math.max(0, seg.length - outerReductionPerSeg);
+  const totalLinearInches = wallShape.segments.reduce((s, seg) => s + outerSegLength(seg), 0);
   const grossSqFt = (totalLinearInches * wallHeightInches) / 144;
 
   // O-045 (CMP-D02) -- authored wall openings deduct their area from masonry
@@ -92,7 +104,7 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
       ? Number(wall.bond_fraction) : 0;
     const staggeredBricks = bond > 0 && numCoursesRounded > 1 ? numCoursesRounded - 1 : 0;
     wallShape.segments.forEach(seg => {
-      const bricksThisCourse = Math.ceil(seg.length / brickPitch);
+      const bricksThisCourse = Math.ceil(outerSegLength(seg) / brickPitch);
       totalBricks += (bricksThisCourse * numCoursesRounded) + staggeredBricks;
     });
   }
@@ -155,8 +167,13 @@ export function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial,
     const intNumCourses = Math.ceil(internalWallHeightInches / intCourseH);
     const intBrickPitch = intUnitL + intMortar;
 
-    const isClosed = wallShape.closed !== false;
-    const lengthReduction = isClosed ? (unitW + intUnitW) : 0;
+    // O-047 -- the internal fill's corner reduction now rides the same
+    // corner count as the outer wall: closed outlines keep the exact
+    // unitW+intUnitW-per-segment reduction they always had; open polylines
+    // deduct at their interior return joints too (segments-1 corners).
+    const intSegCount = wallShape.segments.length;
+    const intCorners = isClosedOutline ? intSegCount : Math.max(0, intSegCount - 1);
+    const lengthReduction = intSegCount ? ((unitW + intUnitW) * intCorners) / intSegCount : 0;
 
     wallShape.segments.forEach(seg => {
       const innerSegLength = Math.max(0, seg.length - lengthReduction);
