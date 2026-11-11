@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
       } catch(error) { archiveContinuation={success:false,status:'archive_continuation_failed',error:String(error?.message || error)}; }
       // Isolate parser loading/failure from the research dispatcher. No LLM call.
       try {
-        const { readAndExtractSourcePdf } = await import('../../shared/jurisdictionSourceTextRuntime.ts');
+        const { readAndExtractSourcePdf } = await import('./jurisdictionSourceTextRuntime.ts');
         textContinuation = await continueSourceTextBacklog({
           entity: base44.asServiceRole.entities.PermittingSourceDocument,
           segmentEntity: base44.asServiceRole.entities.PermittingSourceTextSegment,
