@@ -199,3 +199,21 @@ Both transported EXACT; remote build EXIT=0. Test now 8/10 — the 2
 residuals are frozen cell-text diffs (BOM cells now carry note text).
 Sibling scan for the same undeclared-prop pattern across all foundation
 .jsx components: clean (2 regex false positives verified by hand).
+
+## Estimator-wide undeclared-prop scan
+
+Scanner: `.audit-work/scantest/run.cjs` — matches `function Name({props})`
+signatures, flags prop-shaped identifiers (project/items/calc/inventory/
+walls/poles/totals/delivery/cabinets/options/pricing/history/estimate/
+record/settings/catalog/line/source/data/patch/prev/next/row/item) used
+in the body but bound nowhere in the file (props, const/let/var/function,
+arrow params, destructure members, import specifiers). Sanity-verified
+against a synthetic known-bad file before the sweep.
+
+Result across `src/components/estimator/**` + estimator `src/pages/*`:
+CLEAN. 12 initial candidates all verified false positives by hand
+(useState destructures, `tab.items`/`item.row` member access,
+`const [_,_,catalog]` array destructure, `fields.map(({options})`,
+`.summary-row.machine` CSS classes inside <style> template literals).
+The three real bugs this class produced (WallRow `items`, BOM `project`,
+copy-signature `at`) are fixed and transported.
