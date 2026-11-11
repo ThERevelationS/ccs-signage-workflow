@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(30_000),...init});
 
 /**
  * Real Google Places autocomplete for address inputs.
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
       || Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim();
     if (!apiKey) return Response.json({ error: 'Places API key not configured' }, { status: 503 });
 
-    const resp = await fetch(ENDPOINT, {
+    const resp = await boundedFetch(ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
