@@ -31,7 +31,7 @@ async function kitComponents(kit) {
     .filter((k) => k.id && k.qty > 0);
   const resolved = [];
   for (const item of items.slice(0, 50)) {
-    const row = await staffEntities.Inventory.get(item.id).catch(() => null);
+    const row = await staffEntities.Inventory.get(item.id);
     resolved.push({ ...item, row });
   }
   return resolved;
