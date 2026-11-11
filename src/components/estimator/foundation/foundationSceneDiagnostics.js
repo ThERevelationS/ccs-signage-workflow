@@ -74,6 +74,30 @@ export function foundationSceneDiagnostics(scene) {
   const walls = scene?.walls || [], caps = scene?.wall_caps || [], cabinets = scene?.signage_cabinets || [];
   const landscape = scene?.landscape || null;
 
+  // O-084 (CMP-G07) -- non-vision contradiction surface: a photo's authored
+  // `reported_dims` (the photo's claimed dimensions) vs the scene's authored
+  // dims -- a claimed dim that conflicts with a real dim surfaces as an
+  // advisory (the photo is context-only; the claim is recorded, not trusted).
+  const photos = Array.isArray(scene?.reference_photos) ? scene.reference_photos : [];
+  photos.forEach((p, pi) => {
+    const rd = p?.reported_dims;
+    if (!rd || typeof rd !== "object") return;
+    items.forEach((item, i) => {
+      const claimL = Number(rd.length_inches), claimW = Number(rd.width_inches);
+      const realL = Number(item.length_inches), realW = Number(item.width_inches);
+      if (Number.isFinite(claimL) && Number.isFinite(realL) && Math.abs(claimL - realL) > 6) {
+        push("warning", "photo-contradicts-geometry",
+          `Photo ${pi + 1}'s reported length (${claimL}") contradicts ${itemRowName(item, i)}'s authored length (${realL}") -- review the photo's claim.`,
+          [sceneNodeId.item(layoutItemKey(item, i))]);
+      }
+      if (Number.isFinite(claimW) && Number.isFinite(realW) && Math.abs(claimW - realW) > 6) {
+        push("warning", "photo-contradicts-geometry",
+          `Photo ${pi + 1}'s reported width (${claimW}") contradicts ${itemRowName(item, i)}'s authored width (${realW}") -- review the photo's claim.`,
+          [sceneNodeId.item(layoutItemKey(item, i))]);
+      }
+    });
+  });
+
   // -- item bounds + pairwise clash -------------------------------------
   const rects = items.map((item, i) => ({ item, index: i, rect: itemRect(item, i) }));
   rects.forEach(({ item, index, rect }) => {
