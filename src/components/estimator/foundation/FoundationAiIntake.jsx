@@ -268,12 +268,16 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
       setError(`Proposal schema version ${proposal.schema_version} doesn't match the record's assembly schema ${project.assembly_schema_version} -- re-parse against the current record.`);
       return;
     }
-    // W-017 -- base-revision verification: a proposal drafted against a stale
-    // base (project.updated_date moved) flags a stale-draft warning before the
-    // merge -- the operator confirms the revision-aware apply.
-    if (!force && proposal.base_project_revision != null && project?.updated_date != null
-      && proposal.base_project_revision !== project.updated_date) {
-      setStaleBase(true);
+    // W-017 + O-087 -- base-revision verification: a proposal drafted against
+    // a stale base (project.updated_date moved) flags a stale-draft warning
+    // before the merge. O-087's explicit base-version matching extends the
+    // gate: a proposal carrying NO recorded base revision can't prove it
+    // matches the current design -- it flags the same operator-confirmed path
+    // (labeled "unverifiable"), never a silent pass.
+    if (!force && project?.updated_date != null
+      && (proposal.base_project_revision == null
+        || proposal.base_project_revision !== project.updated_date)) {
+      setStaleBase(proposal.base_project_revision == null ? "unverifiable" : "stale");
       return;
     }
     setStaleBase(false);
@@ -495,10 +499,13 @@ export default function FoundationAiIntake({ project, catalog, onApply, disabled
               Concept draft -- the intake still lacks required fields. Review the flagged fields before applying.
             </div>
           )}
-          {/* W-017 -- stale-base warning + an explicit apply-anyway. */}
+          {/* W-017/O-087 -- stale-base OR unverifiable-base warning + an
+              explicit apply-anyway. */}
           {staleBase && (
             <div className="mt-1 flex items-center gap-2 rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-1 text-[10px] text-amber-800">
-              Draft is stale - the design changed since this proposal. Review the current design, then apply anyway or regenerate.
+              {staleBase === "unverifiable"
+                ? "This proposal records no base revision -- it cannot be verified against the current design. Review, then apply anyway or regenerate."
+                : "Draft is stale - the design changed since this proposal. Review the current design, then apply anyway or regenerate."}
               <button
                 type="button"
                 onClick={() => { setStaleBase(false); apply(true); }}
