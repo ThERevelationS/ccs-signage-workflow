@@ -5,6 +5,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+const boundedFetch=(input:any,init:any={})=>fetch(input,{signal:AbortSignal.timeout(120_000),...init});
 
 Deno.serve(async (req) => {
   try {
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
     // Action: List folders for folder picker
     if (action === 'listFolders') {
       const parentId = body.parentId || 'root';
-      const response = await fetch(
+      const response = await boundedFetch(
         `https://www.googleapis.com/drive/v3/files?q='${parentId}'+in+parents+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id,name)&orderBy=name`,
         {
           headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
         parents: parentId ? [parentId] : undefined
       };
       
-      const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+      const response = await boundedFetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -166,7 +167,7 @@ Deno.serve(async (req) => {
     // Helper to find existing folder by name (only searches app-created files)
     const findExistingFolder = async (folderName) => {
       try {
-        const searchResponse = await fetch(
+        const searchResponse = await boundedFetch(
           `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(folderName)}'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id,name)`,
           {
             headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
       if (folderCache[folderName]) {
         // Verify the cached folder still exists
         try {
-          const verifyResponse = await fetch(
+          const verifyResponse = await boundedFetch(
             `https://www.googleapis.com/drive/v3/files/${folderCache[folderName]}?fields=id,trashed`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
           );
@@ -220,7 +221,7 @@ Deno.serve(async (req) => {
         mimeType: 'application/vnd.google-apps.folder'
       };
       
-      const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+      const response = await boundedFetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -291,7 +292,7 @@ Deno.serve(async (req) => {
         closeDelim;
       
       // If a folder ID is specified but it's not app-created, upload to root instead
-      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      const response = await boundedFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -319,7 +320,7 @@ Deno.serve(async (req) => {
             base64Data +
             closeDelim;
           
-          const retryResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          const retryResponse = await boundedFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
