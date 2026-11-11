@@ -330,6 +330,11 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
                 return cls ? foundationSourceClassLabel(cls) : null;
               } catch { return null; }
             })() : null],
+            // Lane E -- license_class/licensed_source: the source's license
+            // class (a licensed standard vs a shop assumption) + whether the
+            // source is licensed travel to the field; blank = "not recorded".
+            ["License class", db.license_class],
+            ["Licensed source", db.licensed_source === true ? "Yes" : db.licensed_source === false ? "No" : null],
             // O-109 (CMP-I08) -- soil/groundwater/frost/wind assumption fields:
             // authored site assumptions travel to the field; blank = "not
             // recorded" (never an invented geotech number).
