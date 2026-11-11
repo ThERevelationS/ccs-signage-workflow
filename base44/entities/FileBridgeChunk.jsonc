@@ -1,7 +1,7 @@
 {
   "name": "FileBridgeChunk",
   "type": "object",
-  "description": "In-flight chunk reassembly for >48MB deliveries. Rows expire quickly — TTL-swept.",
+  "description": "In-flight chunk reassembly for >48MB deliveries. Rows expire quickly \u2014 TTL-swept.",
   "properties": {
     "schema_version": {
       "type": "number",
@@ -15,6 +15,10 @@
     },
     "file_url": {
       "type": "string"
+    },
+    "data_b64": {
+      "type": "string",
+      "description": "Inline chunk bytes (base64) \u2014 replaces UploadFile blob staging; assembly reads this first, falls back to legacy file_url rows."
     },
     "bytes": {
       "type": "number"
