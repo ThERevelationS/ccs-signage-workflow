@@ -3,7 +3,7 @@
 // returns field/object issues and never touches project state; a valid
 // proposal then applies through `commit`, which carries the schema-valid +
 // undo contract itself.
-import { estimatorModuleKey } from "../estimatorModuleKeys";
+import { estimatorModuleKey } from "../estimatorModuleKeys.js";
 
 const ITEM_TYPES = ["spread_foot", "drilled_pier", "continuous", "pillar"];
 const DIMENSION_KEYS = ["length_inches", "width_inches", "diameter", "depth_inches"];
