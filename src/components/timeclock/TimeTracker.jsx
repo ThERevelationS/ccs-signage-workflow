@@ -301,8 +301,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const accruingPaid = snapshot.accruing_paid === true;
     const accruingElapsed = snapshot.status === "clocked_in";
     return {
-      paid: Number(snapshot.paid_minutes_today || 0) + (accruingPaid ? sinceReceipt : 0),
-      elapsed: Number(snapshot.elapsed_minutes_today || 0) + (accruingElapsed ? sinceReceipt : 0),
+      paid: Number(snapshot.tracker_paid_minutes ?? snapshot.paid_minutes_today ?? 0) + (accruingPaid ? sinceReceipt : 0),
+      elapsed: Number(snapshot.tracker_elapsed_minutes ?? snapshot.elapsed_minutes_today ?? 0) + (accruingElapsed ? sinceReceipt : 0),
       weekly: Number(snapshot.weekly_paid_minutes || 0) + (accruingPaid ? sinceReceipt : 0),
       unpaidNow: Number(snapshot.live_unpaid_minutes || 0) + (accruingElapsed && !accruingPaid ? sinceReceipt : 0),
       frozen: snapshot.status === "clocked_in" && !accruingPaid,
