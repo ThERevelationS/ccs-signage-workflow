@@ -108,11 +108,14 @@ export async function assertSafeExternalUrl(input: unknown) {
 
 export async function safeExternalFetch(input: unknown, init: RequestInit = {}, maxRedirects = 5, allowedUrl?: (url: URL) => boolean) {
   let url = await assertSafeExternalUrl(input);
+  // One 30s bound for the whole redirect chain unless the caller supplied its
+  // own abort signal — an unbounded upstream stall must never hang the request.
+  const signal = init.signal ?? AbortSignal.timeout(30_000);
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     if (allowedUrl && !allowedUrl(new URL(url.href))) {
       throw Object.assign(new Error('External redirect is outside the selected document/source host; review required.'), { status: 400 });
     }
-    const response = await fetch(url, { ...init, redirect: 'manual' });
+    const response = await fetch(url, { ...init, redirect: 'manual', signal });
     // Re-resolve after the connection as defense in depth against DNS answers
     // changing between preflight and fetch. This is not socket pinning, but it
     // prevents a response from being consumed if the hostname has moved into a
