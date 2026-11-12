@@ -14,7 +14,7 @@ import {
   formatCompanyDateTime,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 export default function MissedPunchResolutionDialog({
   open,
@@ -100,13 +100,13 @@ export default function MissedPunchResolutionDialog({
             <Label htmlFor="missed-clock-out-time" className="font-semibold text-slate-900 dark:text-slate-100">
               I forgot to Clock Out ??? when did you actually stop working? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
-            <TimeQuickPick
+            <CcsDateTimeField
               value={claimedClockOut}
-              onChange={(v) => { setClaimedClockOut(v); setLocalError(""); }}
+              onChange={(e) => { setClaimedClockOut(e.target.value); setLocalError(""); }}
               disabled={busy || resolution?.self_service_blocked}
-              clockIn={entry?.clock_in}
-              confirmLabel="Stopping at"
-              inputId="missed-clock-out-time"
+              min={entry?.clock_in ? new Date(entry.clock_in) : undefined}
+              max={new Date()}
+              id="missed-clock-out-time"
             />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               Enter the actual shop/company time in {TIME_CLOCK_COMPANY_TIME_LABEL}. This closes the old shift operationally and creates a manager-review correction for the time you enter.
