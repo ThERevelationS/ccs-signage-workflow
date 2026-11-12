@@ -259,6 +259,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
 - P-12 Scenarios: flush channel, halo, unlit dimensional, mixed sets, fabrication-only, install-only,
   high facade, unknown scale/electrical access, changed counts, reassigned purchase, raceway change,
   custom zero markup, canceled/stale proposal and linked-product ownership.
+  [LANDED: composed-pipeline scenario matrix + verifier 20/20 local+remote - see root ledger `P-12`]
 - P-13 Tests: existing `test-channel-pricing-wire.mjs`; new pure set/proposal/material/quantity fixtures
   and synthetic layout/recovery/Builder tests. Assert visible placement and exact-once cost ownership.
 
