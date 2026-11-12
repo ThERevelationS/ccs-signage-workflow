@@ -23,5 +23,5 @@ Run 2026-11 under estimator scope + P-01 module grant. Surfaces inventoried:
 ## Gaps carried into the P-02+ implementation pass
 
 - **G1 (structural)**: No accepted-design snapshot versioning on `ChannelLetterInstallation` — adopt `calculation_version` + `acceptance` + `pricing_basis_snapshot` when the module takes the foundation-V2 contract.
-- **G2 (low)**: Catalog-tab writes (`ChannelLetterInstallInventory/Equipment/DimensionalLetterMaterial .create/.update`) are direct — no `creation_request_key`/CAS. Catalog-side, lower risk than estimate records; candidate for the idempotency seam in the implementation pass.
-- **G3 (cosmetic)**: `installExport` `parseFloat(v)||0` in export-text formatting — export-only, not money math.
+- **G2 — CLOSED** (2026-11-12): the three catalog-tab create paths now route through `ensureIdempotentEntityCreate` keyed on each entity's natural name field (`item_name`/`equipment_name`/`material_name` — these entities carry no `creation_request_key` field). Identical-payload retries resolve the same row; a same-name create with different data throws instead of silently duplicating. `.audit-work/channel-g2-catalog/verify-g2.mjs` — 8/8 local + remote.
+- **G3 — CLOSED** (landed earlier in the session, confirmed on remote 2026-11-12): `installExport` now emits `—` for held/unavailable values via `fmt`/`fixed` (`Number.isFinite` gated) instead of laundering missing values into `$0.00`; `__held` rows annotate "saved values (not repriced)".
