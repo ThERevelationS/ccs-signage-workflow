@@ -15,7 +15,8 @@ import {
   formatCompanyDateTime,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { WORKDAY_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
+import dayjs from "dayjs";
 
 export default function WorkPauseMenu({
   open,
@@ -148,28 +149,28 @@ export default function WorkPauseMenu({
                     <Label htmlFor="missed-pause-start" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause started ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <TimeQuickPick
+                    <CcsDateTimeField
+                      id="missed-pause-start"
                       value={startedInput}
-                      onChange={(v) => { setStartedInput(v); setLocalError(""); }}
+                      onChange={(e) => { setStartedInput(e.target.value); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      dayOffsets={[0, 1]}
-                      times={WORKDAY_TIMES}
-                      confirmLabel="Paused at"
-                      inputId="missed-pause-start"
+                      max={dayjs().format("YYYY-MM-DD")}
+                      presets={false}
+                      className="mt-1"
                     />
                   </div>
                   <div>
                     <Label htmlFor="missed-pause-end" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause ended ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <TimeQuickPick
+                    <CcsDateTimeField
+                      id="missed-pause-end"
                       value={resumedInput}
-                      onChange={(v) => { setResumedInput(v); setLocalError(""); }}
+                      onChange={(e) => { setResumedInput(e.target.value); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      dayOffsets={[0, 1]}
-                      times={WORKDAY_TIMES}
-                      confirmLabel="Resumed at"
-                      inputId="missed-pause-end"
+                      max={dayjs().format("YYYY-MM-DD")}
+                      presets={false}
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -217,4 +218,3 @@ export default function WorkPauseMenu({
     </Dialog>
   );
 }
-
