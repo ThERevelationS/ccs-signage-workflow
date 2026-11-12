@@ -13,7 +13,7 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -164,8 +164,8 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
             <span>This does not rewrite your time. A manager must review and approve the request before the stored shift changes.</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><Label>Requested Clock In ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockIn} onChange={setClockIn} disabled={busy} times={SHIFT_START_TIMES} inputId="req-clock-in" /></div>
-            <div><Label>Requested Clock Out ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockOut} onChange={setClockOut} disabled={busy} inputId="req-clock-out" /></div>
+            <div><Label>Requested Clock In ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy} id="req-clock-in" /></div>
+            <div><Label>Requested Clock Out ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy} id="req-clock-out" /></div>
           </div>
           <div><Label>Lunch Break (minutes)</Label><Input type="number" min="0" max="240" step="1" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy} /></div>
           <div className={`rounded-lg border p-3 text-sm ${correctionPreview.valid ? "border-blue-200 bg-blue-50 text-blue-900" : "border-red-200 bg-red-50 text-red-800"}`}>
@@ -193,4 +193,3 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
     </Dialog>
   );
 }
-
