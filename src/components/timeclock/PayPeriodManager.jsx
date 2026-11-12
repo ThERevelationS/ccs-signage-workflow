@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -722,8 +722,8 @@ export default function PayPeriodManager({
           <div className="space-y-4">
             <div><Label>Label</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Example: Sept 1???15" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><Label>Start date</Label><TimeQuickPick mode="date" value={startDate} onChange={setStartDate} dayOffsets={[0, 1, 7, 14, 15, 30]} inputId="period-start" /></div>
-              <div><Label>End date</Label><TimeQuickPick mode="date" value={endDate} onChange={setEndDate} dayOffsets={[0, -1, -7, -14, -15, -30]} inputId="period-end" /></div>
+              <div><Label>Start date</Label><CcsDateField value={startDate} onChange={(e) => setStartDate(e.target.value)} id="period-start" /></div>
+              <div><Label>End date</Label><CcsDateField value={endDate} onChange={(e) => setEndDate(e.target.value)} id="period-end" /></div>
             </div>
             <p className="text-xs text-gray-500">No payroll cadence is assumed. Overlapping periods are rejected by the server.</p>
             <div className="flex gap-2 justify-end">
@@ -775,4 +775,3 @@ export default function PayPeriodManager({
     </div>
   );
 }
-
