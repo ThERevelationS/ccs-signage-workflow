@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Clock3, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 import {
   Dialog,
   DialogContent,
@@ -152,9 +152,8 @@ export default function MissedClockInDialog({
                 {dayButton(0, "Today")}
                 {dayButton(1, "Yesterday")}
               </div>
-              <Input
+              <CcsTimeField
                 id="mci-arrival-time"
-                type="time"
                 value={timeText}
                 onChange={(event) => { setTimeText(event.target.value); setLocalError(""); }}
                 disabled={busy}
