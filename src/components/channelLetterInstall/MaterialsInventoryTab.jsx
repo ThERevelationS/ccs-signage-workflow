@@ -36,6 +36,7 @@ export default function MaterialsInventoryTab() {
   const [items, setItems] = useState([]);
   const [savedSnapshots, setSavedSnapshots] = useState({}); // id -> last saved price snapshot
   const [usageCounts, setUsageCounts] = useState({});
+  const [projectsFailed, setProjectsFailed] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,7 +63,7 @@ export default function MaterialsInventoryTab() {
     const [data, user, projects] = await Promise.all([
       loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
       User.me().catch(() => null),
-      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => []),
+      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => { setProjectsFailed(true); return []; }),
     ]);
     setItems(data);
     setCurrentUser(user);
@@ -491,7 +492,7 @@ export default function MaterialsInventoryTab() {
                     defaultExpanded={!!it._new}
                     selected={selectedKeys.has(keyFor(it))}
                     onSelectChange={(on) => toggleSelect(it, on)}
-                    usageCount={it.id ? (usageCounts[it.id] || 0) : 0}
+                    usageCount={projectsFailed ? null : (it.id ? (usageCounts[it.id] || 0) : 0)}
                     readOnly={readOnly}
                     onChange={(patch) => update(idx, patch)}
                     onRemove={() => removeItem(idx)}
