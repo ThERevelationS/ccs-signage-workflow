@@ -13,7 +13,7 @@ import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 export default function LateClockInReviewDialog({
   open,
@@ -80,18 +80,17 @@ export default function LateClockInReviewDialog({
             <Label htmlFor="missed-clock-in-time" className="mt-3 block text-sm text-slate-800 dark:text-slate-100">
               What time did you actually arrive today? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
-            <TimeQuickPick
+            <CcsDateTimeField
               value={claimedClockIn}
-              onChange={(v) => {
-                setClaimedClockIn(v);
+              onChange={(e) => {
+                setClaimedClockIn(e.target.value);
                 setLocalError("");
               }}
               disabled={busy}
-              dayOffsets={[0]}
-              times={SHIFT_START_TIMES}
-              confirmLabel="Arrived at"
-              inputId="missed-clock-in-time"
-            />
+              min={new Date(new Date().setHours(0, 0, 0, 0))}
+              max={new Date()}
+              id="missed-clock-in-time"
+              />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               Enter the actual shop/company arrival time in {TIME_CLOCK_COMPANY_TIME_LABEL}. We will reconstruct the missing start from your answer, mark the shift Needs Review, keep a full audit record,
               and take you directly to the normal Clock Out screen so you can reconcile lunch and job time.
@@ -138,4 +137,3 @@ export default function LateClockInReviewDialog({
     </Dialog>
   );
 }
-
