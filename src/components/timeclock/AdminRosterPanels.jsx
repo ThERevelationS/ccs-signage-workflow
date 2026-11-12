@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -210,13 +210,13 @@ export default function AdminRosterPanels({ sessionToken }) {
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">Start</label>
-                <TimeQuickPick mode="time" value={schedForm.start} onChange={(v) => setSchedForm({ ...schedForm, start: v })}
-                  times={SHIFT_START_TIMES} inputId="sched-start" />
+                <CcsTimeField value={schedForm.start} onChange={(e) => setSchedForm({ ...schedForm, start: e.target.value })}
+                  id="sched-start" />
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">End</label>
-                <TimeQuickPick mode="time" value={schedForm.end} onChange={(v) => setSchedForm({ ...schedForm, end: v })}
-                  inputId="sched-end" />
+                <CcsTimeField value={schedForm.end} onChange={(e) => setSchedForm({ ...schedForm, end: e.target.value })}
+                  id="sched-end" />
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">Days</label>
