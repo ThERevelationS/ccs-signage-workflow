@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -379,21 +379,17 @@ export default function TimeClockReportsDashboard() {
 
           {dateRange === "custom" && (
             <div className="flex items-center gap-2">
-              <TimeQuickPick
-                mode="date"
+              <CcsDateField
                 value={customStartDate}
-                onChange={setCustomStartDate}
-                dayOffsets={[0, 1, 7, 14, 30]}
-                inputId="report-range-from"
-              />
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                id="report-range-from"
+                />
               <span className="text-gray-400">to</span>
-              <TimeQuickPick
-                mode="date"
+              <CcsDateField
                 value={customEndDate}
-                onChange={setCustomEndDate}
-                dayOffsets={[0, -1, 1, 7, 14]}
-                inputId="report-range-to"
-              />
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                id="report-range-to"
+                />
             </div>
           )}
 
