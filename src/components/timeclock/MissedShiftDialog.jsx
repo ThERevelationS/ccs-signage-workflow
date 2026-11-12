@@ -11,7 +11,7 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { WORKDAY_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 // Employee claims a shift that was never punched at all - both ends. The
 // backend writes it as a completed needs_review entry; a manager only has to
@@ -83,11 +83,11 @@ export default function MissedShiftDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Clock In - {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-              <TimeQuickPick value={clockIn} onChange={setClockIn} disabled={busy} times={WORKDAY_TIMES} inputId="missed-shift-in" dayOffsets={[0, 1, 2, 3, 4, 5, 6]} />
+              <CcsDateTimeField value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy} id="missed-shift-in" min={new Date(Date.now() - 7 * 86400000)} max={new Date()} />
             </div>
             <div>
               <Label>Clock Out - {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-              <TimeQuickPick value={clockOut} onChange={setClockOut} disabled={busy} times={WORKDAY_TIMES} inputId="missed-shift-out" dayOffsets={[0, 1, 2, 3, 4, 5, 6]} />
+              <CcsDateTimeField value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy} id="missed-shift-out" min={new Date(Date.now() - 7 * 86400000)} max={new Date()} />
             </div>
           </div>
           <div>
