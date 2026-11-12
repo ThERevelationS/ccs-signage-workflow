@@ -28,7 +28,7 @@ const FACT_MAP = {
 // records an explicit assumption until an operator confirms on site.
 const ASSUMPTION_FACTS = new Set(["wall_material", "poor_electrical", "thick_hollow_walls", "parapet"]);
 
-const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+const num = (v) => (v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 const eq = (a, b) => (typeof a === "number" || typeof b === "number")
   ? num(a) !== null && num(b) !== null && Math.abs(num(a) - num(b)) < 1e-6
   : String(a) === String(b);
