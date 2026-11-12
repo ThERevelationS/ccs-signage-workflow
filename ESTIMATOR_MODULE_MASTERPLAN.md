@@ -255,6 +255,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   explanation of each charge, keyboard editing and recoverable save.
   [LANDED: `channelSetOps.js` bulk-ops model + verifier 19/19 local+remote - see root ledger `P-10`]
 - P-11 Prove complete copy/template/reopen, manual locks, proposal revision/undo and accepted pricing.
+  [LANDED: `channelProposalRevisions.js` lifecycle model + verifier 15/15 local+remote - see root ledger `P-11`]
 - P-12 Scenarios: flush channel, halo, unlit dimensional, mixed sets, fabrication-only, install-only,
   high facade, unknown scale/electrical access, changed counts, reassigned purchase, raceway change,
   custom zero markup, canceled/stale proposal and linked-product ownership.
