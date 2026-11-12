@@ -32,6 +32,7 @@ import PhotoEstimateModal from "@/components/channelLetterInstall/PhotoEstimateM
 import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScopeModal";
 import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntakeDialog";
 import ChannelTakeoffCard from "@/components/channelLetterInstall/ChannelTakeoffCard";
+import { recordFieldOverrides } from "@/components/channelLetterInstall/channelSetSync.js";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
@@ -280,7 +281,9 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
   const updateItem = (idx, updated) => {
     const next = [...project.items];
-    next[idx] = updated;
+    // P-07: hand-edits to sync-managed fields on a linked item become pinned
+    // overrides — the next letters->install re-sync leaves them alone.
+    next[idx] = recordFieldOverrides(project.items[idx], updated);
     setProject(prev => ({ ...prev, items: next }));
   };
 
