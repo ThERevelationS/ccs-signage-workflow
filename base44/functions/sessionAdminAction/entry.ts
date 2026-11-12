@@ -1,7 +1,7 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-export async function handler(request: Request) {
+export default async function handler(request: Request) {
   try {
     const base44 = createClientFromRequest(request);
     const body = await request.json().catch(() => ({}));
