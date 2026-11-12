@@ -28,6 +28,7 @@ export default function EstimatorAuditPanel() {
   const [type, setType] = useState(() => String(prefs?.pageViews?.audit_log || ""));
   const [error, setError] = useState("");
   const [prefApplied, setPrefApplied] = useState(() => Boolean(prefs?.pageViews?.audit_log));
+  const [degraded, setDegraded] = useState([]);
   const touchedRef = useRef(false);
 
   // Server prefs hydrate after mount — apply the saved default view once,
@@ -43,14 +44,20 @@ export default function EstimatorAuditPanel() {
     let live = true;
     const load = async () => {
       setError("");
+      setDegraded([]);
+      const FAILED = Symbol("feed-failed");
+      const feed = (name, promise) => promise.catch(() => FAILED).then((r) => {
+        if (r === FAILED && live) setDegraded((d) => [...d, name]);
+        return r === FAILED ? [] : r;
+      });
       try {
         const [revisions, activities, adminRows] = await Promise.all([
-          type === "activity" || type === "admin" ? Promise.resolve([]) : base44.entities.EstimateRevision.filter({}, "-updated_date", 150).catch(() => []),
-          type === "revision" || type === "admin" ? Promise.resolve([]) : base44.entities.OpportunityActivity.filter({}, "-created_date", 150).catch(() => []),
+          type === "activity" || type === "admin" ? Promise.resolve([]) : feed("Estimate revisions", base44.entities.EstimateRevision.filter({}, "-updated_date", 150)),
+          type === "revision" || type === "admin" ? Promise.resolve([]) : feed("Opportunity activity", base44.entities.OpportunityActivity.filter({}, "-created_date", 150)),
           // AdminAuditLog is not in the base44Client read-proxy set — it must
           // go through staffEntities (staffDataRead ADMIN_READABLE, admin role
           // re-checked server-side; the panel itself mounts only for admins).
-          type === "revision" || type === "activity" ? Promise.resolve([]) : staffEntities.AdminAuditLog.filter({}, "-at", 150).catch(() => []),
+          type === "revision" || type === "activity" ? Promise.resolve([]) : feed("Admin audit log", staffEntities.AdminAuditLog.filter({}, "-at", 150)),
         ]);
         const rev = (Array.isArray(revisions) ? revisions : []).map((r) => ({
           id: `r-${r.id}`, ts: r?.updated_date || r?.created_date || "", kind: "revision",
@@ -117,6 +124,11 @@ export default function EstimatorAuditPanel() {
       )}
 
       {error && <div role="alert" className="mt-2 border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+      {degraded.length > 0 && (
+        <div role="status" className="mt-2 border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">
+          Degraded feed — {degraded.join(", ")} could not be loaded; the timeline below may be incomplete. Refresh to retry.
+        </div>
+      )}
       <div className="mt-2 border border-gray-200 rounded">
         {rows === null ? <ListSkeleton rows={8} /> : rows.length === 0 ? (
           <div className="px-4 py-8 text-center text-[11px] text-gray-400">No audit records yet.</div>
