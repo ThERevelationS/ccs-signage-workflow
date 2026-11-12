@@ -60,7 +60,7 @@ import {
   shiftDurationSummary,
   formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateField, CcsTimeField, CcsDateTimeField } from "@/components/ui/ccs-date-field";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -1302,11 +1302,11 @@ export default function TimeClockAdmin({ view = "entries" }) {
         {dateRange === "custom" ? (
           <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
             <Label className="text-sm text-purple-700 font-medium">From:</Label>
-            <TimeQuickPick mode="date" value={customStartDate} onChange={setCustomStartDate}
-              dayOffsets={[0, 1, 7, 14, 30]} inputId="range-from" />
+            <CcsDateField value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)}
+              id="range-from" />
             <Label className="text-sm text-purple-700 font-medium">To:</Label>
-            <TimeQuickPick mode="date" value={customEndDate} onChange={setCustomEndDate}
-              dayOffsets={[0, -1, 1, 7, 14]} inputId="range-to" />
+            <CcsDateField value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)}
+              id="range-to" />
           </div>
         ) : (
           <div className="flex items-center gap-1">
@@ -1490,7 +1490,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
             <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
             <div className="flex items-center gap-2">
               <Label className="text-xs whitespace-nowrap">Close at</Label>
-              <TimeQuickPick mode="time" value={bulkCloseTime} onChange={setBulkCloseTime} inputId="bulk-close-time" />
+              <CcsTimeField value={bulkCloseTime} onChange={(e) => setBulkCloseTime(e.target.value)} id="bulk-close-time" />
             </div>
             <div>
               <Label className="text-xs">Reason (required)</Label>
@@ -2228,20 +2228,19 @@ export default function TimeClockAdmin({ view = "entries" }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Clock In -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <TimeQuickPick
+                  <CcsDateTimeField
                     value={editingClockInInput}
-                    onChange={(v) => { setEditingClockInInput(v); setTimeEntryError(""); }}
-                    times={SHIFT_START_TIMES}
-                    inputId="admin-edit-clock-in"
-                  />
+                    onChange={(e) => { setEditingClockInInput(e.target.value); setTimeEntryError(""); }}
+                    id="admin-edit-clock-in"
+                    />
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Clock Out -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <TimeQuickPick
+                  <CcsDateTimeField
                     value={editingClockOutInput}
-                    onChange={(v) => { setEditingClockOutInput(v); setTimeEntryError(""); }}
-                    inputId="admin-edit-clock-out"
-                  />
+                    onChange={(e) => { setEditingClockOutInput(e.target.value); setTimeEntryError(""); }}
+                    id="admin-edit-clock-out"
+                    />
                 </div>
               </div>
 
