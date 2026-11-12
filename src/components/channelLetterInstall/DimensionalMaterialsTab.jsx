@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { DimensionalLetterMaterial } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -223,7 +224,9 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
               label: `Dimensional material “${m.material_name || "Item"}”`,
             });
           } else {
-            saved = await DimensionalLetterMaterial.create(data);
+            saved = data.material_name
+              ? await ensureIdempotentEntityCreate({ entity: DimensionalLetterMaterial, keyField: "material_name", key: data.material_name, data, label: `Dimensional material "${data.material_name}"` })
+              : await DimensionalLetterMaterial.create(data);
             if (!saved?.id) throw new Error(`Created material “${m.material_name || "Item"}” could not be verified.`);
           }
           confirmed += 1;
