@@ -7,6 +7,28 @@
 export const CHANNEL_SET_SYNC_VERSION = 1;
 export const ALLOWANCE_KINDS = ["delivery", "design", "permit"];
 
+// Fields the purchase->install sync manages — the shared contract the page's
+// updateItem uses to decide which hand-edits become pinned overrides.
+export const SYNCED_ITEM_FIELDS = new Set([
+  "description", "installation_type", "qty_letters", "letter_size",
+  "letter_height_inches", "installation_height_feet", "raceway_length_feet",
+  "wall_material", "set_id", "set_parent_id",
+  "backer_width_inches", "backer_height_inches", "backer_standoff_qty",
+]);
+
+// Record operator pins: when a hand edit changes a sync-managed field on a
+// linked item, that field joins override_fields so the next re-sync leaves it
+// alone. Returns the updated item with override_fields merged.
+export const recordFieldOverrides = (existing = {}, updated = {}) => {
+  if (!existing.source_letter_purchase_id) return updated;
+  const changed = [];
+  for (const k of SYNCED_ITEM_FIELDS) {
+    if (k in updated && JSON.stringify(updated[k]) !== JSON.stringify(existing[k])) changed.push(k);
+  }
+  if (!changed.length) return updated;
+  return { ...updated, override_fields: [...new Set([...(updated.override_fields || existing.override_fields || []), ...changed])] };
+};
+
 const allowanceKey = (kind, scope) => `allowance:${kind}:${scope}`;
 
 // Operator override: fields listed in item.override_fields are NOT patched by
