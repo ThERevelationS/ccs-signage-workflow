@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
 import { User } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,7 +163,9 @@ export default function MaterialsInventoryTab() {
 
       let saved;
       if (id) saved = await ChannelLetterInstallInventory.update(id, payload);
-      else saved = await ChannelLetterInstallInventory.create(payload);
+      else saved = payload.item_name
+        ? await ensureIdempotentEntityCreate({ entity: ChannelLetterInstallInventory, keyField: "item_name", key: payload.item_name, data: payload, label: `Inventory item "${payload.item_name}"` })
+        : await ChannelLetterInstallInventory.create(payload);
 
       // Update local row with returned id and clear dirty flag
       setItems(prev => {
