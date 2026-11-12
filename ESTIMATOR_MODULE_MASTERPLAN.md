@@ -262,6 +262,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: composed-pipeline scenario matrix + verifier 20/20 local+remote - see root ledger `P-12`]
 - P-13 Tests: existing `test-channel-pricing-wire.mjs`; new pure set/proposal/material/quantity fixtures
   and synthetic layout/recovery/Builder tests. Assert visible placement and exact-once cost ownership.
+  [LANDED: consolidated fixture suite + verifier 12/12 local+remote - see root ledger `P-13`]
 
 ## 7. Sign Maintenance - WS-Q
 
