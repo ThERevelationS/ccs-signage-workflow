@@ -15,6 +15,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
   const [busy, setBusy] = useState(false);
   const { currentUser } = useAuth();
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
+  const [woLinkFailed, setWoLinkFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -29,7 +30,9 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         setWorkOrderId(row?.id && row.deleted !== true ? row.id : "");
       })
       .catch(() => {
-        if (active) setWorkOrderId("");
+        // A failed link check is NOT "unlinked" — keep the authored id and
+        // flag the read failure so the card does not falsely show unlinked.
+        if (active) setWoLinkFailed(true);
       });
     return () => { active = false; };
   }, [estimate.work_order_id]);
@@ -118,6 +121,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
           ? "Creates a Work Order in the sales pipeline linked to this approved estimate and customer."
           : "Approve the estimate first. Customer acceptance can approve it automatically, or the shop can use the existing manual approval workflow."}
       </p>
+      {woLinkFailed && (
+        <div role="alert" className="mb-2 rounded border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
+          The linked job record could not be verified — the link may exist even though it is not shown. Reload before converting to avoid a duplicate.
+        </div>
+      )}
       <Button
         onClick={handleConvert}
         disabled={disabled || busy || !approved || !(estimate.line_items || []).length}
