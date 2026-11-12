@@ -65,6 +65,7 @@ export default function Step1EstimateDetails({
   const [entityLocations, setEntityLocations] = useState([]);
   const [entityContacts, setEntityContacts] = useState([]);
   const [entityFlags, setEntityFlags] = useState([]);
+  const [relatedFailed, setRelatedFailed] = useState(false);
 
   const linkedCustomer = customers.find((c) => c.id === form.customer_id) || null;
 
@@ -77,8 +78,9 @@ export default function Step1EstimateDetails({
     let active = true;
     const load = (entity) =>
       entity && typeof entity.filter === "function"
-        ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
+        ? entity.filter({ customer_id: form.customer_id }).catch(() => { if (active) setRelatedFailed(true); return []; })
         : Promise.resolve([]);
+    setRelatedFailed(false);
     Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact), load(staffEntities?.CustomerNote)]).then(
       ([locations, contacts, notes]) => {
         if (!active) return;
@@ -278,6 +280,11 @@ export default function Step1EstimateDetails({
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
           </button>
+          {relatedFailed && (
+            <span role="status" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+              Some customer records could not be loaded — locations/contacts/flags may be incomplete. Re-pick the customer to retry.
+            </span>
+          )}
           {linkedCustomer?.credit_hold === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
               CREDIT HOLD — new work needs a deposit or manager override
