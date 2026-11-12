@@ -238,6 +238,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: `channelLayoutModel.js` render contract + verifier 16/16 local+remote - see root ledger `P-04`]
 - P-05 Deterministic purchased/fabricated set takeoff for face/return/back, LEDs/power supply from
   product data, trim/raceway/backer/hardware, finish, assembly and installation labor.
+  [LANDED: `channelSetTakeoff.js` BOM model + verifier 23/23 local+remote - see root ledger `P-05`]
 - P-06 Validate material/mount/illumination compatibility, available size/stock, access/crew/equipment,
   electrical/load assumptions and missing prices. No certification claims.
 - P-07 Reconcile letters-to-install synchronization, edits/deletion/duplication, overrides, delivery,
