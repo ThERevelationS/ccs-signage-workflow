@@ -74,8 +74,17 @@ export const FOUNDATION_SOURCE_TOPIC_INDEX = Object.freeze({
   "support.placement.spacing": "spacing/count ceilings per bearing mode",
   "support.density": "density/count caps (never a universal entitlement)",
   "support.compatibility": "member-type vs support-kind compatibility (pillar/base-plate/drilled-shaft)",
-  "support.catalog": "per-SKU catalog-row modeling rules",
+  "support.catalog": "per-SKU catalog-row modeling rules + held capacity seed",
   "support.placement": "placement rules (bracing, plates, coatings)",
+  "support.geometry": "support height/geometry rules + held height seed",
+  "method.sign_wind": "held sign-wind method seed — no encoded formula; design_basis.sign_wind carries the operator basis",
+  "method.footing": "held footing-bearing method seed (bearing/overturn/sliding/uplift) — design_basis.bearing carries the basis",
+  "method.shaft": "held drilled-shaft/embedment method seed — design_basis.shaft carries the basis",
+  "method.pillar_bar": "held pillar-bar method seed — design_basis.pillar_bar carries the basis",
+  "method.base_plate": "held base-plate method seed — design_basis.base_plate carries the basis",
+  "method.lateral": "held lateral-load method seed — design_basis.lateral carries the basis",
+  "method.frost_depth": "held frost-depth method seed + source index — design_basis.frost_depth carries the basis",
+  "masonry.cap_detail": "held masonry cap-detail seeds (coping/drip/mortar) — design_basis.cap_detail carries the basis",
   "authority": "citation/authority markers (paid standards, licensed-only)",
 });
 
@@ -910,14 +919,18 @@ export const FOUNDATION_RULE_SEEDS = deepFreeze([
   },
   {
     rule_id: "SUP-COMPAT-BASE-PLATE-ON-SHAFT",
-    member_types: ["base_plate"],
-    usages: ["sign_pole", "shaft_mount"],
+    domain: "support.compatibility",
     statement: "A base plate mounts the sign pole on the drilled shaft's top — the plate's support kind is the shaft-mount class, not a flat-slab chair. The base plate's support is the shaft's top bearing, never a mat support.",
-    usage_note: "base_plate member_types + sign_pole/shaft_mount usages record the support-kind distinction",
+    params: {},
+    units: null,
+    logic: null,
     source_ref: src("CMP-SUP-024", "base-plate mounting via manufacturer catalog", "candidate"),
+    corroborating_register_ids: [],
+    applicability: { member_types: ["base_plate"], usages: ["sign_pole", "shaft_mount"] },
+    limits: ["base_plate member_types + sign_pole/shaft_mount usages record the support-kind distinction"],
+    unsupported: ["base-plate anchor bolt sizing is a structural design input, not a register constant — the entry records the support kind only"],
     rule_version: "1.0.0",
     status: "active",
-    unsupported: ["base-plate anchor bolt sizing is a structural design input, not a register constant — the entry records the support kind only"],
   },
   {
     rule_id: "SUP-PLACE-PILLAR-CAGE-STAND",
@@ -1624,6 +1637,65 @@ export const FOUNDATION_RULE_SEEDS = deepFreeze([
     unsupported: ["frost-depth sizing; footing embedment"],
     rule_version: "0.0.0", status: "held",
   },
+
+  // ===== support/masonry held encodings — O-111 support-basis + O-112
+  // masonry-caps bounded subunits. Same held-seed contract: the named gap is
+  // registered so consumers can cite it; nothing is encoded to gate on. =====
+  {
+    rule_id: "SUP-HEIGHT-HELD",
+    domain: "support.geometry",
+    statement: "Support height/stand-height basis beyond the cited geometry rows is held pending a real cited height method; no invented chair/bolster height ceiling is encoded.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no support-height method is encoded beyond the cited SUP-GEOMETRY rows; the operator's authored basis carries the entry"],
+    unsupported: ["support height ceilings; stand-height sizing; tall-chair thresholds not already cited"],
+    rule_version: "0.0.0", status: "held",
+  },
+  {
+    rule_id: "SUP-CAPACITY-HELD",
+    domain: "support.catalog",
+    statement: "Support load/capacity basis is held pending a real cited capacity method; no invented per-SKU load rating or universal capacity is encoded.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no support-capacity method is encoded; per-SKU load data must come from a cited catalog row or the operator's authored basis"],
+    unsupported: ["per-SKU load ratings; universal capacity tables; chair/bolster strength limits"],
+    rule_version: "0.0.0", status: "held",
+  },
+  {
+    rule_id: "CAP-COPING-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap coping profile/material basis is held pending a real cited coping method; the design-basis cap_detail field carries the operator's entry.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no coping profile/material method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["coping profile selection; coping material spec; overhang/drip geometry"],
+    rule_version: "0.0.0", status: "held",
+  },
+  {
+    rule_id: "CAP-DRIP-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap drip-edge/wash basis is held pending a real cited drip-detail method; the design-basis cap_detail field carries the operator's entry.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no drip-edge/wash method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["drip-edge geometry; cap wash/slope; weep placement"],
+    rule_version: "0.0.0", status: "held",
+  },
+  {
+    rule_id: "CAP-MORTAR-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap mortar-joint/attachment basis is held pending a real cited mortar-detail method; the design-basis cap_detail field carries the operator's entry.",
+    params: null, units: null, logic: null,
+    source_ref: null, corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no mortar-joint/attachment method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["mortar joint profile; cap attachment method; sealant spec"],
+    rule_version: "0.0.0", status: "held",
+  },
 ]);
 
 // ---------------------------------------------------------------------------
@@ -1659,9 +1731,19 @@ function normalizeRule(rule) {
   const statement = text(rule.statement);
   if (!statement || statement.length > 4000) errors.push("statement must be 1-4000 characters");
 
+  let status = text(rule.status) || "active";
+  if (!STATUSES.has(status)) {
+    errors.push("status must be 'active' or 'held'");
+    status = "held";
+  }
+  const isHeld = status === "held";
+
   const params = rule.params === undefined ? {} : rule.params;
-  if (!isRecord(params)) errors.push("params must be a plain record when present");
-  else {
+  if (params === null && isHeld) {
+    // Held seeds encode nothing — params is legitimately absent.
+  } else if (!isRecord(params)) {
+    errors.push("params must be a plain record when present");
+  } else {
     for (const [key, value] of Object.entries(params)) {
       if (!text(key)) errors.push("params keys must be nonempty strings");
       if (typeof value === "number" && !Number.isFinite(value)) errors.push(`params.${key} must be finite`);
@@ -1672,10 +1754,15 @@ function normalizeRule(rule) {
   }
 
   // Fail closed: a limit-bearing rule (any params) without a complete,
-  // cited source_ref cannot register — and no registry rule may be uncited.
+  // cited source_ref cannot register — and no ACTIVE rule may be uncited.
+  // Held seeds are the citation gap marker itself: source_ref may be null
+  // (nothing is encoded, so there is nothing to cite); a present source_ref
+  // still gets the full gate.
   const sref = rule.source_ref;
   if (!isRecord(sref)) {
-    errors.push("source_ref is required for every registry rule");
+    if (!(isHeld && (sref === null || sref === undefined))) {
+      errors.push("source_ref is required for every registry rule");
+    }
   } else {
     if (!text(sref.register_id) || !REGISTER_ID.test(sref.register_id)) {
       errors.push("source_ref.register_id must match the CMP-SUP-### register-id shape");
@@ -1696,11 +1783,6 @@ function normalizeRule(rule) {
     }
   }
 
-  let status = text(rule.status) || "active";
-  if (!STATUSES.has(status)) {
-    errors.push("status must be 'active' or 'held'");
-    status = "held";
-  }
   // Honesty gate: no rule may be active while its source is unverified,
   // candidate or refuted. Coerced rather than rejected so the gap stays
   // documented inside the registry instead of vanishing.
@@ -1752,18 +1834,20 @@ function normalizeRule(rule) {
   if (errors.length) return { ok: false, errors, warnings };
   const normalized = deepFreeze({
     rule_id, domain, statement,
-    params: { ...params },
+    params: isRecord(params) ? { ...params } : {},
     units: rule.units ?? null,
     logic: rule.logic ?? null,
-    source_ref: {
-      register_id: sref.register_id.trim(),
-      authority: sref.authority.trim(),
-      title: sref.title.trim(),
-      edition: sref.edition ?? null,
-      section: sref.section ?? null,
-      url: sref.url ?? null,
-      verified: sref.verified,
-    },
+    source_ref: isRecord(sref)
+      ? {
+        register_id: sref.register_id.trim(),
+        authority: sref.authority.trim(),
+        title: sref.title.trim(),
+        edition: sref.edition ?? null,
+        section: sref.section ?? null,
+        url: sref.url ?? null,
+        verified: sref.verified,
+      }
+      : null,
     corroborating_register_ids: Array.isArray(rule.corroborating_register_ids)
       ? [...rule.corroborating_register_ids] : [],
     applicability: { ...applicability },
