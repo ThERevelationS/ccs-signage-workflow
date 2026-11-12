@@ -367,8 +367,6 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
                     className="h-6 w-20 rounded-sm border border-gray-300 px-0.5 text-[10px]"
                     title="Bed region cells (x,y;x,y — a bed polygon's coverage vs cell paint)"
                   />
-                  className="h-5 w-10 rounded-sm border border-gray-300 px-0.5 text-[9px]"
-                />
                 <button
                   type="button"
                   aria-label={`Remove bed ${bi + 1}`}
