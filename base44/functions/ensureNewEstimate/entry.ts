@@ -113,21 +113,20 @@ const COPY_PROJECT_STRIP = new Set([
   'estimate_number', 'work_order_id',
 ]);
 
-// Production/lifecycle fields reset on a cloned BuilderProduct — the copy is
-// a draft estimate's product, not a live job. Design/pricing fields
-// (builder_snapshot*, frozen_cost, price_state, part counts) carry verbatim.
-const COPY_PRODUCT_RESET: Record<string, unknown> = {
-  fulfillment_state: '', operational_status: '', operational_substatus: '',
-  operational_status_changed_at: '', queue_priority: null,
-  proof_status: '', proof_version: 0, proof_file_url: '', proof_file_name: '',
-  proof_approved_version: 0, design_due_date: '', product_due_date: '',
-  hard_due_date: '', assigned_to: '', designer: '', responsibility: '',
-  customer_facing_status: '',
-};
-
-const COPY_PRODUCT_STRIP = new Set([
+// Production/lifecycle fields dropped from a cloned BuilderProduct — the copy
+// is a draft estimate's product, not a live job, and dropped keys take the
+// entity's own defaults (type-safe: no guessed empty values). Design/pricing
+// fields (builder_snapshot*, frozen_cost, price_state, part counts) carry
+// verbatim.
+const COPY_PRODUCT_DROP = new Set([
   'id', 'created_date', 'updated_date', 'created_by', 'created_by_id',
   'creation_request_key', 'estimate_id', 'estimate_line_id', 'source_project_id',
+  'fulfillment_state', 'operational_status', 'operational_substatus',
+  'operational_status_changed_at', 'queue_priority',
+  'proof_status', 'proof_version', 'proof_file_url', 'proof_file_name',
+  'proof_approved_version', 'design_due_date', 'product_due_date',
+  'hard_due_date', 'assigned_to', 'designer', 'responsibility',
+  'customer_facing_status',
 ]);
 
 // Mirrors estimateLineSelectionKey in estimateCreationService.js — the key a
@@ -200,9 +199,8 @@ async function completeEstimateCopy(base44: any, { record, sourceId, isSplit, in
     if (!productId) {
       const data: any = {};
       for (const [k, v] of Object.entries(src)) {
-        if (!COPY_PRODUCT_STRIP.has(k) && !k.startsWith('_')) data[k] = v;
+        if (!COPY_PRODUCT_DROP.has(k) && !k.startsWith('_')) data[k] = v;
       }
-      Object.assign(data, COPY_PRODUCT_RESET);
       data.estimate_id = newEstId;
       data.estimate_line_id = clean(line?.line_id);
       const mappedProject = projectMap.get(clean(src?.source_project_id));
