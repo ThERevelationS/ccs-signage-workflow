@@ -289,6 +289,60 @@
     "poor_electrical_access": {
       "type": "boolean",
       "description": "Legacy"
+    },
+    "interview_draft": {
+      "type": "object",
+      "description": "P-02: structured-intake answers {version, answers{}} as last applied \u2014 preserved verbatim for reopen/edit."
+    },
+    "unverified_assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "P-02/P-03: field names whose values are unverified on-site assumptions \u2014 review before acceptance."
+    },
+    "proposal_accepted": {
+      "type": "boolean",
+      "description": "P-11/G1: proposal currently accepted \u2014 edits frozen until explicit reopen."
+    },
+    "proposal_accepted_by": {
+      "type": "string",
+      "description": "P-11/G1: actor who accepted the proposal."
+    },
+    "proposal_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "P-11/G1: acceptance timestamp."
+    },
+    "pricing_basis_snapshot": {
+      "type": "object",
+      "description": "P-11/G1: frozen pricing basis at acceptance \u2014 {captured_at, mode, spec, optional_scopes, prices, totals, revision_n}."
+    },
+    "prior_acceptance": {
+      "type": "object",
+      "description": "P-11: previous acceptance preserved as history after a reasoned reopen."
+    },
+    "proposal_reopened_reason": {
+      "type": "string",
+      "description": "P-11: operator-supplied reason for reopening an accepted proposal."
+    },
+    "proposal_revision_n": {
+      "type": "integer",
+      "description": "P-11: current revision number of the proposal (0 = first draft)."
+    },
+    "proposal_revisions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "P-11: revision snapshots [{revision_n, revised_at, edits_applied, snapshot}] \u2014 undo restores the last."
+    },
+    "proposal_locked_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "P-11: field names manually locked against proposal revisions."
     }
   },
   "required": [
