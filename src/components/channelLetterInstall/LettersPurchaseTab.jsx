@@ -41,6 +41,12 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
   // Hide the fee + rollup row when every letter product on the project is dimensional.
   const onlyDimensional = purchases.length > 0 && purchases.every(p => p.letter_type === "dimensional_letters");
 
+  // P-08: channel/capsule rows must declare purchased-vs-fabricated explicitly —
+  // unset stays visibly flagged rather than defaulting silently. (Raceway is
+  // hardware and dimensional is inherently fabricated — neither counts.)
+  const MODE_ELIGIBLE = new Set(["channel_raceway_mounted", "channel_flush_mounted", "channel_halo_lit", "capsule_logo_pillbox"]);
+  const unsetModeCount = purchases.filter(p => MODE_ELIGIBLE.has(p.letter_type) && !p.fabrication).length;
+
   // Enable a backer on the first dimensional row that doesn't already have one
   const addBackerToFirstDimensional = () => {
     const idx = purchases.findIndex(p => p.letter_type === "dimensional_letters" && !p.backer_enabled);
@@ -248,6 +254,14 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
           </div>
         </CardContent>
       </Card>
+
+      {unsetModeCount > 0 && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-amber-800 text-xs">
+          {unsetModeCount} letter row{unsetModeCount === 1 ? "" : "s"} ha{unsetModeCount === 1 ? "s" : "ve"} no
+          source mode — set <span className="font-medium">Source</span> to Purchased or Fabricated on each row so
+          the takeoff/export doesn't guess.
+        </div>
+      )}
 
       {/* Purchase rows */}
       {purchases.length === 0 ? (
