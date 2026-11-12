@@ -1763,6 +1763,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 />
                 <LandscapeDesigner
                   landscape={project.landscape}
+                  items={project.items}
                   onChange={(landscape) => patch({ landscape })}
                 />
               </TabsContent>
