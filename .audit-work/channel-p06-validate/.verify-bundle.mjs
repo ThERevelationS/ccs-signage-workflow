@@ -1,6 +1,6 @@
 // src/components/channelLetterInstall/channelValidationModel.js
 var CHANNEL_VALIDATION_VERSION = 1;
-var num = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
+var num = (v) => v === null || v === void 0 || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null;
 var LIT = /* @__PURE__ */ new Set(["front_lit", "halo_lit", "front_and_halo"]);
 var liftReaches = (e, heightFt) => (parseFloat(e.max_height_feet) || 0) >= heightFt + (Number.isFinite(parseFloat(e.vertical_reach_safety_margin_feet)) ? parseFloat(e.vertical_reach_safety_margin_feet) : 2);
 var materialAppliesTo = (m, installType) => {
