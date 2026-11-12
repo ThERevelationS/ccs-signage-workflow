@@ -171,15 +171,30 @@ async function completeEstimateCopy(base44: any, { record, sourceId, isSplit, in
     if (!service) return { id: '', missing: `module entity ${entityName}` };
     const key = `copy-proj:${newEstId}:${srcId}`;
     const found = await service.filter({ creation_request_key: key }).catch(() => []);
-    if (found?.[0]?.id) return { id: clean(found[0].id) };
+    if (found?.[0]?.id) {
+      // Self-heal: a clone from a failed/older attempt that never got ownership
+      // must be claimed before the copy can rely on it.
+      const prior = found[0];
+      if (clean(prior.estimate_id) !== newEstId && service.updateMany) {
+        await service.updateMany(
+          { id: clean(prior.id), updated_date: clean(prior.updated_date) },
+          { $set: { estimate_id: newEstId } },
+        ).catch(() => null);
+      }
+      return { id: clean(prior.id) };
+    }
     const src = await service.get(srcId).catch(() => null);
     if (!src?.id) return { id: '', missing: `source project ${srcId}` };
     const data: any = {};
     for (const [k, v] of Object.entries(src)) {
       if (!COPY_PROJECT_STRIP.has(k) && !k.startsWith('_')) data[k] = v;
     }
-    if (newNumber) data.estimate_number = newNumber;
-    if ('estimate_id' in src) data.estimate_id = newEstId;
+    // Ownership re-anchors unconditionally — a module entity lacking these
+    // fields drops them harmlessly; the source may itself carry an unset or
+    // sanitized estimate_id (staffEntityWrite strips identity fields), so the
+    // presence check cannot decide whether the clone needs ownership.
+    data.estimate_id = newEstId;
+    if ('estimate_number' in src || newNumber) data.estimate_number = newNumber;
     data.creation_request_key = key;
     const created = await service.create(data);
     return { id: clean(created?.id) };
