@@ -11,6 +11,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
   const [productGroup, setProductGroup] = useState("my");
   const [categories, setCategories] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
+  const [catsFailed, setCatsFailed] = useState(false);
   const [extraCategories, setExtraCategories] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -25,7 +26,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setSaving(false);
     setError("");
     Promise.all([
-      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => []),
+      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
       base44.auth.me().catch(() => null),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
       .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
@@ -124,6 +125,11 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
                       </button>
                     );
                   })}
+                </div>
+              )}
+              {catsFailed && (
+                <div role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] text-amber-800">
+                  Saved categories could not be loaded — the picker may be incomplete, not necessarily empty. Reopen to retry.
                 </div>
               )}
               <input value={extraCategories} onChange={(event) => setExtraCategories(event.target.value)} aria-label="Add extra categories" placeholder="Add categories, comma separated..." className="w-full h-[34px] px-3 border border-gray-300 rounded text-[11px]" />
