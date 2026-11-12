@@ -54,5 +54,25 @@ ok(elig && elig[1].includes("channel_flush_mounted") && !elig[1].includes("dimen
 const tab = readFileSync(join(SRC, "LettersPurchaseTab.jsx"), "utf8");
 ok(tab.includes("unsetModeCount") && tab.includes("no"), "tab flags unset source modes");
 
+// --- copy seams strip lifecycle state (P-11: a copy is a NEW draft) -------
+const LIFECYCLE_FIELDS = ["proposal_accepted", "proposal_accepted_by", "proposal_accepted_at",
+  "pricing_basis_snapshot", "prior_acceptance", "proposal_reopened_reason",
+  "proposal_revision_n", "proposal_revisions", "proposal_locked_fields"];
+const extractSet = (file, name) => {
+  const m = readFileSync(file, "utf8").match(new RegExp(name + "\\s*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\)"));
+  // strip // comments before extracting quoted entries — apostrophes inside
+  // comments would pair with the field quotes and offset the capture.
+  const body = (m?.[1] || "").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+  return [...body.matchAll(/["']([^"']+)["']/g)].map((x) => x[1]);
+};
+const clientStrip = extractSet(join(HERE, "../../src/components/estimator/moduleShared/moduleProjectActions.js"), "STRIP_ON_COPY");
+const serverStrip = extractSet(join(HERE, "../../base44/functions/ensureNewEstimate/entry.ts"), "COPY_PROJECT_STRIP");
+ok(LIFECYCLE_FIELDS.every((f) => clientStrip.includes(f)), "client copy strips lifecycle fields");
+ok(LIFECYCLE_FIELDS.every((f) => serverStrip.includes(f)), "server clone strips lifecycle fields");
+// behavioral: applying the client strip to a payload with acceptance drops it.
+const copied = { ...acceptedProject, project_name: "X (Copy)" };
+for (const f of new Set(clientStrip)) delete copied[f];
+ok(copied.proposal_accepted === undefined && copied.pricing_basis_snapshot === undefined, "copy produces a draft, not a second acceptance");
+
 console.log(`\n${fail === 0 ? "PASS" : "FAIL"} verify-lifecycle-wire: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
