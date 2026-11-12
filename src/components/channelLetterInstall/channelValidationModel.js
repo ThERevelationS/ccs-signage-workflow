@@ -6,7 +6,7 @@
 // named issue, never a pass.
 export const CHANNEL_VALIDATION_VERSION = 1;
 
-const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+const num = (v) => (v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 const LIT = new Set(["front_lit", "halo_lit", "front_and_halo"]);
 
 // Reach rule mirrors equipmentSuggester: max_height_feet >= height + margin (default 2ft).
