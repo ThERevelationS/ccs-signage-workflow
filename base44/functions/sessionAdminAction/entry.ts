@@ -1,7 +1,7 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-async function handler(request: Request) {
+Deno.serve(async (request: Request) => {
   try {
     const base44 = createClientFromRequest(request);
     const body = await request.json().catch(() => ({}));
@@ -38,6 +38,4 @@ async function handler(request: Request) {
   } catch (e: any) {
     return Response.json({ success: false, error: e?.message || 'Session admin failed' }, { status: e?.status || 500 });
   }
-}
-
-export default handler;
+});
