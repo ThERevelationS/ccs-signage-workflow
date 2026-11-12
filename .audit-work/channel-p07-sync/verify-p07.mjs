@@ -9,6 +9,13 @@ await esbuild.build({ entryPoints: [join(HERE, "../../src/components/channelLett
 const M = await import(pathToFileURL(OUT).href + `?t=${Date.now()}`);
 const { syncChannelSet, applySyncOverrides, ensureAllowanceLines, ensurePersonnelTravelLines } = M;
 
+// Live sync honors operator pins — bundle lettersCalculator (imports the
+// shared applySyncOverrides) and drive a linked-item re-sync.
+const OUT2 = join(HERE, ".verify-calc.mjs");
+await esbuild.build({ entryPoints: [join(HERE, "../../src/components/channelLetterInstall/lettersCalculator.jsx")], bundle: true, format: "esm", platform: "node", outfile: OUT2, logLevel: "silent" });
+const { syncInstallItemsFromPurchases } = await import(pathToFileURL(OUT2).href + `?t=${Date.now()}`);
+const { recordFieldOverrides } = await import(pathToFileURL(OUT).href + `?t=${Date.now()}`);
+
 let pass = 0, fail = 0;
 const ok = (c, n, x = "") => { if (c) { pass++; console.log("ok  ", n); } else { fail++; console.log("FAIL", n, x); } };
 const map = (p) => ({ description: p.description, qty_letters: p.qty, installation_height_feet: p.height });
@@ -55,6 +62,22 @@ const args = { items: [], purchases: two, mapPurchase: map, allowances: [{ kind:
 const full = syncChannelSet(args);
 const full2 = syncChannelSet({ ...args, items: full.items });
 ok(full.items.length === 5 && full2.items.length === 5 && JSON.stringify(full.items) === JSON.stringify(full2.items), "2 sets + delivery + personnel + travel = 5 lines, second sync identical");
+
+// live re-sync: pinned install_height survives, unpinned fields propagate.
+const liveItems = [{ source_letter_purchase_id: "p1", installation_height_feet: 20, qty_letters: 5, override_fields: ["installation_height_feet"], materials: [] }];
+const livePurchases = [{ id: "p1", create_install_item: true, letter_type: "channel_flush_mounted", qty: 8, install_height_feet: 12, description: "Set" }];
+const liveOut = syncInstallItemsFromPurchases(liveItems, livePurchases, () => ({ materials: [] }), []);
+ok(liveOut[0].installation_height_feet === 20 && liveOut[0].qty_letters === 8, "live sync: pinned field survives, unpinned propagates", JSON.stringify(liveOut[0]));
+
+// recordFieldOverrides: linked item + synced-field change -> pin recorded.
+const pin = recordFieldOverrides({ source_letter_purchase_id: "p1", wall_material: "eifs", qty_letters: 5 }, { source_letter_purchase_id: "p1", wall_material: "brick", qty_letters: 5, note: "x" });
+ok((pin.override_fields || []).includes("wall_material"), "hand-edit on synced field pins it");
+// unlinked item -> no pinning.
+const nopin = recordFieldOverrides({ wall_material: "eifs" }, { wall_material: "brick" });
+ok(!nopin.override_fields, "unlinked item never pinned");
+// unchanged synced field -> no pin.
+const same = recordFieldOverrides({ source_letter_purchase_id: "p1", qty_letters: 5 }, { source_letter_purchase_id: "p1", qty_letters: 5 });
+ok(!same.override_fields, "unchanged synced field -> no pin");
 
 console.log(`\n${fail === 0 ? "PASS" : "FAIL"} verify-p07: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
