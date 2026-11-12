@@ -382,9 +382,15 @@ export async function importPartsLibraryRows({
     try {
       // Pre-check so the summary honestly separates "created" from "already
       // imported" — the idempotent create alone can't distinguish the two.
+      // A failed existence check is NOT "row absent": fail closed (record an
+      // error, skip the row) rather than miscount a recovered row as created.
       const prior = typeof entity?.filter === "function"
-        ? await entity.filter({ idempotency_key: t.idempotencyKey }).catch(() => [])
+        ? await entity.filter({ idempotency_key: t.idempotencyKey }).catch((e) => {
+          result.errors.push({ row: t.row, name: t.data.template_name, message: `Existence check failed — row not imported: ${e?.message || "read error"}` });
+          return null;
+        })
         : [];
+      if (prior === null) { if (delayMs > 0) await sleep(delayMs); continue; }
       if ((prior || []).some((row) => String(row?.idempotency_key || "") === t.idempotencyKey)) {
         result.existing += 1;
         continue;
