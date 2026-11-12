@@ -269,6 +269,7 @@ export default function EstimatorCustomers() {
   const presetFilter = searchParams.get("filter") || "";
   const [customers, setCustomers] = useState([]);
   const [tiers, setTiers] = useState([]);
+  const [tiersFailed, setTiersFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState(() => {
@@ -279,6 +280,7 @@ export default function EstimatorCustomers() {
   const [savingTierId, setSavingTierId] = useState(null);
   const [detailId, setDetailId] = useState("");
   const [portalInbox, setPortalInbox] = useState([]);
+  const [portalInboxFailed, setPortalInboxFailed] = useState(false);
   const [me, setMe] = useState(null);
   const [syncingWorkflowCustomers, setSyncingWorkflowCustomers] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
@@ -312,7 +314,7 @@ export default function EstimatorCustomers() {
       try {
         const [res, tierRows, user] = await Promise.all([
           loadAllCustomers().catch((e) => { setLoadError(e?.message || "Customer list could not be loaded. Try again."); return []; }),
-          loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
+          loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => { setTiersFailed(true); return []; }),
           base44.auth.me().catch(() => null),
         ]);
         setCustomers(res || []);
@@ -328,8 +330,8 @@ export default function EstimatorCustomers() {
   useEffect(() => {
     if (!sessionToken) return;
     const reloadInbox = () => invokePortal(sessionToken, { action: "portal_inbox" })
-      .then((d) => setPortalInbox(d.customers || []))
-      .catch(() => setPortalInbox([]));
+      .then((d) => { setPortalInbox(d.customers || []); setPortalInboxFailed(false); })
+      .catch(() => setPortalInboxFailed(true));
     reloadInbox();
     inboxReloadRef.current = reloadInbox;
   }, [sessionToken]);
@@ -579,6 +581,11 @@ export default function EstimatorCustomers() {
         {loadError && (
           <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{loadError}</div>
         )}
+        {tiersFailed && (
+          <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Customer markup tiers could not be loaded — pricing tiers are unavailable until the list reloads. Refresh to retry.
+          </div>
+        )}
 
         {linkedCustomerId && (
           <div className="flex flex-col gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -592,10 +599,16 @@ export default function EstimatorCustomers() {
           </div>
         )}
 
+        {portalInboxFailed && portalInbox.length === 0 && (
+          <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Portal inbox could not be loaded — customer waiting list is unavailable, not necessarily empty.
+          </div>
+        )}
+
         {portalInbox.length > 0 && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-              <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />Portal inbox — {portalInbox.length} customer{portalInbox.length === 1 ? "" : "s"} waiting
+              <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />Portal inbox — {portalInbox.length} customer{portalInbox.length === 1 ? "" : "s"} waiting{portalInboxFailed ? " · stale (reload failed)" : ""}
             </div>
             <div className="mt-1.5 space-y-1">
               {portalInbox.slice(0, 4).map((row) => (
