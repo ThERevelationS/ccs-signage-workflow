@@ -232,6 +232,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: `channelInterviewModel.js` contract + verifier 26/26 local+remote — see root ledger `P-02`]
 - P-03 Improve existing photo/scope tools into one brief/proposal workflow with known-scale calibration,
   conflict resolution and explicit unverified wall/electrical/structural assumptions.
+  [LANDED: `channelScopeBrief.js` merge/calibration/proposal model + verifier 17/17 local+remote — see root ledger `P-03`]
 - P-04 Editable letter-set/layout/elevation preview: overall envelope, spacing, alignment, mounting,
   raceway/backer, front/halo illumination concept, front/back artwork and material/finish selections.
 - P-05 Deterministic purchased/fabricated set takeoff for face/return/back, LEDs/power supply from
