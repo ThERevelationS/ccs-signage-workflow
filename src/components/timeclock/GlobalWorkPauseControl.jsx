@@ -288,7 +288,11 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setReportError(message);
       throw err;
     } finally {
-      if (isCurrentAction()) setReportBusy(false);
+      // Clear on mount+scope only — never on the transition guard. This
+      // action's own signalPauseChanged → loadStatus bumps the transition
+      // counter before finally runs, which left reportBusy stuck true and
+      // the Save spinner running after a confirmed save.
+      if (mountedRef.current && scopeRef.current === scopeInstanceKey) setReportBusy(false);
     }
   };
 
