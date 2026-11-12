@@ -318,11 +318,16 @@ export async function checkEstimateConversionCredit({
             0,
           );
         }
-      } catch { /* openAr stays null — the block reason says it could not be verified */ }
+      } catch { /* openAr stays null — handled below, never silently counted as 0 */ }
     }
-    const exposure = (openAr || 0) + estimateTotal;
+    // Unverifiable AR means exposure cannot be computed — gate it like any
+    // other credit decision rather than passing with a fabricated 0.
+    if (openAr == null) {
+      return decideOrBlock("credit_limit", `${customerName} has a credit limit ${limit.toFixed(2)} but open AR could not be loaded — credit exposure cannot be verified.`);
+    }
+    const exposure = openAr + estimateTotal;
     if (exposure > limit + 0.005) {
-      const arNote = openAr == null ? "open AR could not be loaded" : `open AR ${openAr.toFixed(2)}`;
+      const arNote = `open AR ${openAr.toFixed(2)}`;
       return decideOrBlock("credit_limit", `${customerName} would exceed its credit limit — ${arNote} + this estimate ${estimateTotal.toFixed(2)} = ${exposure.toFixed(2)} vs limit ${limit.toFixed(2)}.`);
     }
   }
