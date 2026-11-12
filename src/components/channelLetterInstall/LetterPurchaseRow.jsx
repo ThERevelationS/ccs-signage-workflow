@@ -46,6 +46,16 @@ const TYPE_COLOR = {
   dimensional_letters: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
+// P-08: channel/capsule letter types choose purchased-vs-fabricated explicitly.
+// Raceway is hardware and dimensional_letters is inherently fabricated —
+// neither gets a mode selector.
+const FABRICATION_ELIGIBLE = new Set([
+  "channel_raceway_mounted",
+  "channel_flush_mounted",
+  "channel_halo_lit",
+  "capsule_logo_pillbox",
+]);
+
 export default function LetterPurchaseRow({
   purchase,
   settings,
@@ -129,6 +139,25 @@ export default function LetterPurchaseRow({
           <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
             <Link2 className="w-3 h-3 mr-1" /> Auto-creates install item
           </Badge>
+        )}
+        {FABRICATION_ELIGIBLE.has(purchase.letter_type) && (
+          <span className="inline-flex items-center gap-1 text-[11px]">
+            <span className="text-slate-400">Source:</span>
+            <select
+              value={purchase.fabrication || ""}
+              onChange={(e) => update({ fabrication: e.target.value || null })}
+              className={`h-6 rounded border px-1.5 text-[11px] ${
+                purchase.fabrication
+                  ? "border-slate-200 bg-slate-50 text-slate-700"
+                  : "border-amber-300 bg-amber-50 text-amber-800"
+              }`}
+              title="P-08: purchased vs fabricated — required for takeoff/export; left unset it flags the set"
+            >
+              <option value="">— unset —</option>
+              <option value="purchased">Purchased</option>
+              <option value="fabricated">Fabricated</option>
+            </select>
+          </span>
         )}
         <div className="ml-auto flex items-center gap-1">
           <span className="text-lg font-bold tabular-nums text-slate-900 mr-2">
