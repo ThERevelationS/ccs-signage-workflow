@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ChannelLetterInstallEquipment } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
+import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,7 @@ export default function EquipmentInventoryTab({ scope = "construction" }) {
           payload.ownership = isOwned(it) ? "owned" : "rented";
         }
         if (id) await ChannelLetterInstallEquipment.update(id, payload);
+        else if (payload.equipment_name) await ensureIdempotentEntityCreate({ entity: ChannelLetterInstallEquipment, keyField: "equipment_name", key: payload.equipment_name, data: payload, label: `Equipment "${payload.equipment_name}"` });
         else await ChannelLetterInstallEquipment.create(payload);
       }
       await load();
