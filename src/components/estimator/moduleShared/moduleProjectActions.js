@@ -14,6 +14,18 @@ const STRIP_ON_COPY = new Set([
   "is_sample",
   "creation_request_key",
   "idempotency_key",
+  // P-11: proposal lifecycle state — a copy is a NEW draft, never a second
+  // acceptance. Deleted keys fall back to entity defaults; modules lacking
+  // these fields are unaffected (delete on an absent key is a no-op).
+  "proposal_accepted",
+  "proposal_accepted_by",
+  "proposal_accepted_at",
+  "pricing_basis_snapshot",
+  "prior_acceptance",
+  "proposal_reopened_reason",
+  "proposal_revision_n",
+  "proposal_revisions",
+  "proposal_locked_fields",
 ]);
 
 // Clone a module's save payload into a brand-new project record (#78). The
