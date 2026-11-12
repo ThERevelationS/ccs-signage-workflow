@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -202,25 +202,19 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, ses
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Start Date</Label>
-              <TimeQuickPick
-                mode="date"
+              <CcsDateField
                 value={startDate}
-                onChange={setStartDate}
-                dayOffsets={[0, -1, -2, -3, -7, -14]}
-                confirmLabel="Starts"
-                inputId="pto-start"
-              />
+                onChange={(e) => setStartDate(e.target.value)}
+                id="pto-start"
+                />
             </div>
             <div>
               <Label>End Date</Label>
-              <TimeQuickPick
-                mode="date"
+              <CcsDateField
                 value={endDate}
-                onChange={setEndDate}
-                dayOffsets={[0, -1, -2, -3, -7, -14]}
-                confirmLabel="Ends"
-                inputId="pto-end"
-              />
+                onChange={(e) => setEndDate(e.target.value)}
+                id="pto-end"
+                />
             </div>
           </div>
 
