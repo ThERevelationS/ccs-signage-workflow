@@ -111,6 +111,11 @@ const COPY_PROJECT_STRIP = new Set([
   'id', 'created_date', 'updated_date', 'created_by', 'created_by_id',
   'creation_request_key', 'builder_sync_attempt', 'estimate_id',
   'estimate_number', 'work_order_id',
+  // P-11: a cloned project is a NEW draft — proposal acceptance/lifecycle
+  // state never transplants onto the module records of a copied estimate.
+  'proposal_accepted', 'proposal_accepted_by', 'proposal_accepted_at',
+  'pricing_basis_snapshot', 'prior_acceptance', 'proposal_reopened_reason',
+  'proposal_revision_n', 'proposal_revisions', 'proposal_locked_fields',
 ]);
 
 // Production/lifecycle fields dropped from a cloned BuilderProduct — the copy
