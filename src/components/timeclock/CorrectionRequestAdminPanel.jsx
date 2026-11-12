@@ -15,7 +15,7 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
-import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 function reviewRetryStorageKey(correctionRequestId) {
   return `ccs_timeclock_review_retry:${String(correctionRequestId || "").trim().toLowerCase()}`;
@@ -445,8 +445,8 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
                   <div className="text-xs text-gray-500 mt-1">These fields are used only by <strong>Apply Edited Time</strong>. <strong>Approve Reported Time</strong> uses the employee request above exactly.</div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockIn} onChange={setClockIn} disabled={busy || retryingSelected} times={SHIFT_START_TIMES} inputId="adj-clock-in" /></div>
-                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockOut} onChange={setClockOut} disabled={busy || retryingSelected} inputId="adj-clock-out" /></div>
+                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} id="adj-clock-in" /></div>
+                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><CcsDateTimeField value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} id="adj-clock-out" /></div>
                 </div>
                 <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" step="1" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
                 <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy || retryingSelected} /></div>
