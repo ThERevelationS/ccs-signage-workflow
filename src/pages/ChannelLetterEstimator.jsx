@@ -33,6 +33,7 @@ import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScop
 import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntakeDialog";
 import ChannelTakeoffCard from "@/components/channelLetterInstall/ChannelTakeoffCard";
 import { recordFieldOverrides } from "@/components/channelLetterInstall/channelSetSync.js";
+import ProposalLifecycleCard from "@/components/channelLetterInstall/ProposalLifecycleCard";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
@@ -83,7 +84,7 @@ const blankProject = () => ({
 
 export default function ChannelLetterEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const navigate = useNavigate();
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [searchParams] = useSearchParams();
   // Prop wins when embedded inside the All-In-One estimator.
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
@@ -1264,6 +1265,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
             <CrewEquipmentHint items={recalculated.items} />
             <ValidationWarnings project={recalculated} pricingIssues={pricingIssues} />
             <ChannelTakeoffCard project={recalculated} inventory={inventory} equipmentInventory={equipmentInventory} />
+            <ProposalLifecycleCard project={recalculated} currentUser={currentUser} onUpdateProject={updateProject} />
             <div className="text-[10px] text-slate-400 text-center px-2">
               Shortcuts: <kbd className="px-1 bg-slate-100 rounded">⌘S</kbd> Save · <kbd className="px-1 bg-slate-100 rounded">⌘I</kbd> Add Item
             </div>
