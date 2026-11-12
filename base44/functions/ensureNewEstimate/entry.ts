@@ -81,6 +81,237 @@ async function canDiscardRaceDuplicate(base44: any, row: any) {
   return { ok: true, reason: '', record: live };
 }
 
+// ---- Estimate copy-completion (O-012 Option A) ----
+// A duplicated/split estimate is created as a Draft shell — line_items strip
+// above — so the copy pipeline below rebuilds what the clone references: for
+// every carried line, the module project and the Builder product (with its
+// part groups and parts) are cloned into records owned by the NEW estimate,
+// the carried line's ids are remapped to the clones, and line_items is CAS-
+// attached. Every step dedupes on natural keys so the pipeline resumes
+// cleanly across creation-key retries — a retried copy never double-clones.
+const COPY_MODULE_ENTITIES: Record<string, string> = {
+  foundation: 'FoundationProject',
+  channel_letters: 'ChannelLetterInstallation',
+  vinyl: 'VinylProject',
+  cnc: 'CNCProject',
+  laser: 'LaserProject',
+  metal: 'MetalProject',
+  brick_stone: 'BrickStoneProject',
+  maintenance: 'MaintenanceProject',
+  painting: 'Project',
+  custom_items: 'CustomItemsProject',
+  sign_hardware: 'SignHardwareProject',
+  digital_print: 'DigitalPrintProject',
+};
+
+// Identity/ownership fields stripped from a cloned module project. Estimate
+// linkage is re-anchored to the new estimate below; a foreign builder sync
+// receipt must never transplant (its recovery state belongs to the source).
+const COPY_PROJECT_STRIP = new Set([
+  'id', 'created_date', 'updated_date', 'created_by', 'created_by_id',
+  'creation_request_key', 'builder_sync_attempt', 'estimate_id',
+  'estimate_number', 'work_order_id',
+]);
+
+// Production/lifecycle fields reset on a cloned BuilderProduct — the copy is
+// a draft estimate's product, not a live job. Design/pricing fields
+// (builder_snapshot*, frozen_cost, price_state, part counts) carry verbatim.
+const COPY_PRODUCT_RESET: Record<string, unknown> = {
+  fulfillment_state: '', operational_status: '', operational_substatus: '',
+  operational_status_changed_at: '', queue_priority: null,
+  proof_status: '', proof_version: 0, proof_file_url: '', proof_file_name: '',
+  proof_approved_version: 0, design_due_date: '', product_due_date: '',
+  hard_due_date: '', assigned_to: '', designer: '', responsibility: '',
+  customer_facing_status: '',
+};
+
+const COPY_PRODUCT_STRIP = new Set([
+  'id', 'created_date', 'updated_date', 'created_by', 'created_by_id',
+  'creation_request_key', 'estimate_id', 'estimate_line_id', 'source_project_id',
+]);
+
+// Mirrors estimateLineSelectionKey in estimateCreationService.js — the key a
+// split's line selection is expressed in.
+const copyLineKey = (line: any, index: number) =>
+  clean(line?.line_id) || clean(line?.builder_product_id) || clean(line?.project_id) || `i${index}`;
+
+const copyNum = (v: any) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+
+async function completeEstimateCopy(base44: any, { record, sourceId, isSplit, inputLines }: any) {
+  const svc = base44.asServiceRole.entities;
+  const newEstId = clean(record?.id);
+  if (!newEstId) return record;
+  const source = await svc.AllInOneEstimate.get(sourceId).catch(() => null);
+  if (!source?.id) {
+    throw Object.assign(new Error('The estimate this copy was made from could not be loaded; the copy was left as a draft shell — retry to resume it.'), { statusCode: 409 });
+  }
+  const sourceLines = Array.isArray(source.line_items) ? source.line_items : [];
+  let carried = sourceLines;
+  if (isSplit) {
+    const srcKeys = sourceLines.map(copyLineKey);
+    const picked = new Set((Array.isArray(inputLines) ? inputLines : []).map(copyLineKey));
+    if (!picked.size || [...picked].some((k) => srcKeys.filter((x) => x === k).length !== 1)) {
+      throw Object.assign(new Error('The selected products changed or have ambiguous identifiers. Reload and select them again.'), { statusCode: 409 });
+    }
+    carried = sourceLines.filter((_: any, i: number) => picked.has(srcKeys[i]));
+  }
+  // Same transplant guard as the client: a durable Builder recovery marker is
+  // unresumable on a foreign estimate — the pending op belongs to the source.
+  for (const line of carried) {
+    if (line?.price_acceptance_pending?.key) {
+      throw Object.assign(new Error('This estimate has an unfinished Builder operation. Resolve or discard it before copying.'), { statusCode: 409 });
+    }
+  }
+
+  const newNumber = clean(record.estimate_number);
+  const warnings: string[] = [];
+  const newLines: any[] = [];
+
+  const cloneProject = async (entityName: string, srcId: string) => {
+    const service = svc[entityName];
+    if (!service) return { id: '', missing: `module entity ${entityName}` };
+    const key = `copy-proj:${newEstId}:${srcId}`;
+    const found = await service.filter({ creation_request_key: key }).catch(() => []);
+    if (found?.[0]?.id) return { id: clean(found[0].id) };
+    const src = await service.get(srcId).catch(() => null);
+    if (!src?.id) return { id: '', missing: `source project ${srcId}` };
+    const data: any = {};
+    for (const [k, v] of Object.entries(src)) {
+      if (!COPY_PROJECT_STRIP.has(k) && !k.startsWith('_')) data[k] = v;
+    }
+    if (newNumber) data.estimate_number = newNumber;
+    if ('estimate_id' in src) data.estimate_id = newEstId;
+    data.creation_request_key = key;
+    const created = await service.create(data);
+    return { id: clean(created?.id) };
+  };
+
+  const cloneProduct = async (srcProductId: string, line: any, projectMap: Map<string, string>) => {
+    const service = svc.BuilderProduct;
+    const src = await service.get(srcProductId).catch(() => null);
+    if (!src?.id) return { id: '', missing: `builder product ${srcProductId}` };
+    // Dedupe: an earlier attempt's clone for this exact line — same owning
+    // estimate + same line + same design snapshot.
+    const candidates = await service.filter({ estimate_id: newEstId, estimate_line_id: clean(line?.line_id) }).catch(() => []);
+    const match = (candidates || []).find((c: any) =>
+      clean(c?.builder_snapshot_hash) === clean(src?.builder_snapshot_hash) || clean(src?.builder_snapshot_hash) === ''
+    );
+    let productId = clean(match?.id);
+    if (!productId) {
+      const data: any = {};
+      for (const [k, v] of Object.entries(src)) {
+        if (!COPY_PRODUCT_STRIP.has(k) && !k.startsWith('_')) data[k] = v;
+      }
+      Object.assign(data, COPY_PRODUCT_RESET);
+      data.estimate_id = newEstId;
+      data.estimate_line_id = clean(line?.line_id);
+      const mappedProject = projectMap.get(clean(src?.source_project_id));
+      data.source_project_id = mappedProject || clean(src?.source_project_id);
+      const created = await service.create(data);
+      productId = clean(created?.id);
+      if (!productId) throw Object.assign(new Error(`Builder product ${srcProductId} could not be cloned — retry the copy to resume it.`), { statusCode: 409 });
+    }
+    // Part groups + parts — natural-key dedupe per record.
+    const groupMap = new Map<string, string>();
+    const groups = await svc.BuilderPartGroup.filter({ builder_product_id: srcProductId }).catch(() => []);
+    for (const g of Array.isArray(groups) ? groups : []) {
+      const gKey = clean(g?.group_key);
+      const existing = gKey
+        ? await svc.BuilderPartGroup.filter({ builder_product_id: productId, group_key: gKey }).catch(() => [])
+        : [];
+      let groupId = clean(existing?.[0]?.id);
+      if (!groupId) {
+        const { id: _gi, created_date: _gc, updated_date: _gu, created_by: _gb, created_by_id: _gbi, ...gf } = g || {};
+        const created = await svc.BuilderPartGroup.create({ ...gf, builder_product_id: productId });
+        groupId = clean(created?.id);
+      }
+      if (clean(g?.id)) groupMap.set(clean(g.id), groupId);
+    }
+    const parts = await svc.BuilderPart.filter({ builder_product_id: srcProductId }).catch(() => []);
+    for (const p of Array.isArray(parts) ? parts : []) {
+      const pKey = clean(p?.part_key);
+      const existing = pKey
+        ? await svc.BuilderPart.filter({ builder_product_id: productId, part_key: pKey }).catch(() => [])
+        : [];
+      if (existing?.[0]?.id) continue;
+      const { id: _pi, created_date: _pc, updated_date: _pu, created_by: _pb, created_by_id: _pbi, ...pf } = p || {};
+      const mappedGroup = groupMap.get(clean(p?.part_group_id));
+      await svc.BuilderPart.create({ ...pf, builder_product_id: productId, part_group_id: mappedGroup || clean(p?.part_group_id) });
+    }
+    return { id: productId };
+  };
+
+  const projectMap = new Map<string, string>();
+  for (const line of carried) {
+    const next: any = { ...line };
+    const srcProjectId = clean(line?.project_id);
+    if (srcProjectId) {
+      const entityName = COPY_MODULE_ENTITIES[clean(line?.module_key)] || '';
+      const cloned = entityName ? await cloneProject(entityName, srcProjectId) : { id: '', missing: 'module entity' };
+      if (cloned.id) projectMap.set(srcProjectId, cloned.id);
+      else warnings.push(`project ${srcProjectId} could not be cloned${cloned.missing ? ` (${cloned.missing})` : ''}`);
+    }
+    newLines.push(next);
+  }
+  // Products clone after projects so source_project_id remaps to the clones.
+  for (let i = 0; i < newLines.length; i += 1) {
+    const srcProductId = clean(newLines[i]?.builder_product_id);
+    if (!srcProductId) continue;
+    const cloned = await cloneProduct(srcProductId, newLines[i], projectMap);
+    if (cloned.id) {
+      newLines[i].builder_product_id = cloned.id;
+    } else {
+      warnings.push(`builder product ${srcProductId} could not be cloned${cloned.missing ? ` (${cloned.missing})` : ''}`);
+    }
+  }
+  for (const line of newLines) {
+    const mapped = projectMap.get(clean(line?.project_id));
+    if (mapped) line.project_id = mapped;
+  }
+
+  const totalCost = newLines.reduce((sum, l) => sum + copyNum(l?.total_cost), 0);
+  const fields: any = { line_items: newLines, total_cost: totalCost };
+  if (!isSplit && copyNum(source?.quote_total) > 0) {
+    fields.quote_total = copyNum(source.quote_total);
+  } else {
+    fields.pricing_stale = true;
+    fields.pricing_stale_reason = 'Estimate copied — recompute pricing before sending.';
+  }
+  const attach = await svc.AllInOneEstimate.updateMany(
+    { id: newEstId, updated_date: clean(record.updated_date) },
+    { $set: fields },
+  );
+  if (attach?.updated !== 1) {
+    // Same-value retries may report 0; verify content before declaring a CAS miss.
+    const live = await svc.AllInOneEstimate.get(newEstId).catch(() => null);
+    const liveLines = Array.isArray(live?.line_items) ? live.line_items : [];
+    const sameLines = liveLines.length === newLines.length
+      && liveLines.every((l: any, i: number) => clean(l?.builder_product_id) === clean(newLines[i]?.builder_product_id) && clean(l?.project_id) === clean(newLines[i]?.project_id));
+    if (!sameLines) {
+      throw Object.assign(new Error('The copied estimate changed before its products could be attached. Retry the copy to resume it.'), { statusCode: 409 });
+    }
+  }
+  const final = await svc.AllInOneEstimate.get(newEstId).catch(() => null);
+  if (!final?.id) {
+    throw Object.assign(new Error('The copied estimate could not be re-read after its products were attached.'), { statusCode: 409 });
+  }
+  if (warnings.length) final.copy_warnings = warnings.join('; ');
+  return final;
+}
+
+// Runs the copy pipeline when the row carries a copy lineage marker. Deduped
+// internally — safe on every reuse/retry path.
+async function finalizeCopiedEstimate(record: any, base44: any, inputLines: any) {
+  const sourceId = clean(record?.duplicated_from_estimate_id) || clean(record?.split_from_estimate_id);
+  if (!sourceId) return record;
+  return completeEstimateCopy(base44, {
+    record,
+    sourceId,
+    isSplit: !!clean(record?.split_from_estimate_id),
+    inputLines,
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
@@ -143,7 +374,7 @@ Deno.serve(async (req) => {
 
     let existingRows = await readKeyedRows();
     const existing = validateKeyedRows(existingRows);
-    if (existing?.id) return Response.json({ estimate: existing, reused: true });
+    if (existing?.id) return Response.json({ estimate: await finalizeCopiedEstimate(existing, base44, estimateInput.line_items), reused: true });
 
     let created;
     try {
@@ -163,7 +394,7 @@ Deno.serve(async (req) => {
         ), { statusCode: 409 });
       }
       const recovered = validateKeyedRows(existingRows);
-      if (recovered?.id) return Response.json({ estimate: recovered, reused: true, recovered_after_create_error: true });
+      if (recovered?.id) return Response.json({ estimate: await finalizeCopiedEstimate(recovered, base44, estimateInput.line_items), reused: true, recovered_after_create_error: true });
       throw createError;
     }
 
@@ -193,7 +424,7 @@ Deno.serve(async (req) => {
       }
       const losing = discard.record;
       if (!losing?.id) {
-        return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true, duplicate_already_absent: true });
+        return Response.json({ estimate: await finalizeCopiedEstimate(canonical, base44, estimateInput.line_items), reused: true, concurrent_duplicate_discarded: true, duplicate_already_absent: true });
       }
       const losingVersion = String(losing.updated_date || '').trim();
       if (!losingVersion) {
@@ -213,7 +444,7 @@ Deno.serve(async (req) => {
           return null;
         });
         if (!verifyFailed && Array.isArray(afterError) && afterError.length === 0) {
-          return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true, recovered_after_delete_error: true });
+          return Response.json({ estimate: await finalizeCopiedEstimate(canonical, base44, estimateInput.line_items), reused: true, concurrent_duplicate_discarded: true, recovered_after_delete_error: true });
         }
         throw deleteError;
       }
@@ -224,14 +455,14 @@ Deno.serve(async (req) => {
           return null;
         });
         if (!verifyFailed && Array.isArray(afterDelete) && afterDelete.length === 0) {
-          return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true });
+          return Response.json({ estimate: await finalizeCopiedEstimate(canonical, base44, estimateInput.line_items), reused: true, concurrent_duplicate_discarded: true });
         }
         return Response.json({ error: 'The losing duplicate Estimate changed before cleanup. No uncertain Estimate was deleted; reload before retrying.' }, { status: 409 });
       }
-      return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true });
+      return Response.json({ estimate: await finalizeCopiedEstimate(canonical, base44, estimateInput.line_items), reused: true, concurrent_duplicate_discarded: true });
     }
 
-    return Response.json({ estimate: canonical, reused: false });
+    return Response.json({ estimate: await finalizeCopiedEstimate(canonical, base44, estimateInput.line_items), reused: false });
   } catch (error) {
     const status = Number(error?.status || error?.statusCode || 500);
     const safeStatus = [400, 401, 403, 404, 409, 429, 503].includes(status) ? status : 500;
