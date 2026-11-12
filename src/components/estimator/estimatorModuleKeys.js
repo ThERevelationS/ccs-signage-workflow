@@ -62,7 +62,9 @@ export const INTAKE_SHELL_CONTRACT = {
 // module's required facts without an implemented intake shell.
 export const MODULE_QUESTION_MAP = {
   foundation: ["sign style/weight", "mounting", "site constraints", "scope", "budget"],
-  channel_letters: ["letter height", "mounting type", "power supply", "site access", "budget"],
+  // P-02: channel_letters is implemented — the map mirrors the interview
+  // contract's required facts (channelInterviewModel.CHANNEL_INTERVIEW_FIELDS).
+  channel_letters: ["letter text/font/artwork", "count/height/depth/type", "faces/returns/backs/illumination/finish", "mounting substrate + raceway/backer", "access/height/environment", "electrical scope/access"],
   maintenance: ["service interval", "scope (cleaning/repair/lamp)", "access", "budget"],
   painting: ["surface area", "prep level", "coating type", "site access", "budget"],
   laser: ["material", "thickness", "detail level", "quantity", "budget"],
