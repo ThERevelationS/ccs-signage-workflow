@@ -1656,10 +1656,12 @@ export default function QuickClockSection({
       });
       assertEmployeeAcknowledgement(result, email, "Missed shift report");
       clearRequest("report_missed_shift", email, requestId);
-      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       if (result?.success !== true || !result?.entry?.id || result.entry.status !== "clocked_out") {
         throw new Error("Missed shift report returned an unexpected response. Reload before continuing.");
       }
+      // A poll bumping workViewEpoch mid-submit must not swallow a confirmed
+      // report — close + announce whenever the same user context still holds.
+      if (!stillCurrent()) return null;
       setMissedShiftPrompt(false);
       setMissedShiftError("");
       setRecognitionStatus("Missed shift reported - a manager will review and approve those hours.");
