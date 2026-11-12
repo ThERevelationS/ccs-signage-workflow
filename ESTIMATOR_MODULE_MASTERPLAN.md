@@ -235,6 +235,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: `channelScopeBrief.js` merge/calibration/proposal model + verifier 17/17 local+remote — see root ledger `P-03`]
 - P-04 Editable letter-set/layout/elevation preview: overall envelope, spacing, alignment, mounting,
   raceway/backer, front/halo illumination concept, front/back artwork and material/finish selections.
+  [LANDED: `channelLayoutModel.js` render contract + verifier 16/16 local+remote - see root ledger `P-04`]
 - P-05 Deterministic purchased/fabricated set takeoff for face/return/back, LEDs/power supply from
   product data, trim/raceway/backer/hardware, finish, assembly and installation labor.
 - P-06 Validate material/mount/illumination compatibility, available size/stock, access/crew/equipment,
