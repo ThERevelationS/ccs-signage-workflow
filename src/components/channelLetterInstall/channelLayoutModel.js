@@ -9,7 +9,7 @@ import { estimateAverageLetterWidth } from "./letterWidthCalculator.jsx";
 export const CHANNEL_LAYOUT_VERSION = 1;
 export const CHANNEL_ALIGNMENTS = ["flush_left", "center", "right", "distributed"];
 
-const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+const num = (v) => (v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 
 // letters: [{char, width_inches?}] — explicit per-letter width wins over the
 // height-ratio estimate; a letter with no resolvable width flags unplaced.
