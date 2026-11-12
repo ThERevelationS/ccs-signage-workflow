@@ -241,6 +241,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: `channelSetTakeoff.js` BOM model + verifier 23/23 local+remote - see root ledger `P-05`]
 - P-06 Validate material/mount/illumination compatibility, available size/stock, access/crew/equipment,
   electrical/load assumptions and missing prices. No certification claims.
+  [LANDED: `channelValidationModel.js` validation model + verifier 16/16 local+remote - see root ledger `P-06`]
 - P-07 Reconcile letters-to-install synchronization, edits/deletion/duplication, overrides, delivery,
   design/permit allowances, personnel and travel exactly once.
 - P-08 Purchased versus fabricated alternatives; optional scopes stay separate from accepted base.
