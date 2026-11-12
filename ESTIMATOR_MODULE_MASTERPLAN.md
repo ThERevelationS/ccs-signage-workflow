@@ -244,6 +244,7 @@ inventory/pricing seams. Shared personnel/equipment/travel changes require regre
   [LANDED: `channelValidationModel.js` validation model + verifier 16/16 local+remote - see root ledger `P-06`]
 - P-07 Reconcile letters-to-install synchronization, edits/deletion/duplication, overrides, delivery,
   design/permit allowances, personnel and travel exactly once.
+  [LANDED: `channelSetSync.js` sync contract + verifier 10/10 local+remote - see root ledger `P-07`]
 - P-08 Purchased versus fabricated alternatives; optional scopes stay separate from accepted base.
   Linked Concrete/Paint/CNC/Laser products have explicit cost ownership, not duplicated charges.
 - P-09 Export quote scope, fabrication takeoff, layout and installation sheet with inclusions,
