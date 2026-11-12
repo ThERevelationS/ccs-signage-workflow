@@ -31,6 +31,7 @@ import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomer
 import PhotoEstimateModal from "@/components/channelLetterInstall/PhotoEstimateModal";
 import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScopeModal";
 import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntakeDialog";
+import ChannelTakeoffCard from "@/components/channelLetterInstall/ChannelTakeoffCard";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
@@ -1259,6 +1260,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
             </div>
             <CrewEquipmentHint items={recalculated.items} />
             <ValidationWarnings project={recalculated} pricingIssues={pricingIssues} />
+            <ChannelTakeoffCard project={recalculated} inventory={inventory} equipmentInventory={equipmentInventory} />
             <div className="text-[10px] text-slate-400 text-center px-2">
               Shortcuts: <kbd className="px-1 bg-slate-100 rounded">⌘S</kbd> Save · <kbd className="px-1 bg-slate-100 rounded">⌘I</kbd> Add Item
             </div>
