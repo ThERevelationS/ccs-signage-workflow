@@ -1,3 +1,5 @@
+import { applySyncOverrides } from "./channelSetSync.js";
+
 // Pricing math + helpers for the Letters Purchase tab.
 // All pricing pulls from project settings, with sensible defaults that
 // match the user's price sheet (Excel rows 12-19).
@@ -385,8 +387,9 @@ export const syncInstallItemsFromPurchases = (existingItems, purchases, emptyLin
 
     if (byPurchaseId.has(p.id)) {
       const idx = byPurchaseId.get(p.id);
-      // Preserve existing materials when re-syncing
-      items[idx] = { ...items[idx], ...patch };
+      // Preserve existing materials when re-syncing; P-07: fields the
+      // operator pinned (item.override_fields) survive re-sync untouched.
+      items[idx] = { ...items[idx], ...applySyncOverrides(patch, items[idx]) };
     } else {
       // Create a fresh item using the project's empty template, then apply the patch
       const fresh = emptyLineItemFn();
