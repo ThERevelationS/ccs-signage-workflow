@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, ClipboardList, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
 import { useAuth, getSessionToken } from "@/components/auth/EmailGate";
@@ -30,6 +30,7 @@ import { categorizeChannelLetterProject } from "@/components/markup/projectCateg
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import PhotoEstimateModal from "@/components/channelLetterInstall/PhotoEstimateModal";
 import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScopeModal";
+import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntakeDialog";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
@@ -99,6 +100,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [intakeOpen, setIntakeOpen] = useState(false);
   const [aiInstallOpen, setAiInstallOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null); // { title, description, ... }
   const [helpTrigger, setHelpTrigger] = useState(false);
@@ -428,6 +430,26 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     setActiveTab("items");
   };
 
+  // Apply structured-intake draft: project-level fields merge, the interview
+  // item lands on emptyLineItem with default materials (same convention as
+  // applyPhotoEstimate).
+  const applyIntakeDraft = (draft) => {
+    setProject((prev) => {
+      const next = { ...prev };
+      for (const [k, v] of Object.entries(draft || {})) {
+        if (k === "items" || k === "interview_version" || k === "unverified_assumptions") continue;
+        next[k] = v;
+      }
+      if (draft?.items?.length) {
+        const merged = { ...emptyLineItem(), ...draft.items[0] };
+        merged.materials = defaultMaterialsForItem(merged, inventory);
+        next.items = [...next.items, merged];
+      }
+      return next;
+    });
+    setActiveTab("items");
+  };
+
   // Keyboard shortcuts: Ctrl/Cmd+S = save, Ctrl/Cmd+N = new item
   useEffect(() => {
     const handler = (e) => {
@@ -739,6 +761,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
               className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-purple-800 hover:from-purple-100 hover:to-pink-100"
             >
               <Camera className="w-4 h-4 mr-2" /> Photo → Estimate
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIntakeOpen(true)}
+              className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200 text-indigo-800 hover:from-indigo-100 hover:to-blue-100"
+            >
+              <ClipboardList className="w-4 h-4 mr-2" /> Intake
             </Button>
             <Link to={createPageUrl("MasterInventory")}>
               <Button variant="outline" className="bg-white">
@@ -1253,6 +1282,12 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         open={aiInstallOpen}
         onClose={() => setAiInstallOpen(false)}
         onApply={applyAIInstallItems}
+      />
+
+      <ChannelIntakeDialog
+        open={intakeOpen}
+        onClose={() => setIntakeOpen(false)}
+        onApply={applyIntakeDraft}
       />
 
       <ModuleTemplateDialog
