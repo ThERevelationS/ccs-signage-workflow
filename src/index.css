@@ -763,3 +763,14 @@ html { accent-color: var(--ccs-accent, #6366F1); }
 /* Accent: elements that opt in via .ccs-accented pick up the user's accent */
 .ccs-accented { accent-color: var(--ccs-accent, #6366F1); }
 .ccs-accent-ring:focus-visible { outline: 2px solid var(--ccs-accent, #6366F1); outline-offset: 1px; }
+/* Mantine renders pickers/menus/modals in body-level portals. Radix modal
+   dialogs set body{pointer-events:none}, which leaves those overlays painted
+   but unclickable — re-enable interaction on the portal subtrees. */
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Tooltip-tooltip,
+.mantine-Modal-root,
+.mantine-HoverCard-dropdown,
+.mantine-Notification-root {
+  pointer-events: auto;
+}
