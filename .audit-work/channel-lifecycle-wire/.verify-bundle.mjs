@@ -71,9 +71,26 @@ var proposalLifecycleState = (project = {}) => {
   if (project.prior_acceptance) return "reopened";
   return "draft";
 };
+var isProposalAccepted = (p = {}) => p?.proposal_accepted === true;
+var PROPOSAL_LIFECYCLE_PATCH_KEYS = /* @__PURE__ */ new Set([
+  "proposal_accepted",
+  "proposal_accepted_by",
+  "proposal_accepted_at",
+  "pricing_basis_snapshot",
+  "prior_acceptance",
+  "proposal_reopened_reason",
+  "proposal_revision_n",
+  "proposal_revisions",
+  "proposal_locked_fields",
+  "updated_date"
+]);
+var patchOnlyTouchesLifecycle = (patch = {}) => Object.keys(patch).every((k) => PROPOSAL_LIFECYCLE_PATCH_KEYS.has(k));
 export {
   CHANNEL_LIFECYCLE_VERSION,
+  PROPOSAL_LIFECYCLE_PATCH_KEYS,
   acceptInstallationProposal,
+  isProposalAccepted,
+  patchOnlyTouchesLifecycle,
   proposalLifecycleState,
   reopenInstallationProposal
 };
