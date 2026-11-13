@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
 import { hasFoundationCostSnapshot } from "./foundationCatalogIntegrity";
-import { inventoryNumberInput } from "@/components/masterInventory/inventoryNormalization";
+import { inventoryNumberInput, groupInventoryBySupplier } from "@/components/masterInventory/inventoryNormalization";
 import { FoundationDimensionInput } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import { suggestFeasibleFoundationDims } from "./poleCalculator";
@@ -77,7 +77,14 @@ const Check = ({ label, checked, onChange }) => (
 );
 
 const Picker = ({ label, value, onChange, options, placeholder }) => {
-  const missing = value && !options.some((o) => o.id === value);
+  const rows = Array.isArray(options) ? options : [];
+  const missing = value && !rows.some((o) => o.id === value);
+  // O-008 tail (CMP-A08): supplier-grouped options via the boundary's
+  // canonical grouping — same convention InventoryTable renders. When no row
+  // records a supplier the picker stays flat (a lone "not recorded" group is
+  // noise, not signal); unassigned rows sort last, never merged.
+  const groups = groupInventoryBySupplier(rows);
+  const grouped = groups.some((g) => g.key !== null);
   return (
     <label className="text-xs text-gray-500">
       {label}
@@ -92,11 +99,21 @@ const Picker = ({ label, value, onChange, options, placeholder }) => {
             Catalog item unavailable ({value})
           </option>
         )}
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.material_name}
-          </option>
-        ))}
+        {grouped
+          ? groups.map((group) => (
+              <optgroup key={group.key ?? "__unassigned__"} label={`Supplier: ${group.label || "— not recorded"}`}>
+                {group.rows.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.material_name}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          : rows.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.material_name}
+              </option>
+            ))}
       </select>
     </label>
   );
