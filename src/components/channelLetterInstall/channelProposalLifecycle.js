@@ -60,3 +60,25 @@ export const proposalLifecycleState = (project = {}) => {
   if (project.prior_acceptance) return "reopened";
   return "draft";
 };
+
+// P-11 hard-freeze — while proposal_accepted the pricing basis is frozen:
+// content mutations are refused until an explicit reopen. Only the keys in
+// PROPOSAL_LIFECYCLE_PATCH_KEYS may change on an accepted record (the
+// accept/reopen patches themselves plus the persistence updated_date stamp).
+export const isProposalAccepted = (p = {}) => p?.proposal_accepted === true;
+
+export const PROPOSAL_LIFECYCLE_PATCH_KEYS = new Set([
+  "proposal_accepted",
+  "proposal_accepted_by",
+  "proposal_accepted_at",
+  "pricing_basis_snapshot",
+  "prior_acceptance",
+  "proposal_reopened_reason",
+  "proposal_revision_n",
+  "proposal_revisions",
+  "proposal_locked_fields",
+  "updated_date",
+]);
+
+export const patchOnlyTouchesLifecycle = (patch = {}) =>
+  Object.keys(patch).every((k) => PROPOSAL_LIFECYCLE_PATCH_KEYS.has(k));
