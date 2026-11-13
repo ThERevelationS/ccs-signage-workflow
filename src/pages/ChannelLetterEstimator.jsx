@@ -34,6 +34,8 @@ import ChannelIntakeDialog from "@/components/channelLetterInstall/ChannelIntake
 import ChannelTakeoffCard from "@/components/channelLetterInstall/ChannelTakeoffCard";
 import { recordFieldOverrides } from "@/components/channelLetterInstall/channelSetSync.js";
 import ProposalLifecycleCard from "@/components/channelLetterInstall/ProposalLifecycleCard";
+import { isProposalAccepted, patchOnlyTouchesLifecycle } from "@/components/channelLetterInstall/channelProposalLifecycle";
+import { useToast } from "@/components/ui/use-toast";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { suggestEquipmentForProject, selectedEquipmentFromInventory, suggestPersonnelForProject, suggestCrewSize } from "@/components/channelLetterInstall/equipmentSuggester";
@@ -111,6 +113,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const createAttemptRef = React.useRef({ signature: "", key: "" });
   const copyAttemptRef = React.useRef({ signature: "", key: "" });
   const [templateMode, setTemplateMode] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
@@ -269,7 +272,20 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   }, [recalculated]);
 
   // Mutators
+  // P-11 hard-freeze — while a proposal is accepted its pricing basis is
+  // frozen: every content mutation is refused until the Lifecycle card
+  // explicitly reopens it. updateProject additionally admits the accept /
+  // reopen patches themselves (lifecycle keys only).
+  const proposalFrozen = isProposalAccepted(project);
+  const denyProposalMutation = () => {
+    toast({
+      variant: "destructive",
+      title: "Proposal is accepted",
+      description: "The pricing basis is frozen — reopen the proposal from the Lifecycle card to make changes.",
+    });
+  };
   const updateProject = (patch) => {
+    if (proposalFrozen && !patchOnlyTouchesLifecycle(patch)) { denyProposalMutation(); return; }
     setProject(prev => {
       const next = { ...prev, ...patch };
       // When letter_purchases changes, keep matching install items in sync
@@ -280,7 +296,14 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     });
   };
 
+  // Direct setProject content mutations outside the named mutators below
+  // (inline JSX handlers) funnel through the same guard.
+  const mutateProject = (updater) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
+    setProject(updater);
+  };
   const updateItem = (idx, updated) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const next = [...project.items];
     // P-07: hand-edits to sync-managed fields on a linked item become pinned
     // overrides — the next letters->install re-sync leaves them alone.
@@ -289,6 +312,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const addItem = () => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItem = emptyLineItem();
     newItem.materials = defaultMaterialsForItem(newItem, inventory);
     setProject(prev => ({ ...prev, items: [...prev.items, newItem] }));
@@ -296,6 +320,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const removeItem = (idx) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     if (!confirm("Remove this line item and all its materials?")) return;
     const next = [...project.items];
     next.splice(idx, 1);
@@ -303,6 +328,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const duplicateItem = (idx) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const copy = JSON.parse(JSON.stringify(project.items[idx]));
     const next = [...project.items];
     next.splice(idx + 1, 0, copy);
@@ -310,6 +336,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const reorderItems = (from, to) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const next = [...project.items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
@@ -336,6 +363,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const shop = (settings.install_shop_address || "").trim();
     const site = (project.site_address || "").trim();
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — travel miles can't be written anyway
     if (scope === "letters_only") return;
     if (!shop || !site || !hasEquipment) return;
     // Already have miles → nothing to fetch.
@@ -357,7 +385,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       }
     })();
     return () => { cancelled = true; };
-  }, [hasLoaded, hasEquipment, project.site_address, settings.install_shop_address, scope]);
+  }, [hasLoaded, hasEquipment, project.site_address, settings.install_shop_address, scope, proposalFrozen]);
 
   // Auto-suggest equipment when max install height changes (only if user hasn't picked any yet)
   const maxInstallHeight = useMemo(
@@ -366,6 +394,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   );
   useEffect(() => {
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — no auto-fill mutations
     if ((project.selected_equipment || []).length > 0) return; // never auto-overwrite user choice
     if (maxInstallHeight <= 0 || equipmentInventory.length === 0) return;
     const projectLaborHours = recalculated.labor_hours || 0;
@@ -374,12 +403,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const crewSize = (project.personnel || []).length || suggestCrewSize(project.items);
     const rows = suggested.map((inv) => selectedEquipmentFromInventory(inv, projectLaborHours, crewSize));
     setProject((prev) => ({ ...prev, selected_equipment: rows }));
-  }, [maxInstallHeight, equipmentInventory, hasLoaded]);
+  }, [maxInstallHeight, equipmentInventory, hasLoaded, proposalFrozen]);
 
   // Auto-fill personnel when the user enters the Crew & Equipment tab and the crew is empty.
   // Uses the same suggester as the "Auto-Suggest Crew" button, so the result is identical.
   useEffect(() => {
     if (!hasLoaded) return;
+    if (proposalFrozen) return; // accepted — no auto-fill mutations
     if (activeTab !== "crew") return;
     if ((project.personnel || []).length > 0) return; // never overwrite user choice
     if (!project.items || project.items.length === 0) return;
@@ -396,10 +426,11 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const newCrew = suggestPersonnelForProject(project.items, projectLaborHours, rateForRole);
     if (newCrew.length === 0) return;
     setProject((prev) => ({ ...prev, personnel: newCrew }));
-  }, [activeTab, hasLoaded]);
+  }, [activeTab, hasLoaded, proposalFrozen]);
 
   // Apply AI-generated installation items
   const applyAIInstallItems = (aiItems, mode = "append") => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItems = aiItems.map((ai) => {
       const base = emptyLineItem();
       const merged = {
@@ -422,6 +453,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
   // Apply Photo→Estimate result as a new line item
   const applyPhotoEstimate = (result) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     const newItem = emptyLineItem();
     newItem.installation_height_feet = parseFloat(result.estimated_height_feet) || newItem.installation_height_feet;
     newItem.wall_material = result.wall_material || newItem.wall_material;
@@ -439,6 +471,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   // item lands on emptyLineItem with default materials (same convention as
   // applyPhotoEstimate).
   const applyIntakeDraft = (draft) => {
+    if (proposalFrozen) { denyProposalMutation(); return; }
     setProject((prev) => {
       const next = { ...prev };
       for (const [k, v] of Object.entries(draft || {})) {
@@ -1233,7 +1266,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                   project={recalculated}
                   categorize={categorizeChannelLetterProject}
                   accentColor="purple"
-                  onTierChange={(tier) => setProject((prev) => ({
+                  onTierChange={(tier) => mutateProject((prev) => ({
                     ...prev,
                     customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
                   }))}
@@ -1302,7 +1335,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         mode={templateMode}
         onClose={() => setTemplateMode(null)}
         project={project}
-        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        onApply={(data) => mutateProject((prev) => ({ ...prev, ...data }))}
         moduleKey="channel_letters"
         title="Channel Letter"
         buildTemplateData={buildChannelLetterTemplateData}
