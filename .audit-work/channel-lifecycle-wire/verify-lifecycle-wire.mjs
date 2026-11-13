@@ -74,5 +74,34 @@ const copied = { ...acceptedProject, project_name: "X (Copy)" };
 for (const f of new Set(clientStrip)) delete copied[f];
 ok(copied.proposal_accepted === undefined && copied.pricing_basis_snapshot === undefined, "copy produces a draft, not a second acceptance");
 
+// --- P-11 hard-freeze: adapter guard helpers -------------------------------
+const { isProposalAccepted, patchOnlyTouchesLifecycle } = M;
+ok(isProposalAccepted(acceptedProject) === true, "isProposalAccepted: accepted true");
+ok(isProposalAccepted(draft) === false && isProposalAccepted(null) === false, "isProposalAccepted: draft/null false");
+ok(patchOnlyTouchesLifecycle({ proposal_accepted: true, proposal_accepted_by: "u", proposal_accepted_at: "t", pricing_basis_snapshot: {}, proposal_reopened_reason: null }), "accept patch is lifecycle-only");
+ok(patchOnlyTouchesLifecycle({ proposal_accepted: false, prior_acceptance: {}, proposal_reopened_reason: "r", pricing_basis_snapshot: null }), "reopen patch is lifecycle-only");
+ok(!patchOnlyTouchesLifecycle({ items: [] }), "items patch refused");
+ok(!patchOnlyTouchesLifecycle({ client_name: "x" }), "client_name patch refused");
+ok(!patchOnlyTouchesLifecycle({ letter_purchases: [] }), "letter_purchases patch refused");
+ok(!patchOnlyTouchesLifecycle({ customer_pricing: { tier_number: 1 } }), "tier patch refused");
+ok(patchOnlyTouchesLifecycle({ updated_date: "t" }), "updated_date stamp allowed");
+ok(!patchOnlyTouchesLifecycle({ items: [], proposal_accepted: false }), "mixed lifecycle+content patch refused");
+ok(LIFECYCLE_FIELDS.every((f) => patchOnlyTouchesLifecycle({ [f]: 1 })), "patch allowlist covers every lifecycle field");
+
+// --- P-11 hard-freeze: page enforcement ------------------------------------
+ok(page.includes("isProposalAccepted") && page.includes("patchOnlyTouchesLifecycle"), "page imports freeze helpers");
+ok(page.includes("proposalFrozen") && page.includes("denyProposalMutation") && page.includes("useToast"), "page wires frozen state + denial feedback");
+ok(/const updateProject = \(patch\) => \{\s*if \(proposalFrozen && !patchOnlyTouchesLifecycle\(patch\)\)/.test(page), "updateProject refuses non-lifecycle patches while frozen");
+const guardedFns = ["updateItem", "addItem", "removeItem", "duplicateItem", "reorderItems", "applyAIInstallItems", "applyPhotoEstimate", "applyIntakeDraft"];
+for (const fn of guardedFns) {
+  const m = page.match(new RegExp("const " + fn + " = \\([^)]*\\) => \\{\\s*if \\(proposalFrozen\\) \\{ denyProposalMutation\\(\\); return; \\}"));
+  ok(!!m, fn + " refuses mutations while frozen");
+}
+ok((page.match(/mutateProject\(\(prev\)/g) || []).length >= 2, "inline JSX handlers route through mutateProject");
+ok((page.match(/if \(proposalFrozen\) return;/g) || []).length >= 3, "auto-fill effects skip frozen projects (silent)");
+// load + save-stamp paths must stay unguarded raw setProject calls.
+ok(page.includes("setProject({ ...blankProject(), ...existing"), "load path stays unguarded");
+ok(page.includes("setProject((prev) => ({ ...prev, updated_date: persistedSource.updated_date }))"), "save stamp stays unguarded");
+
 console.log(`\n${fail === 0 ? "PASS" : "FAIL"} verify-lifecycle-wire: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
