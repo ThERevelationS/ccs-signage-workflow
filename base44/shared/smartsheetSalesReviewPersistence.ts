@@ -2,7 +2,7 @@ import { loadAllEntityRows } from './pagedEntityRows.ts';
 
 // Reviews are field/value-specific, not invalidated by unrelated row metadata.
 export async function persistSalesReviews(base44, reviews, assertOwner, loadedReviews = null) {
-  const summary = { added: 0, kept: 0, superseded: 0, dropped_stale: 0 };
+  const summary = { added: 0, kept: 0, superseded: 0, dropped_stale: 0, reopened: 0 };
   if (!reviews.length) return summary;
   const entity = base44.asServiceRole.entities.SyncConflict;
   const ids = [...new Set(reviews.map(r => r.entity_id))];
@@ -28,6 +28,20 @@ export async function persistSalesReviews(base44, reviews, assertOwner, loadedRe
     for (const r of matches) if (r.id !== keep?.id) updates.push({id:r.id,status:'superseded'});
     if (!keep) additions.push(review);
     else summary.kept++;
+  }
+  // Sales conflict keys are value-derived, so a resolved review's key can
+  // recur if the same value pair returns. Upserting over that closed row
+  // would silently reopen a resolved decision; mint a fresh key instead so
+  // each occurrence gets its own review.
+  if (additions.length) {
+    const closed = await loadAllEntityRows({entity,query:{conflict_key:{$in:additions.map(r => r.conflict_key)}},sort:'id',label:'Closed Sales field review keys'});
+    const closedKeys = new Set(closed.map(r => String(r.conflict_key)));
+    for (const review of additions) {
+      if (closedKeys.has(String(review.conflict_key))) {
+        review.conflict_key = String(review.conflict_key) + ':reocc:' + new Date().toISOString();
+        summary.reopened++;
+      }
+    }
   }
   summary.added = additions.length;
   summary.superseded = updates.length;
