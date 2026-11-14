@@ -269,8 +269,26 @@ bucket as every user.
       under the synthetic saturation wave; raised to 3 + redeployed. Sim's
       invoke-cap pressure is ~5.7 POSTs/sec synthetic vs real mounts spread
       over minutes — treats 429s as the ceiling marker, not a regression.
+      **N=25 staggered mount flow 2026-11-14 (`--stagger=2000`, sessions
+      arriving over ~50s, overlapping the 23:00Z File Bridge Maintenance fire):**
+      225 calls → 187×200, 34×429 (15% vs 25% unstaggered), 4×5xx, p50 259ms,
+      p95 9296ms (retry waits), entity ~113/min + the cron job's own reads
+      sharing the bucket. Interpretation: real-world mounts degrade to slower
+      loads with transient 429s that the client retry layer absorbs — the
+      residual fire-minute saturation is cron reads colliding with browser
+      bursts, the one remaining spend class not yet self-paced.
 - [ ] Real-world check: all kiosks + 5 office sessions during a cron
-      fire-minute → no banners.
+      fire-minute → no banners. (Needs Brett's live traffic window — the
+      staggered sim above is the closest solo approximation.)
+- [~] Remaining lever if fire-minute 429s persist in production: pace the
+      scheduled-job readers so cron yields to browser bursts. **STATUS: infra
+      exists — `withEntityRateLimitRetry` `paceMs` serializes calls within an
+      isolate (fileBridgeMaintenance runs `paceMs: 200` = ≤5 reads/s + 15s
+      yield on 429). The residual is INTER-function coordination — no shared
+      budget across isolates (the fleet ledger is local-only). A real fix is
+      a pacer entity row or cron cadence changes (File Bridge every-5min →
+      10min), not a code patch. Revisit only if production shows the staggered
+      15% pattern hurting real users.**
 - [x] Published 2026-11-09T09:15Z checkpoint `6af182a3` (user-authorized
       "ship it"): memo layer all gateways live, mount gates, leader election,
       lazy face-api, instrumentation visible on published route.
