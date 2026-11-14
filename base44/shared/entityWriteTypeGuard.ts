@@ -8,6 +8,14 @@
 import { ENTITY_SCALAR_WRITE_PATHS } from './entityScalarWritePaths.ts';
 
 const coerceLeaf = (declared: string, v: any): any => {
+  // Numeric strings into declared number/integer fields (sweep-found class:
+  // WorkOrder.estimate_amount held "1875.33" on 53 rows). Lossless and safe.
+  if ((declared === 'number' || declared === 'integer') && typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    if (Number.isFinite(n)) return declared === 'integer' ? Math.trunc(n) : n;
+    return v; // non-numeric string — leave for the entity layer to reject
+  }
+  if (declared === 'string' && typeof v === 'number' && Number.isFinite(v)) return String(v);
   if (!Array.isArray(v)) return v;
   if (v.length === 0) return undefined;
   if (v.length > 1) {
