@@ -296,6 +296,20 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   invalid={fieldIssue("total_length_inches") || undefined}
                   describedBy={fieldIssue("total_length_inches") ? describedBy : undefined}
                 />
+                {/* O-062 (CMP-E07) -- anchor_assembly: the pole's anchor-bolt
+                    pattern (count / bolt circle / embedment). Authored; blank
+                    = "not recorded" (the diagnostics hold it), never an
+                    invented pattern. */}
+                <label className="text-xs text-gray-500">
+                  Anchor assembly
+                  <input
+                    type="text" placeholder="4 bolts, 6&quot; circle"
+                    value={pole.anchor_assembly ?? ""}
+                    onChange={(e) => patchPole(index, { anchor_assembly: e.target.value === "" ? undefined : e.target.value })}
+                    className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                    aria-label={`Pole ${index + 1} anchor-bolt pattern`}
+                  />
+                </label>
               </div>
 
               <div className="flex items-center justify-between mt-2">
@@ -319,7 +333,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   <span>Paint {hasFoundationCostSnapshot(pole.pole_painting_cost) ? money(pole.pole_painting_cost) : "Not saved"}</span>
                   <span className="font-bold text-gray-900 text-sm">{hasFoundationCostSnapshot(pole.total_cost) ? money(pole.total_cost) : "Not saved"}</span>
                   {pricingUnavailable && <span className="col-span-full text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
-                  <Button variant="ghost" size="icon" onClick={() => removePole(index)}>
+                  <Button variant="ghost" size="icon" aria-label={`Remove pole ${index + 1}`} onClick={() => removePole(index)}>
                     <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                   </Button>
                 </div>
@@ -344,6 +358,27 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                   </p>
                 );
               })()}
+              {/* O-115 (CMP-I14) -- feasible_candidate/dim_range: the
+                  operator's recorded election -- this pole is the feasible
+                  candidate + the recorded feasible range. Authored surfaces;
+                  the advisory above stays the derived check, never silently
+                  applied. */}
+              <label className="mt-0.5 flex items-center gap-1 text-[9px] text-gray-500">
+                <input
+                  type="checkbox" className="h-3 w-3"
+                  checked={pole.feasible_candidate === true}
+                  onChange={(e) => patchPole(index, { feasible_candidate: e.target.checked ? true : undefined })}
+                  aria-label={`Pole ${index + 1} feasible candidate`}
+                />
+                feasible candidate
+                <input
+                  type="text" placeholder="recorded range"
+                  value={pole.dim_range ?? ""}
+                  onChange={(e) => patchPole(index, { dim_range: e.target.value === "" ? undefined : e.target.value })}
+                  className="ml-1 h-4 w-24 rounded-sm border border-gray-300 px-0.5 text-[9px]"
+                  aria-label={`Pole ${index + 1} recorded dim range`}
+                />
+              </label>
               {/* O-060 (CMP-E08)  -  editable sign list on the pole: each sign
                   carries its own dims + mount height; the assembly model
                   normalizes component_ids. */}
@@ -512,6 +547,18 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                             aria-label={`Pole ${index + 1} sign ${si + 1} spans`}
                           />
                         </label>
+                        {/* O-059 (CMP-E04) -- sign_span_count: the recorded
+                            span's pole count, derived from the authored spans
+                            list (read-only -- never a separately authored
+                            number that could disagree with `spans`). */}
+                        {(() => {
+                          const count = String(s.spans ?? "").split(",").map((t) => t.trim()).filter((t) => t !== "").length;
+                          return count > 0 ? (
+                            <span className="text-[9px] text-gray-400" title="sign_span_count -- poles this sign spans">
+                              spans {count} pole{count === 1 ? "" : "s"}
+                            </span>
+                          ) : null;
+                        })()}
                         {/* O-059 (CMP-E04) -- foundation/wall-top mounting:
                             `mount_type` records the mount kind (the default
                             `pole` mount vs a `wall_top`/`foundation` mount --
