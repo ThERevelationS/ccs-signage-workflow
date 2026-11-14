@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { coerceToDeclaredScalars } from '../../shared/entityWriteTypeGuard.ts';
 
 // Session-authenticated write gateway for staff-tier entities. Entity RLS is
 // backend-only now, so every staff-facing mutation flows through this narrow
@@ -213,6 +214,12 @@ Deno.serve(async (req) => {
     const entity = (base44.asServiceRole.entities as any)[entityName];
     if (!entity) throw bad('Unknown record type.');
 
+    // WS-7: normalize array-into-scalar fields (assigned_to: ["name"]) to the
+    // declared type before they can poison reads. Throws 400 on multi-element
+    // arrays so the caller bug surfaces loudly instead of silently truncating.
+    const coercedFields = coerceToDeclaredScalars(entityName, data);
+    if (coercedFields.length) console.log(`staffEntityWrite coerced scalar fields on ${entityName}: ${coercedFields.join(', ')}`);
+
     // Office-authority roles are a fixed vocabulary — a write carrying an
     // unknown role string (typo, merged types) must not land. Keeps
     // electrical issuer/inspector and city/township roles strictly separate.
@@ -339,6 +346,7 @@ Deno.serve(async (req) => {
       rejectOperatorKeys(patch);
       // Identity/system fields are never client-supplied.
       for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      coerceToDeclaredScalars(entityName, patch);
       const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
       return Response.json({ success: true, result });
     }
