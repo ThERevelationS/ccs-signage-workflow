@@ -53,6 +53,35 @@ export default function FoundationDesignBasis({ project, onChange }) {
           </label>
         ))}
       </div>
+      {/* O-120 (CMP-I19) -- license_class/licensed_source: the source's
+          license class + whether the design basis relies on a licensed
+          source. The field package renders both; blank/unset = not recorded. */}
+      <div className="grid grid-cols-2 gap-1.5 mt-2">
+        <label className="block">
+          <span className="text-[10px] font-semibold text-gray-600">License class</span>
+          <input
+            type="text"
+            className="mt-0.5 w-full text-[11px] border border-gray-300 rounded-sm px-1.5 py-0.5"
+            value={db.license_class ?? ""}
+            placeholder="not recorded"
+            title="the license class of the source the design basis relies on"
+            onChange={(e) => set("license_class", e.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="text-[10px] font-semibold text-gray-600">Licensed source</span>
+          <select
+            className="mt-0.5 w-full text-[11px] border border-gray-300 rounded-sm px-1.5 py-0.5 bg-white"
+            value={db.licensed_source === true ? "yes" : db.licensed_source === false ? "no" : ""}
+            title="whether the design basis relies on a licensed engineering source"
+            onChange={(e) => set("licensed_source", e.target.value === "yes" ? true : e.target.value === "no" ? false : undefined)}
+          >
+            <option value="">not recorded</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+      </div>
     </details>
   );
 }
