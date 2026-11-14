@@ -130,6 +130,38 @@
             "type": "integer",
             "description": "Absent or 1 uses legacy reinforcement; 2 uses the explicitly accepted preliminary model. Unsupported versions must not fall back to legacy pricing."
           },
+          "support_class": {
+            "type": "string",
+            "description": "O-111 \u2014 authored support method/class; blank = not recorded"
+          },
+          "support_count": {
+            "type": "number",
+            "description": "B-3 \u2014 projected required support units (reinforcement projection)"
+          },
+          "support_purchased_units": {
+            "type": "number",
+            "description": "B-3 \u2014 projected purchased support units"
+          },
+          "support_packs": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support packs"
+          },
+          "support_material_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support material cost"
+          },
+          "support_labor_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support labor cost"
+          },
+          "support_labor_hours": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support labor hours"
+          },
+          "support_cost": {
+            "type": "number",
+            "description": "B-3 \u2014 projected support total cost"
+          },
           "reinforcement_design": {
             "type": "object",
             "description": "Accepted versioned raw reinforcement geometry. Not engineering approval, structural capacity or a stock purchasing schedule.",
@@ -501,6 +533,18 @@
           "rotation_degrees": {
             "type": "number"
           },
+          "anchor_assembly": {
+            "type": "string",
+            "description": "Lane E \u2014 authored pole anchor-assembly note; blank = not recorded"
+          },
+          "feasible_candidate": {
+            "type": "boolean",
+            "description": "Lane E \u2014 operator-recorded feasible-dimension candidate flag"
+          },
+          "dim_range": {
+            "type": "string",
+            "description": "Lane E \u2014 operator-recorded feasible dimension range note"
+          },
           "signs": {
             "type": "array",
             "items": {
@@ -509,7 +553,8 @@
                 "component_id": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": true
             }
           }
         }
@@ -557,13 +602,30 @@
             "type": "number",
             "default": 0.5
           },
+          "brick_bond_type": {
+            "type": "string",
+            "description": "O-047 \u2014 authored coursing bond kind (running/stack/Flemish/soldier); blank = not recorded"
+          },
+          "corner_return_count": {
+            "type": "number",
+            "description": "O-047 \u2014 operator-recorded corner-return count"
+          },
           "shape": {
             "type": "object",
             "properties": {
               "points": {
                 "type": "array",
                 "items": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": true
                 }
               },
               "closed": {
@@ -576,8 +638,13 @@
                   "properties": {
                     "component_id": {
                       "type": "string"
+                    },
+                    "length": {
+                      "type": "number",
+                      "description": "Segment length in inches (derived from recorded points)"
                     }
-                  }
+                  },
+                  "additionalProperties": true
                 }
               }
             }
@@ -671,6 +738,78 @@
             "type": "number",
             "default": 0,
             "description": "Side-to-side offset from wall centerline (negative = outer side)"
+          },
+          "width_inches": {
+            "type": "number",
+            "description": "Cap width in inches"
+          },
+          "height_inches": {
+            "type": "number",
+            "description": "Cap height in inches"
+          },
+          "elevation_inches": {
+            "type": "number",
+            "description": "Cap elevation above wall top in inches"
+          },
+          "joint_spacing_inches": {
+            "type": "number",
+            "description": "Cap joint spacing in inches"
+          },
+          "joint_width_inches": {
+            "type": "number",
+            "description": "Cap joint width in inches"
+          },
+          "overhang_inches": {
+            "type": "number",
+            "description": "Cap overhang in inches"
+          },
+          "miter_angle_deg": {
+            "type": "number",
+            "description": "Lane E \u2014 authored miter angle (deg) for the cap end"
+          },
+          "purchased_pieces": {
+            "type": "number",
+            "description": "Lane E \u2014 operator-recorded purchased cap piece count"
+          },
+          "cut_labor_cost": {
+            "type": "number",
+            "description": "Cap cut labor cost"
+          },
+          "supplies_cost": {
+            "type": "number",
+            "description": "Cap supplies cost"
+          },
+          "profile": {
+            "type": "string",
+            "description": "Cap profile kind"
+          },
+          "slope": {
+            "type": "string",
+            "description": "Cap slope kind"
+          },
+          "end_treatment": {
+            "type": "string",
+            "description": "Cap end treatment kind"
+          },
+          "cap_anchor_state": {
+            "type": "string",
+            "description": "Lane E \u2014 authored cap anchor state"
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Operator lock on the cap's authored fields"
+          },
+          "offcut_reuse_elected": {
+            "type": "boolean",
+            "description": "Lane E \u2014 operator elected to reuse offcuts"
+          },
+          "reanchor_log": {
+            "type": "array",
+            "description": "Lane E \u2014 recorded bulk re-anchor entries ({at, by, ...})",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
           }
         }
       }
@@ -733,6 +872,14 @@
           "unit_cost": {
             "type": "number",
             "default": 0
+          },
+          "mount_hardware": {
+            "type": "string",
+            "description": "O-061 \u2014 authored cabinet mount hardware kind (bracket/base_plate/anchor/other)"
+          },
+          "mount_hardware_model": {
+            "type": "string",
+            "description": "O-061 \u2014 typed mount model reference"
           }
         }
       }
@@ -741,6 +888,14 @@
       "type": "object",
       "description": "Site landscaping painted on the landscape designer grid. cells maps 'x,y' grid keys to a material key; cell_size_inches is the size of one cell.",
       "additionalProperties": true
+    },
+    "walkthrough_step": {
+      "type": "number",
+      "description": "O-101 \u2014 operator-recorded walkthrough position"
+    },
+    "walkthrough_video_url": {
+      "type": "string",
+      "description": "O-101 \u2014 authored walkthrough video URL"
     },
     "customer_markup_percent": {
       "type": "number",
@@ -993,6 +1148,122 @@
         "basis_locked": {
           "type": "boolean",
           "description": "Operator lock on a captured basis: while true, basis edits require an explicit re-capture confirmation. Stripped when no basis content remains."
+        },
+        "sign_wind": {
+          "type": "string",
+          "description": "O-106 \u2014 authored sign-wind method/source note"
+        },
+        "footing_basis": {
+          "type": "string",
+          "description": "O-107 \u2014 authored footing-bearing method/source note"
+        },
+        "shaft_basis": {
+          "type": "string",
+          "description": "O-108 \u2014 authored drilled-shaft/embedment method/source note"
+        },
+        "lateral": {
+          "type": "string",
+          "description": "O-108 \u2014 authored lateral-load method/source note"
+        },
+        "frost_depth": {
+          "type": "string",
+          "description": "O-110 \u2014 authored frost-depth source note"
+        },
+        "pillar_bar": {
+          "type": "string",
+          "description": "O-111 \u2014 authored pillar-bar method/source note"
+        },
+        "base_plate": {
+          "type": "string",
+          "description": "O-111 \u2014 authored base-plate method/source note"
+        },
+        "cap_detail": {
+          "type": "string",
+          "description": "O-112 \u2014 authored masonry cap detail method/source note"
+        },
+        "basis_reference": {
+          "type": "string",
+          "description": "Lane E \u2014 free-text source citation (e.g. 'ACI 318'); distinct from basis_source enum provenance"
+        },
+        "license_class": {
+          "type": "string",
+          "description": "O-120 \u2014 license class of the source the basis relies on"
+        },
+        "licensed_source": {
+          "type": "boolean",
+          "description": "O-120 \u2014 whether the basis relies on a licensed engineering source"
+        },
+        "bearing": {
+          "type": "string",
+          "description": "Legacy authored footing-bearing note (superseded by footing_basis; preserved for pre-rename records)"
+        },
+        "shaft": {
+          "type": "string",
+          "description": "Legacy authored shaft note (superseded by shaft_basis; preserved for pre-rename records)"
+        },
+        "soil": {
+          "type": "string",
+          "description": "O-109 \u2014 authored soil assumption note"
+        },
+        "groundwater": {
+          "type": "string",
+          "description": "O-109 \u2014 authored groundwater assumption note"
+        },
+        "wind": {
+          "type": "string",
+          "description": "O-109 \u2014 authored wind assumption note"
+        },
+        "concrete": {
+          "type": "string",
+          "description": "O-110 \u2014 authored concrete assumption note"
+        },
+        "rebar": {
+          "type": "string",
+          "description": "O-110 \u2014 authored rebar assumption note"
+        },
+        "cover": {
+          "type": "string",
+          "description": "O-110 \u2014 authored cover assumption note"
+        },
+        "durability": {
+          "type": "string",
+          "description": "O-110 \u2014 authored durability assumption note"
+        },
+        "masonry": {
+          "type": "string",
+          "description": "O-112 \u2014 authored masonry assumption note"
+        },
+        "cap_material": {
+          "type": "string",
+          "description": "O-112 \u2014 authored cap material assumption note"
+        },
+        "coping": {
+          "type": "string",
+          "description": "O-112 \u2014 authored coping assumption note"
+        },
+        "site": {
+          "type": "string",
+          "description": "O-118 \u2014 authored site note"
+        },
+        "signs_loads": {
+          "type": "string",
+          "description": "O-118 \u2014 authored signs/loads note"
+        },
+        "geometry": {
+          "type": "string",
+          "description": "O-118 \u2014 authored geometry note"
+        },
+        "open_questions": {
+          "type": "string",
+          "description": "O-118 \u2014 authored open-questions note"
+        },
+        "quantity_cost_revision": {
+          "type": "string",
+          "description": "O-118 \u2014 authored quantity/cost revision note"
+        },
+        "policy_sensitivity": {
+          "type": "string",
+          "description": "O-118 \u2014 authored policy-sensitivity note"
         }
       }
     },
