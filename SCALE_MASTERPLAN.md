@@ -223,6 +223,15 @@ bucket as every user.
       p50 250ms, p95 1793ms; entity spend ~166/min (memo holds: 0.1-2.0 avg
       calls). The remaining 429s are the platform INVOKE cap (POST count),
       not the entity bucket — WS-3 mount consolidation is the fix.**
+      **N=25 re-run 2026-11-14 (flows added `--flow=kiosk|mount|poll`):**
+      kiosk replay 300 calls → 134×200, 166×429, 0×5xx, entity ~106/min
+      (-36% vs Nov-9 — memos + lite snapshot biting: roster 0.3, status_lite
+      2.5→1.6 avg). mount flow 225 calls → 152×200, **56×429 (-66% vs kiosk
+      replay — the bootstrap consolidation cutting mount POSTs)**, 17×5xx —
+      traced to appBootstrap's session-verify read exhausting maxRetries:1
+      under the synthetic saturation wave; raised to 3 + redeployed. Sim's
+      invoke-cap pressure is ~5.7 POSTs/sec synthetic vs real mounts spread
+      over minutes — treats 429s as the ceiling marker, not a regression.
 - [ ] Real-world check: all kiosks + 5 office sessions during a cron
       fire-minute → no banners.
 - [x] Published 2026-11-09T09:15Z checkpoint `6af182a3` (user-authorized
