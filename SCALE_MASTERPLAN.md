@@ -191,8 +191,12 @@ bucket as every user.
 
 ## WS-5 — Hot-path latency (continue the status parallelization)
 
-- [ ] `clock_in`/`clock_out`/break/labor actions: audit sequential entity reads;
-      batch independent ones like `status` (done: ~10 serial → ~3 waves).
+- [x] `clock_in`/`clock_out`/break/labor actions: **AUDITED 2026-11-14 —
+      already tight.** Punch paths were parallelized previously (Promise.all
+      waves + version-stamped memos; the status prompt correctly stays
+      sequential since it depends on the loaded entry). Rejected the
+      finalized-period scan memo — 1 call saved wasn't worth a freshness
+      window on a mutable payroll-admission gate.
 - [ ] `boardFeed`/`queueFeed`/`staffDataRead` internals: same treatment where
       reads are independent.
 - [x] `monitor_stale_shifts` (Time Clock cron): reads only clocked-in
@@ -213,11 +217,26 @@ bucket as every user.
 
 ## WS-7 — Data hygiene (the "one bad row breaks a batch" class)
 
-- [ ] Validation sweep script: scan every entity for values that violate its
-      schema (like the `assigned_to: ["name"]` array-vs-string case) BEFORE
-      they poison a batch write. Fix list → CAS repairs.
-- [ ] Write-time coercion guards in `staffEntityWrite` for the known offender
-      shapes (tasks/work_notes nested `assigned_to`).
+- [x] Validation sweep — **DONE 2026-11-14** (`scripts/validate-entity-values.mjs`,
+      paced through the fleet ledger, fix list → `.audit-work/schema-violations.json`):
+      **233 entities, 90,287 rows → 53 violations, one class** —
+      `WorkOrder.estimate_amount` held numeric strings ("1875.33") in a declared
+      `number` field. Repaired via `scripts/repair-schema-violations.mjs` — each
+      fix CAS-anchored on a fresh `updated_date` re-read (53/53 fixed, 0 failed,
+      re-sweep 0/3,189). The historical `assigned_to:["name"]` bug has zero
+      live instances.
+- [x] Write-time coercion guard — **DEPLOYED 2026-11-14**
+      (`base44/shared/entityWriteTypeGuard.ts` + generated
+      `entityScalarWritePaths.ts`, wired into `staffEntityWrite` on create/
+      update/updateMany paths): declared-scalar fields receiving arrays unwrap
+      single-element, drop empty, and **400-reject multi-element** (loud, no
+      silent truncation); numeric strings coerce to number/integer, numbers
+      coerce to string. Regenerate the map after entity changes:
+      `node scripts/gen-write-scalar-paths.mjs`. Verified live: probe returns
+      the guard's 400 message; unit tests 14/14. NOTE: `functions deploy`
+      propagation runs ~20-60min behind (isolate cache) — probes can read as
+      old-bundle for a while. `functions pull` corrupts `function.jsonc`
+      (entry path) — fix to `"entry": "entry.ts"` before re-deploying.
 
 ## WS-8 — Verification gates
 
