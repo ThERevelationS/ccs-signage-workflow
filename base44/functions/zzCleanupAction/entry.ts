@@ -34,7 +34,8 @@ const isZz = (row: any) => {
 // Dependency order — children before parents (Z-04 runbook).
 const CLEANUP_ORDER = ['Payment', 'Invoice', 'ChangeOrder', 'PurchaseOrder', 'PermitLineItem', 'WorkOrder',
   'EstimateAcceptance', 'AllInOneEstimate', 'EstimatingRequest', 'OpportunityIntake', 'Opportunity',
-  'CustomerContact', 'CustomerLocation', 'Customer', 'OpportunityActivity', 'GeneralTask'];
+  'CustomerContact', 'CustomerLocation', 'Customer', 'OpportunityActivity', 'GeneralTask',
+  'FoundationProject'];
 
 async function scanEntityRows(entity: any, query: any = null) {
   const rows: any[] = [];
