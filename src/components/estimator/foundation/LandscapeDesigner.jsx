@@ -62,6 +62,8 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
   const cellHint = foundationDimensionInputIssue(landscape?.cell_size_inches);
 
   const paint = (x, y) => {
+    // O-069 landscape_lock: a locked design refuses cell edits.
+    if (landscape?.locked === true) return;
     const key = `${x},${y}`;
     const base = strokeRef.current ?? (strokeRef.current = { ...cells });
     if (brush === "dirt") delete base[key];
@@ -98,7 +100,7 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
   // perimeter with the current brush in ONE commit (same cell contract as
   // free painting -- the edging is just a painted perimeter ring).
   const edge = () => {
-    if (brush === "dirt" || brush == null) return;
+    if (landscape?.locked === true || brush === "dirt" || brush == null) return;
     const next = { ...(strokeRef.current ?? cells) };
     for (let x = 0; x < GRID_COLS; x++) { next[`${x},0`] = brush; next[`${x},${GRID_ROWS - 1}`] = brush; }
     for (let y = 0; y < GRID_ROWS; y++) { next[`0,${y}`] = brush; next[`${GRID_COLS - 1},${y}`] = brush; }
@@ -106,6 +108,7 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
   };
 
   const flood = (x, y) => {
+    if (landscape?.locked === true) return;
     const target = cells[`${x},${y}`] || "";
     if (target === (brush === "dirt" ? "" : brush)) return; // already the brush value
     const region = [];
@@ -182,6 +185,29 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
               />
             </label>
           ))}
+          {/* O-069 (CMP-F02) -- landscape_layer/landscape_lock: the design's
+              recorded layer name + the lock flag. Locked designs refuse
+              paint/edge/fill edits; layer is a recorded surface, never
+              consumed by pricing. */}
+          <label className="text-[10px] text-gray-500">
+            Layer
+            <input
+              type="text" placeholder="base"
+              value={landscape?.layer ?? ""}
+              onChange={(e) => onChange({ ...landscape, layer: e.target.value === "" ? undefined : e.target.value })}
+              className="ml-1 h-7 w-16 rounded-sm border border-gray-300 px-1 text-[11px]"
+              aria-label="Landscape layer"
+            />
+          </label>
+          <label className="text-[10px] text-gray-500 flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={landscape?.locked === true}
+              onChange={(e) => onChange({ ...landscape, locked: e.target.checked ? true : undefined })}
+              aria-label="Landscape locked"
+            />
+            Locked
+          </label>
           {/* O-069 (CMP-F02) -- count-priced objects: `landscape.objects[]`
               rows {type, qty} bill qty x the catalog object's unit_cost. A
               malformed row holds its line in the summary -- never a silent $0. */}
