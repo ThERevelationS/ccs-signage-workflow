@@ -718,7 +718,7 @@ export const FOUNDATION_METHOD_WORKED_EXAMPLES = Object.freeze([
     domain: "pole embedment",
     inputs: { height_inches: 120, pole_diameter_inches: 8 },
     derivation: "embedment = ceil(height * embedment_min_ratio); shaft_diameter = ceil(pole_dia * shaft_diameter_min_ratio)",
-    output: { embedment_inches: 42, shaft_diameter_inches: 10 },
+    output: { embedment_inches: 40, shaft_diameter_inches: 16 },
     note: "the domain's ratios applied to the authored height/diameter -- inside the documented domain, never an unexplained multiplier",
   },
   {
