@@ -1853,9 +1853,16 @@ async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEn
     'user_email',
     'Clocked-in employee states',
   );
-  const missedClockOutCases = await loadAllFilteredRows(
+  // Dedupe lookups only ever consult case_keys of currently-stale entries —
+  // bound the read to exactly those keys instead of paging the whole
+  // exception table every run (it grows forever). $in keeps the duplicate
+  // detection identical: multiple rows for a key still surface as conflicts.
+  const staleCaseKeys = activeEntries
+    .map((entry: any) => `missed_clock_out:${String(entry?.id || '')}`)
+    .filter((key: string) => key.length > 'missed_clock_out:'.length);
+  const missedClockOutCases = staleCaseKeys.length === 0 ? [] : await loadAllFilteredRows(
     punchExceptionEntity,
-    { exception_type: 'missed_clock_out' },
+    { exception_type: 'missed_clock_out', case_key: { $in: staleCaseKeys } },
     '-detected_at',
     'Missed Clock Out punch exceptions',
   );
