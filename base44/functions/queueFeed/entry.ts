@@ -432,8 +432,14 @@ Deno.serve(async (req) => {
     // its own gateway reads for exactly the missing slice (fail-open).
     const extrasErrors: Record<string, string> = {};
 
+    // The items scan and every requested extra are independent reads writing
+    // distinct payload keys — they run concurrently so a mount that asks for
+    // several extras pays one round-trip instead of up to ~8 serial ones.
+    const jobs: Array<() => Promise<void>> = [];
+
     // --- items: the page's row set -------------------------------------------
     if (wantItems) {
+      jobs.push(async () => {
       const query: Record<string, any> = {};
       if (since) query.updated_date = { $gte: since };
 
@@ -497,10 +503,12 @@ Deno.serve(async (req) => {
       payload.count = pageItems.length;
       payload.truncated = scanned.truncated || cappedByLimit;
       payload.next_cursor = nextCursor;
+      });
     }
 
     // --- extras: the page's mount-time scoped reads ---------------------------
     if (include.includes('saved_views')) {
+      jobs.push(async () => {
       try {
         const rows = queueLens
           ? await loadScopedRows(entities.SavedQueueView, { queue_lens: queueLens }, 'created_date')
@@ -512,8 +520,10 @@ Deno.serve(async (req) => {
         extrasErrors.saved_views = e?.message || 'Saved views could not be loaded.';
         payload.saved_views = null;
       }
+      });
     }
     if (include.includes('settings')) {
+      jobs.push(async () => {
       try {
         const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_STAGE_MODE });
         if (!Array.isArray(rows)) throw new Error('Setting lookup did not return a record list.');
@@ -525,8 +535,10 @@ Deno.serve(async (req) => {
         extrasErrors.settings = e?.message || 'Queue settings could not be loaded.';
         payload.settings = null;
       }
+      });
     }
     if (include.includes('customers')) {
+      jobs.push(async () => {
       try {
         const rows = await scanProjectedRows(
           entities.Customer, {}, CRM_CUSTOMER_FIELDS, projectCrmCustomer, { maxRows: MAX_ROWS },
@@ -537,8 +549,10 @@ Deno.serve(async (req) => {
         extrasErrors.customers = e?.message || 'Customers could not be loaded.';
         payload.customers = null;
       }
+      });
     }
     if (include.includes('quote_defaults')) {
+      jobs.push(async () => {
       try {
         const rows = await entities.QuoteDefaults.filter({ config_name: 'default' }, undefined, 1);
         const row = Array.isArray(rows) ? rows[0] : null;
@@ -547,8 +561,10 @@ Deno.serve(async (req) => {
         extrasErrors.quote_defaults = e?.message || 'Quote defaults could not be loaded.';
         payload.quote_defaults = null;
       }
+      });
     }
     if (include.includes('users')) {
+      jobs.push(async () => {
       try {
         // The page's unfiltered AuthorizedEmail pull — the assignee pickers
         // need the whole roster, projected down to the five fields they read.
@@ -561,8 +577,10 @@ Deno.serve(async (req) => {
         extrasErrors.users = e?.message || 'The user directory could not be loaded.';
         payload.users = null;
       }
+      });
     }
     if (include.includes('dropdown_conditions')) {
+      jobs.push(async () => {
       try {
         const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_DROPDOWN_CONDITIONS });
         if (!Array.isArray(rows)) throw new Error('Setting lookup did not return a record list.');
@@ -572,8 +590,10 @@ Deno.serve(async (req) => {
         extrasErrors.dropdown_conditions = e?.message || 'Dropdown conditions could not be loaded.';
         payload.dropdown_conditions = null;
       }
+      });
     }
     if (include.includes('task_descriptions')) {
+      jobs.push(async () => {
       try {
         const rows = await entities.GlobalSettings.filter({ setting_key: SETTINGS_KEY_TASK_DESCRIPTIONS });
         if (!Array.isArray(rows)) throw new Error('Setting lookup did not return a record list.');
@@ -583,7 +603,10 @@ Deno.serve(async (req) => {
         extrasErrors.task_descriptions = e?.message || 'Task descriptions could not be loaded.';
         payload.task_descriptions = null;
       }
+      });
     }
+
+    await Promise.all(jobs.map((run) => run()));
 
     payload.projected_fields = {
       items:
