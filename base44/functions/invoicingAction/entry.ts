@@ -1203,7 +1203,7 @@ Deno.serve(async (req) => {
           .map((li: any) => ({ itemId: clean(li?.inventory_item_id || li?.item_id), qty: num(li?.quantity) }))
           .filter((r: any) => r.itemId && r.qty > 0);
         if (restockable.length === 0) {
-          restock.note = "No restock performed: invoice line items do not reference inventory items, so no stock could be returned. TODO: when line items carry inventory_item_id, refunds write InventoryMovement return rows automatically.";
+          restock.note = "No restock performed: these invoice lines carry no inventory_item_id/item_id linkage (aggregate billing milestones, not per-product lines). The movement-write path is live — when a line carries the linkage, the refund returns stock automatically.";
         } else {
           const Inventory = base44.asServiceRole.entities.Inventory;
           const Movement = base44.asServiceRole.entities.InventoryMovement;
