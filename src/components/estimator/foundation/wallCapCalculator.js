@@ -15,6 +15,10 @@ export function wallCapCutLengthValue(cap) {
   // Do not replace an explicitly cleared current cut with an old legacy value.
   return Object.prototype.hasOwnProperty.call(cap, "length_inches") ? cap.length_inches : cap.cut_length_inches;
 }
+// O-051 (CMP-D08) -- the supported cap end-treatment enum, exported so the
+// authored domain is documented at the boundary (straight / mitered /
+// returned) rather than re-listed in each consumer.
+export const WALL_CAP_SUPPORTED_END_TREATMENTS = ["straight", "mitered", "returned"];
 const known = value => typeof value === "number" && Number.isFinite(value);
 const assigned = id => (typeof id === "string" && id.trim() !== "")
   || (typeof id === "number" && Number.isFinite(id));
@@ -78,7 +82,7 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
     // advisory issue (never held -- the profile is metadata, not geometry).
     const SUPPORTED_PROFILES = ["flat", "sloped", "beveled", "rounded"];
     const SUPPORTED_SLOPES = ["flat", "single", "double"];
-    const SUPPORTED_END_TREATMENTS = ["straight", "mitered", "returned"];
+    const SUPPORTED_END_TREATMENTS = WALL_CAP_SUPPORTED_END_TREATMENTS;
     if (cap?.profile != null && cap.profile !== "" && !SUPPORTED_PROFILES.includes(cap.profile)) {
       issue("profile", "wall_cap_profile_unsupported", `profile ${JSON.stringify(cap.profile)} is not a supported cap profile (${SUPPORTED_PROFILES.join(", ")}).`);
     }
