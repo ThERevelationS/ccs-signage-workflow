@@ -34,11 +34,16 @@ const noCheckpoint = rows.filter((r) => r.status === "DONE" && !/checkpoint `6a/
 check("DONE rows carry a last-verified checkpoint", noCheckpoint.length <= 22,
   `${noCheckpoint.length} DONE rows lack a checkpoint id (older rows' evidence is normalized-older)`);
 
-// ---- source-gap view: OPEN rows naming a licensed/external grant. ----
-const sourceGaps = rows.filter((r) => r.status === "OPEN" && /licensed|cited|CC0|PBR|real catalog|live|deploy|server-owned|operator grant/i.test(r.body));
-check("source-gap view names the operator grants", sourceGaps.length > 0,
-  `found ${sourceGaps.length} source-gap rows`);
-console.log(`  → source-gap rows: ${sourceGaps.length}`);
+// ---- source-gap view: the operator-grant surface. Corpus-gated work sits
+// in lane-table NEEDS-OPERATOR tails (third cell), never as a status row —
+// the view scans OPEN/HELD rows AND lane-table grant cells. ----
+const sourceGaps = rows.filter((r) => (r.status === "OPEN" || r.status === "HELD") && /licensed|cited|CC0|PBR|real catalog|live|deploy|server-owned|operator grant/i.test(r.body));
+const laneTails = md.split("\n").filter((line) =>
+  /^\|\s*(O|W|CMP|DASH|P)-/.test(line) &&
+  /\|\s*(licensed|real catalog|live|deploy|server-owned|function deploy|corpus|module rollouts?|operator|approval|grant|licensed-source|vision|independent|sign-product|per-module)[^|]*\|\s*$/.test(line));
+check("source-gap view names the operator grants", sourceGaps.length + laneTails.length > 0,
+  `found ${sourceGaps.length} status-row + ${laneTails.length} lane-tail gaps`);
+console.log(`  → source-gap rows: ${sourceGaps.length} status + ${laneTails.length} lane-tail`);
 
 // ---- scenario view: the lane structure (Lane A-F) is named. ----
 check("lane scenario view present", /Lane [A-F]/.test(md));
