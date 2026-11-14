@@ -321,15 +321,22 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             ["Code edition", db.code_edition],
             ["Jurisdiction", db.jurisdiction],
             ["Basis source", db.basis_source],
-            // O-103 (CMP-I02) -- citation-class display: when `basis_source`
+            // The citation text is `basis_reference` (the O-104 boundary owns
+            // `basis_source` as enum provenance). Pre-rename records may carry
+            // a free-text value in basis_source — a non-enum value there is a
+            // legacy citation, surfaced as the reference.
+            ["Basis reference", db.basis_reference ?? (typeof db.basis_source === "string" && !["manual", "official_report", "api"].includes(db.basis_source) ? db.basis_source : null)],
+            // O-103 (CMP-I02) -- citation-class display: when the reference
             // names a register id (CMP-SUP-*), the source's authority class
             // surfaces alongside (a shop assumption never reads as adopted code).
-            ["Basis source class", typeof db.basis_source === "string" && db.basis_source ? (() => {
+            ["Basis source class", (() => {
+              const ref = db.basis_reference ?? (typeof db.basis_source === "string" && !["manual", "official_report", "api"].includes(db.basis_source) ? db.basis_source : null);
+              if (typeof ref !== "string" || !ref) return null;
               try {
-                const cls = foundationSourceAuthorityClass(db.basis_source.trim());
+                const cls = foundationSourceAuthorityClass(ref.trim());
                 return cls ? foundationSourceClassLabel(cls) : null;
               } catch { return null; }
-            })() : null],
+            })()],
             // Lane E -- license_class/licensed_source: the source's license
             // class (a licensed standard vs a shop assumption) + whether the
             // source is licensed travel to the field; blank = "not recorded".
@@ -359,8 +366,12 @@ export default function FoundationFieldPackage({ project, calc, revision = null,
             // authored sign-wind/footing/shaft basis travel to the field
             // alongside the material rows; blank = "not recorded".
             ["Sign wind", db.sign_wind],
-            ["Footing basis", db.footing_basis],
-            ["Shaft basis", db.shaft_basis],
+            // bearing/shaft are the pre-rename authored keys — a record saved
+            // before the rename still surfaces its note under the right label.
+            ["Footing basis", db.footing_basis ?? db.bearing],
+            ["Shaft basis", db.shaft_basis ?? db.shaft],
+            ["Lateral basis", db.lateral],
+            ["Cap detail", db.cap_detail],
             // O-111 (CMP-I10) -- pillar-bar/base-plate fields: authored
             // pillar/base-plate basis travels to the field alongside the
             // method rows; blank = "not recorded".
