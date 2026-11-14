@@ -706,24 +706,24 @@ paid AI call, inventory seeding or unrelated-module write occurred.
 
 Remaining open items in dependency order. Each is worked the standard cycle: fresh remote pull → candidate → verify (model assertions + esbuild + stub-render where applicable) → transport (exact readback) → remote esbuild/npm-checkpoint → ledger update. Session runs continuously; checkpoints are the resume points.
 
-**Lane 1 — foundation scene/render cluster (active):**
-1. `O-034` remainders — properties-panel sync, elevation/3D highlight sync (needs `highlightComponentIds`-style prop on `Foundation3DPreview`)
-2. `O-029` remainder — exploded/section views (`foundationReinforcementPreview3D`/`ThreePreview`)
-3. `O-032` — elevation/3D parity for measured placement
-4. `O-033` — render foundations/masonry/caps/poles/signs/reinforcement/supports/landscape
-5. `O-037` — layer visibility, locked layers, isolation, transparent concrete
-6. `O-041` — renderer lifecycle (dispose, resize/fullscreen, WebGL loss, demand render)
-7. `O-042` — conflict/clearance diagnostics + click-to-object navigation
-8. `O-043` — export labeled plan/elevations/assembly details/BOM/presentation images
-9. `O-093` remainders — dimensional diagram, `FoundationToolbar.onHelp` toggle
+**Lane 1 — foundation scene/render cluster (active):** *(audit 2026-11-14 — all nine entries verified landed in code; this list predates the sweeps and is kept as the work-order record. Status lives on the lane tables/status rows, never here.)*
+1. `O-034` remainders — properties-panel sync, elevation/3D highlight sync — **landed**: `Foundation3DPreview` accepts `highlightComponentIds`; meshes carry `component_id` and swap to the shared highlight material on select (properties-panel ↔ 3D sync).
+2. `O-029` remainder — exploded/section views — **landed**: `exploded` toggle + `section` elevation clip-plane + `sectionBelow` below-grade view + `cutawayX` slider; rebar rides `foundationReinforcementPreview3D`.
+3. `O-032` — elevation/3D parity for measured placement — **landed**: `ElevationStrip` side-profile companion (front/side toggle) draws items/poles/cabinets in the same measured x/z space; 3D anchors on authored `x_inches`/`z_inches`.
+4. `O-033` — render foundations/masonry/caps/poles/signs/reinforcement/supports/landscape — **landed**: items, wall shape-point extrusion, wall_caps, signage_cabinets, poles, multi-face signs, rebar preview, landscape cells + objects all draw.
+5. `O-037` — layer visibility, locked layers, isolation, transparent concrete — **landed**: `FoundationLayoutCanvas` per-collection show/hide + lock + `data-layer-op="isolate"` + `transparentConcrete` toggle.
+6. `O-041` — renderer lifecycle — **landed**: `disposeObject` (geometries+materials), resize listener, `requestFullscreen` button, `webglcontextlost` handler + `glFailed` amber fallback, demand-driven render (rAF coalesce, no continuous loop), lazy mount behind "Show 3D View".
+7. `O-042` — conflict/clearance diagnostics + click-to-object navigation — **landed**: scene diagnostics (`pole-clash`, `cap-miter-overlap`, `foundation_overlaps` etc.) + click-to-focus: clicking a finding selects and centers the object it names; ElevationStrip rows `onSelect` into selection.
+8. `O-043` — export labeled plan/elevations/assembly details/BOM/presentation images — **landed**: `foundationPlanExport.js` `buildFoundationPlanSvg`/`buildFoundationElevationSvg`/`buildFoundationBomSvg` (authored labels only, missing placement skipped); "Presentation" concept-only render toggle.
+9. `O-093` remainders — dimensional diagram, `FoundationToolbar.onHelp` toggle — **landed**: dimensional diagram renders on the card; `onHelp` wired to the toolbar (walkthrough fields authorable — `walkthrough_step`/`walkthrough_video_url`).
 
 **Lane 2 — scene geometry clusters:**
-`O-044`–`O-055` (walls/caps) → `O-058`–`O-067` (poles/signs/mounts) → `O-068`–`O-077` (landscape + asset manifest) → `O-078`–`O-091` (AI intake/brief/proposals) → `O-092` (guided wizard), `O-094`–`O-095`, `O-097`–`O-101` (UX tail)
+`O-044`–`O-055` (walls/caps) → `O-058`–`O-067` (poles/signs/mounts) → `O-068`–`O-077` (landscape + asset manifest) → `O-078`–`O-091` (AI intake/brief/proposals) → `O-092` (guided wizard), `O-094`–`O-095`, `O-097`–`O-101` (UX tail). *(audit 2026-11-14 — bounded subunits landed across the Lane D/E sweep; per-item status lives on the lane tables above. External tails: O-063 catalog-entity design call, O-084 vision pass needs real photos.)*
 
 **Lane 3 — engineering/research cluster:**
-`O-015`–`O-021` remainders (rebar placement/presets/engineering gates), `O-102`–`O-121` (source register, methods research, worked examples, sensitivity, design-basis, licensing, version updates)
+`O-015`–`O-021` remainders (rebar placement/presets/engineering gates), `O-102`–`O-121` (source register, methods research, worked examples, sensitivity, design-basis, licensing, version updates). *(audit 2026-11-14 — O-015–O-021's B-2 cluster landed: `foundationReinforcement*` editor/proposal/cut-schedule/supports/3D-preview/BOM/work-order-part chain + `reinforcement_acceptance` field flow all present; engineering acceptance stays corpus-gated. O-102–O-121's bounded subunits landed in the Lane A/D/E sweeps; external tails: licensed corpora O-106–O-112/W-023/O-120, O-114 independent reproduction, O-121 live affected-list — no live project carries `policy_version` yet.)*
 
-**Lane 4 — earlier open items:** `O-004`, `O-007`–`O-014` remainders (draft persistence tail, save/copy, field normalization, catalog integrity tail, totals reconciliation, builder extraction, handoff, RLS, silent-failure tail)
+**Lane 4 — earlier open items:** `O-004`, `O-007`–`O-014` remainders (draft persistence tail, save/copy, field normalization, catalog integrity tail, totals reconciliation, builder extraction, handoff, RLS, silent-failure tail). *(audit 2026-11-14 — all eight rows `[DONE]`; in-row remainders resolved by their own VERIFIED subunit entries or held on live-authorization evidence gates; the O-012 live run + `live-lineage` 4/4 idempotent/lineage probes covered the live-evidence grants.)*
 
 ---
 - [x] `O-001` **[DONE]** (`CMP-A01`) Fix Save & Exit so failed or partial saves keep the editor open with a recoverable error. Technical evidence: checkpoint `6aec82410d2ab0bd55cc306d`, compiled-page and isolated-browser failure/partial/retry checks; release/RLS are separate gates. **stage: complete**
