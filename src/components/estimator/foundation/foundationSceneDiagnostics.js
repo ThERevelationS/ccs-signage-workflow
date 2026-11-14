@@ -270,6 +270,16 @@ export function foundationSceneDiagnostics(scene) {
             `Pole ${i + 1} sign ${si + 1} claims a "${signMount}" mount but lives on a pole -- the mount type and the pole context disagree.`,
             [poleId]);
         }
+        // O-063 (CMP-E08) -- linked_product_missing: the sign's linked
+        // product reference points at no item in the scene -- a dangling
+        // linkage (never silently dropped, always surfaced).
+        const linked = s?.linked_product_id;
+        if (typeof linked === "string" && linked !== ""
+            && !items.some((it) => it?.component_id === linked)) {
+          push("warning", "linked-product-missing",
+            `Pole ${i + 1} sign ${si + 1}'s linked product no longer exists -- relink it or clear the link.`,
+            [poleId]);
+        }
       });
     }
     // Lane D -- anchor_assembly: the pole's anchor-bolt pattern/embedment is
@@ -305,6 +315,31 @@ export function foundationSceneDiagnostics(scene) {
       }
     }
   });
+
+  // O-058 (CMP-E03) -- pole_clash: two poles whose plan positions sit closer
+  // than the sum of their radii physically overlap -- a clash, not an authored
+  // spacing. Poles without a recorded diameter use no radius (held -- never an
+  // invented bore).
+  {
+    const diaOf = (p) => Number(p?.diameter_inches) || Number(p?.cross_section?.diameter) || 0;
+    for (let a = 0; a < poles.length; a += 1) {
+      const pa = poles[a], ax = Number(pa?.x_inches), az = Number(pa?.z_inches);
+      if (!Number.isFinite(ax) || !Number.isFinite(az)) continue;
+      const ra = diaOf(pa) / 2;
+      for (let b = a + 1; b < poles.length; b += 1) {
+        const pb = poles[b], bx = Number(pb?.x_inches), bz = Number(pb?.z_inches);
+        if (!Number.isFinite(bx) || !Number.isFinite(bz)) continue;
+        const minDist = ra + diaOf(pb) / 2;
+        if (minDist <= 0) continue;
+        const dist = Math.hypot(ax - bx, az - bz);
+        if (dist < minDist - 0.01) {
+          push("warning", "pole-clash",
+            `Poles ${a + 1} and ${b + 1} are ${Math.round(dist)}" apart but their diameters need ${Math.round(minDist)}" -- the bores physically overlap; move one.`,
+            [sceneNodeId.pole(layoutItemKey(pb, b))]);
+        }
+      }
+    }
+  }
 
   // -- caps + cabinets: mount references must resolve -------------------
   caps.forEach((cap, i) => {
@@ -345,6 +380,33 @@ export function foundationSceneDiagnostics(scene) {
         [capId]);
     }
   });
+  // Lane D -- cap_miter_overlap: two caps on the same segment whose pieces
+  // overlap are flagged for review -- the cut list treats the overlap as an
+  // intentional miter joint, but each piece still bills a full stock length,
+  // so an overlap can double-count covered length.
+  {
+    const bySegment = new Map();
+    caps.forEach((cap, i) => {
+      const segId = cap?.segment_component_id;
+      const pos = Number(cap?.position_along_segment_inches);
+      const len = Number(cap?.length_inches ?? cap?.cut_length_inches);
+      if (!segId || !Number.isFinite(pos) || !Number.isFinite(len) || len <= 0) return;
+      if (!bySegment.has(segId)) bySegment.set(segId, []);
+      bySegment.get(segId).push({ cap, i, pos, end: pos + len });
+    });
+    bySegment.forEach((pieces) => {
+      pieces.sort((a, b) => a.pos - b.pos);
+      for (let k = 1; k < pieces.length; k += 1) {
+        const prev = pieces[k - 1], cur = pieces[k];
+        const overlap = prev.end - cur.pos;
+        if (overlap > 0.01) {
+          push("warning", "cap-miter-overlap",
+            `Wall caps ${prev.i + 1} + ${cur.i + 1} overlap by ${Math.round(overlap)}" on their segment -- verify the miter joint; each piece still bills a full stock length.`,
+            [sceneNodeId.wallCap(layoutItemKey(cur.cap, cur.i))]);
+        }
+      }
+    });
+  }
   cabinets.forEach((cab, i) => {
     const cabId = sceneNodeId.cabinet(layoutItemKey(cab, i));
     const parent = reparentParentOf(scene, "cabinet", cab);
@@ -364,6 +426,16 @@ export function foundationSceneDiagnostics(scene) {
       if (!poleParent?.componentId) {
         push("warning", "engineering-review", `Cabinet ${i + 1} hangs on a pole with no foundation mount -- the load path needs engineering review.`, [cabId]);
       }
+    }
+    // O-062 (CMP-E07) -- hardware_unsupported: the authored mount-hardware
+    // kind must be in the supported set (bracket / base_plate / anchor /
+    // other). Anything else -- usually an imported or legacy value -- surfaces
+    // for review rather than silently repricing.
+    if (cab?.mount_hardware != null && cab.mount_hardware !== ""
+        && !["bracket", "base_plate", "anchor", "other"].includes(cab.mount_hardware)) {
+      push("warning", "hardware-unsupported",
+        `Cabinet ${i + 1}'s mount hardware ${JSON.stringify(cab.mount_hardware)} is not a supported kind -- record a bracket, base plate, anchor assembly, or mark it "other" for engineering review.`,
+        [cabId]);
     }
   });
 
@@ -450,10 +522,20 @@ export function foundationSceneDiagnostics(scene) {
     const assignedRect = assigned ? rects.find(({ item }) => item?.component_id === assigned)?.rect : null;
     // Lane D -- mortar_joint_inches/brick_bond_type: a masonry wall's mortar
     // joint + bond type are unrecorded -- a held state (the coursing math
-    // can't carry a mortar joint; blank = "not recorded").
-    const wMat = typeof wall?.material === "string" && wall.material ? wall.material : null;
-    if (wMat && ["brick", "cmu", "block", "masonry"].includes(wMat)) {
-      if (wall?.mortar_joint_inches == null) {
+    // can't carry a mortar joint; blank = "not recorded"). Walls author a
+    // catalog `materialId` (wall-material rows are unit masonry -- brick /
+    // CMU / stone); an authored `material` string is also honored so older
+    // records still resolve.
+    const wMat = typeof wall?.material === "string" && wall.material
+      ? wall.material
+      : typeof wall?.material_type === "string" && wall.material_type
+        ? wall.material_type
+        : wall?.materialId ? "masonry" : null;
+    if (wMat && ["brick", "cmu", "block", "masonry", "brick_stone", "wall_material"].includes(wMat)) {
+      // `mortar_joint_inches` is the recorded-field name; `mortarGapInches`
+      // is the panel's authored joint width -- either records the joint.
+      const mortarJoint = wall?.mortar_joint_inches ?? wall?.mortarGapInches;
+      if (mortarJoint == null || !Number.isFinite(Number(mortarJoint)) || Number(mortarJoint) <= 0) {
         push("info", "mortar-joint-held",
           `${wName}'s mortar joint is not recorded -- record the joint width (inches) for the coursing math.`,
           [wallId]);
