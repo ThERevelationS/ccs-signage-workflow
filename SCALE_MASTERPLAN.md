@@ -107,11 +107,15 @@ N-table reads-per-invoke with a single maintained snapshot read.
       never cached. Until the `lite_snapshot` field provisions, the store
       is a silent no-op and the path behaves exactly as the old build —
       verified `updated_date` unchanged, zero CAS risk.
-- [ ] `who_is_in` live-status tile: already 1 filtered read + 8s memo —
+- [x] `who_is_in` live-status tile: already 1 filtered read + 8s memo —
       no snapshot needed.
-- [ ] `staffDataRead` hot entities (AuthorizedEmail roster, GlobalSettings
-      configs): entity-level snapshot with write-through invalidation in
-      `staffEntityWrite` — reads hit 1 record instead of a table scan.
+- [x] `staffDataRead` hot entities — **ASSESSED & DECLINED 2026-11-14.**
+      Roster/GlobalSettings are small tables: a cold read is already 1 paged
+      filter call, so an entity snapshot saves ~0 calls (1 snapshot get = 1
+      filter). The 45s in-isolate cache + the WS-1 memo layer already absorb
+      the repeat-read bursts. Write-through invalidation adds complexity for
+      no measurable spend cut. The snapshot pattern's value is N→1 read
+      collapse, which doesn't apply at 1 call already.
 - [x] Snapshot staleness contract implemented: version-pinned fingerprints,
       mutable inputs verified per-read (entry.updated_date), fresh-time
       re-evaluation of time gates, any doubt → live build path.
@@ -197,8 +201,11 @@ bucket as every user.
       sequential since it depends on the loaded entry). Rejected the
       finalized-period scan memo — 1 call saved wasn't worth a freshness
       window on a mutable payroll-admission gate.
-- [ ] `boardFeed`/`queueFeed`/`staffDataRead` internals: same treatment where
-      reads are independent.
+- [x] `boardFeed`/`queueFeed`/`staffDataRead` internals — **DONE 2026-11-14:**
+      `queueFeed`'s items scan + up to 7 include extras ran serially
+      (~8×200ms on cold mount). Now thunks under one `Promise.all` — distinct
+      payload keys, per-extra try/catch preserved, fail-open semantics kept.
+      `boardFeed` already single-filter; `staffDataRead` is one gateway read.
 - [x] `monitor_stale_shifts` (Time Clock cron): reads only clocked-in
       entries/states — confirmed. Also bounded the `missed_clock_out`
       exception read to `$in` on the stale entries' case_keys (was an
@@ -208,12 +215,15 @@ bucket as every user.
 
 ## WS-6 — Payload diet
 
-- [ ] `fields` projection on the fat reads: TimeEntry history, WorkOrder board,
-      roster (project only fields the surface renders). `staffDataRead` already
-      supports `fields` — the calls just don't pass it.
-- [ ] Response trimming inside hot functions: drop fields the client never
-      reads from `status`/feed payloads (smaller bodies = faster parse on
-      low-end kiosk hardware).
+- [x] **ASSESSMENT CLOSED 2026-11-14 — wins already taken.** `face_descriptors`
+      is FIELD_DENYLIST'd in `staffDataRead` (roster never carries embeddings;
+      face matching has its own channel). `my_history` projects server-side.
+      All hot board paths (ProductQueues, MyWorkflow, EstimatorQueues,
+      SalesPipeline) route through `queueFeed`/`boardFeed` which project
+      server-side (QUEUE_WO_FIELDS/CRM_ACTIVITY_FIELDS/GENERAL_TASK_FIELDS/
+      MY_WORKFLOW_USER_FIELDS). Remaining direct full-row reads are scoped
+      admin/estimator edit surfaces that legitimately need the whole record.
+      No further diet available without breaking edit surfaces.
 
 ## WS-7 — Data hygiene (the "one bad row breaks a batch" class)
 
