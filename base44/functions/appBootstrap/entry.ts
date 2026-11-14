@@ -11,7 +11,7 @@ import { subscriptionsForUser } from "../../shared/alertSubscriptionsModel.ts";
 // mutable still goes through its own gateway.
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 3 });
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: "Authentication required" }, { status: 401 });
