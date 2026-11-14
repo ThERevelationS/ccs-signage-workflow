@@ -547,13 +547,9 @@
           },
           "signs": {
             "type": "array",
+            "description": "Freeform sign-canvas records mounted on this pole - component_id is the identity key; geometry, artwork, mount, link and cost fields are authored per sign (like reinforcement_design, the record evolves with the canvas).",
             "items": {
               "type": "object",
-              "properties": {
-                "component_id": {
-                  "type": "string"
-                }
-              },
               "additionalProperties": true
             }
           }
