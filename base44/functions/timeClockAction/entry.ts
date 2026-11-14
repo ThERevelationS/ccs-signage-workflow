@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
 import { withEntityRateLimitRetry, entityCallIsolateStats } from '../../shared/entityRateLimitRetry.ts';
 import { memo, bust } from '../../shared/invokeMemo.ts';
-import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
+import { buildStatusLite, liteStateFingerprint, liteSnapshotForState, serveLiteSnapshot, snapshotFromLiteResult } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -3571,14 +3571,45 @@ Deno.serve(async (req) => {
         'tclite',
         String(target.id || target.email || 'unknown'),
         5000,
-        () => buildStatusLite({
-          stateEntity, entryEntity, breakEntity, workPauseEntity, target,
-          helpers: {
-            publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
-            breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
-            MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
-          },
-        }),
+        async () => {
+          // WS-2 read-model: the state row carries a versioned lite_snapshot
+          // written by the last full build. Serve it when its fingerprints
+          // prove every input unchanged — 1 read clocked-out, 2 reads
+          // clocked-in, versus 4-6 for a live build. Any doubt falls through
+          // to the live path, which also refreshes the snapshot (CAS-guarded).
+          const stateRows = await stateEntity.filter({ user_email: asEmail(target?.email) }).catch(() => null);
+          const snapState = Array.isArray(stateRows) && stateRows.length === 1 ? stateRows[0] : null;
+          const snapshot = snapState ? liteSnapshotForState(snapState) : null;
+          let preloadedEntry: any;
+          if (snapshot && snapshot.fp_state === liteStateFingerprint(snapState)) {
+            if (snapshot.body?.status === 'clocked_in' && snapState.active_entry_id) {
+              preloadedEntry = await entryEntity.get(snapState.active_entry_id).catch(() => null);
+            }
+            const served = serveLiteSnapshot({
+              state: snapState, entry: preloadedEntry, target, snapshot,
+              helpers: { publicEmployee, dateKeyInCompanyTime, MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS },
+            });
+            if (served) return served;
+          }
+          const built = await buildStatusLite({
+            stateEntity, entryEntity, breakEntity, workPauseEntity, target,
+            preloadedStateRows: Array.isArray(stateRows) ? stateRows : undefined,
+            preloadedEntry,
+            helpers: {
+              publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
+              breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
+              MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
+            },
+          });
+          const snap = snapshotFromLiteResult({ result: built, state: snapState, entry: built?.entry || null });
+          if (snap && snapState?.id) {
+            await stateEntity.updateMany(
+              { id: snapState.id, updated_date: snapState.updated_date },
+              { $set: { lite_snapshot: snap } },
+            ).catch(() => null);
+          }
+          return built;
+        },
         { bypass: body?.bypass === true },
       );
       return Response.json({ ...liteResult, entity_calls: entityCalls() });
