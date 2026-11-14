@@ -9169,8 +9169,8 @@ Deno.serve(async (req) => {
       // Delegated approvers (#129): admins review everything; a configured
       // approver list (GlobalSettings.timeclockDelegatedApprovers) may review
       // requests outside their own punches - still blocked on their own.
-      const gsRows = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);
-      const delegated = new Set(((Array.isArray(gsRows) && gsRows[0]?.value) || []).map((e: any) => String(e || '').trim().toLowerCase()).filter(Boolean));
+      const gsRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'timeclockDelegatedApprovers' }).catch(() => []);
+      const delegated = new Set(((Array.isArray(gsRows) && gsRows[0]?.setting_value?.value) || []).map((e: any) => String(e || '').trim().toLowerCase()).filter(Boolean));
       const isDelegatedApprover = delegated.has(asEmail(actor.email));
       if (actor.role !== 'admin' && !isDelegatedApprover) return Response.json({ success: false, error: 'Administrator or delegated-approver access is required to review correction requests.' }, { status: 403 });
       const correctionRequestId = String(body?.correction_request_id || '').trim();
@@ -9217,7 +9217,7 @@ Deno.serve(async (req) => {
       // Two-step approval (#130): deltas above the configured threshold need a
       // second manager. The first approval marks the request pending-second;
       // a DIFFERENT approver's decision then completes it normally.
-      const twoStepThresholdMin = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []))[0]?.value ?? 240));
+      const twoStepThresholdMin = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'twoStepThresholdMinutes' }).catch(() => []))[0]?.setting_value?.value ?? 240));
       if (twoStepThresholdMin > 0 && (decision === 'approve' || decision === 'approve_modified')) {
         const alreadyFirst = String(correctionRequest.first_approved_by || '');
         if (!alreadyFirst) {
@@ -12063,24 +12063,24 @@ Deno.serve(async (req) => {
     if (action === 'set_delegated_approvers') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const emails = Array.isArray(body.emails) ? body.emails.map((e: any) => asEmail(e)).filter(Boolean).slice(0, 50) : [];
-      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);
-      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: emails }).catch(() => null);
-      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'timeclockDelegatedApprovers', value: emails }).catch(() => null);
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'timeclockDelegatedApprovers' }).catch(() => []);
+      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { setting_value: { value: emails } }).catch(() => null);
+      else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'timeclockDelegatedApprovers', setting_value: { value: emails } }).catch(() => null);
       return Response.json({ success: true, delegated_approvers: emails });
     }
 
     if (action === 'set_two_step_threshold') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const minutes = Math.max(0, Math.min(1440, Number(body.minutes || 0)));
-      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []);
-      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: minutes }).catch(() => null);
-      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'twoStepThresholdMinutes', value: minutes }).catch(() => null);
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'twoStepThresholdMinutes' }).catch(() => []);
+      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { setting_value: { value: minutes } }).catch(() => null);
+      else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'twoStepThresholdMinutes', setting_value: { value: minutes } }).catch(() => null);
       return Response.json({ success: true, two_step_threshold_minutes: minutes });
     }
 
     if (action === 'overtime_cost_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rate = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'defaultHourlyRate' }).catch(() => []))[0]?.value ?? 0));
+      const rate = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'defaultHourlyRate' }).catch(() => []))[0]?.setting_value?.value ?? 0));
       const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 7 * 86400000).toISOString());
       const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
       const rows = await loadAllEntityRows({
@@ -12332,8 +12332,8 @@ Deno.serve(async (req) => {
 
     if (action === 'feature_flags') {
       // Feature toggles from GlobalSettings - admin-managed, read by all clients.
-      const gs = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockFeatures' }).catch(() => []);
-      const flags = (Array.isArray(gs) && gs[0]?.value) || { experimental: false, announcements: true, shift_templates: true, dual_ring: true };
+      const gs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'timeclockFeatures' }).catch(() => []);
+      const flags = (Array.isArray(gs) && gs[0]?.setting_value?.value) || { experimental: false, announcements: true, shift_templates: true, dual_ring: true };
       return Response.json({ success: true, flags });
     }
 
