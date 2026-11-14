@@ -310,7 +310,13 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   const w = walls.find((x) => x.component_id === c?.wall_component_id);
                   const segs = w?.shape?.segments || [];
                   if (c?.segment_component_id && !segs.some((s) => s?.component_id === c.segment_component_id)) {
-                    return { ...c, segment_component_id: segs[0]?.component_id || c.segment_component_id, segment_index: 0 };
+                    const to = segs[0]?.component_id || c.segment_component_id;
+                    // O-054 (CMP-D11) -- cap_reanchor_log: every re-anchor is
+                    // recorded (from -> to segment + when), never a silent
+                    // rebind.
+                    const reanchor_log = [...(Array.isArray(c.reanchor_log) ? c.reanchor_log : []),
+                      { at: new Date().toISOString(), from: c.segment_component_id, to }];
+                    return { ...c, segment_component_id: to, segment_index: 0, reanchor_log };
                   }
                   return c;
                 }))}
@@ -605,6 +611,62 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                   aria-label={`Cap ${index + 1} cut labor cost`}
                 />
               </label>
+              {/* O-050 (CMP-D07) -- miter angle + joint width: the cut-list
+                  fields the scene diagnostics hold as "not recorded" until
+                  authored. Blank = held, never an invented angle. */}
+              <label className="text-xs text-gray-500">
+                Miter angle (deg)
+                <input
+                  type="number" step="0.1" placeholder="45"
+                  value={cap.miter_angle_deg ?? ""}
+                  onChange={(e) => patchCap(index, { miter_angle_deg: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} miter angle (degrees)`}
+                />
+              </label>
+              <FoundationDimensionInput
+                label="Joint width (in)"
+                value={cap.joint_width_inches}
+                onCommit={(v) => patchCap(index, { joint_width_inches: v })}
+                ariaLabel={`Cap ${index + 1} joint width (inches)`}
+              />
+              {/* O-053 (CMP-D10) -- offcut election + purchased-piece count:
+                  whether the cap's offcut is elected for reuse and how many
+                  stock pieces are purchased. Billing stays full-stock per
+                  piece; these are recorded fields, never a silent discount. */}
+              <label className="text-xs text-gray-500 flex items-end gap-1.5 pb-2">
+                <input
+                  type="checkbox"
+                  checked={cap.offcut_reuse_elected === true}
+                  onChange={(e) => patchCap(index, { offcut_reuse_elected: e.target.checked ? true : undefined })}
+                  aria-label={`Cap ${index + 1} offcut reuse elected`}
+                />
+                Reuse offcut
+              </label>
+              <label className="text-xs text-gray-500">
+                Purchased pieces
+                <input
+                  type="number" min="0" step="1" placeholder="0"
+                  value={cap.purchased_pieces ?? ""}
+                  onChange={(e) => patchCap(index, { purchased_pieces: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} purchased pieces`}
+                />
+              </label>
+              {/* O-054 (CMP-D11) -- anchor state: the cap's recorded segment
+                  anchor (anchored / drifted / manual). Bulk re-anchor appends
+                  to reanchor_log; this field records the operator's state. */}
+              <label className="text-xs text-gray-500">
+                Anchor state
+                <input
+                  type="text"
+                  value={cap.cap_anchor_state ?? ""}
+                  placeholder="anchored"
+                  onChange={(e) => patchCap(index, { cap_anchor_state: e.target.value === "" ? undefined : e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                  aria-label={`Cap ${index + 1} anchor state`}
+                />
+              </label>
             </div>
             {geometryIssues(index).length > 0 && (
               <div id={`wall-cap-${index}-geometry`} className="mt-1 text-[11px] text-amber-700 space-y-0.5">
@@ -634,7 +696,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 </label>
                 <span className="font-bold text-gray-900">{hasFoundationCostSnapshot(cap.cost) ? money(cap.cost) : "Not saved"}</span>
                 {unavailableCaps.has(index) && <span className="text-[10px] text-amber-700">Saved amounts (not current pricing)</span>}
-                <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
+                <Button variant="ghost" size="icon" aria-label={`Remove cap ${index + 1}`} onClick={() => removeCap(index)}>
                   <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
               </div>
