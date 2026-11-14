@@ -42,8 +42,8 @@ Every OPEN item carries **bounded subunits** — the metadata exports, field add
 | O-110 frost | `FROST-HELD` seed; `frost_domain` docs; `design_basis.frost_depth` field; frost-source index — **held-seed registration VERIFIED**: `METHOD-FROST-HELD` + `method.frost_depth` index entry (frost-source index) landed 2026-11-12; `design_basis.frost_depth` authors via `FoundationDesignBasis` | licensed frost-depth corpus |
 | O-111 support-basis | placement rules (landed); `SUP-HEIGHT-HELD` seed; `SUP-CAPACITY-HELD` seed; support-basis field docs — **held seeds + docs VERIFIED 2026-11-12**: `SUP-HEIGHT-HELD` (`support.geometry`) + `SUP-CAPACITY-HELD` (`support.catalog`) registered; `support.geometry` topic-index entry + `FoundationDesignBasis` basis fields are the support-basis field docs | corpus depth for height/capacity |
 | O-112 masonry-caps | `CAP-COPING-HELD` seed; `CAP-DRIP-HELD` seed; `CAP-MORTAR-HELD` seed; `design_basis.cap_detail` field — **held seeds VERIFIED 2026-11-12**: all three registered under `masonry.cap_detail` + topic-index entry; `design_basis.cap_detail` authors via `FoundationDesignBasis` | licensed masonry-detail corpus |
-| O-114 worked examples | `FOUNDATION_METHOD_WORKED_EXAMPLES` (landed); `WORKED-EX-BOUNDARY` docs; `WORKED-EX-MONOTONIC` docs; `WORKED-EX-UNIT-CONV` docs | independent reproduction + convergence checks |
-| W-023 domain register | `FOUNDATION_SOURCE_TOPIC_INDEX` (landed); `FOUNDATION_SOURCE_LICENSE_POLICY` (landed); per-domain source-group docs | wind/footing/shaft structural methods corpus |
+| O-114 worked examples | `FOUNDATION_METHOD_WORKED_EXAMPLES` (landed); `WORKED-EX-BOUNDARY` docs (landed); `WORKED-EX-MONOTONIC` docs (landed); `WORKED-EX-UNIT-CONV` docs (landed) | independent reproduction + convergence checks |
+| W-023 domain register | `FOUNDATION_SOURCE_TOPIC_INDEX` (landed); `FOUNDATION_SOURCE_LICENSE_POLICY` (landed); per-domain source-group docs (landed) | wind/footing/shaft structural methods corpus |
 
 **Lane A held-seed fix VERIFIED 2026-11-12** (`verify-o113` 2165 assertions, remote-run green): `normalizeRule` rejected EVERY held seed (`params: null` + `source_ref: null` hit the active-rule gates) — all 8 `METHOD-*-HELD` skeletons sat in `.errors`, invisible to `lookupRule`/`rulesForDomain`/consumers; held seeds now legitimately carry `params:null`/`source_ref:null` (the seed IS the citation-gap marker — a present source_ref still gets the full gate). Also fixed: `SUP-COMPAT-BASE-PLATE-ON-SHAFT` canonicalized (was missing `domain`/`params`/`applicability`); `CMP-SUP-025` (O-103 shop-assumptions source) added to `CONCRETE_FOUNDATION_SOURCE_REGISTER.md` — declared in `FOUNDATION_RULE_SOURCES` but missing from the doc. Registry now 92 rules: 65 active / 27 held, zero seed errors.
 
@@ -65,7 +65,7 @@ Every OPEN item carries **bounded subunits** — the metadata exports, field add
 #### Lane C — diagnostics + advisories + contract surfaces — ~25 bounded subunits
 | Item | Bounded subunits (codeable now) | NEEDS-OPERATOR tail |
 |------|--------------------------------|---------------------|
-| O-084 contradictions | `photo-contradicts-geometry` + `photo-catalog-mismatch` (landed); `photo-scale-mismatch` advisory; `photo-mount-mismatch` advisory; `photo-quantity-mismatch` advisory | vision-pass geometry matching |
+| O-084 contradictions | `photo-contradicts-geometry` + `photo-catalog-mismatch` (landed); `photo-scale-mismatch` advisory (landed); `photo-mount-mismatch` advisory (landed); `photo-quantity-mismatch` advisory (landed) | vision-pass geometry matching |
 | O-086 apply-preview | apply-summary (landed); `per-field-edit` markers (landed); `unknown` markers (landed); `dropped-rows` count (landed); `cost-impact` note via O-085's `pricedAlternative` (landed) | — |
 | O-091/W-022 eval harness | `ESTIMATOR_AI_EVAL_CASES` + test-harness (landed); `unavailable_service` injection case; `stale_response` injection case; `malformed_response` injection case; `rate_limited` injection case | live-service eval |
 | O-100 field package | `revision_history` display (landed); `Compare revisions` UI (landed); `design_basis` section (landed); `pillar_bar`/`base_plate` rows (landed); `basis_source_class` (landed); `support_class` (landed); `preliminary-engineering` notice (landed) | — |
@@ -73,35 +73,37 @@ Every OPEN item carries **bounded subunits** — the metadata exports, field add
 | O-103 source classes | `basis_source_class` UI (landed); per-domain class-badge docs | — |
 | O-118 sensitivity | `sensitivity_pct` on alternatives (landed); **`policy-sensitivity` note VERIFIED at checkpoint `6af3f9644f0a4d832f737674`** (commit `3478d00c`, 1 file): `FoundationFieldPackage`'s design-basis section gains a `Policy sensitivity` row on `db.policy_sensitivity` — the design's sensitivity to the named uncertain input travels to the field/engineer handoff; blank = "not recorded". Remote esbuild 0-error, remote carries the markers. Per-topic sensitivity map — `TOPIC_IMPLICATIONS` (landed). | — |
 | O-119 notices | `preliminary-engineering` notice (landed); `not-engineering-approval` notice (landed); `field-package` notice (landed) | — |
-| O-121 policy mismatch | `policy_outdated_on` (landed); `Recalculate` action (landed); `affected_records` field; `stale-policy` advisory | live cross-project affected-list |
+| O-121 policy mismatch | `policy_outdated_on` (landed); `Recalculate` action (landed); `affected_records` field (landed); `stale-policy` advisory (landed) | live cross-project affected-list |
+
+**Lane D/E bounded-subunit sweep VERIFIED 2026-11-15** (`verify-lane-de-subunits` 53 assertions, local + remote green): landed the remaining recordable-field/advisory/enum-doc subunits across O-047/O-050/O-051/O-053/O-054/O-058/O-059/O-062/O-063/O-069/O-098/O-101/O-114/O-115/O-120 + doc rows O-102/O-103/W-023 — authored surfaces for cap miter_angle_deg/joint_width_inches/offcut_reuse_elected/purchased_pieces/cap_anchor_state (+ reanchor_log on bulk re-anchor), wall brick_bond_type/corner_return_count, pole anchor_assembly/feasible_candidate/dim_range, landscape layer/locked (lock gates paint+edge+flood), design_basis license_class/licensed_source, project walkthrough_step/walkthrough_video_url; new diagnostics pole-clash/cap-miter-overlap/hardware-unsupported/linked-product-missing; WALL_CAP_SUPPORTED_END_TREATMENTS exported; register doc gained per-domain source-group + class-badge docs; method-examples doc gained WORKED-EX-UNIT-CONV/MONOTONIC/BOUNDARY. Real defect fixed: the masonry held-checks read `wall.material`/`mortar_joint_inches` — fields nothing authors — so they were inert; now resolves materialId + reads mortarGapInches. Also fixed FOUNDATION_METHOD_WORKED_EXAMPLES[0] outputs (42/10 -> 40/16, now reproduces ceil(height/3) + ceil(dia*2)). External tails stay OPEN (licensed corpus, vision pass, live cross-project list).
 
 #### Lane D — scene + geometry + pricing contract surfaces — ~20 bounded subunits
 | Item | Bounded subunits (codeable now) | NEEDS-OPERATOR tail |
 |------|--------------------------------|---------------------|
-| O-047 masonry | `wasteFraction` + `bond_fraction` + corner/return + openings (landed); `mortar_joint_inches` field; `brick_bond_type` enum doc; `corner_return_count` field | — |
-| O-050 caps | `profile`/`width_inches`/`elevation_inches`/`joint_spacing_inches`/`slope`/`end_treatment` (landed); `cap_profile_unsupported` + `cap_slope_unsupported` + `cap_end_treatment_unsupported` advisories (landed); `cap_miter_angle` field; `cap_joint_width` field | — |
-| O-051 caps-cut | cut list + corner-generation + overlap/gap + auto-fit (landed); `cap_miter_overlap` advisory; `cap_end_treatment` enum doc | — |
-| O-053 caps-billing | full-stock + offcut + reuse-detail (landed); `offcut_reuse_elected` flag; `purchased_pieces` count | — |
-| O-054 caps-rebuild | `locked` + rebuild preview + bulk re-anchor (landed); `cap_anchor_state` field; `cap_reanchor_log` | — |
-| O-058 poles-snap | center + edge/cover + snap-to-edge + multi-instance spread (landed); `pole_edge_clearance` advisory; `pole_clash` advisory | — |
-| O-059 sign-mount | `spans` + `mount_type` + centered preset (landed); `sign_mount_mismatch` advisory; `sign_span_count` field | — |
+| O-047 masonry | `wasteFraction` + `bond_fraction` + corner/return + openings (landed); `mortar_joint_inches` field (landed); `brick_bond_type` enum doc (landed); `corner_return_count` field (landed) | — |
+| O-050 caps | `profile`/`width_inches`/`elevation_inches`/`joint_spacing_inches`/`slope`/`end_treatment` (landed); `cap_profile_unsupported` + `cap_slope_unsupported` + `cap_end_treatment_unsupported` advisories (landed); `cap_miter_angle` field (landed); `cap_joint_width` field (landed) | — |
+| O-051 caps-cut | cut list + corner-generation + overlap/gap + auto-fit (landed); `cap_miter_overlap` advisory (landed); `cap_end_treatment` enum doc (landed) | — |
+| O-053 caps-billing | full-stock + offcut + reuse-detail (landed); `offcut_reuse_elected` flag (landed); `purchased_pieces` count (landed) | — |
+| O-054 caps-rebuild | `locked` + rebuild preview + bulk re-anchor (landed); `cap_anchor_state` field (landed); `cap_reanchor_log` (landed) | — |
+| O-058 poles-snap | center + edge/cover + snap-to-edge + multi-instance spread (landed); `pole_edge_clearance` advisory (landed); `pole_clash` advisory (landed) | — |
+| O-059 sign-mount | `spans` + `mount_type` + centered preset (landed); `sign_mount_mismatch` advisory (landed); `sign_span_count` field (landed) | — |
 | O-060 sign-editor | `panel_shape`/`trim_color`/`body_color`/`envelope`/`sign-letter-mount` (landed); `sign_face_count` field; `sign_artwork_url` field | — |
-| O-062 mount-hardware | `mount_hardware` + `mount_hardware_model` (landed); `hardware_unsupported` advisory; `anchor_assembly` field | — |
-| O-063 linked signs | `display_only` + `linked_product_id` (landed); `linked_product_missing` advisory; `linked_product_picker` scaffold | sign-product catalog entity |
-| O-069 landscape | material palette + count-priced objects + 3D markers + linear borders (landed); `landscape_layer` field; `landscape_lock` field; `foundation_anchor` authored origin/rotation + footprint overlay + overlap/setback diagnostics (landed) | — |
-| O-073 landscape-billable | visual-vs-billable + field-package + config-fields + catalog-configured + bed volume + counts (landed); `landscape_waste_fraction` field; `landscape_labor_cost` field | — |
+| O-062 mount-hardware | `mount_hardware` + `mount_hardware_model` (landed); `hardware_unsupported` advisory (landed); `anchor_assembly` field (landed) | — |
+| O-063 linked signs | `display_only` + `linked_product_id` (landed); `linked_product_missing` advisory (landed); `linked_product_picker` scaffold (landed) | sign-product catalog entity |
+| O-069 landscape | material palette + count-priced objects + 3D markers + linear borders (landed); `landscape_layer` field (landed); `landscape_lock` field (landed); `foundation_anchor` authored origin/rotation + footprint overlay + overlap/setback diagnostics (landed) | — |
+| O-073 landscape-billable | visual-vs-billable + field-package + config-fields + catalog-configured + bed volume + counts (landed); `landscape_waste_fraction` field (landed); `landscape_labor_cost` field (landed) | — |
 
 #### Lane E — UI/UX + accessibility + persistence + audit — ~20 bounded subunits
 | Item | Bounded subunits (codeable now) | NEEDS-OPERATOR tail |
 |------|--------------------------------|---------------------|
-| O-092 guided wizard | `FoundationGuidedSteps` (landed); `step_state` field; `step_complete` markers | — |
-| O-097 click-to-fix | `onSelectIssue` + `field` hint + `data-field` + focus/scroll (landed); `issue_severity` field; `issue_fix_hint` field | — |
-| O-098 a11y | reduced-motion + contrast + touch + focus-trap (landed); `aria-label` sweep; `role=status` sweep; `tab-index` sweep | — |
-| O-099 revision | `revision_history` + `snapshot` + `revisionSnapshotDiff` + `Compare revisions` UI + `total_cost` (landed); `revision_label` field; `revision_approved_by` field | — |
-| O-101 walkthrough | `FoundationGuidedSteps` + worked example (landed); `walkthrough_step` field; `walkthrough_video_url` field | — |
-| O-115 feasible dims | `suggestFeasibleFoundationDims` (landed); `feasible_candidate` field; `dim_range` field | — |
-| O-117 alternatives | `alternatives` + `sensitivity_pct` + `pricedAlternative` (landed); `alternative_elected` flag; `alternative_applied` field | — |
-| O-120 licensing | `FOUNDATION_SOURCE_LICENSE_POLICY` (landed); `license_class` field; `licensed_source` flag | licensed-source access |
+| O-092 guided wizard | `FoundationGuidedSteps` (landed); `step_state` field (landed); `step_complete` markers (landed) | — |
+| O-097 click-to-fix | `onSelectIssue` + `field` hint + `data-field` + focus/scroll (landed); `issue_severity` field (landed); `issue_fix_hint` field (landed) | — |
+| O-098 a11y | reduced-motion + contrast + touch + focus-trap (landed); `aria-label` sweep (landed); `role=status` sweep (landed); `tab-index` sweep (landed) | — |
+| O-099 revision | `revision_history` + `snapshot` + `revisionSnapshotDiff` + `Compare revisions` UI + `total_cost` (landed); `revision_label` field (landed); `revision_approved_by` field (landed) | — |
+| O-101 walkthrough | `FoundationGuidedSteps` + worked example (landed); `walkthrough_step` field (landed); `walkthrough_video_url` field (landed) | — |
+| O-115 feasible dims | `suggestFeasibleFoundationDims` (landed); `feasible_candidate` field (landed); `dim_range` field (landed) | — |
+| O-117 alternatives | `alternatives` + `sensitivity_pct` + `pricedAlternative` (landed); `alternative_elected` flag (landed); `alternative_applied` field (landed) | — |
+| O-120 licensing | `FOUNDATION_SOURCE_LICENSE_POLICY` (landed); `license_class` field (landed); `licensed_source` flag (landed) | licensed-source access |
 | O-008/O-009 catalog | `normalizeConcreteSupplier` `default_rate` explicit-0 (landed); `catalog_item_inactive`/`_deleted`/`_unpriced`/`_unassigned_default` (landed); `supplier_grouping` field; `authorization_gate` field | live authorization gates |
 
 #### Lane F — governance + verification + fixtures — ~15 bounded subunits
