@@ -1,0 +1,44 @@
+{
+  "name": "WorkflowEventClaim",
+  "type": "object",
+  "description": "One-time claim for a browser-reported automation event on one record version. Written only by processWorkflowTriggers so a write can fire each event's rules at most once.",
+  "properties": {
+    "claim_key": {
+      "type": "string",
+      "description": "client-event:v1:<event_type>:<entity_type>:<record id>:<record updated_date>"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "WorkOrder",
+        "Order",
+        "AuthorizedEmail",
+        "JurisdictionProfile"
+      ]
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "record_version": {
+      "type": "string"
+    },
+    "claimed_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "claim_key",
+    "event_type",
+    "entity_type",
+    "record_id"
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__workfloweventclaim_backend_only__" } },
+    "read": { "user_condition": { "role": "__workfloweventclaim_backend_only__" } },
+    "update": { "user_condition": { "role": "__workfloweventclaim_backend_only__" } },
+    "delete": { "user_condition": { "role": "__workfloweventclaim_backend_only__" } }
+  }
+}
