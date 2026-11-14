@@ -75,6 +75,14 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
         queueSalesReview({conflict_key:key,dataset,entity_id:record.id,record_label:record.client_name||record.title||record.id,field_name:field,field_label:field.replace(/_/g,' '),sheet_id:record.smartsheet_sheet_id,row_id:record.smartsheet_row_id,column_id:column,local_value:preview(a??''),remote_value:preview(b??''),baseline_value:known?preview(prior[column]??''):'Unknown',local_modified_at:localAt,remote_modified_at:remoteAt,local_version:record.updated_date,remote_version:remoteRow.modified_at||'',reason:reason||'Both versions differ; choose which value to keep.',status:'open'});
         unresolved.push(field); continue;
       }
+      // Mid-pull staleness guard, same policy as the Sales review path: this
+      // record snapshot may predate a local save that landed while the pull
+      // ran. Re-check the revision before minting a conflict; a stale
+      // snapshot defers the decision to the next pull.
+      const latest=await base44.asServiceRole.entities[type].get(record.id).catch(()=>null);
+      if(!latest || (record.updated_date && latest.updated_date!==record.updated_date)) {
+        unresolved.push(field); continue;
+      }
       await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,column_id:column,status:{$in:['open','approved']},conflict_key:{$ne:key}},{$set:{status:'superseded'}});
       if(!approvals.length)await base44.asServiceRole.entities.SyncConflict.upsert([{conflict_key:key,dataset,entity_id:record.id,record_label:record.client_name||record.customer_name||record.title||record.id,
         field_name:field,field_label:field.replace(/_/g,' '),sheet_id:record.smartsheet_sheet_id,row_id:record.smartsheet_row_id,column_id:column,
