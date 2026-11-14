@@ -381,10 +381,10 @@ Deno.serve(async (req) => {
     // returns matching rules so the UI can surface "watch hit" notifications.
     const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
     const loadWatchConfig = async () => {
-      const rows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
+      const rows = await GlobalSettings.filter({ setting_key: "watch_rules" }).catch(() => []);
       const row = Array.isArray(rows) && rows.length ? rows[0] : null;
       let map: Record<string, any[]> = {};
-      try { map = JSON.parse(String(row?.watch_rules || "{}") || "{}"); } catch { map = {}; }
+      try { map = JSON.parse(String(row?.setting_value?.watch_rules || "{}") || "{}"); } catch { map = {}; }
       return { row, map };
     };
     if (action === "set_watch") {
@@ -401,8 +401,8 @@ Deno.serve(async (req) => {
       if (!rule.entity || !rule.record_id || !rule.field) throw bad("entity, record_id and field are required to watch a record.", 400);
       map[key] = (map[key] || []).filter((w: any) => !(w.entity === rule.entity && w.record_id === rule.record_id && w.field === rule.field));
       map[key].push(rule);
-      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
-      else await GlobalSettings.create({ config_name: "watch_rules", watch_rules: JSON.stringify(map) });
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
+      else await GlobalSettings.create({ setting_key: "watch_rules", setting_value: { watch_rules: JSON.stringify(map) } });
       return Response.json({ success: true, action, rule, count: map[key].length });
     }
     if (action === "list_watches") {
@@ -416,7 +416,7 @@ Deno.serve(async (req) => {
       const idx = Number(body?.index);
       if (!Number.isInteger(idx)) throw bad("A watch index is required.", 400);
       map[key] = (map[key] || []).filter((_: any, i: number) => i !== idx);
-      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
       return Response.json({ success: true, action, watches: map[key] });
     }
     // Evaluate the caller's watched records and surface any that match.
