@@ -89,17 +89,27 @@ entity cost.
 The expensive surfaces are per-user status and shared collections. Replace
 N-table reads-per-invoke with a single maintained snapshot read.
 
-- [ ] `timeClockAction` employee-state board (`who_is_in`, live-status admin
-      tile): one `TimeClockEmployeeState`-derived snapshot record, refreshed
-      on every punch write + stale-shift monitor tick. Readers = 1 call.
+- [x] `status_lite` read-model on `TimeClockEmployeeState.lite_snapshot`
+      (DEPLOYED 2026-11-13, activates when the schema field publishes):
+      steady lite responses are stored back on the state row (CAS-guarded
+      updateMany) with `fp_state` = hash of every state field except
+      `updated_date`/`lite_snapshot` and `fp_entry` = active entry's
+      `updated_date`. Readers: 1 call clocked-out, 2 calls clocked-in
+      (was 4-6). Break/pause rows covered by fp_state — their only write
+      sites sit inside state-bracketed transitions. The time-dependent
+      missed-punch gate is re-evaluated at serve time with a fresh clock,
+      so no expiry math and no staleness. FULL/transitional results are
+      never cached. Until the `lite_snapshot` field provisions, the store
+      is a silent no-op and the path behaves exactly as the old build —
+      verified `updated_date` unchanged, zero CAS risk.
+- [ ] `who_is_in` live-status tile: already 1 filtered read + 8s memo —
+      no snapshot needed.
 - [ ] `staffDataRead` hot entities (AuthorizedEmail roster, GlobalSettings
       configs): entity-level snapshot with write-through invalidation in
       `staffEntityWrite` — reads hit 1 record instead of a table scan.
-- [ ] Snapshot staleness contract: mutable operational data (punch state,
-      inventory) never served older than its write; advisory/config data may be
-      up to TTL stale. Same rule as `READ_TTL_ACTIONS` — freshness by class.
-- [ ] CAS/version stamp on every snapshot so readers can detect mid-refresh
-      reads and fall back to the live path.
+- [x] Snapshot staleness contract implemented: version-pinned fingerprints,
+      mutable inputs verified per-read (entry.updated_date), fresh-time
+      re-evaluation of time gates, any doubt → live build path.
 
 ## WS-3 — Frontend concurrency multipliers
 
