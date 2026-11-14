@@ -38,7 +38,7 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove, items = []
         />
         <div className="flex shrink-0 items-center gap-3">
           <span className="whitespace-nowrap font-bold text-gray-900">{amt(c.totalCost)}</span>
-          <Button variant="ghost" size="icon" onClick={() => onRemove(index)}>
+          <Button variant="ghost" size="icon" aria-label={`Remove wall ${index + 1}`} onClick={() => onRemove(index)}>
             <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
           </Button>
         </div>
@@ -96,6 +96,38 @@ function WallRow({ wall, index, options, pricing, onChange, onRemove, items = []
           {wall.materialId && !options.some((o) => o.id === wall.materialId) && (
             <span className="block text-[10px] text-amber-700 mt-1">Catalog material unavailable; current pricing needs review.</span>
           )}
+        </label>
+        {/* O-047 (CMP-D04) -- brick_bond_type: the coursing bond's named
+            pattern, recorded separately from the stagger fraction
+            (offsetFraction drives the coursing math; this names the bond).
+            Blank = "not recorded", the diagnostics hold it accordingly. */}
+        <label className="text-xs text-gray-500">
+          Bond type
+          <select
+            className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+            value={wall.brick_bond_type ?? ""}
+            aria-label="Wall bond type"
+            onChange={(e) => set({ brick_bond_type: e.target.value === "" ? undefined : e.target.value })}
+          >
+            <option value="">Not recorded</option>
+            <option value="running">Running</option>
+            <option value="stack">Stack</option>
+            <option value="flemish">Flemish</option>
+            <option value="soldier">Soldier</option>
+          </select>
+        </label>
+        {/* O-047 (CMP-D04) -- corner_return_count: the operator's recorded
+            count of corner returns on this wall (geometry still derives
+            corners from the shape; this is the field record). */}
+        <label className="text-xs text-gray-500">
+          Corner returns
+          <input
+            type="number" min="0" step="1" placeholder="0"
+            value={wall.corner_return_count ?? ""}
+            onChange={(e) => set({ corner_return_count: e.target.value === "" ? undefined : Number(e.target.value) })}
+            className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+            aria-label="Wall corner return count"
+          />
         </label>
         <label className="text-xs text-gray-500 md:col-span-2">
           Foundation
