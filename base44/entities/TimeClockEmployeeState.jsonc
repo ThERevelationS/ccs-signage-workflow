@@ -169,6 +169,10 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when the current shared employee mutation gate was claimed"
+    },
+    "lite_snapshot": {
+      "type": "object",
+      "description": "Versioned read-model of the last steady status_lite response (WS-2); served only while its state+entry fingerprints match the live rows"
     }
   },
   "required": [
