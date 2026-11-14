@@ -5,6 +5,7 @@ import { PreliminaryNotice } from "./foundationPreliminaryNotice";
 import { foundationReinforcementBOMRows } from "./foundationReinforcementBOMRows";
 import { foundationWallBomRows } from "./wallCalculator";
 import { landscapeSummary } from "./landscapeMaterials";
+import { buildFoundationBomSvg } from "./foundationPlanExport";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
@@ -283,7 +284,30 @@ export default function FoundationBOM({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h3 className="font-semibold text-gray-900 mb-3">Bill of Materials</h3>
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="font-semibold text-gray-900">Bill of Materials</h3>
+        {/* O-043 (CMP-C12) -- BOM image export: the same `rows[]` the table
+            renders become a standalone labeled SVG download; a held/"Not
+            saved" cost travels verbatim, never a silently-zero cell. */}
+        {rows.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const svg = buildFoundationBomSvg(rows, { title: `${project?.project_name || "Foundation"} — Bill of materials` });
+              const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `${(project?.project_name || "foundation").replace(/[^\w-]+/g, "_")}-bom.svg`;
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(url), 4000);
+            }}
+            className="text-[10px] text-blue-600 hover:text-blue-800 underline print:hidden"
+            aria-label="Download the bill of materials as an SVG image"
+          >
+            Download image (SVG)
+          </button>
+        )}
+      </div>
       {/* O-119 (CMP-I18) -- preliminary notice on the BOM print block:
           the BOM carries "Preliminary estimating only - final engineering
           required" like every other structural concept surface. */}
