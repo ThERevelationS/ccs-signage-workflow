@@ -2,25 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { ESTIMATOR_AI_MODEL } from "../../../base44/shared/estimatorAiModelPolicy.js";
 import { getSessionToken } from "@/components/auth/EmailGate";
-
-const SCHEMA = {
-  type: "object",
-  properties: {
-    suggestions: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          full_address: { type: "string", description: "Complete formatted address: street, city, state, zip" },
-          label: { type: "string", description: "Short display label (street + city)" }
-        },
-        required: ["full_address"]
-      }
-    }
-  }
-};
 
 export default function AddressAutocomplete({ value, onChange, placeholder, className, id }) {
   const [query, setQuery] = useState(value || "");
@@ -56,16 +38,6 @@ export default function AddressAutocomplete({ value, onChange, placeholder, clas
     if (lastFetchedRef.current === q) return;
     lastFetchedRef.current = q;
     setLoading(true);
-    const llmFallback = async () => {
-      const llm = await base44.integrations.Core.InvokeLLM({
-        prompt: `Return up to 5 plausible US street-address autocomplete completions for: "${q}".
-Each must look like a real mailing address (street number + street, city, state abbr, ZIP).
-Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`,
-        response_json_schema: SCHEMA,
-        model: ESTIMATOR_AI_MODEL
-      });
-      return llm?.suggestions || [];
-    };
     let list = null;
     try {
       // Primary: real Google Places autocomplete (backend proxy).
@@ -77,8 +49,7 @@ Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`
     } catch (e) {
       list = null;
     }
-    if (!list) list = await llmFallback().catch(() => []);
-    setSuggestions(list);
+    setSuggestions(list || []);
     setOpen(true);
     setHighlight(-1);
     setLoading(false);
