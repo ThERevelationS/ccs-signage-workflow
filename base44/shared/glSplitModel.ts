@@ -49,9 +49,10 @@
 // to the SAME income base before emitting a patch — an unbalanced manual
 // posting is rejected (ok:false + delta_cents), never silently forced.
 // splits_override* fields flag the row; splitAuditEvent produces the
-// before/after activity row. NOTE: Invoice.jsonc does not yet declare
-// splits_override*/splits_override_by — the schema owner adds them (fields
-// ride the patch regardless; entities in this schema family are permissive).
+// before/after activity row. The splits_override*/splits_override_by/
+// splits_override_at/splits_override_reason fields are declared on
+// Invoice.jsonc — undeclared entity fields drop on write, so the
+// declaration is what makes the patch persist.
 //
 // FEE SIGN PARITY: kind 'discount' fee lines post negative (positive input
 // coerced), mirroring orderFees.normalizeFeeLines — restated inline because
