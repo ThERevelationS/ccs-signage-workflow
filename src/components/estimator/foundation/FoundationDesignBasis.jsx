@@ -11,13 +11,20 @@ import React from "react";
 // computed engineering values — the register's held seeds (`METHOD-*-HELD`)
 // name the unencoded checks; the authored basis carries the operator's record.
 
+// Field names match the FieldPackage read keys exactly — an authored note
+// that a reader never names is silently invisible data (pre-rename records
+// carrying `bearing`/`shaft` still display via the package's fallbacks).
 const BASIS_FIELDS = [
   ["sign_wind", "Sign wind basis", "the sign-wind method/source the design relies on (e.g. 'ASCE 7-22 §29.4' or 'shop assumption' — the held METHOD-SIGN-WIND-HELD seed names the unencoded check)"],
-  ["bearing", "Footing bearing basis", "the soil-bearing method/source (e.g. 'presumptive 1500 psf' or 'geotech report X' — the held METHOD-FOOTING-BEARING-HELD seed names the unencoded check)"],
-  ["shaft", "Shaft/embedment basis", "the drilled-shaft/embedment method/source (e.g. 'IBC 1807.3.2.1' or 'pole manufacturer embedment table' — the held METHOD-SHAFT-HELD seed names the unencoded check)"],
+  ["footing_basis", "Footing bearing basis", "the soil-bearing method/source (e.g. 'presumptive 1500 psf' or 'geotech report X' — the held METHOD-FOOTING-BEARING-HELD seed names the unencoded check)"],
+  ["shaft_basis", "Shaft/embedment basis", "the drilled-shaft/embedment method/source (e.g. 'IBC 1807.3.2.1' or 'pole manufacturer embedment table' — the held METHOD-SHAFT-HELD seed names the unencoded check)"],
   ["lateral", "Lateral basis", "the lateral-load method/source (e.g. 'wind + seismic' or 'not applicable' — the held METHOD-LATERAL-HELD seed names the unencoded check)"],
   ["frost_depth", "Frost depth basis", "the frost-depth source (e.g. 'local code 30in' or 'NOAA frost map' — the held METHOD-FROST-HELD seed names the unencoded check)"],
-  ["basis_source", "Basis source", "the primary source/citation the design basis relies on (e.g. 'ACI 318' or 'shop standard' — names the register entry or external source)"],
+  // basis_reference is the operator's free-text citation — distinct from
+  // `basis_source`, which the O-104 boundary owns as enum provenance
+  // (manual/official_report/api). Writing free text into the enum key
+  // collided with that provenance contract.
+  ["basis_reference", "Basis source", "the primary source/citation the design basis relies on (e.g. 'ACI 318' or 'shop standard' — names the register entry or external source)"],
   ["pillar_bar", "Pillar bar basis", "the pillar-bar method/source (e.g. 'cage manufacturer' or 'shop assumption')"],
   ["base_plate", "Base plate basis", "the base-plate method/source (e.g. 'sign manufacturer' or 'shop assumption')"],
   ["cap_detail", "Cap detail basis", "the masonry cap detail method/source (e.g. 'coping manufacturer' or 'shop standard')"],
