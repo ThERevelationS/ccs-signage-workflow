@@ -1628,6 +1628,32 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               shows the footing + poles + cap; Cost Summary prices concrete + rebar + labor; the BOM prints the
               labeled field sheet.
             </p>
+            {/* O-101 (CMP-H10) -- walkthrough_step / walkthrough_video_url:
+                the operator's recorded walkthrough position + an optional
+                video link. Recorded fields on the project -- never consumed
+                by pricing, never a silent default. */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <label className="text-[11px] text-blue-900/80">
+                Walkthrough step
+                <input
+                  type="number" min="0" step="1" placeholder="0"
+                  value={project?.walkthrough_step ?? ""}
+                  onChange={(e) => patch({ walkthrough_step: e.target.value === "" ? undefined : Number(e.target.value) })}
+                  className="ml-1 h-7 w-16 rounded-sm border border-blue-300 bg-white px-1 text-[11px]"
+                  aria-label="Walkthrough step"
+                />
+              </label>
+              <label className="text-[11px] text-blue-900/80">
+                Walkthrough video
+                <input
+                  type="url" placeholder="https://..."
+                  value={project?.walkthrough_video_url ?? ""}
+                  onChange={(e) => patch({ walkthrough_video_url: e.target.value === "" ? undefined : e.target.value })}
+                  className="ml-1 h-7 w-56 rounded-sm border border-blue-300 bg-white px-1 text-[11px]"
+                  aria-label="Walkthrough video URL"
+                />
+              </label>
+            </div>
           </div>
         )}
 
