@@ -1079,3 +1079,38 @@ and obtain reviewed load/spacing/installation guidance and an actual cost basis.
 These are initial manufacturer sources, not a completed reinforcement or
 preliminary-engineering rule registry. O-102 and the remaining research gates
 stay OPEN. Structural foundations still require review by a real engineer.
+
+## Source Groups By Domain (O-102 / W-023)
+
+The register's sources grouped by the rule domain they feed — derived from
+`FOUNDATION_RULE_REGISTRY` (`register_id` on each rule's `source_ref`), so a
+reader navigates by topic rather than the flat CMP-SUP list. Domains with no
+cited source are the held seeds — the citation gap is named, never covered.
+
+- `support.placement.spacing` — CMP-SUP-013, CMP-SUP-015, CMP-SUP-016, CMP-SUP-019, CMP-SUP-022 (spacing/count ceilings per bearing mode)
+- `support.density` — CMP-SUP-013, CMP-SUP-014, CMP-SUP-019, CMP-SUP-021 (density/count caps)
+- `support.substrate` — CMP-SUP-007, CMP-SUP-013, CMP-SUP-015, CMP-SUP-016, CMP-SUP-021 (member vs substrate compatibility)
+- `support.compatibility` — CMP-SUP-003, CMP-SUP-010, CMP-SUP-013, CMP-SUP-021, CMP-SUP-024 (member-type vs support-kind)
+- `support.bearing_mode` — CMP-SUP-003, CMP-SUP-005, CMP-SUP-009
+- `support.catalog` — CMP-SUP-002, CMP-SUP-003, CMP-SUP-005, CMP-SUP-010, CMP-SUP-012 (per-SKU catalog modeling; `SUP-CAPACITY-HELD`/`SUP-HEIGHT-HELD` name the held capacity/height gaps)
+- `support.geometry` — CMP-SUP-003, CMP-SUP-005, CMP-SUP-009, CMP-SUP-011, CMP-SUP-014
+- `support.placement` / `support.placement.mat` — CMP-SUP-013, CMP-SUP-015 (bracing, plates, mat placement)
+- `support.finish` — CMP-SUP-003 (coatings)
+- `stock.placement` / `stock.splice` — CMP-SUP-015, CMP-SUP-017
+- `tie.pattern` / `tie.wire` — CMP-SUP-013, CMP-SUP-014, CMP-SUP-015, CMP-SUP-016, CMP-SUP-017
+- `clearance.cover` / `clearance.tolerance` — CMP-SUP-014, CMP-SUP-015, CMP-SUP-023
+- `authority.marker` — CMP-SUP-018, CMP-SUP-020, CMP-SUP-024 (paid/authority markers, not usable spec text)
+- Held domains (no cited source — the seed IS the gap): `method.sign_wind`, `method.footing`, `method.shaft`, `method.lateral`, `method.frost_depth`, `method.pillar_bar`, `method.base_plate`, `masonry.cap_detail`
+
+## Authority Class Badges (O-103)
+
+`foundationSourceAuthorityClass(id)` returns a source's class key;
+`foundationSourceClassLabel(key)` renders the badge — citation displays surface
+the class so a shop assumption never reads as adopted code.
+
+- `local_code` — "Adopted local code"
+- `structural_standard` — "Referenced structural standard"
+- `engineering_guidance` — "Engineering guidance"
+- `manufacturer_instructions` — "Manufacturer instructions" (the CMP-SUP corpus is mostly this class)
+- `shop_assumptions` — "Shop estimating assumption" (CMP-SUP-025 and the
+  design-basis fields live here — estimating conventions, never structural law)
