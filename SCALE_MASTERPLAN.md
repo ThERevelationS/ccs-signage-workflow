@@ -170,9 +170,17 @@ bucket as every user.
       gateway invoke in all 13 workers. Business-hours budget lowered
       40→30 (`PERMIT_CALL_BUDGET_DAY`), night stays 80. NOTE: only NEW worker
       spawns pick up the change — running processes hold the old constant.
-- [ ] Fleet "business hours quiet mode": during work hours the big spenders
-      (authority verifier, office researchers, local resolver sweeps) run
-      `--once` hourly passes instead of continuous loops.
+- [x] Fleet "business hours quiet mode" (2026-11-14, `permitting-fleet-supervisor`):
+      during the DAY_BUDGET window (local Sun-off 07:00-19:00) the supervisor
+      culls continuous heavy spenders — QUIET_ONCE (--once-capable) get a
+      deterministic-staggered hourly single pass (hash-spread over the hour,
+      spawn-registry tracked so a running pass is never double-fired), and
+      QUIET_PAUSE (no --once support: local-resolver + the research class)
+      pauses entirely until 19:00. Keepers (mirror-sync, feeder,
+      write-flusher, doc lanes, forever-runner, watchdog) stay continuous and
+      now own the full 30-call/min ledger. `FLEET_QUIET=0` disables.
+      **Activates on next supervisor restart** — the running process holds
+      the old code like every other fleet change.
 - [x] ~~Second service-token/identity for the fleet~~ — **CLOSED 2026-11-07:
       impossible.** Secrets inventory shows one service identity (the app's
       implicit service role) — `secrets list` holds only env vars
