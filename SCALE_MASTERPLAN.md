@@ -44,8 +44,10 @@ Sustained interactive budget available for staff: ≥100 calls/60s at all times.
       `staffDataRead` (batch + single) and `timeClockAction` (`status_lite`,
       `status` clocked_in/clocked_out) responses. **Visible after next publish
       only** — the app URL serves the last published function build.
-- [ ] `window.__ccsRequestStats` already reports logical calls/retries/gaveUp —
-      add a per-action breakdown dump helper for field measurement.
+- [x] `window.__ccsRequestStats` reports logical calls/retries/gaveUp AND
+      `window.__ccsRequestReport()` dumps the per-action breakdown —
+      `stats.detail[label]` holds count/errors/avg/max per `fn:<name>` or
+      `<entity>.<op>` plus a `slow[]` tail of the last N slow calls.
 - [x] Load harness: `scripts/load-sim.mjs` — N concurrent sessions
       (roster → status_lite → status → corrections, 4s think time), reports
       p50/p95/p99, HTTP status mix, entity_calls where visible.
@@ -79,9 +81,12 @@ entity cost.
       bootstrap reads memoized (mine 10s, items/assignments 15s, roster 60s,
       settings 60s). **Remaining spend: `status` full payload ~9 reads —
       mutable punch state, bounded by WS-2.**
-- [ ] Guard: NEVER memo actions whose response can differ by caller on the same
-      payload (scope key already includes session token where relevant — verify).
-- [ ] Honest limit: cold isolates still read; burst absorption only. This is
+- [x] Guard VERIFIED 2026-11-13: audited every memo() call site across
+      timeClockAction/manageTraining/manageSops/notificationAction — all are
+      per-caller keyed (email/id in key), role-gated to a uniform audience
+      (admin 403 before memo), or shared datasets filtered post-memo
+      (soplist/staff_roster/items). No caller-varying response shares a key.
+- [x] Honest limit: cold isolates still read; burst absorption only. This is
       why WS-2 exists for the truly hot shared datasets.
 
 ## WS-2 — Server read-through snapshots for shared datasets
@@ -182,8 +187,12 @@ bucket as every user.
       batch independent ones like `status` (done: ~10 serial → ~3 waves).
 - [ ] `boardFeed`/`queueFeed`/`staffDataRead` internals: same treatment where
       reads are independent.
-- [ ] `monitor_stale_shifts` (Time Clock cron): confirm it reads only
-      clocked-in states, not a full-table scan.
+- [x] `monitor_stale_shifts` (Time Clock cron): reads only clocked-in
+      entries/states — confirmed. Also bounded the `missed_clock_out`
+      exception read to `$in` on the stale entries' case_keys (was an
+      unbounded full-table page every run, growing forever; dedupe
+      semantics identical — any-status cases still suppress re-creation
+      and duplicates still surface as conflicts). Deployed 2026-11-13.
 
 ## WS-6 — Payload diet
 
