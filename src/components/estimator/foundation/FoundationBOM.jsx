@@ -37,7 +37,7 @@ export default function FoundationBOM({
     const out = [];
     // rawQty is the real numeric quantity; displayQty is the formatted label.
     // A row with a positive quantity OR a known cost stays listed (free rows
-    // included) â€” the formatted string is never parsed for the drop test.
+    // included) ‐ the formatted string is never parsed for the drop test.
     // O-097 "why this quantity" — every priced row may carry an honest
     // derivation note; it renders under the row like the reinforcement
     // notes already do. Only real derivation classes, never invented math.
@@ -124,7 +124,7 @@ export default function FoundationBOM({
       const label = `Foundation ${i.component_id ?? "?"} (saved)`;
       {
         out.push({
-          material: `${label} â€” concrete`,
+          material: `${label} ‐ concrete`,
           quantity: Number.isFinite(i.concrete_bags) ? qty(i.concrete_bags, "bags") : "Not saved",
           cost: hasFoundationCostSnapshot(i.concrete_cost) ? i.concrete_cost : "Not saved",
           saved: true,
@@ -134,7 +134,7 @@ export default function FoundationBOM({
         out.push(...foundationReinforcementBOMRows(i, { saved: true }));
       } else if (i.include_rebar) {
         out.push({
-          material: `${label} â€” rebar`,
+          material: `${label} ‐ rebar`,
           quantity: Number.isFinite(i.rebar_feet) ? qty(i.rebar_feet, "LF") : "Not saved",
           cost: hasFoundationCostSnapshot(i.rebar_cost) ? i.rebar_cost : "Not saved",
           saved: true,
@@ -142,7 +142,7 @@ export default function FoundationBOM({
       }
       if (i.include_forming) {
         out.push({
-          material: `${label} â€” forming`,
+          material: `${label} ‐ forming`,
           quantity: Number.isFinite(i.forming_qty) ? qty(i.forming_qty, "units") : "Not saved",
           cost: hasFoundationCostSnapshot(i.forming_cost) ? i.forming_cost : "Not saved",
           saved: true,
@@ -170,7 +170,7 @@ export default function FoundationBOM({
     const polePainting = poles.reduce((s, p, index) =>
       polePricing[index]?.available === false ? s : s + num(p.pole_painting_cost), 0);
     if (polePainting > 0) {
-      add("Pole painting", "â€”", polePainting);
+      add("Pole painting", "‐", polePainting);
     }
 
     const savedPoleFt = (p) => {
@@ -184,15 +184,15 @@ export default function FoundationBOM({
       const label = `Pole ${index + 1} (saved)`;
       const ft = savedPoleFt(p);
       out.push({
-        material: `${label} â€” pole`,
+        material: `${label} ‐ pole`,
         quantity: Number.isFinite(ft) ? qty(ft, "LF") : "Not saved",
         cost: hasFoundationCostSnapshot(p.pole_cost) ? p.pole_cost : "Not saved",
         saved: true,
       });
       if (p.include_pole_painting || hasFoundationCostSnapshot(p.pole_painting_cost)) {
         out.push({
-          material: `${label} â€” painting`,
-          quantity: "â€”",
+          material: `${label} ‐ painting`,
+          quantity: "‐",
           cost: hasFoundationCostSnapshot(p.pole_painting_cost) ? p.pole_painting_cost : "Not saved",
           saved: true,
         });
@@ -229,7 +229,7 @@ export default function FoundationBOM({
       add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost, g.qty, [notes, extras].filter(Boolean).join("; ") || null);
     });
 
-    // Signage cabinets â€” a priced row lists at the acknowledged unit cost Ã—
+    // Signage cabinets ‐ a priced row lists at the acknowledged unit cost Ó
     // quantity; a held row lists its saved state like the blocked foundation
     // items above (never a silently repriced $0 line).
     cabinetRows.forEach((row, index) => {
@@ -251,13 +251,13 @@ export default function FoundationBOM({
       add(label, qty(quantity, "pcs"), row.cost, quantity);
     });
 
-    // Landscape / site materials â€” a fully priced grid lists one row per
+    // Landscape / site materials ‐ a fully priced grid lists one row per
     // material; a held grid keeps the acknowledged section total as a single
     // saved row, exactly like the saved concrete-delivery row above.
     if (landscapePricing && landscapePricing.available === false) {
       out.push({
         material: "Site landscaping (saved)",
-        quantity: "â€”",
+        quantity: "‐",
         cost: hasFoundationCostSnapshot(totals.total_landscape_cost) ? totals.total_landscape_cost : "Not saved",
         saved: true,
       });
@@ -265,14 +265,14 @@ export default function FoundationBOM({
       landscapeSummary(landscape).lines.forEach((line) => {
         if (line.cost === null || line.sqft === null) {
           out.push({
-            material: `Site â€” ${line.label} (saved)`,
+            material: `Site ‐ ${line.label} (saved)`,
             quantity: Number.isFinite(line.sqft) ? qty(line.sqft, "sq ft") : qty(line.cells, "cells"),
             cost: "Not saved",
             saved: true,
           });
           return;
         }
-        add(`Site â€” ${line.label}`, qty(line.sqft, "sq ft"), line.cost, line.sqft);
+        add(`Site ‐ ${line.label}`, qty(line.sqft, "sq ft"), line.cost, line.sqft);
       });
     }
 
@@ -314,7 +314,7 @@ export default function FoundationBOM({
       <PreliminaryNotice />
       {listedPricingUnavailable && (
         <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1">
-          <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable â€” saved quantities may be outdated.</p>
+          <p className="text-[11px] font-semibold text-amber-800">Pricing unavailable ‐ saved quantities may be outdated.</p>
           {itemPricing.filter(p => p && p.available === false)
             .concat(polePricing.filter(p => p && p.available === false))
             .concat(cabinetRows.filter(p => p && p.available === false))
@@ -339,7 +339,7 @@ export default function FoundationBOM({
         </div>
       )}
       {rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No materials yet â€” add a foundation to build the list.</p>
+        <p className="text-sm text-gray-500">No materials yet ‐ add a foundation to build the list.</p>
       ) : (
         <>
           <table className="w-full text-sm">
