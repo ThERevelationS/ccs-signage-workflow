@@ -1042,6 +1042,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     ai_engineering_data: project.ai_engineering_data,
     design_basis: project.design_basis,
     site_hazard: project.site_hazard,
+    // O-101 (CMP-H10) -- authored on the panel via patch(); must ride the
+    // payload or every save drops the recorded walkthrough position.
+    walkthrough_step: project.walkthrough_step,
+    walkthrough_video_url: project.walkthrough_video_url,
     concrete_delivery_snapshot: captureConcreteDeliverySnapshot(calc.delivery),
     total_concrete_cost: calc.totals.total_concrete_cost,
     total_rebar_cost: calc.totals.total_rebar_cost,
