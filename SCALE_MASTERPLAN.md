@@ -280,6 +280,14 @@ bucket as every user.
 - [ ] Real-world check: all kiosks + 5 office sessions during a cron
       fire-minute → no banners. (Needs Brett's live traffic window — the
       staggered sim above is the closest solo approximation.)
+      **N=25 sustained ambient 2026-11-14 (`--flow=poll --stagger=15000
+      --think=80000`, models the real ~65s status_lite poll cadence):**
+      10.7min run → **75/75 HTTP 200, 0×429, 0×5xx, p50 416ms, p95 897ms,
+      entity spend ~21/min = ~15% of the 140 ceiling.** status_lite avg 3.1
+      calls (live-build path; drops to ~2 when lite_snapshot provisions on
+      publish). At N=50 this extrapolates to ~43/min ≈ 30% — comfortable
+      steady-state headroom; bursts remain the only pressure class and the
+      mount work addressed those.
 - [~] Remaining lever if fire-minute 429s persist in production: pace the
       scheduled-job readers so cron yields to browser bursts. **STATUS: infra
       exists — `withEntityRateLimitRetry` `paceMs` serializes calls within an
