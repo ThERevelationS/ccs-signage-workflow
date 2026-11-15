@@ -7,11 +7,76 @@ import { appParams } from "@/lib/app-params";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
-// Notification rules already carry a fully variable-substituted subject and
-// body, so they are formatted locally. Previously every notification spent an
-// integration credit having the AI reword copy the rule already said verbatim.
-const formatTemplateBody = (templateBody) =>
-  `<p>${String(templateBody || "").replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p>`;
+// Generate AI-enhanced email content
+const generateAIEmail = async (templateSubject, templateBody, workOrder, extraData = {}) => {
+  try {
+    // Build context based on whether it's an order or work order
+    let contextInfo = "";
+    if (extraData.orderData) {
+      const order = extraData.orderData;
+      contextInfo = `
+ORDER DETAILS:
+- Customer: ${order.customer_name || "Unknown"}
+- Request Type: ${order.request_type || "Unknown"}
+- Description: ${order.description || "No description"}
+- Quantity: ${order.quantity || "Not specified"}
+- Requestor: ${order.requestor_name || "Unknown"}
+- Date Needed: ${order.date_needed || "Not set"}
+- Vendor: ${order.vendor || "Not specified"}
+- Status: ${order.status || "pending"}`;
+    } else if (workOrder) {
+      contextInfo = `
+WORK ORDER: "${workOrder?.title || "Unknown"}" for client "${workOrder?.client_name || "Unknown"}"
+${extraData.previousStage ? `MOVED FROM: ${formatStageName(extraData.previousStage)}` : ""}
+${extraData.newStage ? `MOVED TO: ${formatStageName(extraData.newStage)}` : ""}
+CURRENT STAGE: ${formatStageName(workOrder?.current_stage)}
+ASSIGNED TO: ${workOrder?.assigned_to || "Unassigned"}
+${workOrder?.due_date ? `DUE DATE: ${workOrder.due_date}` : ""}
+${workOrder?.asap ? "PRIORITY: ASAP - URGENT" : ""}
+${workOrder?.is_rider ? "TYPE: This is a RIDER task" : ""}
+${extraData.taskText ? `TASK: ${extraData.taskText}` : ""}
+${extraData.noteText ? `NOTE: ${extraData.noteText}` : ""}`;
+    }
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `You are an automated workflow notification system for Cincinnati Signs. Generate a brief, impersonal notification email.
+
+EVENT: ${extraData.eventDescription || "Update"}
+${contextInfo}
+
+USER'S TEMPLATE TO BASE THIS ON:
+Subject: ${templateSubject}
+Body: ${templateBody}
+
+INSTRUCTIONS:
+- This is an AUTOMATED SYSTEM notification, NOT from a person
+- Do NOT include any personal sign-offs, names, or contact info
+- Do NOT say "Best regards", "Thanks", or any personal closings
+- Keep it SHORT and factual (1-3 sentences max)
+- Format as clean HTML with <p> tags
+- Just state what happened and relevant details
+- End with something like "This is an automated notification." if needed
+- Do NOT use markdown formatting like ** or - lists`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          subject: { type: "string", description: "The email subject line (plain text, no HTML)" },
+          body: { type: "string", description: "The email body formatted as clean HTML with <p> tags" }
+        },
+        required: ["subject", "body"]
+      }
+    });
+
+    return { subject: result.subject, body: result.body };
+  } catch (error) {
+    console.error("AI email generation failed, using template:", error);
+    // Fallback to original template with basic HTML formatting
+    return { 
+      subject: templateSubject, 
+      body: `<p>${templateBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>` 
+    };
+  }
+};
 
 // Variable replacements for email templates
 const replaceVariables = (template, workOrder, extraData = {}) => {
@@ -161,8 +226,11 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
 
       if (recipients.length === 0) continue;
 
-      const subject = replaceVariables(rule.email_subject, workOrder, extraData);
-      const body = formatTemplateBody(replaceVariables(rule.email_body, workOrder, extraData));
+      const templateSubject = replaceVariables(rule.email_subject, workOrder, extraData);
+      const templateBody = replaceVariables(rule.email_body, workOrder, extraData);
+
+      // Generate AI-enhanced email
+      const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
 
       // EmailGate sessions carry neither platform auth nor a workflow
       // capability, so a direct sendGmail invoke always 401s for them — route
@@ -415,6 +483,27 @@ export const NotificationTriggers = {
       eventDescription: "Order was cancelled",
       orderData: order
     });
+  },
+
+  // Emits every order save event for one CAS-verified write: ordered/received
+  // first-sets, cancel transitions, and one field-changed event per actually
+  // changed mapped field. Callers pass the fields they intended to write so
+  // server-managed keys never fire phantom change events.
+  orderSaveEvents: async ({ baseline, saved, fields, changedBy }) => {
+    if (!saved?.id) return;
+    const changedFields = (fields || []).filter((f) => baseline?.[f] !== saved?.[f]);
+    if (saved.date_ordered && !baseline?.date_ordered) {
+      await NotificationTriggers.orderOrdered(saved, changedBy);
+    }
+    if (saved.date_received && !baseline?.date_received) {
+      await NotificationTriggers.orderReceived(saved, changedBy);
+    }
+    if (changedFields.includes("status") && saved.status === "cancelled") {
+      await NotificationTriggers.orderCancelled(saved, changedBy);
+    }
+    for (const field of changedFields) {
+      await NotificationTriggers.orderFieldChanged(saved, field, baseline?.[field], saved?.[field], changedBy);
+    }
   },
 
   workOrderRestored: async (workOrder, changedBy) => {
