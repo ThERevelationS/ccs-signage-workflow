@@ -101,7 +101,7 @@ export default function ReinforcementDraftGeometry({ draft, item, supportCatalog
               </select>
             </label>
             {supports.catalog_id && !supportRows.some(r => r.id === supports.catalog_id) && (
-              <p className="mt-0.5 text-[11px] text-amber-700">Pinned support ID is not in the current catalog â€” pricing will report it unresolved.</p>
+              <p className="mt-0.5 text-[11px] text-amber-700">Pinned support ID is not in the current catalog ‐ pricing will report it unresolved.</p>
             )}
             {!supportRows.length && (
               <p className="mt-0.5 text-[11px] text-amber-700">No rebar_support catalog rows loaded; compatible-pick pricing will stay unresolved.</p>
