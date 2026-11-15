@@ -36,8 +36,8 @@ function steelPrimitive(primitive, length, depth, width) {
 }
 
 // A modeled bottom-resting support is a vertical post from its base plane up to
-// the mat bearing plane. The marker radius is a fixed visual hint â€” the catalog
-// footprint lives on the priced pick, not in geometry â€” so the marker is never
+// the mat bearing plane. The marker radius is a fixed visual hint ‐ the catalog
+// footprint lives on the priced pick, not in geometry ‐ so the marker is never
 // read as a dimensioned object.
 function supportPrimitive(placement, ordinal, local) {
   if (!positive(placement?.required_height_inches)) return null;
