@@ -132,6 +132,10 @@
       "type": "number",
       "default": 0
     },
+    "automation_deadline_fired": {
+      "type": "object",
+      "description": "Durable deadline-automation claim markers. Keys are ruleId|triggerType|dueDate, values are the ISO date the rule last fired for that combination, so daily reminder runs never re-fire the same rule for the same deadline."
+    },
     "issue_date": {
       "type": "string"
     },
