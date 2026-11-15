@@ -127,11 +127,11 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   // Blank clears the override (null); a malformed draft is preserved verbatim so
   // the item validation reports it instead of a NaN leaking into saved costs.
-  // Delegates to the boundary's catalog draft (CMP-A08) â€” identical contract,
+  // Delegates to the boundary's catalog draft (CMP-A08) ‐ identical contract,
   // plus whitespace-only drafts clear to null instead of minting Number(" ")=0.
   const nullSet = (key) => (e) => set({ [key]: inventoryNumberInput(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
-  // Versioned items price steel from the accepted reinforcement design â€” the
+  // Versioned items price steel from the accepted reinforcement design ‐ the
   // legacy implicit fields below do not apply to them and stay hidden.
   const legacyReinforcement = item.reinforcement_calculation_version == null || item.reinforcement_calculation_version === 1;
   const unavailable = pricing?.available === false;
@@ -230,7 +230,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           <DimensionDiagram item={item} />
         </div>
         <Field
-          label="Rotation (Â°)"
+          label="Rotation (°)"
           type="number"
           value={item.rotation_degrees ?? 0}
           onChange={numSet("rotation_degrees")}
@@ -360,8 +360,8 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             placeholder="chair / bolster / dobie"
           />
           <div className="col-span-2 sm:col-span-4 text-xs text-gray-500">
-            {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft Â·{" "}
-            {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs Â·{" "}
+            {Number.isFinite(item.rebar_feet) ? item.rebar_feet.toFixed(1) : "Not saved"} ft ·{" "}
+            {Number.isFinite(item.rebar_weight_lbs) ? item.rebar_weight_lbs.toFixed(0) : "Not saved"} lbs ·{" "}
             {amt(item.rebar_cost)}
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             <>Version 2 reinforcement uses the accepted design. Edit geometry and pricing through the controlled proposal below.{" "}
               <span className="font-semibold text-gray-800">Physical {num2(item.rebar_geometry_feet)} ft / priced {num2(item.rebar_feet)} ft - {amt(item.rebar_cost)}</span>
               {Number.isFinite(item.support_count) && item.support_count > 0 && (
-                <> Â· Supports: {item.support_count} required{Number.isFinite(item.support_purchased_units) && item.support_purchased_units !== item.support_count ? ` / ${item.support_purchased_units} purchased` : ""} - {amt(item.support_cost)}</>
+                <> · Supports: {item.support_count} required{Number.isFinite(item.support_purchased_units) && item.support_purchased_units !== item.support_count ? ` / ${item.support_purchased_units} purchased` : ""} - {amt(item.support_cost)}</>
               )}</>
           ) : (
             <>Unsupported reinforcement version. Reload before changing reinforcement pricing.</>
@@ -385,7 +385,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
       <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
         <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Excavation</div>
         <div className="text-[11px] text-amber-900">
-          Volume: ~{Number.isFinite(item.excavation_volume_cy) ? item.excavation_volume_cy.toFixed(2) : "Not saved"} CY Â· Cost: {amt(item.excavation_cost)}
+          Volume: ~{Number.isFinite(item.excavation_volume_cy) ? item.excavation_volume_cy.toFixed(2) : "Not saved"} CY · Cost: {amt(item.excavation_cost)}
         </div>
       </div>
 
