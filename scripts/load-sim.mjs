@@ -82,6 +82,9 @@ const flow = FLOWS[FLOW] || FLOWS.kiosk;
 // --stagger=<ms>: per-session join spacing. Default 700ms (burst-ish); real
 // morning mounts spread wider — pass ~2000 for a representative overlap.
 const STAGGER = Number(process.argv.find((a) => a.startsWith('--stagger='))?.split('=')[1] || 700);
+// --think=<ms>: inter-round think time. 4000 replays active use; ~75000
+// models real ambient polling (~1 call/min/user like the 65s status_lite poll).
+const THINK = Number(process.argv.find((a) => a.startsWith('--think='))?.split('=')[1] || 4000);
 
 async function session(id) {
   await sleep(jitter(id * STAGGER)); // staggered join, like real staff
@@ -89,7 +92,7 @@ async function session(id) {
     for (const [fn, payload, label] of flow(id, round)) {
       await call(fn, payload, label);
     }
-    await sleep(jitter(4000)); // think time between punches/refreshes
+    await sleep(jitter(THINK)); // think time between punches/refreshes
   }
 }
 
