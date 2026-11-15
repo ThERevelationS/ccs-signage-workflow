@@ -107,7 +107,7 @@ export function computeMetalCalculations(project = {}, inventory = []) {
     if (inventoryItem && inventoryItem.size) {
       dimensionsDisplay = inventoryItem.size;
       const sizeString = inventoryItem.size.toLowerCase().replace(/['"inchesftt]/g, '').trim();
-      const parts = sizeString.split(/[xÃ—]/).map(p => p.trim());
+      const parts = sizeString.split(/[xÓ]/).map(p => p.trim());
       if (parts.length >= 1) length = parts[0];
       if (parts.length >= 2) width = parts[1];
       if (parts.length >= 3) thickness = parts[2];
