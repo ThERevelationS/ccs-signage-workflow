@@ -230,8 +230,9 @@ await ok('frozen free-bag 45/cost0 BOM row + delivery order (saved) row', async 
   const del = { pricingUnavailable: true, concreteTotal: expected.delivery.concreteTotal, roundedYards: expected.delivery.roundedYards };
   const { c } = await mount(BOM, { items, poles: [], walls: [], delivery: del, totals: deep(expected.totals), inventory: deep(freeCase.inventory), itemPricing: items.map(() => ({ available: true, issues: [] })), pricingUnavailable: true });
   const t = text(c);
-  assert.deepEqual(cells(c).find(row => row[0] === 'Bagged concrete'),
-    ['Bagged concrete', formatQty(expected.items[0].concrete_bags, 'bags'), M(expected.items[0].concrete_cost)]);
+  const bagRow = cells(c).find(row => row[0]?.startsWith('Bagged concrete'));
+  assert.deepEqual(bagRow?.slice(1), [formatQty(expected.items[0].concrete_bags, 'bags'), M(expected.items[0].concrete_cost)],
+    'bagged row qty+cost; first cell also carries the O-097 derivation note');
   assert.ok(t.includes('delivery/order (saved)'), 'delivery order saved row');
 });
 
@@ -248,14 +249,16 @@ await ok('BOM mixed: resolved groups = ONE case1; blocked f1 saved rows; no dup;
   };
   const { c } = await mount(BOM, { items, poles: [], walls: [], delivery: { pricingUnavailable: true }, totals: misleadingCategoryTotals, inventory: deep(C.inventory), itemPricing: pricing, pricingUnavailable: true });
   const t = text(c);
+  // First-cell text includes the O-097 derivation note and O-115 cost-class
+  // badge where present — asserted verbatim so label drift stays loud.
   assert.deepEqual(cells(c), [
-    ['Concrete delivery/order (saved)', 'Not saved', 'Not saved'],
-    ['Bagged concrete', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
-    [`Rebar (${formatQty(exp.rebar_weight_lbs, 'lbs')})`, formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
-    ['Forming material', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
-    ['Foundation f1 (saved) - concrete', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
-    ['Foundation f1 (saved) - rebar', formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
-    ['Foundation f1 (saved) - forming', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
+    ['Concrete delivery/order (saved) saved', 'Not saved', 'Not saved'],
+    ['Bagged concrete Item volume converted to bag count at the supplier bag rate.', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
+    [`Rebar (${formatQty(exp.rebar_weight_lbs, 'lbs')}) Aggregate authored rebar feet and weight on legacy items.`, formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
+    ['Forming material Form units from item perimeter x depth.', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
+    ['Foundation f1 (saved) ‐ concrete', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
+    ['Foundation f1 (saved) ‐ rebar', formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
+    ['Foundation f1 (saved) ‐ forming', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
   ]);
   assert.ok(t.includes('Pricing unavailable'), 'footer flag');
   assert.ok(t.includes(M(exp.rebar_cost)), `resolved rebar cost ${exp.rebar_cost}`);
