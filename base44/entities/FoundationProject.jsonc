@@ -885,6 +885,10 @@
       "description": "Site landscaping painted on the landscape designer grid. cells maps 'x,y' grid keys to a material key; cell_size_inches is the size of one cell.",
       "additionalProperties": true
     },
+    "estimate_id": {
+      "type": "string",
+      "description": "Back-reference to the estimate line this foundation project prices"
+    },
     "walkthrough_step": {
       "type": "number",
       "description": "O-101 \u2014 operator-recorded walkthrough position"
