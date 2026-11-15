@@ -577,12 +577,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           : order));
 
         try {
-          if (cleanedUpdates.date_ordered && !baseline.date_ordered) {
-            await NotificationTriggers.orderOrdered(saved, currentUser?.full_name || currentUser?.email);
-          }
-          if (cleanedUpdates.date_received && !baseline.date_received) {
-            await NotificationTriggers.orderReceived(saved, currentUser?.full_name || currentUser?.email);
-          }
+          await NotificationTriggers.orderSaveEvents({
+            baseline,
+            saved,
+            fields: Object.keys(cleanedUpdates),
+            changedBy: currentUser?.full_name || currentUser?.email,
+          });
         } catch (notificationError) {
           console.error("Order saved but its notification could not be sent:", notificationError);
         }
