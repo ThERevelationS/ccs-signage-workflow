@@ -279,7 +279,7 @@ await ok('price invariance: nonzero calc scalars identical after normalization (
   for (const k of ['total_concrete_cost','total_rebar_cost','total_pole_cost','total_wall_cost','total_wall_cap_cost']) {
     assert.ok(typeof before.totals[k] === 'number' && Number.isFinite(before.totals[k]) && before.totals[k] > 0, `${k} must be nonzero`);
   }
-  const strip = (v) => JSON.parse(JSON.stringify(v, (k, x) => (k === 'component_id' || k === 'assembly_schema_version' || k.endsWith('_component_id') ? undefined : x)));
+  const strip = (v) => JSON.parse(JSON.stringify(v, (k, x) => (k === 'component_id' || k === 'componentId' || k === 'assembly_schema_version' || k.endsWith('_component_id') ? undefined : x)));
   assert.deepEqual(strip(after), strip(before));
 });
 
