@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { fetchAllOrders } from "@/lib/workOrderCache";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
   createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
@@ -228,6 +229,11 @@ export default function WorkOrderOrders({ workOrderId, clientName }) {
 
       setOrders((current) => current.some((order) => order.id === newOrder.id) ? current : [...current, newOrder]);
       originalOrdersRef.current[newOrder.id] = { ...newOrder };
+      try {
+        await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
+      } catch (notificationError) {
+        console.error("Order created but its notification could not be sent:", notificationError);
+      }
     } catch (error) {
       console.error("Error creating Work Order purchase Order:", error);
       setSaveError(error?.message || "The Order could not be created.");
@@ -294,6 +300,16 @@ export default function WorkOrderOrders({ workOrderId, clientName }) {
           ? { ...saved, ...(pendingChangesRef.current[orderId] || {}) }
           : order));
         setPendingChanges({ ...pendingChangesRef.current });
+        try {
+          await NotificationTriggers.orderSaveEvents({
+            baseline,
+            saved,
+            fields: Object.keys(cleanedChanges),
+            changedBy: currentUser?.full_name || currentUser?.email,
+          });
+        } catch (notificationError) {
+          console.error("Order saved but its notification could not be sent:", notificationError);
+        }
       }
     } catch (error) {
       console.error("Error saving Work Order purchases safely:", error);
