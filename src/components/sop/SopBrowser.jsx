@@ -156,6 +156,14 @@ export default function SopBrowser({ sops, settings, me, activeCategory, onCateg
         )}
       </div>
 
+      {!me?.canEdit && (
+        <p className="text-xs text-slate-400">
+          {me?.email
+            ? "You're signed in with read access — an admin can grant SOP editor rights in settings."
+            : "Sign in to create and manage procedures."}
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
