@@ -6,11 +6,11 @@ import { foundationWallOutlineBasis, foundationWallRectangle, foundationWallSegm
 import { formatFoundationDimension, foundationDimensionInputIssue, parseFoundationDimension } from "./foundationFtInEntry";
 import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 
-// O-093 (CMP-H02): rectangle outline entry takes feet/inches text â€” the rect
+// O-093 (CMP-H02): rectangle outline entry takes feet/inches text ‐ the rect
 // draft stays raw local state (same as before); parsing happens at validation/
 // apply time so a malformed draft disables Apply and shows the syntax hint
 // instead of silently coercing. Labels/help/placeholders come from the field
-// meta map (display text only â€” never stored defaults).
+// meta map (display text only ‐ never stored defaults).
 const rectLMeta = foundationDimensionFieldMeta("wallOutline", "rect_length");
 const rectWMeta = foundationDimensionFieldMeta("wallOutline", "rect_width");
 
@@ -70,7 +70,7 @@ export default function WallShapeEditor({ shape, onChange }) {
   const basis = foundationWallOutlineBasis(shape);
   const points = basis.points;
   const closed = basis.closed;
-  // Draft defaults display in the same ft/in form the parser accepts (8'Ã—4').
+  // Draft defaults display in the same ft/in form the parser accepts (8'Ó4').
   const [rect, setRect] = useState(() => ({
     l: formatFoundationDimension(96),
     w: formatFoundationDimension(48),
@@ -106,7 +106,7 @@ export default function WallShapeEditor({ shape, onChange }) {
   };
 
   // ft/in aware: parse the raw drafts first; validity is the parse plus the
-  // canonical-inch rectangle check (positive finite inches â€” unchanged rule).
+  // canonical-inch rectangle check (positive finite inches ‐ unchanged rule).
   const rectL = parseFoundationDimension(rect.l);
   const rectW = parseFoundationDimension(rect.w);
   const rectShape = rectL.ok && rectW.ok ? foundationWallRectangle(rectL.inches, rectW.inches) : null;
@@ -363,13 +363,13 @@ export default function WallShapeEditor({ shape, onChange }) {
         <div key={msg} role="status" className="text-xs text-amber-600">{msg}</div>
       ))}
       <div className="text-xs text-gray-600">
-        {hasSegmentLengths ? `${segments.length} segment${segments.length === 1 ? "" : "s"}` : "no segments"} Â· perimeter{" "}
+        {hasSegmentLengths ? `${segments.length} segment${segments.length === 1 ? "" : "s"}` : "no segments"} · perimeter{" "}
         <span className="font-semibold text-gray-900">{perimeter === null ? "Unavailable" : `${Math.round(perimeter)}"`}</span>
-        {closed ? " Â· closed" : points.length > 2 ? " Â· open (close it for an internal fill wall)" : ""}
+        {closed ? " · closed" : points.length > 2 ? " · open (close it for an internal fill wall)" : ""}
       </div>
       {legacyOnly && (
         <div role="status" className="text-xs text-amber-600">
-          Recorded segment lengths only â€” no drawable footprint. Draw or enter a rectangle to re-establish geometry.
+          Recorded segment lengths only ‐ no drawable footprint. Draw or enter a rectangle to re-establish geometry.
         </div>
       )}
       {malformedPoints && (
