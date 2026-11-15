@@ -3,6 +3,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -83,6 +84,9 @@ Deno.serve(async (req) => {
     const salesDeadlineRules = automations.filter(a =>
       a.triggers?.some(t => SALES_DEADLINE_TRIGGERS.includes(t.trigger_type))
     );
+    const invoiceOverdueRules = automations.filter(a =>
+      a.triggers?.some(t => t.trigger_type === 'invoice_overdue')
+    );
     const activeOrders = orderDeadlineRules.length > 0
       ? await loadAllEntityRows({
           entity: base44.asServiceRole.entities.Order,
@@ -99,12 +103,21 @@ Deno.serve(async (req) => {
           label: 'Deadline reminder Opportunities',
         })
       : [];
+    const openInvoices = invoiceOverdueRules.length > 0
+      ? await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Invoice,
+          query: {},
+          sort: 'due_date',
+          label: 'Deadline reminder Invoices',
+        })
+      : [];
 
     const results = {
       overdue: [],
       approaching: [],
       orders_overdue: [],
       orders_approaching: [],
+      invoices_overdue: [],
       triggered_automations: []
     };
     
@@ -347,6 +360,33 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Overdue invoices: a sent or partially-paid invoice whose due date has
+    // passed with an open balance fires invoice_overdue through the workflow
+    // engine (record context — email plus task/note onto a destination WO).
+    for (const invoice of openInvoices) {
+      const dueDate = String(invoice?.due_date || '').trim();
+      if (!dueDate || dueDate >= today) continue;
+      const invoiceStatus = String(invoice?.status || '').trim();
+      if (invoiceStatus !== 'sent' && invoiceStatus !== 'partially_paid') continue;
+      if (!(Number(invoice?.balance_due) > 0)) continue;
+      results.invoices_overdue.push({ id: invoice.id, customer: invoice.customer_name, due_date: dueDate, balance_due: invoice.balance_due });
+      for (const rule of invoiceOverdueRules) {
+        const trigger = rule.triggers?.find(t => t.trigger_type === 'invoice_overdue');
+        if (!trigger) continue;
+        const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Invoice, invoice, `${rule.id}|invoice_overdue|${dueDate}`, today);
+        if (!claim.claimed) continue;
+        const emitted = await processWorkflowTriggerEvent({
+          base44,
+          payload: { event_type: 'invoice_overdue', record: { id: invoice.id } },
+          changedByOverride: 'Deadline Automation',
+        }).catch((error) => {
+          console.error(`Invoice overdue automation emit failed for invoice ${invoice.id} / rule ${rule.id}:`, error?.message || error);
+          return null;
+        });
+        results.triggered_automations.push({ rule: rule.name, invoice: invoice.customer_name, trigger: 'invoice_overdue', actions: emitted?.actions || [{ error: 'emit failed' }] });
+      }
+    }
+
     return Response.json({
       success: true,
       checked_at: now.toISOString(),
@@ -354,6 +394,7 @@ Deno.serve(async (req) => {
         total_work_orders: workOrders.length,
         total_orders: activeOrders.length,
         total_opportunities: openOpportunities.length,
+        total_invoices: openInvoices.length,
         overdue_count: results.overdue.length,
         approaching_count: results.approaching.length,
         orders_overdue_count: results.orders_overdue.length,
