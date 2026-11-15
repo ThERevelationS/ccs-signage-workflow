@@ -91,7 +91,7 @@ export default function FoundationToolbar({
           disabled={saving}
           className="h-[28px] px-3 flex items-center gap-1.5 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 hover:bg-lime-200 disabled:opacity-60"
         >
-          <Save className="w-3.5 h-3.5" aria-hidden="true" /> {saving ? "Savingâ€¦" : "Save & Exit"}
+          <Save className="w-3.5 h-3.5" aria-hidden="true" /> {saving ? "Saving…" : "Save & Exit"}
         </button>
 
         <button
@@ -112,7 +112,7 @@ export default function FoundationToolbar({
           Auto-save
         </span>
         <span className="text-[11px] text-gray-500">
-          {saving ? "Savingâ€¦" : dirty ? "Not yet saved" : "All changes saved"}{!saving && !dirty && lastSavedAt ? ` Â· Last saved ${new Date(lastSavedAt).toLocaleString()}` : ""}
+          {saving ? "Saving…" : dirty ? "Not yet saved" : "All changes saved"}{!saving && !dirty && lastSavedAt ? ` · Last saved ${new Date(lastSavedAt).toLocaleString()}` : ""}
         </span>
         <button
           type="button"
