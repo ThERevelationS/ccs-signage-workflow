@@ -38,6 +38,12 @@ import { ensurePreliminaryNotice } from "./foundationPreliminaryNotice.js";
 //     transplant one project's engine settings onto another. Totals,
 //     concrete_delivery_snapshot, status, id/updated_date and sync receipts
 //     are likewise excluded — they are derived or record-scoped.
+//     design_basis/site_hazard are excluded on the same record-scope ground:
+//     they are THIS project's engineering provenance (the O-104 contract —
+//     a basis is never rewritten silently), not design geometry a template
+//     may transplant. walkthrough_step/walkthrough_video_url and estimate_id
+//     are likewise record-scoped (operator-session position; the owning
+//     estimate's back-link).
 export const FOUNDATION_TEMPLATE_FIELDS = [
   "items",
   "walls",
