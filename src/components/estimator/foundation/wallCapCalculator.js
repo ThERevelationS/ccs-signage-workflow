@@ -3,11 +3,11 @@
 // wallCapInputNumber is the boundary's finite signed basis (CMP-A08).
 import { inventoryFiniteNumber as wallCapInputNumber } from "@/components/masterInventory/inventoryNormalization";
 export { wallCapInputNumber };
-// O-009 tail: catalog lifecycle classification is the single contract â€” a
+// O-009 tail: catalog lifecycle classification is the single contract ‐ a
 // resolved-but-inactive/deleted cap row flags catalog_item_inactive /
 // catalog_item_deleted instead of silently repricing (the acknowledged
 // snapshot holds through the unchanged issues channel). The integrity module
-// imports foundationWallCapCatalogIssues back from this file â€” both
+// imports foundationWallCapCatalogIssues back from this file ‐ both
 // directions are call-time function declarations, so the cycle is eval-safe.
 import { foundationCatalogRowAvailability } from "./foundationCatalogIntegrity";
 export function wallCapCutLengthValue(cap) {
@@ -104,8 +104,8 @@ export function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
       issue("cap_inventory_id",
         availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
         availability === "deleted"
-          ? "the selected catalog material is marked deleted â€” pick a replacement."
-          : "the selected catalog material is inactive â€” reactivate it or pick a replacement.");
+          ? "the selected catalog material is marked deleted ‐ pick a replacement."
+          : "the selected catalog material is inactive ‐ reactivate it or pick a replacement.");
       return held(cap);
     }
     const firstIssue = issues.length;
