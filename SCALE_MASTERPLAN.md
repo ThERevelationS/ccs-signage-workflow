@@ -288,6 +288,11 @@ bucket as every user.
       publish). At N=50 this extrapolates to ~43/min ≈ 30% — comfortable
       steady-state headroom; bursts remain the only pressure class and the
       mount work addressed those.
+      **N=50 sustained ambient 2026-11-14 (same real cadence):** 16.2min run
+      → **150/150 HTTP 200, 0×429, 0×5xx, p50 413ms, p95 715ms, entity spend
+      ~26/min = ~19% of ceiling** — below the linear extrapolation (shared
+      memo slots amortize across more callers). The 25-50 user ambient
+      target is proven, not projected.
 - [~] Remaining lever if fire-minute 429s persist in production: pace the
       scheduled-job readers so cron yields to browser bursts. **STATUS: infra
       exists — `withEntityRateLimitRetry` `paceMs` serializes calls within an
