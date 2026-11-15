@@ -8,7 +8,7 @@ import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import { foundationWallCapCatalogIssues, wallCapInputNumber, wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-093 (CMP-H02): the cut-length field takes feet/inches entry through the
-// shared dimension field â€” same verbatim-draft contract as the CMP-A08
+// shared dimension field ‐ same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const capDimMeta = (field) => foundationDimensionFieldMeta("wallCap", field);
@@ -386,7 +386,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
 
       {options.length === 0 && (
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-          Wall cap catalog unavailable â€” existing rows remain editable; new caps cannot be added.
+          Wall cap catalog unavailable ‐ existing rows remain editable; new caps cannot be added.
         </div>
       )}
       {cutList.length > 0 && (
@@ -432,7 +432,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                     });
                   }}
                 >
-                  <option value="">Select capâ€¦</option>
+                  <option value="">Select cap…</option>
                   {cap.cap_inventory_id && !options.some((o) => o.id === cap.cap_inventory_id) && (
                     <option value={cap.cap_inventory_id} disabled>{`Catalog cap unavailable (${cap.cap_inventory_id})`}</option>
                   )}
@@ -465,7 +465,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 >
                   <option value="">Unassigned</option>
                   {cap.wall_component_id && !walls.some((w) => w.component_id === cap.wall_component_id) && (
-                    <option value={cap.wall_component_id} disabled>{`Missing wall (${String(cap.wall_component_id).slice(0, 18)}â€¦)`}</option>
+                    <option value={cap.wall_component_id} disabled>{`Missing wall (${String(cap.wall_component_id).slice(0, 18)}…)`}</option>
                   )}
                   {walls.map((w, i) => (
                     <option key={w.component_id || i} value={w.component_id || ""}>
@@ -493,7 +493,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
                 >
                   <option value="">Unassigned</option>
                   {cap.segment_component_id && !(walls.find((w) => w.component_id === cap.wall_component_id)?.shape?.segments || []).some((sg) => sg.component_id === cap.segment_component_id) && (
-                    <option value={cap.segment_component_id} disabled>{`Missing segment (${String(cap.segment_component_id).slice(0, 18)}â€¦)`}</option>
+                    <option value={cap.segment_component_id} disabled>{`Missing segment (${String(cap.segment_component_id).slice(0, 18)}…)`}</option>
                   )}
                   {(walls.find((w) => w.component_id === cap.wall_component_id)?.shape?.segments || []).map((sg, i) => (
                     <option key={sg.component_id || i} value={sg.component_id || ""}>
