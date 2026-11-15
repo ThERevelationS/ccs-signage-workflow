@@ -26,16 +26,16 @@ import {
   diagnoseLandscapeFoundation,
 } from "./foundationLandscapeAnchor";
 
-// O-093 (CMP-H02): the cell size takes feet/inches entry â€” same verbatim-draft
+// O-093 (CMP-H02): the cell size takes feet/inches entry ‐ same verbatim-draft
 // contract as the landscapeInputValue it replaces (blank stays, malformed
 // stores verbatim for diagnostics), canonical inches stored. The cell size is
-// never defaulted here â€” the ported `|| 12` minted a guess on a missing value;
+// never defaulted here ‐ the ported `|| 12` minted a guess on a missing value;
 // the meta placeholder below is display text only, never a stored value.
 const cellMeta = foundationDimensionFieldMeta("landscape", "cell_size_inches");
 
 const sqftLabel = (l) =>
   Number.isFinite(l.sqft) ? `${l.sqft.toFixed(0)} sq ft`
-    : `${l.cells} cell${l.cells === 1 ? "" : "s"} â€” area unavailable`;
+    : `${l.cells} cell${l.cells === 1 ? "" : "s"} ‐ area unavailable`;
 const costLabel = (v) => (Number.isFinite(v) ? money(v) : "Not saved");
 
 export default function LandscapeDesigner({ landscape, onChange, items }) {
@@ -51,7 +51,7 @@ export default function LandscapeDesigner({ landscape, onChange, items }) {
   // onChange on release, so page-level undo reverts the whole stroke.
   const strokeRef = useRef(null);
   const [strokeCells, setStrokeCells] = useState(null);
-  // Focused-edit draft for the cell size â€” while focused the user edits raw
+  // Focused-edit draft for the cell size ‐ while focused the user edits raw
   // text (partial ft/in never snaps); on blur the stored canonical inches
   // (or a verbatim malformed draft) displays again.
   const [cellDraft, setCellDraft] = useState(null);
