@@ -7,6 +7,9 @@ export const FOUNDATION_DRAFT_FIELDS = [
   "ai_engineering_recommendation", "ai_engineering_data",
   // O-104/O-105 — design-basis + site/hazard capture blocks.
   "design_basis", "site_hazard",
+  // O-101 — operator-recorded walkthrough position + video link: authored
+  // project state, so an unsent draft must carry them or restore drops them.
+  "walkthrough_step", "walkthrough_video_url",
   // Customer Pricing tab surface — markup %, manual price override, and the
   // applied-tier record (applied/tier_number). Persisted by payload(); restored
   // verbatim through the assembly normalizer's passthrough.
