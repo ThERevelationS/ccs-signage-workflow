@@ -362,7 +362,7 @@ const TRIGGER_HELP = {
   crm_event_completed: "Fires when a CRM event is closed with an outcome.",
   po_received: "Fires when a purchase order is fully received.",
   po_backordered: "Fires when a purchase order receipt leaves open quantity on backorder.",
-  invoice_overdue: "Computed in the attention feed (due date passed with an open balance) - nothing emits this event yet.",
+  invoice_overdue: "Fires each morning for any sent or partially-paid invoice whose due date has passed with an open balance - once per invoice per due date.",
   recon_variance: "Fires when a reconciliation batch closes with a non-zero variance.",
 };
 
@@ -521,12 +521,13 @@ const JURISDICTION_TRIGGER_SET = new Set([
 ]);
 
 // Unified-alerts record events - emitted client-side after verified writes
-// (CRM close-out, PO receiving, batch close). Record context, so send_email,
-// add_task, and add_note are the supported actions. invoice_overdue is
-// deliberately absent: nothing emits it (the attention feed computes overdue
-// invoices), so the editor keeps marking it "cannot run yet".
+// (CRM close-out, PO receiving, batch close), plus invoice_overdue which is
+// emitted by checkDeadlineReminders when a due date passes with an open
+// balance. Record context, so send_email, add_task, and add_note are the
+// supported actions.
 const OPS_RECORD_TRIGGER_SET = new Set([
   "crm_event_completed", "po_received", "po_backordered", "recon_variance",
+  "invoice_overdue",
 ]);
 
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
@@ -1198,7 +1199,7 @@ export default function AdminSettings() {
       name: `${rule.name || ""} (imported)`, group: rule.group || "", enabled: rule.enabled !== false,
       priority: rule.priority || 0, triggers: rule.triggers || [], actions: rule.actions || [],
     }, null, 2);
-    try { await navigator.clipboard.writeText(payload); }
+    try { await navigator.clipboard.writeText(payload); setRuleMessage?.("Rule JSON copied to clipboard."); }
     catch { window.prompt("Copy this rule JSON:", payload); }
   };
 
