@@ -652,7 +652,7 @@ export async function syncBuilderProductOperationalStatus({ builderProductId, fi
 export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, actor = "", overrideHardDue = false, label = "Product status", workOrder = null } = {}) {
   // Deposit gate (warn-only, never a hard block): a product moving INTO a
   // production status on a job whose deposit is required but not yet invoiced
-  // asks once ‐ "Deposit required $X ‐ proceed anyway?" Callers holding the
+  // asks once — "Deposit required $X — proceed anyway?" Callers holding the
   // Work Order pass it via `workOrder`; otherwise the live record is fetched.
   // The extra read only happens for production-bound moves, so ordinary
   // status edits never pay for it, and re-picking the held status no-ops.
@@ -673,7 +673,7 @@ export async function transitionProductAndBuilderStatus({ workOrderId, product, 
       && typeof window !== "undefined" && typeof window.confirm === "function"
       && !window.confirm(depositGateMessage(woSnapshot))
     ) {
-      throw Object.assign(new Error("Deposit required ‐ the move into production was not applied."), { depositCancelled: true });
+      throw Object.assign(new Error("Deposit required — the move into production was not applied."), { depositCancelled: true });
     }
   }
   const saved = await transitionProductOperationalStatus({ workOrderId, productId: product?.id, patch, actor, overrideHardDue, label });
