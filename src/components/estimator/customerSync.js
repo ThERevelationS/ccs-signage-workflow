@@ -501,7 +501,7 @@ export const backfillCustomersFromWorkOrders = async (customers, { sessionToken 
     const result = response?.data || response;
     if (result?.error) throw new Error(result.error);
     if (!result?.customer?.id) {
-      throw new Error(`Workflow Customer "${company_name}" could not be verified after creation.`);
+      throw new Error(`Workflow Customer “${company_name}” could not be verified after creation.`);
     }
     if (!knownIds.has(result.customer.id)) {
       knownIds.add(result.customer.id);
