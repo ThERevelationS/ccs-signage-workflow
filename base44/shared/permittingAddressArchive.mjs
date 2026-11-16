@@ -16,7 +16,7 @@ function scopedArchiveFetch(entity,id,seed,fetchSource){
 }
 // A separate owner-scoped collection retains originals without writing a
 // JurisdictionProfile, approved authority, WorkOrder or shared source catalog.
-export async function retainAddressResearchFiles({entity,scanRunId,actor,resolution,automatic,fetchSource,uploadFile,onProgress=async()=>{},archiveLimit=1}){
+export async function retainAddressResearchFiles({entity,scanRunId,actor,resolution,automatic,fetchSource,uploadFile,blobEntity,onProgress=async()=>{},archiveLimit=1}){
  if(!automatic?.started)return null;
  if(!scanRunId||!entity?.filter||!entity?.create)return {status:'unavailable',error:'Original-file retention is unavailable; source links remain available.',collections:[]};
  let started=0;const collections=[];
@@ -45,7 +45,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
    // Remaining originals are explicitly pending; no artificial coverage claim.
    const workerEntity={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:scanRunId,reference_only:true,authority_established:false,permitting_url:seed},patch)};
    let archive=null;
-   if((allowed.length||referrals.length)&&started<archiveLimit){started++;archive=allowed.length?await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:scopedArchiveFetch(workerEntity,collection.id,seed,fetchSource),uploadFile,onProgress,manual:false}):await archiveOwnedAddressResearchReferral({entity,collectionId:collection.id,actor,selection:{url:referrals[0].url,source_page_url:referrals[0].source_page_url},automatic:true,fetchSource,uploadFile,onProgress});}
+   if((allowed.length||referrals.length)&&started<archiveLimit){started++;archive=allowed.length?await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:scopedArchiveFetch(workerEntity,collection.id,seed,fetchSource),uploadFile,blobEntity,onProgress,manual:false}):await archiveOwnedAddressResearchReferral({entity,collectionId:collection.id,actor,selection:{url:referrals[0].url,source_page_url:referrals[0].source_page_url},automatic:true,fetchSource,uploadFile,blobEntity,onProgress});}
    const current=await workerEntity.get(collection.id);
    collections.push({...addressResearchCollection(current),archive});
    await onProgress({kind:'address_file_collection',collection_id:current.id,resources:current.documents.filter(d=>d.archive_state?.status==='complete').map(d=>({url:d.file_url,title:'Saved original: '+(d.title || d.url),doc_type:'saved_original'})),detail:`Retained ${current.documents.filter(d=>d.archive_state?.status==='complete').length} originals for ${scan.target.name}; ${current.documents.filter(d=>d.archive_state?.status!=='complete').length+(current.discovery_scan_state?.external_referrals || []).filter(ref=>!current.documents.some(doc=>doc.url===ref.url)).length} files still need download or verification. Research only; no authority approved.`});
@@ -54,7 +54,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
  return {status:collections.some(c=>c.error||c.archive?.success===false)?'needs_review':'retained',collections,reference_only:true,authority_established:false,automatic_archive_limit:archiveLimit};
 }
 
-export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,onProgress,automatic=false,automaticState,now}){
+export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,blobEntity,onProgress,automatic=false,automaticState,now}){
  automatic=automatic===true;
  const current=await entity.get(collectionId);
  const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
@@ -66,14 +66,14 @@ export async function archiveOwnedAddressResearchFile({entity,collectionId,docum
  if(rows.length!==1||rows[0].id!==current.id)throw Object.assign(Error('Duplicate research collection requires review.'),{status:409});
  const seed=new URL(current.permitting_url);
  const source=current.documents.find(doc=>doc.id===documentId),url=new URL(source.url);
- if(source.external_referral_provenance)return archiveOwnedAddressResearchReferral({entity,collectionId,actor,selection:{url:source.url,source_page_url:source.external_referral_provenance.source_page_url},automatic,automaticState,now,fetchSource,uploadFile,onProgress});
+ if(source.external_referral_provenance)return archiveOwnedAddressResearchReferral({entity,collectionId,actor,selection:{url:source.url,source_page_url:source.external_referral_provenance.source_page_url},automatic,automaticState,now,fetchSource,uploadFile,blobEntity,onProgress});
  if(seed.protocol!=='https:'||url.protocol!=='https:'||url.username||url.password||url.hostname.replace(/^www\./,'')!==seed.hostname.replace(/^www\./,'')||url.port!==seed.port)throw Object.assign(Error('Research source is outside the saved host.'),{status:400});
  const adapter={get:async id=>{const row=await entity.get(id);if(!own(row)||(automatic&&(row.auto_refresh!==true||row.state!==current.state)))throw Error('Research collection owner, automatic setting or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,...(automatic?{auto_refresh:true,state:current.state}:{}),owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url},patch)};
- const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:!automatic,now,fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress});
+ const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:!automatic,now,fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,blobEntity,onProgress});
  return {...result,collection:await adapter.get(collectionId)};
 }
 
-export async function archiveOwnedAddressResearchReferral({entity,collectionId,actor,selection,automatic=false,automaticState,now,fetchSource,uploadFile,onProgress}){
+export async function archiveOwnedAddressResearchReferral({entity,collectionId,actor,selection,automatic=false,automaticState,now,fetchSource,uploadFile,blobEntity,onProgress}){
  automatic=automatic===true;
  const current=await entity.get(collectionId);
  const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
@@ -83,11 +83,11 @@ export async function archiveOwnedAddressResearchReferral({entity,collectionId,a
  const refs=(current.discovery_scan_state?.external_referrals || []).filter(ref=>ref.url===selection?.url&&ref.source_page_url===selection?.source_page_url);
  if(refs.length!==1||refs[0].referral_kind!=='downloadable_document'||new URL(refs[0].url).protocol!=='https:'||new URL(refs[0].source_page_url).protocol!=='https:')throw Object.assign(Error('Select one retained HTTPS document referral.'),{status:400});
  const adapter={get:async id=>{const row=await entity.get(id);if(!own(row)||(automatic&&(row.auto_refresh!==true||row.state!==current.state)))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url,...(automatic?{auto_refresh:true,state:current.state}:{})},patch)};
- const result=await archiveExternalJurisdictionReferral({entity:adapter,jurisdictionId:collectionId,selection,manual:!automatic,automaticScopedResume:automatic,automaticInitialCollection:automatic,now,fetchScopedSource:async(url,init,host)=>{await adapter.get(collectionId);return fetchSource(url,init,host);},fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress,invalidateProfile:(_row,fields)=>fields.discovery_scan_state?{...fields,discovery_scan_state:addressDiscoveryCursor(fields.discovery_scan_state,fields.documents || _row.documents)}:fields});
+ const result=await archiveExternalJurisdictionReferral({entity:adapter,jurisdictionId:collectionId,selection,manual:!automatic,automaticScopedResume:automatic,automaticInitialCollection:automatic,now,fetchScopedSource:async(url,init,host)=>{await adapter.get(collectionId);return fetchSource(url,init,host);},fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,blobEntity,onProgress,invalidateProfile:(_row,fields)=>fields.discovery_scan_state?{...fields,discovery_scan_state:addressDiscoveryCursor(fields.discovery_scan_state,fields.documents || _row.documents)}:fields});
  return {...result,collection:await adapter.get(collectionId)};
 }
 
-export async function continueAddressResearchArchives({entity,scanEntity,state,fetchSource,uploadFile,now=()=>Date.now()}){
+export async function continueAddressResearchArchives({entity,scanEntity,state,fetchSource,uploadFile,blobEntity,now=()=>Date.now()}){
  if(!entity?.filter||!scanEntity?.get)return {success:true,skipped:true,reason:'address_archive_unavailable'};
  const pending=archiveBacklogQuery(now());delete pending.documents.$elemMatch.external_referral_provenance;const query={state,auto_refresh:true,$or:[{documents:pending.documents},{'discovery_scan_state.blocked':{$ne:true},'discovery_scan_state.external_initial_collection_drained':{$ne:true},'discovery_scan_state.external_referrals':{$elemMatch:{referral_kind:'downloadable_document',url:{$regex:'^https://'},source_page_url:{$regex:'^https://'}}}}]};
  Object.assign(query,{reference_only:true,authority_established:false,owner_id:{$nin:[null,'']},owner_email:{$nin:[null,'']},scan_run_id:{$nin:[null,'']}});
@@ -105,7 +105,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
    const actor={id:collection.owner_id,email:collection.owner_email};
    reporter=await createScanReporter({entity:scanEntity,token:crypto.randomUUID(),user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Automatic original download — '+(document?.title || referral?.title || collection.name)});
    attempted=true;
-   const common={entity,collectionId:collection.id,actor,automatic:true,automaticState:state,now,fetchSource,uploadFile,onProgress:event=>reporter.emit(event,event.progress || {})};
+   const common={entity,collectionId:collection.id,actor,automatic:true,automaticState:state,now,fetchSource,uploadFile,blobEntity,onProgress:event=>reporter.emit(event,event.progress || {})};
    const result=document?await archiveOwnedAddressResearchFile({...common,documentId:document.id}):await archiveOwnedAddressResearchReferral({...common,selection:{url:referral.url,source_page_url:referral.source_page_url}});
    if(result.skipped){await reporter.finish('complete',result.reason);continue;}
    const saved=result.collection?.documents?.find(doc=>doc.id===(document?.id || result.document_id));
