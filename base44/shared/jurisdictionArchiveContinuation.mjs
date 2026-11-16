@@ -121,7 +121,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, externalReferralAuthorized = false, onProgress = async()=>{}, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, blobEntity = null, manual = false, knownPdf = null, externalReferralAuthorized = false, onProgress = async()=>{}, token = crypto.randomUUID(), now = () => Date.now() }) {
   if (knownPdf && (!manual || !documentId || !/^[a-f0-9]{64}$/.test(knownPdf.sha256 || '') ||
       !Number.isInteger(knownPdf.bytes) || knownPdf.bytes < 5 || knownPdf.bytes > MAX_BYTES)) {
     throw new Error('A selected manual PDF requires its retained SHA-256 and bounded byte count.');
@@ -180,9 +180,21 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
       try { name = decodeURIComponent(name); } catch {}
       if ((knownPdf || classifiedPdf) && !/\.pdf$/i.test(name)) name += '.pdf';
       uploads++;
-      const result = await withResearchArchiveTimeout(uploadFile({ file: new File([bytes], name, { type: types[ext] || 'application/octet-stream' }) }), RESEARCH_UPLOAD_TIMEOUT_MS, 'Archive upload');
-      if (!result?.file_url) throw new Error('Upload returned no usable file URL; outcome is uncertain.');
-      const uploaded = { ...state, status: 'uploaded', file_url: result.file_url, uploaded_at: stamp(), verification_attempts: 0 };
+      let fileUrl;
+      if (blobEntity) {
+        // Inline byte archive — bytes ride a PermitArchiveBlob row instead of a
+        // metered UploadFile blob. state.file_url stores 'archiveblob:<id>'.
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        const row = await withResearchArchiveTimeout(blobEntity.create({ name, content_type: types[ext] || 'application/octet-stream', bytes: bytes.length, sha256: sha, data_b64: btoa(bin), source_url: doc.url, created_ms: now() }), RESEARCH_UPLOAD_TIMEOUT_MS, 'Archive blob store');
+        if (!row?.id) throw new Error('Blob store returned no id; outcome is uncertain.');
+        fileUrl = 'archiveblob:' + row.id;
+      } else {
+        const result = await withResearchArchiveTimeout(uploadFile({ file: new File([bytes], name, { type: types[ext] || 'application/octet-stream' }) }), RESEARCH_UPLOAD_TIMEOUT_MS, 'Archive upload');
+        if (!result?.file_url) throw new Error('Upload returned no usable file URL; outcome is uncertain.');
+        fileUrl = result.file_url;
+      }
+      const uploaded = { ...state, status: 'uploaded', file_url: fileUrl, uploaded_at: stamp(), verification_attempts: 0 };
       // Durable receipt before readback. A later retry verifies this same file.
       await transition(entity, jurisdictionId, doc, state, uploaded);
       state = uploaded;
@@ -192,7 +204,13 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
     const verifying = { ...state, verification_attempts: (Number(state.verification_attempts) || 0) + 1 };
     await transition(entity, jurisdictionId, doc, state, verifying);
     state = verifying;
-    const storedResponse = await fetchBytes(state.file_url);
+    const storedResponse = /^archiveblob:/.test(String(state.file_url || ''))
+      ? await (async () => {
+          const row = await blobEntity.get(String(state.file_url).slice(12)).catch(() => null);
+          if (!row?.data_b64) throw new Error('Stored archive blob row is missing.');
+          return { bytes: Uint8Array.from(atob(String(row.data_b64)), (c) => c.charCodeAt(0)), contentType: String(row.content_type || ''), finalUrl: String(state.file_url), referralRecheck: undefined };
+        })()
+      : await fetchBytes(state.file_url);
     const stored = storedResponse.bytes;
     const storedFormat = state.detected_format || (knownPdf || classifiedPdf ? 'pdf' : new URL(doc.url).pathname.split('.').pop().toLowerCase());
     validatePermitDocumentBytes(stored, {format: storedFormat, contentType: storedResponse.contentType});
