@@ -1,3 +1,25 @@
+// src/components/estimator/foundation/FoundationTotals.jsx
+import { useMemo } from "react";
+
+// src/components/masterInventory/inventoryNormalization.js
+var STRICT_SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+var STRICT_UNSIGNED_EXPONENT = /^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
+var strictNumber = (value, { unsignedExponent = false } = {}) => {
+  if (typeof value !== "number" && (typeof value !== "string" || !(unsignedExponent ? STRICT_UNSIGNED_EXPONENT : STRICT_SIGNED_DECIMAL).test(value.trim()))) {
+    return null;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+var inventoryNonnegativeNumber = (value) => {
+  const number = strictNumber(value);
+  return number !== null && number >= 0 ? number : null;
+};
+var inventoryPositiveNumber = (value) => {
+  const number = strictNumber(value, { unsignedExponent: true });
+  return number !== null && number > 0 ? number : null;
+};
+
 // src/components/estimator/foundation/poleCalculator.js
 var FOUNDATION_METHOD_DOMAIN = Object.freeze({
   // The documented embedment domain: embedment is a third of the exposed pole
@@ -60,12 +82,44 @@ var LANDSCAPE_MATERIALS = [
   { key: "ground_cover", label: "Ground Cover", color: "#65a30d", cost_per_sqft: 4, pattern: "foliage" },
   { key: "planting_bed", label: "Planting Bed", color: "#7c3f00", cost_per_sqft: 6, pattern: "soil" }
 ];
+var materialByKey = (key) => LANDSCAPE_MATERIALS.find((m) => m.key === key);
+var configuredMaterialPrice = (key, overrides) => {
+  const ov = isRecord(overrides) ? overrides[key] : null;
+  const up = ov ? Number(ov.unit_price) : null;
+  if (Number.isFinite(up) && up >= 0) return { rate: up, catalog_id: typeof ov.catalog_id === "string" && ov.catalog_id !== "" ? ov.catalog_id : null, configured: true };
+  return { rate: null, catalog_id: null, configured: false };
+};
 var LANDSCAPE_VISUAL_OBJECTS = [
   { key: "tree", label: "Tree", color: "#166534", height_inches: 96, radius_inches: 24 },
   { key: "shrub", label: "Shrub", color: "#15803d", height_inches: 18, radius_inches: 12 },
   { key: "light", label: "Light", color: "#f59e0b", height_inches: 72, radius_inches: 2 },
   { key: "boulder", label: "Boulder", color: "#57534e", height_inches: 30, radius_inches: 18 }
 ];
+var VISUAL_PREFIX = "visual:";
+var isVisualCellKey = (key) => typeof key === "string" && key.startsWith(VISUAL_PREFIX);
+var visualObjectByKey = (key) => isVisualCellKey(key) ? LANDSCAPE_VISUAL_OBJECTS.find((o) => o.key === key.slice(VISUAL_PREFIX.length)) : void 0;
+var LANDSCAPE_COUNT_OBJECTS = [
+  { key: "tree", label: "Tree", unit_cost: 350, height_inches: 96, radius_inches: 24 },
+  { key: "shrub", label: "Shrub", unit_cost: 45, height_inches: 18, radius_inches: 12 },
+  { key: "light", label: "Light", unit_cost: 120, height_inches: 72, radius_inches: 2 },
+  { key: "boulder", label: "Boulder", unit_cost: 180, height_inches: 30, radius_inches: 18 },
+  // O-069 (CMP-F02) -- additional placed-object types: grass clumps / flower
+  // beds / small rocks / a fountain bill by authored unit_cost per placed
+  // object (count-priced, NOT sqft coverage -- the same count-priced model
+  // the base objects use).
+  { key: "grass_clump", label: "Grass clump", unit_cost: 12, height_inches: 12, radius_inches: 6 },
+  { key: "flower_bed", label: "Flower bed", unit_cost: 65, height_inches: 14, radius_inches: 10 },
+  { key: "small_rock", label: "Small rock", unit_cost: 25, height_inches: 10, radius_inches: 8 },
+  { key: "fountain", label: "Fountain", unit_cost: 850, height_inches: 54, radius_inches: 22 }
+];
+var countObjectByKey = (key) => LANDSCAPE_COUNT_OBJECTS.find((o) => o.key === key);
+var LANDSCAPE_BORDER_TYPES = [
+  { key: "steel_edging", label: "Steel edging", cost_per_ft: 4.5 },
+  { key: "plastic_edging", label: "Plastic edging", cost_per_ft: 1.75 },
+  { key: "brick_border", label: "Brick border", cost_per_ft: 8 },
+  { key: "concrete_curb", label: "Concrete curb", cost_per_ft: 12 }
+];
+var borderTypeByKey = (key) => LANDSCAPE_BORDER_TYPES.find((b) => b.key === key);
 var LANDSCAPE_ASSET_MANIFEST = Object.freeze({
   license_policy: "CC0 or shop-licensed, individually curated per object type -- no blanket packs",
   source_kind: "procedural shop-authored primitives",
@@ -122,6 +176,180 @@ var LANDSCAPE_ASSET_MANIFEST = Object.freeze({
     }
   }))
 });
+var isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+function landscapeInputIssues(landscape) {
+  const issues = [];
+  if (landscape === void 0 || landscape === null) return issues;
+  const add = (field, code, message) => issues.push({
+    kind: "landscape",
+    index: null,
+    componentId: null,
+    field,
+    code,
+    message: `Landscape: ${message}`
+  });
+  const rawCells = landscape.cells;
+  const cells = isRecord(rawCells) ? rawCells : null;
+  if (rawCells !== void 0 && rawCells !== null && cells === null) {
+    add(
+      "cells",
+      "landscape_cells_unavailable",
+      "the recorded site grid is malformed  -  -  -  -  -  -  - ? repair or clear it before repricing"
+    );
+    return issues;
+  }
+  const painted = Object.entries(cells || {}).filter(([, key]) => key && key !== "dirt");
+  if (!painted.length) return issues;
+  if (inventoryPositiveNumber(landscape.cell_size_inches) === null) {
+    add(
+      "cell_size_inches",
+      "landscape_cell_size_unavailable",
+      "record a finite, positive cell size in inches before repricing site materials"
+    );
+  }
+  const reported = /* @__PURE__ */ new Set();
+  for (const [, key] of painted) {
+    if (reported.has(key)) continue;
+    reported.add(key);
+    if (isVisualCellKey(key)) {
+      if (!visualObjectByKey(key)) {
+        add(
+          "cells",
+          "landscape_visual_unavailable",
+          `decorative object ${JSON.stringify(key)} is not in the visual catalog -- pick a listed object or erase it before repricing`
+        );
+      }
+      continue;
+    }
+    const mat = materialByKey(key);
+    if (!mat) {
+      add(
+        "cells",
+        "landscape_material_unavailable",
+        `site material ${JSON.stringify(key)} is not in the landscape catalog  -  -  -  -  -  -  - ? pick a catalog material or erase it before repricing`
+      );
+    } else if (inventoryNonnegativeNumber(mat.cost_per_sqft) === null) {
+      add(
+        "cost_per_sqft",
+        "landscape_material_price_unavailable",
+        `record a finite, nonnegative cost per sq ft for "${mat.label}" before repricing`
+      );
+    }
+  }
+  return issues;
+}
+var landscapeSummary = (landscape) => {
+  const cells = isRecord(landscape?.cells) ? landscape.cells : {};
+  const cellSize = inventoryPositiveNumber(landscape?.cell_size_inches);
+  const sqftPerCell = cellSize === null ? null : Math.pow(cellSize / 12, 2);
+  const waste = Number.isFinite(landscape?.waste_fraction) && landscape.waste_fraction >= 0 ? landscape.waste_fraction : 0;
+  const labor = landscape?.labor_cost == null ? null : Number.isFinite(Number(landscape.labor_cost)) && Number(landscape.labor_cost) >= 0 ? Number(landscape.labor_cost) : null;
+  const laborInvalid = landscape?.labor_cost != null && labor === null;
+  const bedDepth = Number.isFinite(landscape?.bed_depth_inches) && landscape.bed_depth_inches > 0 ? landscape.bed_depth_inches : null;
+  const counts = {};
+  const rows = {};
+  let plantCount = 0;
+  Object.values(cells).forEach((key) => {
+    if (!key || key === "dirt") return;
+    if (isVisualCellKey(key)) {
+      plantCount += 1;
+      return;
+    }
+    counts[key] = (counts[key] || 0) + 1;
+    if (sqftPerCell !== null) rows[key] = (rows[key] || 0) + sqftPerCell;
+  });
+  const lines = Object.entries(counts).map(([key, count]) => {
+    const mat = materialByKey(key);
+    const sqft = sqftPerCell === null ? null : rows[key] * (1 + waste);
+    const configured = configuredMaterialPrice(key, landscape?.material_overrides);
+    const rate = configured.configured ? configured.rate : mat ? inventoryNonnegativeNumber(mat.cost_per_sqft) : null;
+    return {
+      key,
+      label: mat?.label || key,
+      color: mat?.color || "#999",
+      cells: count,
+      sqft,
+      volume_cuft: sqft === null || bedDepth === null ? null : sqft * bedDepth / 12,
+      cost_per_sqft: rate,
+      configured_catalog_id: configured.catalog_id,
+      cost: sqft === null || rate === null ? null : sqft * rate
+    };
+  });
+  const materialsTotal = lines.every((l) => l.cost !== null) ? lines.reduce((s, l) => s + l.cost, 0) : null;
+  const objectLines = (Array.isArray(landscape?.objects) ? landscape.objects : []).map((o) => {
+    const catalog = countObjectByKey(o?.type);
+    const qty = Number(o?.qty);
+    const validQty = Number.isFinite(qty) && qty > 0;
+    const unit = catalog ? Number(catalog.unit_cost) : null;
+    return {
+      key: o?.type || "unknown",
+      label: catalog?.label || (o?.type || "Object"),
+      qty: validQty ? qty : null,
+      unit_cost: unit,
+      cost: validQty && unit !== null ? qty * unit : null,
+      invalid: !catalog || !validQty || unit === null
+    };
+  });
+  const objectsTotal = objectLines.length === 0 ? 0 : objectLines.every((l) => l.cost !== null) ? objectLines.reduce((s, l) => s + l.cost, 0) : null;
+  const borderLines = (Array.isArray(landscape?.borders) ? landscape.borders : []).map((b) => {
+    const type = borderTypeByKey(b?.type);
+    const feet = Number(b?.linear_feet);
+    const validFeet = Number.isFinite(feet) && feet > 0;
+    const rate = type ? Number(type.cost_per_ft) : null;
+    return {
+      key: b?.type || "unknown",
+      label: type?.label || (b?.type || "Border"),
+      linear_feet: validFeet ? feet : null,
+      cost_per_ft: rate,
+      cost: validFeet && rate !== null ? feet * rate : null,
+      invalid: !type || !validFeet || rate === null
+    };
+  });
+  const bordersTotal = borderLines.length === 0 ? 0 : borderLines.every((l) => l.cost !== null) ? borderLines.reduce((s, l) => s + l.cost, 0) : null;
+  const bedLines = (Array.isArray(landscape?.beds) ? landscape.beds : []).map((b) => {
+    const mat = materialByKey(b?.material);
+    const sqft = Number(b?.sqft);
+    const validSqft = Number.isFinite(sqft) && sqft > 0;
+    const rate = mat ? inventoryNonnegativeNumber(mat.cost_per_sqft) : null;
+    return {
+      key: b?.material || "unknown",
+      label: mat?.label || (b?.material || "Bed"),
+      sqft: validSqft ? sqft : null,
+      cost_per_sqft: rate,
+      cost: validSqft && rate !== null ? sqft * rate : null,
+      invalid: !mat || !validSqft || rate === null
+    };
+  });
+  const bedsTotal = bedLines.length === 0 ? 0 : bedLines.every((l) => l.cost !== null) ? bedLines.reduce((s, l) => s + l.cost, 0) : null;
+  const bedsSqft = bedLines.reduce((s, l) => s + (Number.isFinite(l.sqft) ? l.sqft : 0), 0);
+  const bedVolumeCy = bedDepth !== null && bedLines.every((l) => l.sqft !== null) && bedsSqft > 0 ? bedsSqft * bedDepth / 27 : null;
+  const total = laborInvalid || objectsTotal === null || materialsTotal === null || bordersTotal === null || bedsTotal === null ? null : materialsTotal + (labor === null ? 0 : labor) + objectsTotal + bordersTotal + bedsTotal;
+  const groups = {};
+  (Array.isArray(landscape?.objects) ? landscape.objects : []).forEach((o, i) => {
+    const key = o?.group;
+    if (!key) return;
+    const l = objectLines[i];
+    const g = groups[key] || (groups[key] = { count: 0, cost: 0 });
+    g.count += 1;
+    if (l && Number.isFinite(l.cost)) g.cost += l.cost;
+  });
+  return {
+    lines,
+    object_lines: objectLines,
+    border_lines: borderLines,
+    bed_lines: bedLines,
+    total,
+    materials_total: materialsTotal,
+    objects_total: objectsTotal,
+    borders_total: bordersTotal,
+    beds_total: bedsTotal,
+    labor_cost: labor,
+    plant_count: plantCount,
+    groups,
+    bed_volume_cy: bedVolumeCy,
+    issues: landscapeInputIssues(landscape)
+  };
+};
 
 // src/components/estimator/foundation/foundationGeometryInputs.js
 var FOUNDATION_DIMENSION_FIELDS = Object.freeze({
@@ -506,7 +734,7 @@ var APPLICABILITY_LIST_KEYS = /* @__PURE__ */ new Set([
   "mat_layers",
   "exposures"
 ]);
-var isRecord = (value) => value !== null && typeof value === "object" && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+var isRecord2 = (value) => value !== null && typeof value === "object" && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 var text = (value) => typeof value === "string" && value.trim() ? value.trim() : "";
 var finite = (value) => typeof value === "number" && Number.isFinite(value);
 function deepFreeze(value, seen = /* @__PURE__ */ new Set()) {
@@ -2199,7 +2427,7 @@ function gatedChecks(params) {
 function normalizeRule(rule) {
   const errors = [];
   const warnings = [];
-  if (!isRecord(rule)) return { ok: false, errors: ["rule must be a plain record"], warnings };
+  if (!isRecord2(rule)) return { ok: false, errors: ["rule must be a plain record"], warnings };
   const rule_id = text(rule.rule_id);
   if (!rule_id || !RULE_ID.test(rule_id)) errors.push("rule_id must be an UPPER-KEBAB stable identifier");
   const domain = text(rule.domain);
@@ -2214,7 +2442,7 @@ function normalizeRule(rule) {
   const isHeld = status === "held";
   const params = rule.params === void 0 ? {} : rule.params;
   if (params === null && isHeld) {
-  } else if (!isRecord(params)) {
+  } else if (!isRecord2(params)) {
     errors.push("params must be a plain record when present");
   } else {
     for (const [key, value] of Object.entries(params)) {
@@ -2226,7 +2454,7 @@ function normalizeRule(rule) {
     }
   }
   const sref = rule.source_ref;
-  if (!isRecord(sref)) {
+  if (!isRecord2(sref)) {
     if (!(isHeld && (sref === null || sref === void 0))) {
       errors.push("source_ref is required for every registry rule");
     }
@@ -2249,14 +2477,14 @@ function normalizeRule(rule) {
       errors.push("source_ref.url must be a string or null");
     }
   }
-  if (isRecord(sref) && sref.verified !== true && status === "active") {
+  if (isRecord2(sref) && sref.verified !== true && status === "active") {
     warnings.push(`rule ${rule_id} declared active with source verified=${String(sref.verified)}; coerced to held`);
     status = "held";
   }
   const rule_version = text(rule.rule_version);
   if (!rule_version || !SEMVER.test(rule_version)) errors.push("rule_version must be semver (x.y.z)");
   const applicability = rule.applicability === void 0 ? {} : rule.applicability;
-  if (!isRecord(applicability)) {
+  if (!isRecord2(applicability)) {
     errors.push("applicability must be a plain record when present");
   } else {
     for (const [key, value] of Object.entries(applicability)) {
@@ -2295,10 +2523,10 @@ function normalizeRule(rule) {
     rule_id,
     domain,
     statement,
-    params: isRecord(params) ? { ...params } : {},
+    params: isRecord2(params) ? { ...params } : {},
     units: rule.units ?? null,
     logic: rule.logic ?? null,
-    source_ref: isRecord(sref) ? {
+    source_ref: isRecord2(sref) ? {
       register_id: sref.register_id.trim(),
       authority: sref.authority.trim(),
       title: sref.title.trim(),
@@ -2362,7 +2590,7 @@ function createFoundationRuleRegistry(seedRules = FOUNDATION_RULE_SEEDS) {
   }
   for (const seed of Array.isArray(seedRules) ? seedRules : []) {
     const verdict = registerRule(seed);
-    if (!verdict.ok) errors.push({ rule_id: isRecord(seed) ? seed.rule_id ?? null : null, errors: verdict.errors });
+    if (!verdict.ok) errors.push({ rule_id: isRecord2(seed) ? seed.rule_id ?? null : null, errors: verdict.errors });
   }
   function lookupRule(rule_id) {
     return byId.get(rule_id) ?? null;
@@ -2372,18 +2600,18 @@ function createFoundationRuleRegistry(seedRules = FOUNDATION_RULE_SEEDS) {
   }
   function rulesForDomain(domain, context = {}, { includeHeld = false } = {}) {
     const want = text(domain);
-    const ctx = isRecord(context) ? context : {};
+    const ctx = isRecord2(context) ? context : {};
     return [...byId.values()].filter((rule) => includeHeld || rule.status === "active").filter((rule) => !want || want === "*" || rule.domain === want || rule.domain.startsWith(want + ".")).filter((rule) => ruleAppliesTo(rule, ctx)).sort(byRuleId);
   }
   function assertParamsAgainstRule(ruleOrId, actualParams = {}) {
-    const rule = isRecord(ruleOrId) ? ruleOrId : lookupRule(ruleOrId);
+    const rule = isRecord2(ruleOrId) ? ruleOrId : lookupRule(ruleOrId);
     if (!rule) {
-      return { ok: false, verdict: "rule_not_found", rule_id: isRecord(ruleOrId) ? ruleOrId.rule_id ?? null : ruleOrId ?? null, checks: [], violations: [{ code: "rule_not_found" }] };
+      return { ok: false, verdict: "rule_not_found", rule_id: isRecord2(ruleOrId) ? ruleOrId.rule_id ?? null : ruleOrId ?? null, checks: [], violations: [{ code: "rule_not_found" }] };
     }
     if (rule.status !== "active") {
       return { ok: false, verdict: "rule_not_active", rule_id: rule.rule_id, status: rule.status, checks: [], violations: [{ code: "rule_not_active", status: rule.status }] };
     }
-    if (!isRecord(actualParams)) {
+    if (!isRecord2(actualParams)) {
       return { ok: false, verdict: "invalid_input", rule_id: rule.rule_id, checks: [], violations: [{ code: "actual_params_invalid" }] };
     }
     const checks = gatedChecks(rule.params).map((check) => {
@@ -2463,6 +2691,36 @@ var FOUNDATION_METHOD_DOMAIN2 = Object.freeze([
   "method.base_plate"
 ]);
 
+// src/components/estimator/foundation/foundationInputValidation.js
+function signageCabinetInputIssues(cabinet, index = 0) {
+  const issues = [];
+  const record = cabinet ?? {};
+  const add = (field, code, message) => issues.push({
+    kind: "signage_cabinet",
+    index,
+    componentId: record.component_id ?? record.id ?? null,
+    field,
+    code,
+    message: `Signage cabinet ${index + 1}: ${message}`
+  });
+  const qty = record.quantity;
+  if (qty !== void 0 && qty !== null && qty !== "" && inventoryPositiveNumber(qty) === null) {
+    add(
+      "quantity",
+      "signage_cabinet_quantity_unavailable",
+      "record a finite, positive quantity \u2014 a zero or malformed quantity cannot be repriced"
+    );
+  }
+  if (inventoryNonnegativeNumber(record.unit_cost) === null) {
+    add(
+      "unit_cost",
+      "signage_cabinet_price_unavailable",
+      "record a finite, nonnegative unit cost \u2014 a missing price is not a free cabinet"
+    );
+  }
+  return issues;
+}
+
 // src/components/estimator/foundation/foundationReinforcementBasis.js
 var FOOT_UNITS = Object.freeze(["ft", "foot", "feet", "lf", "linear ft", "linear foot", "linear feet"]);
 
@@ -2480,14 +2738,2568 @@ var ROLE_SHAPES = Object.freeze({
 
 // src/components/estimator/foundation/foundationCalc.js
 var num = (v, d = 0) => Number.isFinite(Number(v)) ? Number(v) : d;
+function calcSignageCabinetPricing(cabinets = []) {
+  return (Array.isArray(cabinets) ? cabinets : []).map((cabinet, index) => {
+    const issues = signageCabinetInputIssues(cabinet, index);
+    const entry = { ...cabinet ?? {} };
+    if (issues.length) return { available: false, issues, cost: null, pricedEntry: entry };
+    const quantity = entry.quantity === void 0 || entry.quantity === null || entry.quantity === "" ? 1 : Number(entry.quantity);
+    const cost = Number(entry.unit_cost) * quantity;
+    return { available: true, issues, cost, pricedEntry: entry };
+  });
+}
 var money = (n) => `$${num(n).toLocaleString(void 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// src/components/estimator/foundation/foundationAssemblyModel.js
+var ID_MAX = 200;
+var UNRESOLVED_PREFIX = "unresolved:";
+var UNRESOLVED = {
+  foundation: `${UNRESOLVED_PREFIX}legacy-foundation`,
+  pole: `${UNRESOLVED_PREFIX}legacy-pole`,
+  wall: `${UNRESOLVED_PREFIX}legacy-wall`,
+  segment: `${UNRESOLVED_PREFIX}legacy-segment`
+};
+var isRecord3 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+var isId = (v) => typeof v === "string" && v.trim().length > 0 && v.length <= ID_MAX;
+var isReserved = (v) => typeof v === "string" && v.startsWith(UNRESOLVED_PREFIX);
+function foundationAssemblyIssues(project) {
+  const issues = [];
+  if (!isRecord3(project)) return issues;
+  const items = project.items || [];
+  const walls = project.walls || [];
+  const poles = project.poles || [];
+  const byId = (arr2, id) => isId(id) && (arr2 || []).some((p) => p?.component_id === id);
+  for (const p of poles) {
+    const canon = p?.foundation_component_id;
+    if (canon === "" || canon === void 0 || canon === null) continue;
+    if (isReserved(canon)) issues.push({ code: "unresolved-parent", kind: "pole", componentId: p?.component_id, parentId: canon, message: "Pole legacy foundation index could not be resolved; left unresolved until reassigned." });
+    else if (!byId(items, canon)) issues.push({ code: "dangling-parent", kind: "pole", componentId: p?.component_id, parentId: canon, message: "Pole references a foundation that is not present; it stays priced until reassigned." });
+  }
+  for (const w of project.walls || []) {
+    const fId = w?.foundation_component_id;
+    if (fId === "" || fId === void 0 || fId === null) continue;
+    if (isReserved(fId)) issues.push({ code: "unresolved-parent", kind: "wall", componentId: w?.component_id, parentId: fId, message: "Wall legacy foundation index could not be resolved; left unresolved until reassigned." });
+    else if (!byId(items, fId)) issues.push({ code: "dangling-parent", kind: "wall", componentId: w?.component_id, parentId: fId, message: "Wall references a foundation that is not present; it stays priced until reassigned." });
+  }
+  for (const c of project.wall_caps || []) {
+    const wId = c?.wall_component_id;
+    if (wId === "" || wId === void 0 || wId === null) issues.push({ code: "missing-mount", kind: "wall_cap", componentId: c?.component_id, parentId: void 0, message: "Wall cap has no wall assigned; it stays priced until assigned." });
+    else if (isReserved(wId)) issues.push({ code: "unresolved-parent", kind: "wall_cap", componentId: c?.component_id, parentId: wId, message: "Wall cap wall could not be resolved; left unresolved until reassigned." });
+    else if (!byId(walls, wId)) issues.push({ code: "dangling-parent", kind: "wall_cap", componentId: c?.component_id, parentId: wId, message: "Wall cap references a wall that is not present; it stays priced until reassigned." });
+    const wall = walls.find((w) => w?.component_id === wId);
+    const segs = wall?.shape?.segments || [];
+    const sId = c?.segment_component_id;
+    if (sId === "" || sId === void 0 || sId === null) {
+      if (wall) issues.push({ code: "missing-mount", kind: "wall_cap", componentId: c?.component_id, parentId: void 0, message: "Wall cap has no wall segment assigned; it stays priced until assigned." });
+    } else if (isReserved(sId)) issues.push({ code: "unresolved-parent", kind: "wall_cap", componentId: c?.component_id, parentId: sId, message: "Wall cap segment could not be resolved; left unresolved until reassigned." });
+    else if (!byId(segs, sId)) issues.push({ code: "dangling-parent", kind: "wall_cap", componentId: c?.component_id, parentId: sId, message: "Wall cap references a wall segment that is not present; it stays priced until reassigned." });
+  }
+  for (const c of project.signage_cabinets || []) {
+    if (c?.mount === "pole") {
+      const canon = c?.pole_component_id;
+      if (canon === "" || canon === void 0 || canon === null) issues.push({ code: "missing-mount", kind: "signage_cabinet", componentId: c?.component_id, parentId: void 0, message: "Cabinet has no pole or foundation assigned; it stays priced until assigned." });
+      else if (isReserved(canon)) issues.push({ code: "unresolved-parent", kind: "signage_cabinet", componentId: c?.component_id, parentId: canon, message: "Cabinet pole could not be resolved; left unresolved until reassigned." });
+      else if (!byId(poles, canon)) issues.push({ code: "dangling-parent", kind: "signage_cabinet", componentId: c?.component_id, parentId: canon, message: "Cabinet references a pole that is not present; it stays priced until reassigned." });
+    } else if (c?.mount === "foundation") {
+      const canon = c?.foundation_component_id;
+      if (canon === "" || canon === void 0 || canon === null) issues.push({ code: "missing-mount", kind: "signage_cabinet", componentId: c?.component_id, parentId: void 0, message: "Cabinet has no pole or foundation assigned; it stays priced until assigned." });
+      else if (isReserved(canon)) issues.push({ code: "unresolved-parent", kind: "signage_cabinet", componentId: c?.component_id, parentId: canon, message: "Cabinet foundation could not be resolved; left unresolved until reassigned." });
+      else if (!byId(items, canon)) issues.push({ code: "dangling-parent", kind: "signage_cabinet", componentId: c?.component_id, parentId: canon, message: "Cabinet references a foundation that is not present; it stays priced until reassigned." });
+    } else {
+      issues.push({ code: "unsupported-mount", kind: "signage_cabinet", componentId: c?.component_id, parentId: void 0, message: "Cabinet mount is not supported; it stays priced and visible until reassigned." });
+    }
+  }
+  return issues;
+}
+
+// base44/shared/pricingEngine.ts
+var num2 = (v, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+var normStr = (v) => String(v ?? "").trim().toLowerCase();
+var round2 = (n) => Math.round((num2(n) + Number.EPSILON) * 100) / 100;
+var round4 = (n) => Math.round((num2(n) + Number.EPSILON) * 1e4) / 1e4;
+var TIER_PRECEDENCE = Object.freeze([
+  "global_default",
+  "customer_tier",
+  "part_tier",
+  "part_fixed",
+  "machine_override"
+]);
+var PRICING_MODES = Object.freeze({
+  MARKUP: "markup",
+  COST_PLUS: "cost_plus",
+  MARKET: "market",
+  // F-05 activation vocabulary: 'market_based' is the entity/admin spelling of
+  // the same retail-minus-discount chart family the engine rows call 'market'
+  // (PricingTemplate.market_based, GlobalPricingTier.rules[].market_based).
+  // 'fixed' is a pinned unit sell price (part.fixed_price family).
+  MARKET_BASED: "market_based",
+  FIXED: "fixed"
+});
+var DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+var toTime = (v, { endOfDay = false } = {}) => {
+  if (v == null || v === "") return null;
+  if (v instanceof Date) {
+    const t2 = v.getTime();
+    return Number.isFinite(t2) ? t2 : null;
+  }
+  const s = String(v).trim();
+  if (!s) return null;
+  const t = Date.parse(s);
+  if (!Number.isFinite(t)) return null;
+  return endOfDay && DATE_ONLY.test(s) ? t + 86399999 : t;
+};
+var rowIsActive = (row) => normStr(row?.status ?? "active") !== "inactive";
+function rowIsEffective(row, now = /* @__PURE__ */ new Date()) {
+  const t = now instanceof Date ? now.getTime() : toTime(now);
+  const at = Number.isFinite(t) ? t : Date.now();
+  const from = toTime(row?.effective_from);
+  const to = toTime(row?.effective_to, { endOfDay: true });
+  if (from != null && at < from) return false;
+  if (to != null && at > to) return false;
+  return true;
+}
+var tierKeySet = (customerTier) => {
+  const keys = /* @__PURE__ */ new Set();
+  const add = (v) => {
+    const k = normStr(v);
+    if (k) keys.add(k);
+  };
+  if (customerTier && typeof customerTier === "object") {
+    const t = customerTier;
+    add(t.tier_name);
+    add(t.tier_number);
+    add(t.id);
+    add(t.name);
+  } else {
+    add(customerTier);
+  }
+  return keys;
+};
+var rowPinsTier = (row, tierKeys) => !!normStr(row?.customer_tier) && tierKeys.has(normStr(row?.customer_tier));
+var rowFitsCategory = (row, category) => !normStr(row?.category) || normStr(row?.category) === normStr(category);
+var newerRow = (a, b) => {
+  if (!b) return a;
+  const aFrom = toTime(a?.effective_from) ?? -Infinity;
+  const bFrom = toTime(b?.effective_from) ?? -Infinity;
+  if (aFrom !== bFrom) return aFrom > bFrom ? a : b;
+  const aUp = toTime(a?.updated_date) ?? -Infinity;
+  const bUp = toTime(b?.updated_date) ?? -Infinity;
+  if (aUp !== bUp) return aUp > bUp ? a : b;
+  return String(a?.id || "") <= String(b?.id || "") ? a : b;
+};
+function pickUnitBreak(breaks, qty, opts = {}) {
+  const q = num2(qty);
+  if (!Array.isArray(breaks) || q <= 0) return null;
+  if (opts && opts.interpolate === true) return interpolateUnitBreak(breaks, q);
+  let pick = null;
+  for (const b of breaks) {
+    const bq = num2(b?.qty, NaN);
+    if (!Number.isFinite(bq) || bq <= 0 || bq > q) continue;
+    if (!Number.isFinite(Number(b?.unit_price))) continue;
+    if (!pick || bq > num2(pick.qty)) pick = b;
+  }
+  return pick;
+}
+var sortedUnitBreaks = (breaks) => {
+  const list = [];
+  for (const b of Array.isArray(breaks) ? breaks : []) {
+    const bq = num2(b?.qty, NaN);
+    if (!Number.isFinite(bq) || bq <= 0) continue;
+    if (!Number.isFinite(Number(b?.unit_price))) continue;
+    list.push(b);
+  }
+  list.sort((a, b) => num2(a.qty) - num2(b.qty));
+  return list.filter((b, i) => i === 0 || num2(b.qty) !== num2(list[i - 1].qty));
+};
+function interpolateUnitBreak(breaks, qty) {
+  const q = num2(qty);
+  const list = sortedUnitBreaks(breaks);
+  if (!list.length || q <= 0 || q < num2(list[0].qty)) return null;
+  const last = list[list.length - 1];
+  if (q >= num2(last.qty)) return last;
+  let lower = list[0];
+  let upper = last;
+  for (let i = 0; i < list.length - 1; i += 1) {
+    if (q < num2(list[i + 1].qty)) {
+      lower = list[i];
+      upper = list[i + 1];
+      break;
+    }
+  }
+  if (q === num2(lower.qty)) return lower;
+  const loQ = num2(lower.qty);
+  const hiQ = num2(upper.qty);
+  const loP = num2(lower.unit_price);
+  const hiP = num2(upper.unit_price);
+  const t = (q - loQ) / (hiQ - loQ);
+  return {
+    qty: loQ,
+    unit_price: round4(loP + (hiP - loP) * t),
+    interpolated: true,
+    at_qty: q,
+    between: [lower, upper]
+  };
+}
+function applyFormulaModifiers(unitPrice, modifiers) {
+  let price = num2(unitPrice);
+  const applied = [];
+  for (const m of Array.isArray(modifiers) ? modifiers : []) {
+    const type = normStr(m?.type);
+    const value = Number(m?.value);
+    if (!Number.isFinite(value)) continue;
+    const before = price;
+    if (type === "add_pct") price = price * (1 + value / 100);
+    else if (type === "mul") price = price * value;
+    else if (type === "add_flat") price = price + value;
+    else if (type === "min") price = Math.max(price, value);
+    else if (type === "max") price = Math.min(price, value);
+    else continue;
+    price = Math.max(0, price);
+    applied.push({ type, value, before: round4(before), after: round4(price) });
+  }
+  return { unitPrice: round4(price), applied };
+}
+var marketKind = (row) => {
+  const pm = normStr(row?.pricing_mode);
+  return (pm === PRICING_MODES.MARKET || pm === PRICING_MODES.MARKET_BASED) && Number.isFinite(Number(row?.market_retail)) && Number(row?.market_retail) > 0;
+};
+var wantsInterpolatedBreaks = (src2) => {
+  if (!src2 || typeof src2 !== "object") return false;
+  if (normStr(src2.break_interpolation) === "linear") return true;
+  for (const f of ["interpolate_breaks", "interpolateBreaks", "interpolate"]) {
+    const v = src2[f];
+    if (v === true || normStr(v) === "true" || normStr(v) === "linear") return true;
+  }
+  return false;
+};
+function ruleFromChartRow(row) {
+  return {
+    kind: marketKind(row) ? "market" : "markup",
+    markupPct: num2(row?.markup_pct),
+    marketRetail: marketKind(row) ? num2(row?.market_retail) : void 0,
+    marketDiscountPct: marketKind(row) ? num2(row?.market_discount_pct) : void 0,
+    unitBreaks: Array.isArray(row?.per_unit_breaks) ? row.per_unit_breaks : void 0,
+    interpolateBreaks: wantsInterpolatedBreaks(row) || void 0,
+    minimumCharge: Number.isFinite(Number(row?.minimum_charge)) ? num2(row.minimum_charge) : void 0,
+    formulaModifiers: Array.isArray(row?.formula_modifiers) ? row.formula_modifiers : void 0,
+    ref: row
+  };
+}
+var firstFinite = (...vals) => {
+  for (const v of vals) if (Number.isFinite(Number(v))) return Number(v);
+  return null;
+};
+var markupField = (src2) => firstFinite(src2?.markup_pct, src2?.markup, src2?.markup_percent);
+function overrideRule(source, tierRules) {
+  if (!source || typeof source !== "object") return null;
+  const fixed = firstFinite(source.fixed_price, source.price_override, source.override_price);
+  if (fixed != null && fixed > 0) {
+    return {
+      kind: "fixed",
+      fixedPrice: fixed,
+      minimumCharge: firstFinite(source.minimum_charge) ?? void 0,
+      formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : void 0,
+      ref: source
+    };
+  }
+  const tierRef = source.tier_ref ?? source.tier ?? source.tier_name;
+  if (tierRef != null && normStr(tierRef)) {
+    const wanted = normStr(typeof tierRef === "object" ? tierRef.name ?? tierRef.id : tierRef);
+    const row = (Array.isArray(tierRules) ? tierRules : []).find(
+      (r) => r && rowIsActive(r) && (normStr(r.name) === wanted || normStr(r.id) === wanted)
+    );
+    if (row) return ruleFromChartRow(row);
+    return { kind: "markup", markupPct: 0, ref: source, danglingTierRef: String(wanted) };
+  }
+  const breaks = Array.isArray(source.per_unit_breaks) ? source.per_unit_breaks : Array.isArray(source.unit_breaks) ? source.unit_breaks : null;
+  if (breaks && breaks.length) {
+    return {
+      kind: "breaks",
+      unitBreaks: breaks,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || void 0,
+      markupPct: markupField(source) ?? void 0,
+      minimumCharge: firstFinite(source.minimum_charge) ?? void 0,
+      formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : void 0,
+      ref: source
+    };
+  }
+  if (marketKind(source)) {
+    return {
+      kind: "market",
+      marketRetail: num2(source.market_retail),
+      marketDiscountPct: num2(source.market_discount_pct),
+      unitBreaks: Array.isArray(source.per_unit_breaks) ? source.per_unit_breaks : void 0,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || void 0,
+      minimumCharge: firstFinite(source.minimum_charge) ?? void 0,
+      formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : void 0,
+      ref: source
+    };
+  }
+  const markup = markupField(source);
+  if (markup != null) {
+    return {
+      kind: "markup",
+      markupPct: markup,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || void 0,
+      minimumCharge: firstFinite(source.minimum_charge) ?? void 0,
+      formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : void 0,
+      ref: source
+    };
+  }
+  return null;
+}
+function resolveTier({
+  customerTier = null,
+  category = "",
+  tierRules = [],
+  part = null,
+  machine = null,
+  defaultMarkupPct = 0,
+  now = void 0
+} = {}) {
+  const rules = Array.isArray(tierRules) ? tierRules : [];
+  const tierKeys = tierKeySet(customerTier);
+  const eligible = rules.filter((r) => r && rowIsActive(r) && rowIsEffective(r, now) && rowFitsCategory(r, category));
+  let tierRow = null;
+  let tierRowScoped = false;
+  for (const row of eligible) {
+    if (!rowPinsTier(row, tierKeys)) continue;
+    const scoped = !!normStr(row.category);
+    if (!tierRow || scoped && !tierRowScoped || scoped === tierRowScoped) {
+      if (!tierRow || scoped && !tierRowScoped) {
+        tierRow = row;
+        tierRowScoped = scoped;
+      } else tierRow = newerRow(row, tierRow);
+    }
+  }
+  let catRow = null;
+  let blankRow = null;
+  for (const row of eligible) {
+    if (normStr(row.customer_tier)) continue;
+    if (normStr(row.category)) catRow = newerRow(row, catRow);
+    else blankRow = newerRow(row, blankRow);
+  }
+  const partRule = overrideRule(part, rules);
+  const partSource = partRule?.kind === "fixed" ? "part_fixed" : "part_tier";
+  const machineRule = overrideRule(machine, rules);
+  const defaultRule = catRow || blankRow ? ruleFromChartRow(catRow || blankRow) : { kind: "markup", markupPct: num2(defaultMarkupPct), ref: null, implicit: true };
+  const ladder = [
+    {
+      layer: "global_default",
+      source: "global_default",
+      rule: defaultRule,
+      hit: true,
+      detail: catRow ? "category_row" : blankRow ? "blank_row" : "default_markup_pct"
+    },
+    {
+      layer: "customer_tier",
+      source: "customer_tier",
+      rule: tierRow ? ruleFromChartRow(tierRow) : null,
+      hit: !!tierRow,
+      detail: tierRow ? tierRowScoped ? "category+tier" : "tier" : "no tier row"
+    },
+    {
+      layer: "part",
+      source: partSource,
+      rule: partRule,
+      hit: !!partRule,
+      detail: partRule ? partRule.kind : "no part override"
+    },
+    {
+      layer: "machine",
+      source: "machine_override",
+      rule: machineRule,
+      hit: !!machineRule,
+      detail: machineRule ? machineRule.kind : "no machine override"
+    }
+  ];
+  const tierRowSpec = tierRow ? tierRowScoped ? 3 : 1 : -1;
+  const defaultRowSpec = catRow ? 2 : blankRow ? 0 : -1;
+  let winner = tierRowSpec > defaultRowSpec ? ladder[1] : ladder[0];
+  for (const step of ladder.slice(2)) if (step.hit && step.rule) winner = step;
+  return {
+    source: winner.source,
+    layer: winner.layer,
+    rule: winner.rule,
+    matchedRow: winner.rule?.ref ?? null,
+    trace: ladder.map((step) => ({
+      layer: step.layer,
+      source: step.source,
+      hit: step.hit,
+      won: step === winner,
+      detail: step.detail
+    }))
+  };
+}
+function pricePart(input = {}) {
+  const qty = num2(input.qty ?? input.quantity, 0);
+  const unitCost = num2(input.unitCost ?? input.cost ?? input.costBase);
+  const tier = resolveTier(input);
+  const rule = tier.rule || { kind: "markup", markupPct: 0 };
+  let unitPrice = 0;
+  let priceSource = "cost_passthrough";
+  let breakApplied = null;
+  let market = null;
+  const breaks = Array.isArray(rule.unitBreaks) ? rule.unitBreaks : null;
+  const brk = breaks ? pickUnitBreak(breaks, qty, { interpolate: rule.interpolateBreaks === true }) : null;
+  if (rule.kind === "fixed") {
+    unitPrice = num2(rule.fixedPrice);
+    priceSource = "fixed_price";
+  } else if (rule.kind === "market") {
+    const retail = num2(rule.marketRetail);
+    const discountPct = num2(rule.marketDiscountPct);
+    const marketUnit2 = Math.max(0, retail * (1 - discountPct / 100));
+    if (brk && num2(brk.unit_price) < marketUnit2) {
+      unitPrice = num2(brk.unit_price);
+      priceSource = "qty_break";
+      breakApplied = brk;
+    } else {
+      unitPrice = marketUnit2;
+      priceSource = "market";
+    }
+    market = { marketRetail: retail, marketDiscountPct: discountPct, marketUnit: round4(marketUnit2) };
+  } else if (rule.kind === "breaks") {
+    if (brk) {
+      unitPrice = num2(brk.unit_price);
+      priceSource = "qty_break";
+      breakApplied = brk;
+    } else {
+      unitPrice = unitCost * (1 + num2(rule.markupPct) / 100);
+      priceSource = Number.isFinite(Number(rule.markupPct)) ? "markup" : "cost_passthrough";
+    }
+  } else {
+    if (brk) {
+      unitPrice = num2(brk.unit_price);
+      priceSource = "qty_break";
+      breakApplied = brk;
+    } else {
+      unitPrice = unitCost * (1 + num2(rule.markupPct) / 100);
+      priceSource = "markup";
+    }
+  }
+  const baseUnitPrice = unitPrice;
+  const ruleMods = Array.isArray(rule.formulaModifiers) ? rule.formulaModifiers : [];
+  const ruleModKeys = new Set(ruleMods.map((m) => `${normStr(m?.type)}|${Number(m?.value)}`));
+  const callerMods = (Array.isArray(input.modifiers) ? input.modifiers : []).filter((m) => !ruleModKeys.has(`${normStr(m?.type)}|${Number(m?.value)}`));
+  const modResult = applyFormulaModifiers(unitPrice, [...ruleMods, ...callerMods]);
+  unitPrice = modResult.unitPrice;
+  const extension = round2(unitPrice * qty);
+  const ruleMin = num2(rule.minimumCharge);
+  const callerMin = num2(input.minimumCharge);
+  const minimumCharge = Math.max(ruleMin, callerMin);
+  const minimumApplied = minimumCharge > 0 && extension > 0 && extension < minimumCharge;
+  const extended = minimumApplied ? round2(minimumCharge) : extension;
+  const setupFee = Math.max(0, num2(input.setupFee ?? input.setup_fee));
+  const subtotal = round2(extended + setupFee);
+  const taxable = input.taxable !== false;
+  const taxPercent = Math.max(0, num2(input.taxPercent ?? input.tax_percent));
+  const tax = taxable ? round2(subtotal * (taxPercent / 100)) : 0;
+  const total = round2(subtotal + tax);
+  return {
+    label: String(input.label ?? ""),
+    category: String(input.category ?? ""),
+    pricingUnit: String(input.pricingUnit ?? input.pricing_unit ?? "each"),
+    qty,
+    unitCost,
+    tier,
+    rule,
+    baseUnitPrice: round4(baseUnitPrice),
+    unitPrice: round4(unitPrice),
+    priceSource,
+    breakApplied,
+    market,
+    modifiersApplied: modResult.applied,
+    extension,
+    minimumCharge: minimumCharge > 0 ? minimumCharge : 0,
+    minimumApplied,
+    extended,
+    setupFee,
+    subtotal,
+    taxable,
+    taxPercent,
+    tax,
+    total,
+    danglingTierRef: rule.danglingTierRef || null
+  };
+}
+function matrixRowToRule(row, opts = {}) {
+  if (!row || typeof row !== "object") return null;
+  const out = { ...row };
+  out.status = normStr(row.status) === "inactive" ? "inactive" : "active";
+  const rawBreaks = Array.isArray(row.per_unit_breaks) ? row.per_unit_breaks : Array.isArray(row.unit_breaks) ? row.unit_breaks : Array.isArray(row.qty_breaks) ? row.qty_breaks : null;
+  if (rawBreaks) {
+    const clean = rawBreaks.map((b) => ({
+      qty: num2(b?.qty ?? b?.min_qty ?? b?.quantity, NaN),
+      unit_price: num2(b?.unit_price ?? b?.price, NaN)
+    })).filter((b) => Number.isFinite(b.qty) && b.qty > 0 && Number.isFinite(b.unit_price));
+    if (clean.length) out.per_unit_breaks = clean;
+    else delete out.per_unit_breaks;
+  }
+  if (normStr(out.pricing_mode) === "market-based") out.pricing_mode = "market_based";
+  const retail = firstFinite(row.market_retail, row.retail_price, row.retail);
+  if (retail != null) out.market_retail = retail;
+  const discount = firstFinite(row.market_discount_pct, row.discount_pct);
+  if (discount != null) out.market_discount_pct = discount;
+  if (wantsInterpolatedBreaks(row) || opts.interpolateBreaks === true) {
+    out.interpolate_breaks = true;
+  }
+  return out;
+}
+function matrixRowsToRules(rows, opts = {}) {
+  const now = opts.now ?? /* @__PURE__ */ new Date();
+  const list = Array.isArray(rows) ? rows : Array.isArray(rows?.rows) ? rows.rows : [];
+  const out = [];
+  for (const row of list) {
+    if (!row || typeof row !== "object") continue;
+    if (!rowIsActive(row)) continue;
+    if (!rowIsEffective(row, now)) continue;
+    out.push(matrixRowToRule(row, opts));
+  }
+  return out;
+}
+var MODE_TOKENS = {
+  fixed: PRICING_MODES.FIXED,
+  fixed_price: PRICING_MODES.FIXED,
+  flat: PRICING_MODES.FIXED,
+  market: PRICING_MODES.MARKET_BASED,
+  market_based: PRICING_MODES.MARKET_BASED,
+  "market-based": PRICING_MODES.MARKET_BASED,
+  retail: PRICING_MODES.MARKET_BASED,
+  retail_minus_discount: PRICING_MODES.MARKET_BASED,
+  cost_plus: PRICING_MODES.COST_PLUS,
+  "cost-plus": PRICING_MODES.COST_PLUS,
+  costplus: PRICING_MODES.COST_PLUS,
+  markup: PRICING_MODES.COST_PLUS,
+  tier: PRICING_MODES.COST_PLUS,
+  tier_markup: PRICING_MODES.COST_PLUS,
+  tiered: PRICING_MODES.COST_PLUS
+};
+
+// base44/shared/pricingTemplateModel.ts
+var isRecord4 = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+var asString = (v) => v === null || v === void 0 ? "" : String(v).trim();
+var toFiniteNumber = (v) => {
+  if (v === null || v === void 0 || v === "" || typeof v === "object" || typeof v === "function" || typeof v === "symbol" || typeof v === "bigint") {
+    return null;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+var num3 = (v, fallback = 0) => toFiniteNumber(v) ?? fallback;
+var lc = (v) => asString(v).toLowerCase();
+var round22 = (n) => Math.round((num3(n) + Number.EPSILON) * 100) / 100;
+var round42 = (n) => Math.round((num3(n) + Number.EPSILON) * 1e4) / 1e4;
+var firstField = (rec, fields) => {
+  if (!rec) return void 0;
+  for (const f of fields) {
+    const v = rec[f];
+    if (v !== void 0 && v !== null && v !== "") return v;
+  }
+  return void 0;
+};
+var firstFinite2 = (rec, fields) => {
+  if (!rec) return null;
+  for (const f of fields) {
+    const n = toFiniteNumber(rec[f]);
+    if (n !== null) return n;
+  }
+  return null;
+};
+var scopedFinite = (part, fields) => {
+  if (!part) return null;
+  return firstFinite2(part, fields) ?? firstFinite2(isRecord4(part.detail_overrides) ? part.detail_overrides : null, fields) ?? firstFinite2(isRecord4(part.pricing_basis_snapshot) ? part.pricing_basis_snapshot : null, fields);
+};
+var BREAK_QTY_FIELDS = [
+  "qty",
+  "min_qty",
+  "qty_from",
+  "from_qty",
+  "min_quantity",
+  "quantity",
+  "break_qty",
+  "threshold"
+];
+var TIER_MAP_FIELDS = [
+  "tier_markups",
+  "tierMarkups",
+  "tier_margins",
+  "tierMargins",
+  "tiers"
+];
+var UNIT_PRICE_FIELDS = ["unit_price", "price", "sell_price", "rate"];
+var MARKUP_FIELDS = ["markup_pct", "markup", "markup_percent"];
+var DISCOUNT_FIELDS = ["discount_pct", "discount", "discount_percent", "pct_off"];
+var RETAIL_FIELDS = ["market_retail", "retail", "retail_price", "list_price"];
+var RETAIL_DISCOUNT_FIELDS = ["market_discount_pct", "retail_discount_pct"];
+var MIN_CHARGE_FIELDS = ["minimum_charge", "min_charge", "minimum"];
+var CHART_FIELDS = ["breaks", "rows", "margin_rows", "brackets", "chart"];
+var PART_TEMPLATE_ID_FIELDS = [
+  "pricing_template_id",
+  "template_id",
+  "margin_template_id"
+];
+var PART_TEMPLATE_NAME_FIELDS = [
+  "pricing_template_name",
+  "template_name"
+];
+var PART_TEMPLATE_EMBED_FIELDS = ["pricing_template", "template"];
+var PART_TIER_SET_FIELDS = [
+  "global_pricing_tier_id",
+  "pricing_tier_id",
+  "tier_set_id",
+  "pricing_tier_set_id",
+  "pricing_rule_set_id",
+  "global_tier_id"
+];
+var PART_TIER_SET_NAME_FIELDS = [
+  "global_pricing_tier_name",
+  "pricing_tier_name",
+  "tier_set_name"
+];
+var PART_FIXED_FIELDS = [
+  "fixed_price",
+  "price_override",
+  "override_price",
+  "flat_price"
+];
+var PART_BREAK_FIELDS = ["per_unit_breaks", "unit_breaks", "qty_breaks"];
+var PART_MARKET_RETAIL_FIELDS = RETAIL_FIELDS;
+var PART_MARKET_DISCOUNT_FIELDS = ["market_discount_pct", "retail_discount_pct", "discount_pct"];
+var PART_MARKUP_FIELDS = ["markup_pct", "markup", "markup_percent"];
+var PART_MIN_CHARGE_FIELDS = ["min_charge", "minimum_charge", "minimum"];
+var PART_UNIT_FIELDS = [
+  "unit",
+  "pricing_unit",
+  "pricingUnit",
+  "unit_category",
+  "uom",
+  "unit_of_measure"
+];
+var TEMPLATE_MODE_FIELDS = ["pricing_mode", "price_mode", "mode"];
+var MARKET_MODE_TOKENS = /* @__PURE__ */ new Set(["market", "market_based", "market-based", "retail", "retail_minus_discount"]);
+var normalizeTierKey = (v) => {
+  if (v === null || v === void 0) return "";
+  if (typeof v === "object") return "";
+  const s = lc(v);
+  if (!s) return "";
+  const n = Number(s);
+  if (Number.isFinite(n) && /^[-+]?\d+(\.\d+)?$/.test(s)) return String(n);
+  return s;
+};
+var tierKeysOf = (tier) => {
+  const keys = /* @__PURE__ */ new Set();
+  const add = (v) => {
+    const k = normalizeTierKey(v);
+    if (k) keys.add(k);
+  };
+  if (isRecord4(tier)) {
+    for (const f of ["tier_number", "tier_name", "name", "id", "tier", "key"]) add(tier[f]);
+  } else {
+    add(tier);
+  }
+  return keys;
+};
+var chartRows = (raw) => {
+  for (const f of CHART_FIELDS) {
+    if (Array.isArray(raw[f])) return raw[f];
+  }
+  return [];
+};
+var normalizeTierMarkups = (raw, warnings, rowIdx) => {
+  const src2 = firstField(raw, TIER_MAP_FIELDS);
+  const out = {};
+  if (src2 === void 0) return out;
+  if (!isRecord4(src2)) {
+    warnings.push(`break ${rowIdx + 1}: tier_markups is not an object \u2014 ignored`);
+    return out;
+  }
+  for (const [k, v] of Object.entries(src2)) {
+    const n = toFiniteNumber(v);
+    if (n === null) {
+      warnings.push(`break ${rowIdx + 1}: tier_markups["${k}"] is not a number \u2014 dropped`);
+      continue;
+    }
+    out[k] = n;
+  }
+  return out;
+};
+var normalizeBreak = (raw, index, warnings) => {
+  if (!isRecord4(raw)) {
+    warnings.push(`break ${index + 1}: non-object row rejected`);
+    return null;
+  }
+  const qtyField = BREAK_QTY_FIELDS.find((f) => raw[f] !== void 0 && raw[f] !== null && raw[f] !== "");
+  if (qtyField !== void 0) {
+    const q = toFiniteNumber(raw[qtyField]);
+    if (q === null || q < 0) {
+      warnings.push(`break ${index + 1}: ${qtyField} '${asString(raw[qtyField])}' is not a non-negative number \u2014 row rejected`);
+      return null;
+    }
+  }
+  const qty = qtyField !== void 0 ? num3(raw[qtyField]) : 0;
+  const tier_markups = normalizeTierMarkups(raw, warnings, index);
+  const unit_price = firstFinite2(raw, UNIT_PRICE_FIELDS);
+  const markup_pct = firstFinite2(raw, MARKUP_FIELDS);
+  const discount_pct = firstFinite2(raw, DISCOUNT_FIELDS);
+  const market_retail = firstFinite2(raw, RETAIL_FIELDS);
+  const market_discount_pct = firstFinite2(raw, RETAIL_DISCOUNT_FIELDS);
+  const minimum_charge = firstFinite2(raw, MIN_CHARGE_FIELDS);
+  const hasContent = Object.keys(tier_markups).length > 0 || unit_price !== null || markup_pct !== null || discount_pct !== null || market_retail !== null;
+  if (!hasContent) {
+    warnings.push(`break ${index + 1}: no usable pricing content \u2014 row rejected`);
+    return null;
+  }
+  return {
+    qty,
+    tier_markups,
+    unit_price,
+    markup_pct,
+    discount_pct,
+    market_retail,
+    market_discount_pct,
+    minimum_charge,
+    index,
+    raw
+  };
+};
+var templateIsMarketBased = (raw) => {
+  if (raw.market_based === true || lc(raw.market_based) === "true") return true;
+  for (const f of TEMPLATE_MODE_FIELDS) {
+    if (MARKET_MODE_TOKENS.has(lc(raw[f]))) return true;
+  }
+  return false;
+};
+function normalizePricingTemplate(raw) {
+  if (!isRecord4(raw)) return null;
+  const warnings = [];
+  const rows = chartRows(raw);
+  const breaks = [];
+  let rejected = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const b = normalizeBreak(rows[i], i, warnings);
+    if (b === null) rejected += 1;
+    else breaks.push(b);
+  }
+  breaks.sort((a, b) => a.qty - b.qty || a.index - b.index);
+  const status = asString(raw.status) || "active";
+  return {
+    id: asString(raw.id ?? raw.template_id),
+    name: asString(raw.name),
+    unit_category: asString(raw.unit_category ?? raw.unitCategory),
+    breaks,
+    market_based: templateIsMarketBased(raw),
+    status,
+    active: lc(status) !== "inactive",
+    sort: num3(raw.sort ?? raw.sort_order),
+    description: asString(raw.description),
+    unit_price: firstFinite2(raw, UNIT_PRICE_FIELDS),
+    markup_pct: firstFinite2(raw, MARKUP_FIELDS),
+    discount_pct: firstFinite2(raw, DISCOUNT_FIELDS),
+    market_retail: firstFinite2(raw, RETAIL_FIELDS),
+    market_discount_pct: firstFinite2(raw, RETAIL_DISCOUNT_FIELDS),
+    minimum_charge: firstFinite2(raw, MIN_CHARGE_FIELDS),
+    rejected_breaks: rejected,
+    warnings,
+    raw
+  };
+}
+var recordLooksLikeTemplate = (v) => isRecord4(v) && (Array.isArray(v.breaks) || Array.isArray(v.rows) || Array.isArray(v.margin_rows) || Array.isArray(v.brackets) || Array.isArray(v.chart));
+function templateRefForPart(part) {
+  const p = isRecord4(part) ? part : null;
+  if (!p) return null;
+  let embedded = null;
+  for (const f of PART_TEMPLATE_EMBED_FIELDS) {
+    if (recordLooksLikeTemplate(p[f])) {
+      embedded = p[f];
+      break;
+    }
+  }
+  for (const f of PART_TEMPLATE_ID_FIELDS) {
+    const v = asString(p[f]);
+    if (v) return { ref: v, via: f, embedded };
+  }
+  for (const f of PART_TEMPLATE_NAME_FIELDS) {
+    const v = asString(p[f]);
+    if (v) return { ref: v, via: f, embedded };
+  }
+  for (const f of PART_TEMPLATE_EMBED_FIELDS) {
+    const v = p[f];
+    if (isRecord4(v)) {
+      const inner = asString(v.id ?? v.name ?? v.template_id);
+      if (inner) return { ref: inner, via: `${f}.id`, embedded: embedded ?? v };
+    } else {
+      const s = asString(v);
+      if (s) return { ref: s, via: f, embedded };
+    }
+  }
+  if (embedded) return { ref: asString(embedded.id ?? embedded.name), via: "embedded", embedded };
+  return null;
+}
+var templateIds = (t) => {
+  const keys = /* @__PURE__ */ new Set();
+  for (const k of [t.id, t.template_id]) {
+    const s = lc(k);
+    if (s) keys.add(s);
+  }
+  return keys;
+};
+function templateForPart(part, templates = []) {
+  const ref = templateRefForPart(part);
+  if (!ref) return null;
+  const list = Array.isArray(templates) ? templates.filter(isRecord4) : isRecord4(templates) && Array.isArray(templates.rows) ? templates.rows.filter(isRecord4) : isRecord4(templates) && Array.isArray(templates.templates) ? templates.templates.filter(isRecord4) : isRecord4(templates) ? [templates] : [];
+  const wanted = lc(ref.ref);
+  if (wanted) {
+    const idHit = list.find((t) => templateIds(t).has(wanted));
+    if (idHit) return idHit;
+    const nameHits = list.filter((t) => lc(t.name) === wanted);
+    if (nameHits.length) {
+      nameHits.sort((a, b) => {
+        const aAct = lc(a.status ?? "active") !== "inactive" ? 0 : 1;
+        const bAct = lc(b.status ?? "active") !== "inactive" ? 0 : 1;
+        return aAct - bAct || num3(a.sort) - num3(b.sort) || String(a.id ?? "").localeCompare(String(b.id ?? ""));
+      });
+      return nameHits[0];
+    }
+  }
+  return ref.embedded ?? null;
+}
+var tierMarkupsHit = (map, tierKeys) => {
+  for (const [k, v] of Object.entries(map)) {
+    if (tierKeys.has(lc(k)) && Number.isFinite(Number(v))) {
+      return { key: k, value: Number(v), match: "exact" };
+    }
+  }
+  for (const fallback of ["default", "*"]) {
+    for (const [k, v] of Object.entries(map)) {
+      if (lc(k) === fallback && Number.isFinite(Number(v))) {
+        return { key: k, value: Number(v), match: "default" };
+      }
+    }
+  }
+  const entries = Object.entries(map);
+  if (entries.length === 1 && Number.isFinite(Number(entries[0][1]))) {
+    return { key: entries[0][0], value: Number(entries[0][1]), match: "lone" };
+  }
+  return null;
+};
+var marketUnit = (retail, discountPct) => Math.max(0, retail * (1 - num3(discountPct) / 100));
+var bracketPrice = (b, tmpl, tierKeys, base) => {
+  const tierHit = tierMarkupsHit(b.tier_markups, tierKeys);
+  const pct_source = tierHit ? tierHit.match === "exact" ? "tier_markups" : tierHit.match === "default" ? "tier_markups_default" : "tier_markups_lone" : null;
+  const matched_tier = tierHit ? { key: tierHit.key, value: tierHit.value } : null;
+  if (tmpl.market_based) {
+    if (tierHit && tierHit.value > 0) {
+      const disc = b.market_discount_pct ?? b.discount_pct ?? tmpl.market_discount_pct;
+      return {
+        unit: marketUnit(tierHit.value, disc),
+        pct_source,
+        pricing_mode: "market_based",
+        markup_pct: null,
+        discount_pct: disc ?? 0,
+        market_retail: tierHit.value,
+        market_discount_pct: num3(disc),
+        matched_tier,
+        detail: `tier retail ${tierHit.key}`
+      };
+    }
+    const rowRetail = b.market_retail !== null && b.market_retail > 0 ? b.market_retail : null;
+    const tmplRetail = tmpl.market_retail !== null && tmpl.market_retail > 0 ? tmpl.market_retail : null;
+    const retail = rowRetail ?? tmplRetail;
+    if (retail !== null) {
+      const disc = b.market_discount_pct ?? b.discount_pct ?? tmpl.market_discount_pct;
+      return {
+        unit: marketUnit(retail, disc),
+        pct_source: "market_retail",
+        pricing_mode: "market_based",
+        markup_pct: null,
+        discount_pct: disc ?? 0,
+        market_retail: retail,
+        market_discount_pct: num3(disc),
+        matched_tier,
+        detail: rowRetail !== null ? "row market_retail" : "template market_retail"
+      };
+    }
+    if (b.markup_pct !== null) {
+      return {
+        unit: base * (1 + b.markup_pct / 100),
+        pct_source: "markup_pct",
+        pricing_mode: "markup",
+        markup_pct: b.markup_pct,
+        discount_pct: null,
+        market_retail: null,
+        market_discount_pct: null,
+        matched_tier,
+        detail: "market chart markup fallback"
+      };
+    }
+    if (b.unit_price !== null) {
+      return {
+        unit: b.unit_price,
+        pct_source: "unit_price",
+        pricing_mode: "fixed",
+        markup_pct: null,
+        discount_pct: null,
+        market_retail: null,
+        market_discount_pct: null,
+        matched_tier,
+        detail: "bracket unit_price"
+      };
+    }
+    if (b.discount_pct !== null) {
+      return {
+        unit: Math.max(0, base * (1 - b.discount_pct / 100)),
+        pct_source: "discount_pct",
+        pricing_mode: "market_based",
+        markup_pct: null,
+        discount_pct: b.discount_pct,
+        market_retail: null,
+        market_discount_pct: b.discount_pct,
+        matched_tier,
+        detail: "market chart discount off base"
+      };
+    }
+    return null;
+  }
+  if (tierHit) {
+    return {
+      unit: base * (1 + tierHit.value / 100),
+      pct_source,
+      pricing_mode: "markup",
+      markup_pct: tierHit.value,
+      discount_pct: null,
+      market_retail: null,
+      market_discount_pct: null,
+      matched_tier,
+      detail: `tier markup ${tierHit.key}=${tierHit.value}`
+    };
+  }
+  if (b.unit_price !== null) {
+    return {
+      unit: b.unit_price,
+      pct_source: "unit_price",
+      pricing_mode: "fixed",
+      markup_pct: null,
+      discount_pct: null,
+      market_retail: null,
+      market_discount_pct: null,
+      matched_tier,
+      detail: "bracket unit_price"
+    };
+  }
+  if (b.markup_pct !== null) {
+    return {
+      unit: base * (1 + b.markup_pct / 100),
+      pct_source: "markup_pct",
+      pricing_mode: "markup",
+      markup_pct: b.markup_pct,
+      discount_pct: null,
+      market_retail: null,
+      market_discount_pct: null,
+      matched_tier,
+      detail: "bracket markup_pct"
+    };
+  }
+  if (b.discount_pct !== null) {
+    return {
+      unit: Math.max(0, base * (1 - b.discount_pct / 100)),
+      pct_source: "discount_pct",
+      pricing_mode: "markup",
+      markup_pct: null,
+      discount_pct: b.discount_pct,
+      market_retail: null,
+      market_discount_pct: b.discount_pct,
+      matched_tier,
+      detail: "bracket discount off base"
+    };
+  }
+  return null;
+};
+var pickTemplateBreak = (tmpl, qty, tierKeys, base) => {
+  let pick = null;
+  for (const b of tmpl.breaks) {
+    if (b.qty > qty) continue;
+    const price = bracketPrice(b, tmpl, tierKeys, base);
+    if (price === null) continue;
+    if (!pick || b.qty > pick.bracket.qty) pick = { bracket: b, price };
+  }
+  return pick;
+};
+var isRuleSet = (v) => isRecord4(v) && Array.isArray(v.rules);
+var ruleSetIds = (set) => {
+  const keys = /* @__PURE__ */ new Set();
+  for (const k of [set.id, set.name]) {
+    const s = lc(k);
+    if (s) keys.add(s);
+  }
+  return keys;
+};
+var partTierSetRefs = (part) => {
+  const refs = [];
+  for (const f of [...PART_TIER_SET_FIELDS, ...PART_TIER_SET_NAME_FIELDS]) {
+    const v = asString(part[f]);
+    if (v) refs.push(v);
+  }
+  return refs;
+};
+var tierRuleSetHit = (part, ruleSets, tierKeys, base) => {
+  const refs = partTierSetRefs(part).map(lc);
+  if (!refs.length) return null;
+  for (const wanted of refs) {
+    for (const set of ruleSets) {
+      if (lc(set.status ?? "active") === "inactive") continue;
+      if (!ruleSetIds(set).has(wanted)) continue;
+      for (const rule of Array.isArray(set.rules) ? set.rules : []) {
+        if (!isRecord4(rule)) continue;
+        const pin = lc(rule.tier ?? rule.customer_tier);
+        const pinned = pin && (tierKeys.has(pin) || pin === "*" || pin === "default");
+        if (!pinned) continue;
+        const pct = toFiniteNumber(rule.markup_pct);
+        if (pct === null) continue;
+        return {
+          unit: base * (1 + pct / 100),
+          markup_pct: pct,
+          set,
+          rule
+        };
+      }
+    }
+  }
+  return null;
+};
+var partChartBreaks = (part) => {
+  for (const f of PART_BREAK_FIELDS) {
+    if (Array.isArray(part[f])) return part[f];
+  }
+  return [];
+};
+var pickPartUnitBreak = (breaks, qty) => {
+  let pick = null;
+  for (const b of breaks) {
+    if (!isRecord4(b)) continue;
+    const bq = num3(b.qty ?? b.min_qty ?? b.quantity, NaN);
+    if (!Number.isFinite(bq) || bq <= 0 || bq > qty) continue;
+    if (!Number.isFinite(Number(b.unit_price ?? b.price))) continue;
+    if (!pick || bq > num3(pick.qty ?? pick.min_qty ?? pick.quantity)) pick = b;
+  }
+  return pick;
+};
+function resolveTemplatePrice(input = {}) {
+  const args = isRecord4(input) ? input : {};
+  const part = isRecord4(args.part) ? args.part : {};
+  const qty = num3(args.qty ?? args.quantity);
+  const base = num3(firstField(args, ["base_price", "basePrice", "unit_cost", "unitCost", "cost", "costBase", "cost_base"]) ?? 0);
+  const warnings = [];
+  const tierValue = firstField(args, ["tier", "customer_tier", "customerTier"]);
+  const tiersArg = args.tiers;
+  const tierCatalog = Array.isArray(tiersArg) ? tiersArg : [];
+  const bareTier = tierValue ?? (!Array.isArray(tiersArg) && !isRecord4(tiersArg) ? tiersArg : null);
+  const tierKeys = tierKeysOf(
+    bareTier !== null && bareTier !== void 0 ? bareTier : isRecord4(tiersArg) ? tiersArg : null
+  );
+  for (const row of tierCatalog) {
+    if (!isRecord4(row) || isRuleSet(row)) continue;
+    const rowKeys = tierKeysOf(row);
+    let shared = false;
+    for (const k of rowKeys) if (tierKeys.has(k)) {
+      shared = true;
+      break;
+    }
+    if (shared) for (const k of rowKeys) tierKeys.add(k);
+  }
+  const ruleSets = tierCatalog.filter(isRuleSet);
+  const ref = templateRefForPart(part);
+  const templatePool = Array.isArray(args.templates) ? args.templates : isRecord4(args.templates) && Array.isArray(args.templates.rows) ? args.templates.rows : isRecord4(args.templates) && Array.isArray(args.templates.templates) ? args.templates.templates : isRecord4(args.templates) ? [args.templates] : [];
+  let rawTemplate = null;
+  let templateVia = "";
+  if (isRecord4(args.template)) {
+    rawTemplate = args.template;
+    templateVia = "opts.template";
+  } else if (args.template !== void 0 && args.template !== null && asString(args.template)) {
+    const wanted = lc(args.template);
+    rawTemplate = templatePool.filter(isRecord4).find(
+      (t) => templateIds(t).has(wanted) || lc(t.name) === wanted
+    ) ?? null;
+    templateVia = "opts.template";
+  } else if (ref) {
+    rawTemplate = templateForPart(part, templatePool);
+    templateVia = ref.via;
+  }
+  const tmpl = rawTemplate ? normalizePricingTemplate(rawTemplate) : null;
+  if (tmpl) warnings.push(...tmpl.warnings);
+  const templateId = tmpl ? tmpl.id || asString(rawTemplate?.name) || asString(ref?.ref) : null;
+  const partUnit = lc(firstField(part, PART_UNIT_FIELDS));
+  const unitCategory = tmpl ? lc(tmpl.unit_category) : "";
+  const unitMismatch = !!tmpl && !!unitCategory && !!partUnit && partUnit !== unitCategory;
+  const unitUnverified = !!tmpl && !!unitCategory && !partUnit;
+  const chain = [];
+  let won = false;
+  const record = (layer, hit, detail) => chain.push({ layer, hit, won: false, detail });
+  const markWon = () => {
+    chain[chain.length - 1].won = true;
+    won = true;
+  };
+  const take = (fn) => {
+    if (!won) fn();
+  };
+  let unit = null;
+  let source = "cost_passthrough";
+  let pctSource = null;
+  let pricingMode = "cost_passthrough";
+  let tierRow = null;
+  let matchedTier = null;
+  let markupPct = null;
+  let discountPct = null;
+  let marketRetail = null;
+  let marketDiscountPct = null;
+  let reason = null;
+  let breakMinCharge = null;
+  let applied = false;
+  const fixed = scopedFinite(part, PART_FIXED_FIELDS);
+  if (fixed !== null && fixed > 0) {
+    record("part_fixed", true, `fixed_price ${fixed}`);
+    take(() => {
+      markWon();
+      unit = fixed;
+      source = "part_fixed";
+      pctSource = "fixed_price";
+      pricingMode = "fixed";
+      reason = "fixed_price";
+    });
+  } else {
+    record("part_fixed", false, fixed !== null ? "fixed_price not positive" : "no fixed price");
+  }
+  {
+    let layerReason = null;
+    if (!ref && !rawTemplate) layerReason = "no_template_ref";
+    else if (!tmpl) layerReason = "template_not_found";
+    else if (!tmpl.active) layerReason = "template_inactive";
+    else if (unitMismatch) layerReason = "unit_category_mismatch";
+    else if (qty <= 0) layerReason = "qty_not_positive";
+    if (layerReason) {
+      record("template", false, layerReason);
+      reason = reason ?? layerReason;
+    } else {
+      const pick = pickTemplateBreak(tmpl, qty, tierKeys, base);
+      if (pick) {
+        record(
+          "template",
+          true,
+          `bracket qty>=${pick.bracket.qty} via ${pick.price.pct_source}${templateVia ? ` [${templateVia}]` : ""}`
+        );
+        take(() => {
+          markWon();
+          applied = true;
+          source = "template";
+          pctSource = pick.price.pct_source;
+          pricingMode = pick.price.pricing_mode === "fixed" ? "fixed" : pick.price.pricing_mode === "market_based" ? "market_based" : "markup";
+          unit = pick.price.unit;
+          tierRow = pick.bracket;
+          matchedTier = pick.price.matched_tier;
+          markupPct = pick.price.markup_pct;
+          discountPct = pick.price.discount_pct;
+          marketRetail = pick.price.market_retail;
+          marketDiscountPct = pick.price.market_discount_pct;
+          breakMinCharge = pick.bracket.minimum_charge;
+        });
+      } else {
+        const t = tmpl;
+        const flat = bracketPrice(
+          {
+            qty: 0,
+            tier_markups: {},
+            unit_price: t.unit_price,
+            markup_pct: t.markup_pct,
+            discount_pct: t.discount_pct,
+            market_retail: t.market_retail,
+            market_discount_pct: t.market_discount_pct,
+            minimum_charge: null,
+            index: -1,
+            raw: t.raw
+          },
+          t,
+          tierKeys,
+          base
+        );
+        if (flat) {
+          record("template", true, `template_default ${flat.pct_source}${templateVia ? ` [${templateVia}]` : ""}`);
+          take(() => {
+            markWon();
+            applied = true;
+            source = "template";
+            pctSource = "template_default";
+            pricingMode = flat.pricing_mode === "fixed" ? "fixed" : flat.pricing_mode === "market_based" ? "market_based" : "markup";
+            unit = flat.unit;
+            matchedTier = flat.matched_tier;
+            markupPct = flat.markup_pct;
+            discountPct = flat.discount_pct;
+            marketRetail = flat.market_retail;
+            marketDiscountPct = flat.market_discount_pct;
+          });
+        } else {
+          record("template", false, "no_qualifying_break");
+          reason = reason ?? "no_qualifying_break";
+        }
+      }
+    }
+  }
+  {
+    const hit = tierRuleSetHit(part, ruleSets, tierKeys, base);
+    if (hit) {
+      record("tier_rule_set", true, `rule tier ${asString(hit.rule.tier ?? hit.rule.customer_tier)} -> ${hit.markup_pct}%`);
+      take(() => {
+        markWon();
+        source = "tier_rule_set";
+        pctSource = "tier_rule_set";
+        pricingMode = "markup";
+        unit = hit.unit;
+        markupPct = hit.markup_pct;
+      });
+    } else {
+      record("tier_rule_set", false, partTierSetRefs(part).length ? "no matching rule" : "no linked rule set");
+    }
+  }
+  {
+    const brk = pickPartUnitBreak(partChartBreaks(part), qty);
+    if (brk) {
+      const price = num3(brk.unit_price ?? brk.price);
+      record("part_chart", true, `per_unit_breaks qty>=${num3(brk.qty ?? brk.min_qty ?? brk.quantity)} -> ${price}`);
+      take(() => {
+        markWon();
+        source = "part_chart";
+        pctSource = "part_chart";
+        pricingMode = "fixed";
+        unit = price;
+      });
+    } else {
+      record("part_chart", false, "no qualifying part break");
+    }
+  }
+  {
+    const retail = scopedFinite(part, PART_MARKET_RETAIL_FIELDS);
+    if (retail !== null && retail > 0) {
+      const disc = scopedFinite(part, PART_MARKET_DISCOUNT_FIELDS) ?? 0;
+      record("part_market", true, `market_retail ${retail} - ${disc}%`);
+      take(() => {
+        markWon();
+        source = "part_market";
+        pctSource = "market_retail";
+        pricingMode = "market_based";
+        unit = marketUnit(retail, disc);
+        marketRetail = retail;
+        marketDiscountPct = disc;
+        discountPct = disc;
+      });
+    } else {
+      record("part_market", false, "no positive market_retail");
+    }
+  }
+  {
+    const partMarkup = scopedFinite(part, PART_MARKUP_FIELDS);
+    const shopDefault = toFiniteNumber(args.default_markup_pct ?? args.defaultMarkupPct);
+    if (partMarkup !== null && partMarkup !== 0) {
+      record("default_markup", true, `part.markup_pct ${partMarkup}`);
+      take(() => {
+        markWon();
+        source = "default_markup";
+        pctSource = "markup_pct";
+        pricingMode = "markup";
+        unit = base * (1 + partMarkup / 100);
+        markupPct = partMarkup;
+      });
+    } else if (shopDefault !== null) {
+      record("default_markup", true, `default_markup_pct ${shopDefault}`);
+      take(() => {
+        markWon();
+        source = "default_markup";
+        pctSource = "fallback";
+        pricingMode = "default_markup";
+        unit = base * (1 + shopDefault / 100);
+        markupPct = shopDefault;
+      });
+    } else {
+      record("default_markup", false, "no finite fallback percent");
+    }
+  }
+  {
+    record("cost_passthrough", true, "unit = base_price");
+    take(() => {
+      markWon();
+      source = "cost_passthrough";
+      pricingMode = "cost_passthrough";
+      unit = base;
+    });
+  }
+  const unitPrice = num3(unit);
+  const extension = round22(unitPrice * qty);
+  const minCandidates = [
+    breakMinCharge,
+    tmpl?.minimum_charge ?? null,
+    scopedFinite(part, PART_MIN_CHARGE_FIELDS),
+    toFiniteNumber(args.minimum_charge ?? args.minimumCharge)
+  ];
+  let minimumCharge = 0;
+  for (const c of minCandidates) {
+    if (c !== null && c > minimumCharge) minimumCharge = c;
+  }
+  const minimumApplied = minimumCharge > 0 && extension > 0 && extension < minimumCharge;
+  const extended = minimumApplied ? round22(minimumCharge) : extension;
+  return {
+    applied,
+    template_id: templateId,
+    template_name: tmpl?.name ?? "",
+    template: tmpl,
+    source,
+    pct_source: pctSource,
+    pricing_mode: pricingMode,
+    qty,
+    base_price: base,
+    unit_price: round42(unitPrice),
+    extended,
+    tier_row: tierRow,
+    bracket_min_qty: tierRow ? tierRow.qty : null,
+    matched_tier: matchedTier,
+    markup_pct: markupPct,
+    discount_pct: discountPct,
+    market_retail: marketRetail,
+    market_discount_pct: marketDiscountPct,
+    minimum_charge: minimumCharge,
+    minimum_applied: minimumApplied,
+    reason,
+    chain,
+    unit_unverified: unitUnverified,
+    warnings
+  };
+}
+var TEMPLATE_SUPERSEDED_FIELDS = [
+  "tier_ref",
+  "tier",
+  "tier_name",
+  "per_unit_breaks",
+  "unit_breaks",
+  "qty_breaks",
+  "market_retail",
+  "retail",
+  "retail_price",
+  "list_price",
+  "market_discount_pct",
+  "market_based",
+  "pricing_mode",
+  "price_mode",
+  "markup_pct",
+  "markup",
+  "markup_percent",
+  "discount_pct"
+];
+function templatePartDescriptor(part, resolution) {
+  const p = isRecord4(part) ? { ...part } : {};
+  if (!resolution || !resolution.applied) return part;
+  for (const f of TEMPLATE_SUPERSEDED_FIELDS) delete p[f];
+  const pinUnit = () => {
+    p.per_unit_breaks = [{ qty: resolution.qty || 1, unit_price: resolution.unit_price }];
+  };
+  switch (resolution.pricing_mode) {
+    case "market_based":
+      if (resolution.pct_source === "discount_pct" && resolution.market_retail === null) {
+        if (resolution.discount_pct !== null && resolution.discount_pct !== 0) {
+          p.markup_pct = -resolution.discount_pct;
+        } else {
+          pinUnit();
+        }
+      } else {
+        p.pricing_mode = "market_based";
+        p.market_retail = resolution.market_retail ?? resolution.unit_price;
+        p.market_discount_pct = resolution.market_discount_pct ?? resolution.discount_pct ?? 0;
+      }
+      break;
+    case "fixed":
+      pinUnit();
+      break;
+    case "markup":
+    default:
+      if (resolution.pct_source === "discount_pct" && resolution.discount_pct !== null) {
+        if (resolution.discount_pct !== 0) p.markup_pct = -resolution.discount_pct;
+        else pinUnit();
+      } else if (resolution.markup_pct !== null && resolution.markup_pct !== 0) {
+        p.markup_pct = resolution.markup_pct;
+      } else {
+        pinUnit();
+      }
+      break;
+  }
+  return p;
+}
+
+// base44/shared/foundationPricingWire.ts
+var isRecord5 = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+var asString2 = (v) => (v === null || v === void 0 ? "" : String(v)).trim();
+var lc2 = (v) => asString2(v).toLowerCase();
+var toFiniteNumber2 = (v) => {
+  if (v === null || v === void 0 || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+var num4 = (v, fallback = 0) => toFiniteNumber2(v) ?? fallback;
+var firstField2 = (rec, fields) => {
+  if (!rec) return void 0;
+  for (const f of fields) {
+    const v = rec[f];
+    if (v !== void 0 && v !== null && v !== "") return v;
+  }
+  return void 0;
+};
+var firstFinite3 = (rec, fields) => {
+  const v = firstField2(rec, fields);
+  const n = toFiniteNumber2(v);
+  return n === null ? null : n;
+};
+var firstArray = (rec, fields) => {
+  if (!rec) return null;
+  for (const f of fields) {
+    if (Array.isArray(rec[f])) return rec[f];
+  }
+  return null;
+};
+var firstRecord = (rec, fields) => {
+  if (!rec) return null;
+  for (const f of fields) {
+    if (isRecord5(rec[f])) return rec[f];
+  }
+  return null;
+};
+var round23 = (n) => Math.round((num4(n) + Number.EPSILON) * 100) / 100;
+var sumRows = (rows, field) => {
+  if (!Array.isArray(rows)) return null;
+  let hit = false;
+  let total = 0;
+  for (const r of rows) {
+    const n = toFiniteNumber2(isRecord5(r) ? r[field] : null);
+    if (n === null) continue;
+    hit = true;
+    total += n;
+  }
+  return hit ? total : null;
+};
+var FOUNDATION_MODULE_KEYS = Object.freeze([
+  "foundation",
+  "foundation_project",
+  "concrete",
+  "masonry",
+  "concrete_masonry_poles",
+  "poles"
+]);
+var itemSum = (field) => (rec) => sumRows(rec.items, field);
+var itemSum2 = (a, b) => (rec) => {
+  const x = sumRows(rec.items, a);
+  const y = sumRows(rec.items, b);
+  if (x === null && y === null) return null;
+  return (x ?? 0) + (y ?? 0);
+};
+var rowCount = (field) => (rec) => Array.isArray(rec[field]) ? rec[field].length : null;
+var FOUNDATION_COMPONENTS = [
+  {
+    key: "concrete",
+    label: "Concrete & Delivery",
+    costFields: ["total_concrete_cost"],
+    qtyFields: ["concrete_delivered_yards", "total_concrete_volume_cy"],
+    qtyFrom: itemSum("concrete_volume_cy"),
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "rebar",
+    label: "Rebar",
+    costFields: ["total_rebar_cost"],
+    qtyFields: ["total_rebar_feet", "rebar_feet"],
+    qtyFrom: itemSum("rebar_feet"),
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "excavation",
+    label: "Excavation",
+    costFields: ["total_excavation_cost"],
+    qtyFields: ["total_excavation_volume_cy"],
+    qtyFrom: itemSum("excavation_volume_cy"),
+    category_key: "inhouse_labor"
+  },
+  {
+    key: "forming",
+    label: "Forming Materials",
+    costFields: ["total_forming_materials_cost"],
+    qtyFields: ["total_forming_qty"],
+    qtyFrom: itemSum("forming_qty"),
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "labor",
+    label: "Pouring & Finishing Labor",
+    costFields: ["total_labor_cost"],
+    qtyFields: ["total_labor_hours"],
+    qtyFrom: itemSum2("pouring_hours", "finishing_hours"),
+    category_key: "inhouse_labor"
+  },
+  {
+    // Breakdown line — walls[].calculatedCosts material+mortar+internal
+    // material+internal mortar (categorizeFoundationProject 'Brick / Wall /
+    // Mortar Materials'). Emitted only when a walls[] row carries a
+    // calculatedCosts record; the 'walls' aggregate fills the slot otherwise.
+    key: "wall_materials",
+    label: "Brick / Wall / Mortar Materials",
+    costFields: [],
+    category_key: "outsourced_fab",
+    aliases: ["walls", "wall"]
+  },
+  {
+    // Breakdown line — walls[].calculatedCosts labor+internal labor
+    // (categorizer 'Masonry Labor').
+    key: "wall_labor",
+    label: "Masonry Labor",
+    costFields: [],
+    category_key: "outsourced_services",
+    aliases: ["walls", "wall"]
+  },
+  {
+    // Aggregate fallback — persisted total_wall_cost when no walls[]
+    // calculatedCosts breakdown exists (legacy/manual totals).
+    key: "walls",
+    label: "Masonry Walls",
+    costFields: ["total_wall_cost"],
+    qtyFrom: rowCount("walls"),
+    category_key: "outsourced_fab",
+    aliases: ["wall"]
+  },
+  {
+    key: "poles",
+    label: "Poles",
+    costFields: ["total_pole_cost"],
+    qtyFrom: rowCount("poles"),
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "pole_painting",
+    label: "Pole Painting",
+    costFields: ["total_pole_painting_cost"],
+    qtyFrom: (rec) => {
+      const rows = rec.poles;
+      if (!Array.isArray(rows)) return null;
+      const n = rows.filter(
+        (p) => isRecord5(p) && (p.paint === true || num4(p.pole_painting_cost) > 0)
+      ).length;
+      return n || (rows.length ? 0 : null);
+    },
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "equipment",
+    label: "Equipment Rental",
+    costFields: ["total_equipment_cost"],
+    qtyFrom: rowCount("selected_equipment"),
+    category_key: "outsourced_services"
+  },
+  {
+    key: "wall_caps",
+    label: "Wall Caps",
+    costFields: ["total_wall_cap_cost"],
+    qtyFrom: rowCount("wall_caps"),
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "signage",
+    label: "Signage Cabinets",
+    costFields: ["total_signage_cabinet_cost"],
+    qtyFrom: (rec) => {
+      const rows = rec.signage_cabinets;
+      if (!Array.isArray(rows)) return null;
+      let hit = false;
+      let total = 0;
+      for (const c of rows) {
+        if (!isRecord5(c)) continue;
+        hit = true;
+        total += num4(c.quantity, 1);
+      }
+      return hit ? total : rows.length ? 0 : null;
+    },
+    category_key: "outsourced_fab"
+  },
+  {
+    key: "landscape",
+    label: "Landscape / Site Materials",
+    costFields: ["total_landscape_cost"],
+    qtyFrom: (rec) => {
+      const cells = isRecord5(rec.landscape) && isRecord5(rec.landscape.cells) ? Object.keys(rec.landscape.cells).length : null;
+      return cells === null ? null : cells;
+    },
+    category_key: "outsourced_fab"
+  }
+];
+var FOUNDATION_COMPONENT_KEYS = Object.freeze(
+  FOUNDATION_COMPONENTS.map((c) => c.key)
+);
+var wallCostBreakdown = (rec) => {
+  const rows = rec.walls;
+  if (!Array.isArray(rows)) return null;
+  let hit = false;
+  let materials = 0;
+  let labor = 0;
+  let matQty = 0;
+  let labQty = 0;
+  for (const w of rows) {
+    const costs = isRecord5(w) && isRecord5(w.calculatedCosts) ? w.calculatedCosts : null;
+    if (!costs) continue;
+    hit = true;
+    materials += num4(costs.materialCost) + num4(costs.mortarCost) + num4(costs.internalMaterialCost) + num4(costs.internalMortarCost);
+    labor += num4(costs.laborCost) + num4(costs.internalLaborCost);
+    matQty += num4(costs.totalBricks) + num4(costs.internalTotalBricks);
+    labQty += num4(costs.laborHours) + num4(costs.internalLaborHours);
+  }
+  return hit ? { materials, labor, matQty, labQty } : null;
+};
+var CONTEXT_BLOCK_FIELDS = [
+  "pricing_engine",
+  "engine_pricing",
+  "pricing_tier_config",
+  "pricing_context",
+  "engine_context"
+];
+var NESTED_CONTEXT_FIELDS = ["engine_context", "pricing_engine"];
+var ENGINE_LINE_MAP_FIELDS = ["items", "lines", "line_config", "item_config"];
+var COMPONENT_BLOCK_SUFFIXES = [
+  "pricing",
+  "price_config",
+  "engine_pricing",
+  "pricing_config",
+  "engine_price",
+  "tier_config",
+  "sell_pricing"
+];
+var ENGINE_MODE_TOKENS = /* @__PURE__ */ new Set([
+  "market",
+  "market_based",
+  "market-based",
+  "retail",
+  "retail_minus_discount",
+  "fixed",
+  "fixed_price",
+  "flat",
+  "cost_plus",
+  "cost-plus",
+  "costplus",
+  "markup",
+  "tier",
+  "tier_markup",
+  "tiered"
+]);
+var FIXED_FIELDS = ["fixed_price", "price_override", "override_price", "flat_price"];
+var TIER_REF_FIELDS = ["tier_ref", "tier_ref_id", "pricing_tier_ref", "bound_tier", "tier", "tier_name"];
+var BREAK_FIELDS = ["per_unit_breaks", "unit_breaks", "qty_breaks"];
+var TEMPLATE_REF_FIELDS = [
+  "pricing_template_id",
+  "template_id",
+  "margin_template_id",
+  "pricing_template_name",
+  "template_name",
+  "pricing_template",
+  "template"
+];
+var TIER_SET_FIELDS = [
+  "global_pricing_tier_id",
+  "pricing_tier_id",
+  "tier_set_id",
+  "pricing_tier_set_id",
+  "pricing_rule_set_id",
+  "global_tier_id",
+  "global_pricing_tier_name",
+  "pricing_tier_name",
+  "tier_set_name"
+];
+var MARKET_FIELDS = ["market_retail", "retail", "retail_price", "list_price"];
+var MARKET_DISCOUNT_FIELDS = ["market_discount_pct", "retail_discount_pct"];
+var MARKUP_FIELDS2 = ["markup_pct", "markup", "markup_percent"];
+var MIN_FIELDS = ["minimum_charge", "min_charge", "minimum", "setup_fee_floor"];
+var SETUP_FIELDS = ["setup_fee", "setupFee", "setup_fee_flat"];
+var FORMULA_FIELDS = ["formula_modifiers", "modifiers"];
+var MODE_FIELDS = ["pricing_mode", "price_mode", "mode", "active_mode"];
+var MACHINE_FIELDS = ["machine", "machine_override", "machine_pricing", "equipment_pricing"];
+var TIER_CONTEXT_FIELDS = ["customer_tier", "customerTier"];
+var EMBEDDED_RULE_FIELDS = ["tier_rules", "tierRules", "tier_matrix", "rules", "matrix", "matrix_rows", "rows", "pricing_matrix"];
+var EMBEDDED_TEMPLATE_FIELDS = ["templates", "pricing_templates"];
+var EMBEDDED_TIER_CATALOG_FIELDS = ["tiers", "tier_catalog", "markup_tiers"];
+var UNIT_FIELDS = ["unit", "pricing_unit", "pricingUnit", "uom", "unit_of_measure", "unit_category"];
+var TAX_PCT_FIELDS = ["tax_percent", "taxPercent"];
+var INTERPOLATE_FIELDS = ["interpolate_breaks", "interpolateBreaks", "interpolate", "break_interpolation"];
+var DEFAULT_MARKUP_FIELDS = ["default_markup_pct", "defaultMarkupPct", "default_markup"];
+var FOUNDATION_ENGINE_LINE_FIELDS = Object.freeze([
+  ...FIXED_FIELDS,
+  ...TIER_REF_FIELDS,
+  ...BREAK_FIELDS,
+  ...TEMPLATE_REF_FIELDS,
+  ...TIER_SET_FIELDS,
+  ...MARKET_FIELDS,
+  ...MARKET_DISCOUNT_FIELDS,
+  ...MARKUP_FIELDS2,
+  ...MIN_FIELDS,
+  ...SETUP_FIELDS,
+  ...FORMULA_FIELDS,
+  ...MODE_FIELDS,
+  ...MACHINE_FIELDS,
+  ...TIER_CONTEXT_FIELDS,
+  ...EMBEDDED_RULE_FIELDS,
+  ...EMBEDDED_TEMPLATE_FIELDS,
+  ...EMBEDDED_TIER_CATALOG_FIELDS,
+  ...UNIT_FIELDS,
+  ...TAX_PCT_FIELDS,
+  ...INTERPOLATE_FIELDS,
+  "taxable"
+]);
+var isEngineModeToken = (v) => ENGINE_MODE_TOKENS.has(lc2(v));
+var nonEmptyArrayField = (rec, fields) => fields.some((f) => Array.isArray(rec[f]) && rec[f].length > 0);
+var machineHasConfig = (v) => {
+  if (!isRecord5(v)) return false;
+  const fixed = firstFinite3(v, FIXED_FIELDS);
+  const retail = firstFinite3(v, MARKET_FIELDS);
+  const markup = firstFinite3(v, MARKUP_FIELDS2);
+  return fixed !== null && fixed > 0 || retail !== null && retail > 0 || markup !== null || firstFinite3(v, MIN_FIELDS) !== null || nonEmptyArrayField(v, [...BREAK_FIELDS, ...FORMULA_FIELDS]) || MODE_FIELDS.some((f) => isEngineModeToken(v[f])) || TIER_REF_FIELDS.some((f) => asString2(v[f]) !== "");
+};
+function descriptorHasPricingContent(d) {
+  if (!isRecord5(d)) return false;
+  const fixed = firstFinite3(d, FIXED_FIELDS);
+  if (fixed !== null && fixed > 0) return true;
+  if (TIER_REF_FIELDS.some((f) => asString2(d[f]) !== "")) return true;
+  if (nonEmptyArrayField(d, BREAK_FIELDS)) return true;
+  const retail = firstFinite3(d, MARKET_FIELDS);
+  if (retail !== null && retail > 0) return true;
+  const discount = firstFinite3(d, MARKET_DISCOUNT_FIELDS);
+  if (discount !== null && discount !== 0) return true;
+  if (MODE_FIELDS.some((f) => isEngineModeToken(d[f]))) return true;
+  const markup = firstFinite3(d, MARKUP_FIELDS2);
+  if (markup !== null) return true;
+  if (nonEmptyArrayField(d, FORMULA_FIELDS)) return true;
+  if (firstFinite3(d, MIN_FIELDS) !== null) return true;
+  if (firstFinite3(d, SETUP_FIELDS) !== null) return true;
+  if (TEMPLATE_REF_FIELDS.some((f) => {
+    const v = d[f];
+    return isRecord5(v) ? true : asString2(v) !== "";
+  })) return true;
+  if (TIER_SET_FIELDS.some((f) => asString2(d[f]) !== "")) return true;
+  if (nonEmptyArrayField(d, [...EMBEDDED_RULE_FIELDS, ...EMBEDDED_TEMPLATE_FIELDS, ...EMBEDDED_TIER_CATALOG_FIELDS])) return true;
+  if (TIER_CONTEXT_FIELDS.some((f) => asString2(firstField2(d, [f])) !== "")) return true;
+  if (MACHINE_FIELDS.some((f) => machineHasConfig(d[f]))) return true;
+  return false;
+}
+var componentOf = (key) => {
+  const k = lc2(key);
+  return FOUNDATION_COMPONENTS.find((c) => c.key === k) ?? null;
+};
+var carrierKeys = (spec) => [
+  ...spec.aliases ?? [],
+  spec.key
+];
+function foundationCostLines(record) {
+  if (!isRecord5(record)) return [];
+  const lines = [];
+  const walls = wallCostBreakdown(record);
+  FOUNDATION_COMPONENTS.forEach((comp) => {
+    if (comp.key === "wall_materials" || comp.key === "wall_labor") {
+      if (!walls) return;
+      const isMat = comp.key === "wall_materials";
+      lines.push({
+        key: comp.key,
+        index: lines.length,
+        label: comp.label,
+        qty: isMat ? walls.matQty : walls.labQty,
+        cost: isMat ? walls.materials : walls.labor,
+        category_key: comp.category_key,
+        item: record,
+        origin: "components"
+      });
+      return;
+    }
+    if (comp.key === "walls" && walls) return;
+    const cost = firstFinite3(record, comp.costFields);
+    if (cost === null) return;
+    const qty = firstFinite3(record, comp.qtyFields ?? []) ?? comp.qtyFrom?.(record) ?? 1;
+    lines.push({
+      key: comp.key,
+      index: lines.length,
+      label: comp.label,
+      qty,
+      cost,
+      category_key: comp.category_key,
+      item: record,
+      origin: "components"
+    });
+  });
+  return lines;
+}
+var contextBlockOf = (record) => {
+  const rec = isRecord5(record) ? record : {};
+  for (const f of CONTEXT_BLOCK_FIELDS) {
+    if (isRecord5(rec[f])) return { block: rec[f], field: f };
+  }
+  const cp = isRecord5(rec.customer_pricing) ? rec.customer_pricing : null;
+  if (cp) {
+    for (const f of NESTED_CONTEXT_FIELDS) {
+      if (isRecord5(cp[f])) return { block: cp[f], field: `customer_pricing.${f}` };
+    }
+  }
+  return { block: null, field: "" };
+};
+function foundationPricingContextOf(record, callerContext = null) {
+  const rec = isRecord5(record) ? record : {};
+  const caller = isRecord5(callerContext) ? callerContext : {};
+  if (callerContext?.__foundationPricingContext === true) {
+    return callerContext;
+  }
+  const { block, field } = contextBlockOf(rec);
+  const blk = block ?? {};
+  const cp = isRecord5(rec.customer_pricing) ? rec.customer_pricing : {};
+  const customerTier = firstField2(caller, ["customerTier", "customer_tier", "tier"]) ?? firstField2(blk, [...TIER_CONTEXT_FIELDS, "tier"]) ?? firstField2(cp, ["tier_number", "tier", "tier_name"]) ?? null;
+  const tierRules = firstArray(caller, EMBEDDED_RULE_FIELDS) ?? firstArray(blk, EMBEDDED_RULE_FIELDS) ?? [];
+  const templates = firstArray(caller, EMBEDDED_TEMPLATE_FIELDS) ?? firstArray(blk, EMBEDDED_TEMPLATE_FIELDS) ?? [];
+  const tiers = firstArray(caller, EMBEDDED_TIER_CATALOG_FIELDS) ?? firstArray(blk, EMBEDDED_TIER_CATALOG_FIELDS) ?? [];
+  const defaultMarkupPct = firstFinite3(caller, DEFAULT_MARKUP_FIELDS.concat("markup_pct")) ?? firstFinite3(blk, DEFAULT_MARKUP_FIELDS.concat(MARKUP_FIELDS2)) ?? firstFinite3(rec, ["customer_markup_percent"]) ?? 0;
+  const taxable = typeof caller.taxable === "boolean" ? caller.taxable : typeof blk.taxable === "boolean" ? blk.taxable : lc2(blk.taxable) === "true" ? true : lc2(blk.taxable) === "false" ? false : void 0;
+  const callerModifiers = firstArray(caller, FORMULA_FIELDS);
+  const blockModifiers = firstArray(blk, FORMULA_FIELDS);
+  return {
+    __foundationPricingContext: true,
+    hasContextBlock: block !== null,
+    field,
+    customerTier,
+    tierRules,
+    templates,
+    tiers,
+    defaultMarkupPct: num4(defaultMarkupPct),
+    machine: firstField2(blk, MACHINE_FIELDS) ?? firstField2(caller, MACHINE_FIELDS) ?? null,
+    taxable,
+    taxPercent: num4(firstFinite3(caller, TAX_PCT_FIELDS) ?? firstFinite3(blk, TAX_PCT_FIELDS)),
+    setupFee: num4(firstFinite3(caller, SETUP_FIELDS) ?? firstFinite3(blk, SETUP_FIELDS)),
+    minimumCharge: num4(firstFinite3(caller, MIN_FIELDS) ?? firstFinite3(blk, MIN_FIELDS)),
+    modifiers: callerModifiers ?? blockModifiers ?? void 0,
+    lineMap: firstRecord(blk, ENGINE_LINE_MAP_FIELDS),
+    now: caller.now ?? blk.now,
+    raw: block
+  };
+}
+var componentNestedBlock = (record, spec) => {
+  const rec = isRecord5(record) ? record : {};
+  let merged = null;
+  for (const carrier of carrierKeys(spec)) {
+    for (const suffix of COMPONENT_BLOCK_SUFFIXES) {
+      const f = `${carrier}_${suffix}`;
+      if (isRecord5(rec[f])) merged = { ...merged ?? {}, ...rec[f] };
+    }
+  }
+  return merged;
+};
+var engineFieldsFrom = (src2, prefix = "") => {
+  const out = {};
+  if (!isRecord5(src2)) return out;
+  for (const f of FOUNDATION_ENGINE_LINE_FIELDS) {
+    const k = prefix ? `${prefix}_${f}` : f;
+    if (src2[k] !== void 0 && src2[k] !== null && src2[k] !== "") out[f] = src2[k];
+  }
+  return out;
+};
+function foundationLineDescriptor(line, record = null) {
+  const spec = componentOf(line?.key);
+  if (!spec) return null;
+  const rec = isRecord5(record) ? record : {};
+  const carriers = carrierKeys(spec);
+  const flat = carriers.reduce(
+    (acc, carrier) => ({ ...acc, ...engineFieldsFrom(rec, carrier) }),
+    {}
+  );
+  const rawLine = isRecord5(line) ? line : {};
+  const ownInline = engineFieldsFrom(rawLine);
+  const ownNested = firstRecord(rawLine, ["descriptor", "pricing", "price_config", "engine_pricing", "pricing_config", "engine_price"]);
+  const { block } = contextBlockOf(rec);
+  const lineMap = block ? firstRecord(block, ENGINE_LINE_MAP_FIELDS) : null;
+  const mapEntry = lineMap ? carriers.reduce((acc, carrier) => {
+    const v = lineMap[carrier];
+    return isRecord5(v) ? { ...acc ?? {}, ...v } : acc;
+  }, null) ?? (isRecord5(lineMap[asString2(line?.index)]) ? lineMap[asString2(line?.index)] : null) : null;
+  const nested = componentNestedBlock(rec, spec);
+  const merged = {
+    ...flat,
+    ...ownInline,
+    ...ownNested ?? {},
+    ...mapEntry ?? {},
+    ...nested ?? {}
+  };
+  if (!Object.keys(merged).length && !nested && !mapEntry && !ownNested) return null;
+  return merged;
+}
+function foundationConfigScan(record, lines) {
+  const wireLines = Array.isArray(lines) ? lines : foundationCostLines(record);
+  const detail = wireLines.map((line) => {
+    const descriptor = foundationLineDescriptor(line, record);
+    return {
+      key: line.key,
+      label: line.label,
+      configured: descriptorHasPricingContent(descriptor),
+      hasCost: line.cost !== null && Number.isFinite(line.cost)
+    };
+  });
+  const configuredCount = detail.filter((d) => d.configured).length;
+  return {
+    configured: configuredCount > 0,
+    configuredCount,
+    lineCount: wireLines.length,
+    lines: detail
+  };
+}
+function foundationEngineConfigured(record, lines) {
+  if (contextBlockOf(record).block) return true;
+  return foundationConfigScan(record, lines).configured;
+}
+var passthroughResult = (reason, baselineSell, internalCost, markupPct, contextEngaged, lines, chain, warnings, contextUsed) => ({
+  applied: false,
+  passthrough: true,
+  reason,
+  customer_price: baselineSell,
+  baseline_sell: baselineSell,
+  internal_cost: internalCost,
+  markup_pct: markupPct,
+  context_engaged: contextEngaged,
+  configured_baseline: 0,
+  remainder_sell: baselineSell,
+  engine_priced_total: 0,
+  lines,
+  chain,
+  warnings,
+  context_used: contextUsed
+});
+function resolveFoundationSellPricing(input = {}) {
+  const warnings = [];
+  const chain = [];
+  const record = isRecord5(input.record) ? input.record : null;
+  const baselineSell = num4(input.baselineSell ?? input.baseline_sell);
+  const internalCost = num4(input.internalCost ?? input.internal_cost);
+  const rec = record ?? {};
+  const markupPct = firstFinite3(input, ["markupPercent", "markup_percent"]) ?? firstFinite3(rec, ["customer_markup_percent"]) ?? 0;
+  const context = foundationPricingContextOf(rec, input.context);
+  const contextUsed = {
+    context_block: context.field || "",
+    customer_tier: asString2(
+      isRecord5(context.customerTier) ? context.customerTier.tier_name ?? context.customerTier.tier_number ?? context.customerTier.id : context.customerTier
+    ),
+    tier_rule_count: context.tierRules.length,
+    template_count: context.templates.length,
+    tier_count: context.tiers.length,
+    default_markup_pct: num4(context.defaultMarkupPct)
+  };
+  const engine = isRecord5(input.engine) ? input.engine : {};
+  const pricePart2 = typeof engine.pricePart === "function" ? engine.pricePart : null;
+  const wireLines = Array.isArray(input.lines) && input.lines.length ? input.lines.map((l, position) => {
+    const spec = componentOf(l?.key);
+    return {
+      key: asString2(l?.key) || `line-${position}`,
+      index: position,
+      label: asString2(l?.label) || spec?.label || `Component ${position + 1}`,
+      qty: l?.qty !== void 0 ? num4(l.qty, 1) : spec ? firstFinite3(rec, spec.qtyFields ?? []) ?? spec.qtyFrom?.(rec) ?? 1 : 1,
+      cost: l?.cost !== void 0 ? toFiniteNumber2(l.cost) : spec && spec.costFields.length ? firstFinite3(rec, spec.costFields) : toFiniteNumber2(l?.item_total_cost ?? l?.line_total_cost ?? l?.total_cost ?? l?.cost),
+      category_key: asString2(l?.category_key) || spec?.category_key || "",
+      item: isRecord5(l?.item) ? l.item : rec,
+      descriptor: isRecord5(l) ? l : null,
+      origin: "caller"
+    };
+  }) : foundationCostLines(rec);
+  const scan = foundationConfigScan(rec, wireLines);
+  const engaged = context.hasContextBlock || scan.configured;
+  chain.push({
+    layer: "config_scan",
+    hit: engaged,
+    won: false,
+    detail: context.hasContextBlock ? `context block via ${context.field}${scan.configured ? ` + ${scan.configuredCount} configured component(s)` : ""}` : scan.configured ? `${scan.configuredCount} of ${scan.lineCount} components carry pricing config` : `no pricing config on ${scan.lineCount} components`
+  });
+  if (!record) return passthroughResult("no_record", baselineSell, internalCost, markupPct, false, [], chain, warnings, contextUsed);
+  if (!wireLines.length) return passthroughResult("no_lines", baselineSell, internalCost, markupPct, context.hasContextBlock, [], chain, warnings, contextUsed);
+  if (!engaged) return passthroughResult("no_config", baselineSell, internalCost, markupPct, false, [], chain, warnings, contextUsed);
+  if (!pricePart2) {
+    warnings.push("pricing engine not injected \u2014 lines left at baseline sell");
+    return passthroughResult("no_engine", baselineSell, internalCost, markupPct, context.hasContextBlock, [], chain, warnings, contextUsed);
+  }
+  const markupFactor = 1 + markupPct / 100;
+  const results = [];
+  let configuredCostSum = 0;
+  let engineSubtotalSum = 0;
+  let pricedCount = 0;
+  let skippedCount = 0;
+  wireLines.forEach((line, position) => {
+    const descriptor = foundationLineDescriptor(line, rec);
+    const configured = descriptorHasPricingContent(descriptor);
+    const enginePrices = configured || context.hasContextBlock;
+    const cost = line.cost !== void 0 ? line.cost : null;
+    const qty = num4(line.qty, 1);
+    const base = {
+      key: line.key || `line-${position}`,
+      label: line.label || `Component ${position + 1}`,
+      index: position,
+      qty,
+      cost: cost ?? 0,
+      unit_cost: cost !== null ? qty > 0 ? cost / qty : cost : 0,
+      baseline_sell: cost !== null ? cost * markupFactor : 0,
+      configured,
+      priced: false,
+      priced_via: null,
+      skipped: null,
+      engine: null
+    };
+    results.push(base);
+    if (!enginePrices) return;
+    if (cost === null || !Number.isFinite(cost)) {
+      base.skipped = "skipped_no_cost";
+      skippedCount += 1;
+      warnings.push(`component '${base.label}' carries pricing config but has no cost base \u2014 left at baseline sell`);
+      return;
+    }
+    let partDescriptor = { ...descriptor ?? {} };
+    const lineModifiers = firstField2(partDescriptor, FORMULA_FIELDS);
+    for (const f of FORMULA_FIELDS) delete partDescriptor[f];
+    const embeddedTemplates = EMBEDDED_TEMPLATE_FIELDS.reduce(
+      (acc, f) => acc.concat(Array.isArray(partDescriptor[f]) ? partDescriptor[f] : []),
+      []
+    );
+    let templateApplied = false;
+    let templateReason = null;
+    if (typeof engine.resolveTemplatePrice === "function") {
+      try {
+        const resolution = engine.resolveTemplatePrice({
+          part: partDescriptor,
+          qty,
+          base_price: base.unit_cost,
+          templates: [...embeddedTemplates, ...context.templates],
+          tiers: context.tiers,
+          tier: firstField2(partDescriptor, TIER_CONTEXT_FIELDS) ?? context.customerTier,
+          default_markup_pct: contextUsed.default_markup_pct
+        });
+        if (resolution && isRecord5(resolution)) {
+          templateApplied = resolution.applied === true;
+          templateReason = asString2(resolution.reason) || null;
+          if (Array.isArray(resolution.warnings)) warnings.push(...resolution.warnings.map((w) => `component '${base.label}': ${asString2(w)}`));
+          if (typeof engine.templatePartDescriptor === "function") {
+            partDescriptor = engine.templatePartDescriptor(partDescriptor, resolution);
+          }
+        }
+      } catch (e) {
+        warnings.push(`component '${base.label}': template resolution failed (${asString2(e?.message)}) \u2014 part fields priced directly`);
+      }
+    }
+    const customerTier = firstField2(partDescriptor, TIER_CONTEXT_FIELDS) ?? context.customerTier;
+    const tierRules = [
+      ...nonEmptyArrayField(partDescriptor, EMBEDDED_RULE_FIELDS) ? EMBEDDED_RULE_FIELDS.reduce((acc, f) => acc.concat(Array.isArray(partDescriptor[f]) ? partDescriptor[f] : []), []) : [],
+      ...context.tierRules
+    ];
+    const machine = firstField2(partDescriptor, MACHINE_FIELDS) ?? context.machine;
+    const setupFee = firstFinite3(partDescriptor, SETUP_FIELDS) ?? (context.setupFee || void 0);
+    const minimumCharge = firstFinite3(partDescriptor, MIN_FIELDS) ?? (context.minimumCharge || void 0);
+    const modifiers = Array.isArray(lineModifiers) ? lineModifiers : context.modifiers;
+    const taxable = typeof partDescriptor.taxable === "boolean" ? partDescriptor.taxable : context.taxable;
+    const taxPercent = firstFinite3(partDescriptor, TAX_PCT_FIELDS) ?? (context.taxPercent || void 0);
+    let priced = null;
+    try {
+      priced = pricePart2({
+        label: base.label,
+        category: line.category_key || asString2(partDescriptor.category_key ?? partDescriptor.category),
+        qty,
+        unitCost: base.unit_cost,
+        pricingUnit: asString2(firstField2(partDescriptor, UNIT_FIELDS)) || "each",
+        customerTier,
+        tierRules,
+        part: partDescriptor,
+        machine,
+        defaultMarkupPct: contextUsed.default_markup_pct,
+        setupFee,
+        minimumCharge,
+        taxable,
+        taxPercent,
+        modifiers,
+        now: input.now ?? context.now
+      });
+    } catch (e) {
+      base.skipped = "engine_error";
+      skippedCount += 1;
+      warnings.push(`component '${base.label}': engine pricing failed (${asString2(e?.message)}) \u2014 left at baseline sell`);
+      return;
+    }
+    const pricedRecord = isRecord5(priced) ? priced : {};
+    const lineSubtotal = firstFinite3(pricedRecord, ["subtotal"]) ?? num4(pricedRecord.extended);
+    base.priced = true;
+    base.priced_via = configured ? "descriptor" : "context";
+    pricedCount += 1;
+    configuredCostSum += cost;
+    engineSubtotalSum += lineSubtotal;
+    base.engine = {
+      unit_price: num4(pricedRecord.unitPrice),
+      extended: num4(pricedRecord.extended),
+      setup_fee: num4(pricedRecord.setupFee),
+      subtotal: lineSubtotal,
+      total: num4(pricedRecord.total),
+      price_source: asString2(pricedRecord.priceSource),
+      tier_source: asString2(pricedRecord?.tier?.source),
+      minimum_applied: pricedRecord.minimumApplied === true,
+      dangling_tier_ref: asString2(pricedRecord.danglingTierRef) || null,
+      template_applied: templateApplied,
+      template_reason: templateReason,
+      trace: Array.isArray(pricedRecord?.tier?.trace) ? pricedRecord.tier.trace : []
+    };
+    if (base.engine?.dangling_tier_ref) {
+      warnings.push(`component '${base.label}': tier ref '${base.engine.dangling_tier_ref}' did not resolve \u2014 priced via remaining layers`);
+    }
+  });
+  chain.push({
+    layer: "engine_pricing",
+    hit: pricedCount > 0,
+    won: false,
+    detail: skippedCount ? `${pricedCount} engine-priced, ${skippedCount} skipped (kept at baseline)` : `${pricedCount} engine-priced`
+  });
+  if (!pricedCount) {
+    return passthroughResult("no_priced_lines", baselineSell, internalCost, markupPct, context.hasContextBlock, results, chain, warnings, contextUsed);
+  }
+  const configuredBaseline = configuredCostSum * markupFactor;
+  const remainder = baselineSell - configuredBaseline;
+  const engineTotal = engineSubtotalSum;
+  const customerPrice = round23(remainder + engineTotal);
+  if (remainder < 0) {
+    warnings.push(`priced components' baseline (${round23(configuredBaseline)}) exceeds project sell \u2014 remainder ${round23(remainder)}`);
+  }
+  chain.push({
+    layer: "remainder",
+    hit: true,
+    won: false,
+    detail: `baseline ${round23(baselineSell)} - priced baseline ${round23(configuredBaseline)} = remainder ${round23(remainder)}`
+  });
+  chain.push({
+    layer: "customer_price",
+    hit: true,
+    won: true,
+    detail: `remainder ${round23(remainder)} + engine ${round23(engineTotal)} = ${customerPrice}`
+  });
+  return {
+    applied: true,
+    passthrough: false,
+    reason: "priced",
+    customer_price: customerPrice,
+    baseline_sell: baselineSell,
+    internal_cost: internalCost,
+    markup_pct: markupPct,
+    context_engaged: context.hasContextBlock,
+    configured_baseline: configuredBaseline,
+    remainder_sell: remainder,
+    engine_priced_total: engineTotal,
+    lines: results,
+    chain,
+    warnings,
+    context_used: contextUsed
+  };
+}
+
+// src/components/estimator/foundation/foundationSellPricing.js
+var ENGINE = Object.freeze({ pricePart, resolveTemplatePrice, templatePartDescriptor });
+function resolveFoundationEngineSell(record, { baselineSell, internalCost, markupPercent, pricingContext, now } = {}) {
+  try {
+    const caller = pricingContext && typeof pricingContext === "object" ? { ...pricingContext } : {};
+    const rawRules = caller.tierRules ?? caller.tier_rules ?? caller.tier_matrix;
+    if (Array.isArray(rawRules) && rawRules.length) {
+      caller.tierRules = matrixRowsToRules(rawRules, { now: caller.now ?? now });
+    }
+    const context = foundationPricingContextOf(record, caller);
+    return resolveFoundationSellPricing({ record, baselineSell, internalCost, markupPercent, context, engine: ENGINE, now });
+  } catch {
+    return { applied: false, passthrough: true, reason: "no_engine", customer_price: baselineSell, warnings: [] };
+  }
+}
+function foundationEngineEconomics(record, { baselineSell, internalCost, markupPercent, pricingContext, now } = {}) {
+  const res = resolveFoundationEngineSell(record, { baselineSell, internalCost, markupPercent, pricingContext, now });
+  return res && res.applied === true ? { internalCost, customerPrice: res.customer_price, resolution: res } : null;
+}
+function foundationHasEnginePricing(record) {
+  try {
+    return foundationEngineConfigured(record) === true;
+  } catch {
+    return false;
+  }
+}
+
+// src/components/estimator/foundation/foundationTotalsSummary.js
+var fin = (v) => typeof v === "number" && Number.isFinite(v);
+var numOrNull = (v) => v === void 0 || v === null || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null;
+var arr = (v) => Array.isArray(v) ? v : [];
+var isRecord6 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+var fmtQty = (n, unit, digits = 2) => fin(n) ? `${n.toLocaleString(void 0, { maximumFractionDigits: digits })} ${unit}` : null;
+var joinQty = (parts) => {
+  const out = parts.filter((p) => typeof p === "string" && p !== "");
+  return out.length ? out.join(" \xB7 ") : null;
+};
+var FOUNDATION_STICKY_PARTITION_FIELDS = [
+  ["total_concrete_cost", "Concrete"],
+  ["total_rebar_cost", "Rebar"],
+  ["total_excavation_cost", "Excavation"],
+  ["total_forming_materials_cost", "Forming materials"],
+  ["total_labor_cost", "Labor"],
+  ["total_wall_cost", "Walls"],
+  ["total_pole_cost", "Poles"],
+  ["total_pole_painting_cost", "Pole painting"],
+  ["total_equipment_cost", "Equipment"],
+  ["total_wall_cap_cost", "Wall caps"],
+  ["total_signage_cabinet_cost", "Signage cabinets"],
+  ["total_landscape_cost", "Site landscaping"]
+];
+var FOUNDATION_TYPE_LABEL = {
+  spread_foot: "spread footing",
+  pillar: "pillar/caisson"
+};
+function resolveFoundationStickySummary({
+  sectionTotal = null,
+  savedSectionTotal = null,
+  pricingUnavailable = false,
+  project = null,
+  engineResolver = null
+} = {}) {
+  const liveCost = fin(sectionTotal) ? sectionTotal : null;
+  const savedCost = fin(savedSectionTotal) ? savedSectionTotal : null;
+  const cost = liveCost !== null ? liveCost : savedCost;
+  const costSource = liveCost !== null ? "live" : savedCost !== null ? "saved" : "none";
+  const projectLinked = project !== null && project !== void 0;
+  const markupPercent = numOrNull(project?.customer_markup_percent) ?? 0;
+  const override = numOrNull(project?.customer_price_override);
+  const cp = isRecord6(project?.customer_pricing) ? project.customer_pricing : null;
+  const tierTotal = cp?.applied === true && numOrNull(cp?.total) !== null ? numOrNull(cp.total) : null;
+  const tierCost = numOrNull(cp?.raw_subtotal);
+  const manualBaseline = projectLinked && liveCost !== null ? override !== null && override > 0 ? override : liveCost * (1 + markupPercent / 100) : null;
+  let sell = null;
+  let sellSource = "none";
+  let sellLabel = "Not recorded";
+  if (projectLinked && typeof engineResolver === "function" && manualBaseline !== null) {
+    let wired = null;
+    try {
+      wired = engineResolver(project, {
+        baselineSell: manualBaseline,
+        internalCost: cost,
+        markupPercent
+      });
+    } catch {
+      wired = null;
+    }
+    if (wired && fin(wired.customerPrice)) {
+      sell = wired.customerPrice;
+      sellSource = "engine";
+      sellLabel = "Pricing engine";
+    }
+  }
+  if (sell === null && tierTotal !== null) {
+    sell = tierTotal;
+    sellSource = "tier";
+    sellLabel = `Tier ${cp.tier_number ?? "\u2014"} applied`;
+  }
+  if (sell === null && override !== null && override > 0) {
+    sell = override;
+    sellSource = "override";
+    sellLabel = "Price override";
+  }
+  if (sell === null && manualBaseline !== null) {
+    sell = manualBaseline;
+    sellSource = "markup";
+    sellLabel = markupPercent > 0 ? `Markup ${markupPercent}%` : "Cost (no markup)";
+  }
+  const marginAmount = sell !== null && cost !== null ? sell - cost : null;
+  const marginPct = marginAmount !== null && sell > 0 ? marginAmount / sell * 100 : null;
+  const marginBasis = marginAmount !== null ? costSource : "none";
+  const acknowledged = sellSource === "tier" && fin(tierCost) ? {
+    sell: tierTotal,
+    cost: tierCost,
+    marginAmount: tierTotal - tierCost,
+    marginPct: tierTotal > 0 ? (tierTotal - tierCost) / tierTotal * 100 : null,
+    differs: cost === null || Math.abs(tierCost - cost) > 5e-3
+  } : null;
+  return {
+    cost: { value: cost, source: costSource },
+    sell: { value: sell, source: sellSource, label: sellLabel },
+    margin: { amount: marginAmount, pct: marginPct, basis: marginBasis },
+    acknowledged,
+    projectLinked,
+    pricingUnavailable: pricingUnavailable === true
+  };
+}
+function buildFoundationTakeoff({
+  totals = {},
+  items = null,
+  itemPricing = null,
+  walls = null,
+  wallPricing = null,
+  poles = null,
+  polePricing = null,
+  wallCaps = null,
+  equipment = null,
+  equipmentPricing = null,
+  delivery = null,
+  cabinets = null,
+  cabinetRows = null,
+  landscapeLines = null,
+  landscapePricing = null
+} = {}) {
+  const groups = [];
+  const addGroup = (key, label, rows) => {
+    if (rows.length) groups.push({ key, label, rows });
+  };
+  const foundationRows = [];
+  arr(items).forEach((item, index) => {
+    const held = arr(itemPricing)[index]?.available === false;
+    const typeLabel = FOUNDATION_TYPE_LABEL[item?.foundation_type] || "foundation";
+    const qty = joinQty([
+      fmtQty(numOrNull(item?.concrete_volume_cy), "CY"),
+      numOrNull(item?.rebar_feet) > 0 ? fmtQty(numOrNull(item.rebar_feet), "LF rebar", 1) : null,
+      numOrNull(item?.forming_qty) > 0 ? fmtQty(numOrNull(item.forming_qty), "forming", 1) : null,
+      numOrNull(item?.excavation_volume_cy) > 0 ? fmtQty(numOrNull(item.excavation_volume_cy), "CY dug") : null
+    ]);
+    foundationRows.push({
+      key: `item-${index}`,
+      label: `Item ${index + 1} \u2014 ${typeLabel} \xD7${numOrNull(item?.quantity) ?? 1}`,
+      qty,
+      amount: fin(item?.item_total_cost) ? item.item_total_cost : null,
+      held
+    });
+  });
+  const deliveryRows = (() => {
+    const src2 = isRecord6(delivery) ? delivery : null;
+    const yards = src2 ? numOrNull(src2.roundedYards) : numOrNull(totals?.concrete_delivered_yards);
+    const trucks = src2 ? arr(src2.trucksList).length : arr(totals?.concrete_trucks).length;
+    const amount = src2 ? numOrNull(src2.concreteTotal) : numOrNull(totals?.concrete_delivery_cost);
+    const held = src2?.pricingUnavailable === true;
+    if (yards === null && !trucks && amount === null) return [];
+    return [{
+      key: "delivery",
+      label: "Concrete delivery",
+      qty: joinQty([
+        yards !== null ? fmtQty(yards, "yd", 1) : null,
+        trucks > 0 ? `${trucks} truck${trucks === 1 ? "" : "s"}` : null,
+        fin(numOrNull(src2?.additionalStopsCost ?? totals?.additional_stops_cost)) && numOrNull(src2?.additionalStopsCost ?? totals?.additional_stops_cost) > 0 ? "+ extra stops" : null
+      ]),
+      amount,
+      held
+    }];
+  })();
+  addGroup("foundations", "Foundations", [...foundationRows, ...deliveryRows]);
+  addGroup("masonry", "Masonry walls", arr(walls).map((wall, index) => {
+    const held = arr(wallPricing)[index]?.available === false;
+    const cc = isRecord6(wall?.calculatedCosts) ? wall.calculatedCosts : {};
+    const matUnit = cc.materialQuantityUnit === "cy" ? "CY" : "units";
+    const linearFt = numOrNull(cc.totalLinearInches);
+    const qty = joinQty([
+      numOrNull(cc.totalBricks) !== null ? fmtQty(numOrNull(cc.totalBricks), matUnit, 0) : null,
+      linearFt !== null ? fmtQty(linearFt / 12, "LF outline", 1) : null,
+      numOrNull(cc.internalTotalBricks) > 0 ? `+${fmtQty(numOrNull(cc.internalTotalBricks), cc.internalMaterialQuantityUnit === "cy" ? "CY" : "units", 0)} internal` : null
+    ]);
+    return {
+      key: `wall-${index}`,
+      label: wall?.name || `Wall ${index + 1}`,
+      qty,
+      amount: fin(cc.totalCost) ? cc.totalCost : null,
+      held
+    };
+  }));
+  addGroup("poles", "Poles", arr(poles).map((pole, index) => {
+    const held = arr(polePricing)[index]?.available === false;
+    const billedInches = numOrNull(pole?.required_length_inches) ?? (numOrNull(pole?.height_inches) !== null && numOrNull(pole?.embedment_inches ?? pole?.y_offset_inches) !== null ? numOrNull(pole.height_inches) + numOrNull(pole.embedment_inches ?? pole?.y_offset_inches) : null);
+    const qty = joinQty([
+      billedInches !== null ? fmtQty(billedInches / 12, "LF billed", 1) : null,
+      numOrNull(pole?.stock_pieces) > 0 ? `${numOrNull(pole.stock_pieces)} stock pc${numOrNull(pole.stock_pieces) === 1 ? "" : "s"}` : null,
+      numOrNull(pole?.pole_painting_cost) > 0 ? "+ painting" : null
+    ]);
+    return {
+      key: `pole-${index}`,
+      label: pole?.pole_name || `Pole ${index + 1}`,
+      qty,
+      amount: fin(pole?.total_cost) ? pole.total_cost : null,
+      held
+    };
+  }));
+  const capRows = (() => {
+    if (Array.isArray(wallCaps) && wallCaps.length) {
+      return wallCaps.map((cap, index) => {
+        const cut = numOrNull(cap?.length_inches ?? cap?.cut_length_inches);
+        return {
+          key: `cap-${index}`,
+          label: cap?.cap_name || `Cap ${index + 1}`,
+          qty: joinQty([cut !== null ? fmtQty(cut, "in cut", 1) : null]),
+          amount: fin(cap?.cost) ? cap.cost : null,
+          held: !fin(cap?.cost)
+        };
+      });
+    }
+    return arr(totals?.wall_caps_by_material).map((g, index) => ({
+      key: `capmat-${index}`,
+      label: g?.name || `Wall cap material ${index + 1}`,
+      qty: numOrNull(g?.qty) !== null ? `${numOrNull(g.qty)} pcs` : null,
+      amount: fin(g?.cost) ? g.cost : null,
+      held: !fin(g?.cost)
+    }));
+  })();
+  addGroup("wall_caps", "Wall caps", capRows);
+  addGroup("equipment", "Equipment", arr(equipment).map((entry, index) => {
+    const held = arr(equipmentPricing)[index]?.available === false;
+    const duration = numOrNull(entry?.custom_qty ?? entry?.rental_duration) ?? 1;
+    const period = entry?.rental_period || "day";
+    const qty = joinQty([
+      fmtQty(duration, period, 1),
+      entry?.include_delivery ? "+ delivery" : null
+    ]);
+    return {
+      key: `equip-${index}`,
+      label: `Equipment ${index + 1}`,
+      qty,
+      amount: fin(entry?.equipment_cost) ? entry.equipment_cost : null,
+      held
+    };
+  }));
+  addGroup("cabinets", "Signage cabinets", arr(cabinetRows).map((row, index) => {
+    const cabinet = arr(cabinets)[index] || {};
+    const quantity = cabinet.quantity === void 0 || cabinet.quantity === null || cabinet.quantity === "" ? 1 : numOrNull(cabinet.quantity);
+    return {
+      key: `cabinet-${index}`,
+      label: cabinet.description || `Cabinet ${index + 1}`,
+      qty: quantity !== null ? `${numOrNull(quantity)} pcs` : null,
+      amount: fin(row?.cost) ? row.cost : null,
+      held: row?.available === false
+    };
+  }));
+  addGroup("landscape", "Site landscape", arr(landscapeLines).map((line, index) => ({
+    key: `land-${index}`,
+    label: line?.label || `Material ${index + 1}`,
+    qty: fin(line?.sqft) ? fmtQty(line.sqft, "sq ft") : numOrNull(line?.cells) !== null ? `${numOrNull(line.cells)} cells` : null,
+    amount: fin(line?.cost) ? line.cost : null,
+    held: landscapePricing?.available === false || !fin(line?.cost)
+  })));
+  const rowCount2 = groups.reduce((s, g) => s + g.rows.length, 0);
+  return { groups, rowCount: rowCount2 };
+}
+function buildFoundationInputChecklist({
+  totals = {},
+  pricingUnavailable = false,
+  calc = null,
+  issues = null,
+  assemblyIssues = null
+} = {}) {
+  const src2 = isRecord6(issues) ? issues : isRecord6(calc) ? calc : {};
+  const channelsKnown = isRecord6(issues) || isRecord6(calc);
+  const catalogIssues = arr(src2.catalogIssues);
+  const inputIssues = arr(src2.inputIssues);
+  const constructionWarnings = arr(src2.constructionWarnings);
+  const placements = arr(assemblyIssues);
+  const seen = /* @__PURE__ */ new Set();
+  const items = (list) => arr(list).filter((issue) => {
+    const key = `${issue?.code ?? ""}|${issue?.kind ?? ""}|${issue?.index ?? ""}|${issue?.componentId ?? ""}|${issue?.field ?? ""}|${issue?.message ?? issue ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map((issue, i) => ({
+    key: `${issue?.code ?? "issue"}-${issue?.kind ?? ""}-${issue?.index ?? i}-${issue?.field ?? ""}-${i}`,
+    message: String(issue?.message ?? issue),
+    code: issue?.code ?? null,
+    field: issue?.field ?? null
+  }));
+  const heldItems = [];
+  for (const [field, label] of FOUNDATION_STICKY_PARTITION_FIELDS) {
+    if (!fin(totals?.[field])) {
+      heldItems.push({
+        key: `held-${field}`,
+        message: `${label} \u2014 amount unavailable (saved amount shown where recorded)`,
+        code: "held_amount",
+        field
+      });
+    }
+  }
+  if (isRecord6(calc?.delivery) && calc.delivery.pricingUnavailable === true) {
+    heldItems.push({
+      key: "held-delivery",
+      message: "Concrete delivery \u2014 held at the saved order snapshot",
+      code: "held_amount",
+      field: "delivery"
+    });
+  }
+  if (pricingUnavailable === true && inputIssues.length === 0 && catalogIssues.length === 0 && heldItems.length === 0) {
+    heldItems.push({
+      key: "held-pricing",
+      message: "Pricing is paused \u2014 review highlighted inputs and catalog selections",
+      code: "pricing_paused",
+      field: null
+    });
+  }
+  const groups = [
+    { key: "inputs", label: "Design inputs", severity: "blocking", items: items(inputIssues) },
+    { key: "catalog", label: "Catalog & settings", severity: "blocking", items: items(catalogIssues) },
+    { key: "assembly", label: "Placement", severity: "advisory", items: items(placements) },
+    { key: "checks", label: "Construction checks", severity: "advisory", items: items(constructionWarnings) },
+    { key: "held", label: "Held amounts", severity: "held", items: heldItems }
+  ].filter((g) => g.items.length > 0);
+  const blockingCount = groups.filter((g) => g.severity === "blocking").reduce((s, g) => s + g.items.length, 0);
+  const advisoryCount = groups.filter((g) => g.severity === "advisory").reduce((s, g) => s + g.items.length, 0);
+  const heldCount = heldItems.length;
+  const totalCount = groups.reduce((s, g) => s + g.items.length, 0);
+  return {
+    groups,
+    blockingCount,
+    advisoryCount,
+    heldCount,
+    totalCount,
+    channelsKnown,
+    // "Complete" is only claimed when the issue channels were actually
+    // consulted and nothing is outstanding — never assumed on an unwired panel.
+    complete: channelsKnown && totalCount === 0
+  };
+}
 
 // src/components/estimator/foundation/FoundationTotals.jsx
 import { jsx, jsxs } from "react/jsx-runtime";
 var amt = (v) => Number.isFinite(v) ? money(v) : "Not saved";
 var known = (v, d, u) => Number.isFinite(v) ? `${v.toFixed(d)} ${u}` : "Not saved";
-function FoundationTotals({ totals, pricingUnavailable = false }) {
+function FoundationTotals({ totals, pricingUnavailable = false, savedSectionTotal = null, sectionTotal = null, project = null, calc = null }) {
   const wallMortar = [totals.total_wall_cost, totals.total_brick_cost, totals.total_fill_cost].every(Number.isFinite) ? totals.total_wall_cost - totals.total_brick_cost - totals.total_fill_cost : null;
+  const saved = Number.isFinite(savedSectionTotal) ? savedSectionTotal : null;
+  const currentKnown = Number.isFinite(sectionTotal);
+  const savedDelta = saved !== null && currentKnown ? sectionTotal - saved : null;
+  const savedDiffers = savedDelta !== null && Math.abs(savedDelta) > 5e-3;
+  const summary = useMemo(
+    () => resolveFoundationStickySummary({
+      sectionTotal,
+      savedSectionTotal,
+      pricingUnavailable,
+      project,
+      engineResolver: project && foundationHasEnginePricing(project) ? foundationEngineEconomics : null
+    }),
+    [sectionTotal, savedSectionTotal, pricingUnavailable, project]
+  );
+  const takeoff = useMemo(
+    () => buildFoundationTakeoff({
+      totals,
+      items: calc?.items,
+      itemPricing: calc?.itemPricing,
+      walls: calc?.walls,
+      wallPricing: calc?.wallPricing,
+      poles: calc?.poles,
+      polePricing: calc?.polePricing,
+      wallCaps: calc?.wallCaps,
+      equipment: calc?.equipment,
+      equipmentPricing: calc?.equipmentPricing,
+      delivery: calc?.delivery,
+      cabinets: project?.signage_cabinets,
+      cabinetRows: project ? calcSignageCabinetPricing(project.signage_cabinets) : null,
+      landscapeLines: project ? landscapeSummary(project.landscape).lines : null,
+      landscapePricing: calc?.landscapePricing
+    }),
+    [totals, calc, project]
+  );
+  const checklist = useMemo(
+    () => buildFoundationInputChecklist({
+      totals,
+      pricingUnavailable,
+      calc,
+      assemblyIssues: project ? foundationAssemblyIssues(project) : null
+    }),
+    [totals, pricingUnavailable, calc, project]
+  );
   const lines = [
     ["Concrete", totals.total_concrete_cost],
     ["Rebar", totals.total_rebar_cost],
@@ -2502,9 +5314,37 @@ function FoundationTotals({ totals, pricingUnavailable = false }) {
     ["Wall caps", totals.total_wall_cap_cost],
     ["Equipment", totals.total_equipment_cost]
   ];
+  const marginText = summary.margin.amount !== null ? `${money(summary.margin.amount)}${summary.margin.pct !== null ? ` \xB7 ${summary.margin.pct.toFixed(1)}%` : ""}` : "\u2014";
   return /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-xl border border-gray-200 p-4 sticky top-4", children: [
     /* @__PURE__ */ jsx("h2", { className: "font-semibold text-gray-900 mb-3", children: "Section Total" }),
     pricingUnavailable && /* @__PURE__ */ jsx("p", { className: "mb-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800", children: "Saved/known amounts only; current pricing is incomplete." }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-2 mb-3 text-center", children: [
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-50 rounded-lg py-2 px-1", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase tracking-wide text-gray-400", children: "Cost (internal)" }),
+        /* @__PURE__ */ jsx("div", { className: "text-sm font-semibold text-gray-800", children: summary.cost.value !== null ? money(summary.cost.value) : "Not saved" }),
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] text-gray-400", children: summary.cost.source === "saved" ? "acknowledged saved" : summary.cost.source === "live" ? "current" : "" })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-50 rounded-lg py-2 px-1", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase tracking-wide text-gray-400", children: "Sell (customer)" }),
+        /* @__PURE__ */ jsx("div", { className: "text-sm font-semibold text-gray-800", children: summary.sell.value !== null ? money(summary.sell.value) : "\u2014" }),
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] text-gray-400", children: summary.sell.value !== null ? summary.sell.label : summary.projectLinked ? "not recorded" : "" })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-50 rounded-lg py-2 px-1", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase tracking-wide text-gray-400", children: "Margin" }),
+        /* @__PURE__ */ jsx("div", { className: `text-sm font-semibold ${summary.margin.amount !== null && summary.margin.amount < 0 ? "text-red-700" : "text-gray-800"}`, children: marginText }),
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] text-gray-400", children: summary.margin.basis === "saved" ? "vs saved cost" : summary.margin.basis === "live" ? "sell \u2212 cost" : "" })
+      ] })
+    ] }),
+    summary.acknowledged?.differs && /* @__PURE__ */ jsxs("p", { role: "status", className: "mb-3 rounded-sm border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-800", children: [
+      "Tier snapshot recorded internal cost ",
+      money(summary.acknowledged.cost),
+      " \u2192 acknowledged margin ",
+      money(summary.acknowledged.marginAmount),
+      summary.acknowledged.marginPct !== null ? ` (${summary.acknowledged.marginPct.toFixed(1)}%)` : "",
+      "; the cost column above reflects the ",
+      summary.cost.source === "saved" ? "saved" : "current",
+      " section total."
+    ] }),
     /* @__PURE__ */ jsx("div", { className: "grid grid-cols-3 gap-2 mb-3 text-center", children: [
       ["Concrete", known(totals.total_concrete_volume_cy, 2, "CY")],
       ["Excavation", known(totals.total_excavation_volume_cy, 2, "CY")],
@@ -2523,6 +5363,60 @@ function FoundationTotals({ totals, pricingUnavailable = false }) {
         /* @__PURE__ */ jsx("span", { className: "text-red-600", children: pricingUnavailable ? /* @__PURE__ */ jsx("span", { className: "text-amber-700", children: "Pricing unavailable" }) : money(totals.grand_total) })
       ] }),
       pricingUnavailable && /* @__PURE__ */ jsx("p", { className: "mt-1 text-[10px] text-amber-700/80", children: "Total is sensitive to unpriced inputs; actual costs come from the catalog or a disclosed allowance." })
+    ] }),
+    checklist.complete ? /* @__PURE__ */ jsx("p", { role: "status", className: "mt-3 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800", children: "All inputs recorded \u2014 no missing or held amounts." }) : checklist.totalCount > 0 ? /* @__PURE__ */ jsxs("details", { className: "mt-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1", open: checklist.blockingCount > 0, children: [
+      /* @__PURE__ */ jsxs("summary", { className: "cursor-pointer select-none text-[11px] font-semibold text-amber-800", children: [
+        "Missing inputs & held amounts \u2014",
+        " ",
+        [
+          checklist.blockingCount > 0 ? `${checklist.blockingCount} blocking` : null,
+          checklist.advisoryCount > 0 ? `${checklist.advisoryCount} advisory` : null,
+          checklist.heldCount > 0 ? `${checklist.heldCount} held` : null
+        ].filter(Boolean).join(", ")
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "mt-1 max-h-56 space-y-2 overflow-y-auto", children: checklist.groups.map((g) => /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsxs("div", { className: `text-[10px] uppercase tracking-wide ${g.severity === "blocking" ? "text-amber-700" : g.severity === "held" ? "text-gray-500" : "text-blue-700"}`, children: [
+          g.label,
+          " (",
+          g.items.length,
+          ")"
+        ] }),
+        /* @__PURE__ */ jsx("ul", { className: `list-disc pl-4 text-[11px] ${g.severity === "advisory" ? "text-blue-900" : "text-amber-900"}`, children: g.items.map((it) => /* @__PURE__ */ jsx("li", { children: it.message }, it.key)) })
+      ] }, g.key)) })
+    ] }) : !checklist.channelsKnown ? /* @__PURE__ */ jsx("p", { className: "mt-3 text-[11px] text-gray-400", children: "No held amounts in the totals snapshot." }) : null,
+    takeoff.rowCount > 0 && /* @__PURE__ */ jsxs("details", { className: "mt-3 rounded-sm border border-gray-200 bg-slate-50 px-2 py-1", children: [
+      /* @__PURE__ */ jsxs("summary", { className: "cursor-pointer select-none text-[11px] font-semibold text-gray-700", children: [
+        "Itemized takeoff \u2014 ",
+        takeoff.rowCount,
+        " row",
+        takeoff.rowCount === 1 ? "" : "s"
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "mt-1 max-h-64 space-y-2 overflow-y-auto", children: takeoff.groups.map((g) => /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase tracking-wide text-gray-400", children: g.label }),
+        /* @__PURE__ */ jsx("ul", { className: "space-y-0.5", children: g.rows.map((r) => /* @__PURE__ */ jsxs("li", { className: "flex justify-between gap-2 text-[11px] text-gray-700", children: [
+          /* @__PURE__ */ jsxs("span", { className: "min-w-0", children: [
+            r.label,
+            r.held && /* @__PURE__ */ jsx("span", { className: "ml-1 font-semibold text-amber-700", children: "(saved)" }),
+            r.qty && /* @__PURE__ */ jsx("span", { className: "block text-[10px] text-gray-400", children: r.qty })
+          ] }),
+          /* @__PURE__ */ jsx("span", { className: "whitespace-nowrap", children: r.amount !== null ? money(r.amount) : r.held ? "Not saved" : "\u2014" })
+        ] }, r.key)) })
+      ] }, g.key)) })
+    ] }),
+    saved !== null && !currentKnown && /* @__PURE__ */ jsxs("div", { role: "status", className: "mt-3 rounded-sm border border-gray-300 bg-slate-50 px-2 py-1 text-[11px] text-gray-700", children: [
+      "Saved section total ",
+      money(saved),
+      " \u2014 current pricing unavailable."
+    ] }),
+    savedDiffers && /* @__PURE__ */ jsxs("div", { role: "status", className: "mt-3 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800", children: [
+      "Saved ",
+      money(saved),
+      " \u2014 current ",
+      money(sectionTotal),
+      " (",
+      savedDelta > 0 ? "+" : "\u2212",
+      money(Math.abs(savedDelta)),
+      ") \u2014 recalculated from current inputs and catalog. Save to update the estimate."
     ] })
   ] });
 }

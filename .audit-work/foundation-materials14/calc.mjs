@@ -1,36 +1,108 @@
-// src/components/estimator/foundation/legacyFoundationCalc.js
-var getConcreteMixes = (invItem) => [
-  { id: "3500_ae", name: "3500 AIR ENTRAINED (AE)", price: invItem?.mix_3500_price ?? 195.4, desc: "Often used for driveways, slabs, and moderate-load footings." },
-  { id: "4000_ae", name: "4000 AIR ENTRAINED (AE)", price: invItem?.mix_4000_price ?? 201, desc: "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability." },
-  { id: "4500_ae", name: "4500 AIR ENTRAINED (AE)", price: invItem?.mix_4500_price ?? 208.7, desc: "Used for heavy-duty commercial slabs and heavy traffic areas." },
-  { id: "5000_ae", name: "5000 AIR ENTRAINED (AE)", price: invItem?.mix_5000_price ?? 214.6, desc: "High-strength mix for heavy structural columns, pillars, and extreme load conditions." },
-  { id: "fast_set", name: "FAST SET", price: invItem?.mix_fast_set_price ?? 248, desc: "Quick-curing concrete used when rapid strength gain is needed to minimize downtime." }
-];
-var getConcreteAdmixtures = (invItem) => [
-  { id: "calcium_chloride", name: "Calcium Chloride", price: invItem?.admix_calcium_chloride_price ?? 8.5, desc: "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!" },
-  { id: "set_retarding", name: "Set-Retarding Admix (Type D)", price: invItem?.admix_set_retarding_price ?? 4.5, desc: "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site." },
-  { id: "water_reducing", name: "Water-Reducing Admix (Type A)", price: invItem?.admix_water_reducing_price ?? 4.25, desc: "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar." },
-  { id: "fibers", name: "Fibers", price: invItem?.admix_fibers_price ?? 12.5, desc: "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse." },
-  { id: "winter_service", name: "Winter Service", price: invItem?.admix_winter_service_price ?? 5.5, desc: "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing." }
-];
-var getSmallLoadFee = (yards, invItem) => {
-  if (yards >= 5) return 0;
-  if (yards >= 4.5) return invItem?.small_load_fee_4_5_4_75 ?? 40;
-  if (yards >= 4) return invItem?.small_load_fee_4_4_25 ?? 80;
-  if (yards >= 3) return invItem?.small_load_fee_3_3_75 ?? 105;
-  if (yards >= 2) return invItem?.small_load_fee_2_2_75 ?? 120;
-  if (yards >= 1) return invItem?.small_load_fee_1_1_75 ?? 150;
-  return invItem?.small_load_fee_1_1_75 ?? 150;
-};
-var getFuelSurcharge = (invItem) => {
-  return invItem?.fuel_surcharge ?? 30;
-};
-var supplierPriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
+// src/components/masterInventory/inventoryNormalization.js
+var STRICT_SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+var STRICT_UNSIGNED_EXPONENT = /^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
+var strictNumber = (value, { unsignedExponent = false } = {}) => {
+  if (typeof value !== "number" && (typeof value !== "string" || !(unsignedExponent ? STRICT_UNSIGNED_EXPONENT : STRICT_SIGNED_DECIMAL).test(value.trim()))) {
+    return null;
+  }
   const number3 = Number(value);
-  return Number.isFinite(number3) && number3 >= 0 ? number3 : null;
+  return Number.isFinite(number3) ? number3 : null;
 };
-var foundationSettingNumber = (value, fallback) => supplierPriceNumber(value === 0 ? 0 : value || fallback);
+var inventoryFiniteNumber = (value) => strictNumber(value);
+var inventoryNonnegativeNumber = (value) => {
+  const number3 = strictNumber(value);
+  return number3 !== null && number3 >= 0 ? number3 : null;
+};
+var inventoryPositiveNumber = (value) => {
+  const number3 = strictNumber(value, { unsignedExponent: true });
+  return number3 !== null && number3 > 0 ? number3 : null;
+};
+var inventoryNonnegativeMeasurement = (value) => {
+  const number3 = strictNumber(value, { unsignedExponent: true });
+  return number3 !== null && number3 >= 0 ? number3 : null;
+};
+var inventoryIsPositiveWhole = (value) => {
+  const number3 = inventoryFiniteNumber(value);
+  const whole3 = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
+  return whole3 && Number.isSafeInteger(number3) && number3 > 0;
+};
+var inventorySettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
+var inventorySettingNumber = (value, fallback) => inventoryNonnegativeNumber(inventorySettingValue(value, fallback));
+var inventoryPositiveSettingNumber = (value, fallback) => inventoryPositiveNumber(inventorySettingValue(value, fallback));
+var FOUNDATION_MATERIAL_TYPE_ALIASES = {
+  forming: "forming_material"
+};
+var FOUNDATION_FIELD_ALIASES = [
+  ["wall_unit_length_inches", "brick_length_inches"],
+  ["wall_unit_width_inches", "brick_width_inches"],
+  ["wall_unit_height_inches", "brick_height_inches"]
+];
+var FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES = {
+  brick: "brick",
+  clay_brick: "brick",
+  face_brick: "brick",
+  veneer_brick: "brick",
+  cinderblock: "cinderblock",
+  cinder_block: "cinderblock",
+  cmu: "cinderblock",
+  concrete_block: "cinderblock",
+  cement_block: "cinderblock",
+  concrete_masonry_unit: "cinderblock",
+  masonry_block: "cinderblock",
+  block: "cinderblock",
+  stone: "stone",
+  natural_stone: "stone",
+  cut_stone: "stone",
+  stone_veneer: "stone",
+  veneer_stone: "stone",
+  limestone: "stone",
+  sandstone: "stone",
+  concrete: "concrete",
+  poured_concrete: "concrete",
+  poured: "concrete",
+  poured_in_place: "concrete",
+  cast_in_place: "concrete",
+  cast_in_place_concrete: "concrete",
+  monolithic_concrete: "concrete"
+};
+var wallMaterialSubtypeKey = (value) => typeof value === "string" ? value.trim().toLowerCase().replace(/[\s\-_]+/g, "_") : null;
+var wallMaterialSubtypeRecorded = (value) => value !== void 0 && value !== null && (typeof value !== "string" || value.trim() !== "");
+var canonicalWallMaterialSubtype = (value) => {
+  if (!wallMaterialSubtypeRecorded(value)) return null;
+  const key = wallMaterialSubtypeKey(value);
+  return key ? FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES[key] ?? null : null;
+};
+var INCHES_PER_FOOT = 12;
+function normalizeFoundationInventoryRow(row) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+  const out = { ...row };
+  const canonicalType = FOUNDATION_MATERIAL_TYPE_ALIASES[out.material_type];
+  if (canonicalType) out.material_type = canonicalType;
+  for (const [canonical, legacy] of FOUNDATION_FIELD_ALIASES) {
+    if (out[canonical] === void 0 && out[legacy] !== void 0) {
+      out[canonical] = out[legacy];
+    }
+  }
+  if (out.pole_stock_length_ft === void 0 && out.pole_stock_length_inches !== void 0) {
+    const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);
+    if (stockLengthInches !== null) out.pole_stock_length_ft = stockLengthInches / INCHES_PER_FOOT;
+  }
+  const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
+  if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
+  if (out.supplier_key === void 0) {
+    const key = inventorySupplierKey(out.supplier);
+    if (key !== null) out.supplier_key = key;
+  }
+  return out;
+}
+var normalizeFoundationInventoryRows = (rows) => Array.isArray(rows) ? rows.map(normalizeFoundationInventoryRow) : rows;
+var inventorySupplierKey = (value) => {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
+  return key === "" ? null : key;
+};
+
+// src/components/estimator/foundation/legacyFoundationCalc.js
 var itemSettingConsumption = (item) => {
   const has = (v) => v !== void 0 && v !== null;
   const consumed = [["foundation_pouring_cost_per_cy", 15, "pouring labor cost per CY"]];
@@ -63,7 +135,7 @@ var itemSettingConsumption = (item) => {
 var foundationItemSettingIssues = (item, settings = {}, index = 0) => {
   const issues = [];
   for (const [key, fallback, label, positive4] of itemSettingConsumption(item)) {
-    const number3 = foundationSettingNumber(settings?.[key], fallback);
+    const number3 = inventorySettingNumber(settings?.[key], fallback);
     if (number3 === null || positive4 && number3 <= 0) {
       issues.push({
         kind: "foundation",
@@ -78,8 +150,34 @@ var foundationItemSettingIssues = (item, settings = {}, index = 0) => {
   }
   return issues;
 };
+var getConcreteMixes = (invItem) => [
+  { id: "3500_ae", name: "3500 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_3500_price), field: "mix_3500_price", desc: "Often used for driveways, slabs, and moderate-load footings." },
+  { id: "4000_ae", name: "4000 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_4000_price), field: "mix_4000_price", desc: "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability." },
+  { id: "4500_ae", name: "4500 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_4500_price), field: "mix_4500_price", desc: "Used for heavy-duty commercial slabs and heavy traffic areas." },
+  { id: "5000_ae", name: "5000 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_5000_price), field: "mix_5000_price", desc: "High-strength mix for heavy structural columns, pillars, and extreme load conditions." },
+  { id: "fast_set", name: "FAST SET", price: inventoryNonnegativeNumber(invItem?.mix_fast_set_price), field: "mix_fast_set_price", desc: "Quick-curing concrete used when rapid strength gain is needed to minimize downtime." }
+];
+var getConcreteAdmixtures = (invItem) => [
+  { id: "calcium_chloride", name: "Calcium Chloride", price: inventoryNonnegativeNumber(invItem?.admix_calcium_chloride_price), field: "admix_calcium_chloride_price", desc: "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!" },
+  { id: "set_retarding", name: "Set-Retarding Admix (Type D)", price: inventoryNonnegativeNumber(invItem?.admix_set_retarding_price), field: "admix_set_retarding_price", desc: "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site." },
+  { id: "water_reducing", name: "Water-Reducing Admix (Type A)", price: inventoryNonnegativeNumber(invItem?.admix_water_reducing_price), field: "admix_water_reducing_price", desc: "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar." },
+  { id: "fibers", name: "Fibers", price: inventoryNonnegativeNumber(invItem?.admix_fibers_price), field: "admix_fibers_price", desc: "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse." },
+  { id: "winter_service", name: "Winter Service", price: inventoryNonnegativeNumber(invItem?.admix_winter_service_price), field: "admix_winter_service_price", desc: "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing." }
+];
+var getSmallLoadFee = (yards, invItem) => {
+  if (yards >= 5) return 0;
+  if (yards >= 4.5) return inventoryNonnegativeNumber(invItem?.small_load_fee_4_5_4_75);
+  if (yards >= 4) return inventoryNonnegativeNumber(invItem?.small_load_fee_4_4_25);
+  if (yards >= 3) return inventoryNonnegativeNumber(invItem?.small_load_fee_3_3_75);
+  if (yards >= 2) return inventoryNonnegativeNumber(invItem?.small_load_fee_2_2_75);
+  if (yards >= 1) return inventoryNonnegativeNumber(invItem?.small_load_fee_1_1_75);
+  return inventoryNonnegativeNumber(invItem?.small_load_fee_1_1_75);
+};
+var getFuelSurcharge = (invItem) => {
+  return inventoryNonnegativeNumber(invItem?.fuel_surcharge);
+};
 var calcItemCost = (item, inventory = [], settings = {}) => {
-  const getSetting = (key, def) => parseFloat(settings[key] || def);
+  const getSetting = (key, def) => parseFloat(inventorySettingValue(settings[key], def));
   const selectedConcrete = inventory.find((c) => c.id === item.selected_concrete_id);
   const conc_cost = item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== void 0 ? item.custom_concrete_cost_per_cy : selectedConcrete?.cost_per_unit || 0;
   const selectedRebar = inventory.find((r) => r.material_type === "rebar" && r.rebar_size === item.rebar_size);
@@ -224,7 +322,91 @@ var calcConcreteDelivery = (project, items = [], inventory = []) => {
   const firstConcreteInv = firstConcreteItem ? inventory.find((inv) => inv.id === firstConcreteItem.selected_concrete_id) : null;
   const availableMixes = getConcreteMixes(firstConcreteInv);
   const availableAdmixes = getConcreteAdmixtures(firstConcreteInv);
+  const issues = [];
+  const add = (field, code, message) => issues.push({
+    kind: "concrete_delivery",
+    index: null,
+    componentId: null,
+    field,
+    inventoryId: firstConcreteInv?.id ?? null,
+    code,
+    message: `Concrete delivery: ${message}.`
+  });
   const mix = availableMixes.find((m) => m.id === project.project_concrete_type) || availableMixes.find((m) => m.id === "4000_ae");
+  if (roundedYards > 0) {
+    if (firstConcreteInv === null) {
+      add(
+        "selected_concrete_id",
+        "supplier_unavailable",
+        "no ready-mix concrete supplier is assigned \u2014 select a supplier with catalog prices before repricing"
+      );
+    } else {
+      if (project.project_concrete_type && !availableMixes.some((m) => m.id === project.project_concrete_type)) {
+        add(
+          "project_concrete_type",
+          "supplier_price_unavailable",
+          "the saved mix selection is not in the supplier catalog \u2014 pick a listed mix before repricing"
+        );
+      }
+      if (!mix || inventoryNonnegativeNumber(mix.price) === null) {
+        add(
+          mix?.field || "mix_price",
+          "supplier_price_unavailable",
+          `record a finite, nonnegative ${mix?.name || "selected mix"} price on the concrete supplier before repricing`
+        );
+      }
+      for (const admixId of project.project_concrete_admixtures || []) {
+        const admix = availableAdmixes.find((x) => x.id === admixId);
+        if (!admix) {
+          add(
+            "project_concrete_admixtures",
+            "supplier_price_unavailable",
+            "the saved admixture selection is not in the supplier catalog \u2014 pick a listed admixture before repricing"
+          );
+        } else if (inventoryNonnegativeNumber(admix.price) === null) {
+          add(
+            admix.field || "admix_price",
+            "supplier_price_unavailable",
+            `record a finite, nonnegative ${admix.name} price on the concrete supplier before repricing`
+          );
+        }
+      }
+      if (inventoryNonnegativeNumber(firstConcreteInv.fuel_surcharge) === null) {
+        add(
+          "fuel_surcharge",
+          "supplier_price_unavailable",
+          "record a finite, nonnegative fuel surcharge on the concrete supplier before repricing"
+        );
+      }
+      let scanYards = roundedYards;
+      while (scanYards > 0) {
+        const truckYards = Math.min(scanYards, 9);
+        scanYards -= truckYards;
+        const roundedTruckYards = Math.ceil(truckYards * 4) / 4;
+        if (getSmallLoadFee(roundedTruckYards, firstConcreteInv) === null) {
+          add(
+            "small_load_fee",
+            "supplier_price_unavailable",
+            `record a finite, nonnegative small-load fee for the ${roundedTruckYards} CY truck bracket on the concrete supplier before repricing`
+          );
+          break;
+        }
+      }
+    }
+  }
+  if (issues.length) {
+    return {
+      pricingUnavailable: true,
+      issues,
+      concreteTotal: null,
+      roundedYards,
+      ratePerYard: null,
+      trucksList: [],
+      additionalStopsCost: null,
+      availableMixes,
+      availableAdmixes
+    };
+  }
   const mixPrice = mix ? mix.price : 201;
   const admixPrice = (project.project_concrete_admixtures || []).reduce((sum, admixId) => {
     const a = availableAdmixes.find((x) => x.id === admixId);
@@ -248,111 +430,7 @@ var calcConcreteDelivery = (project, items = [], inventory = []) => {
   const newSignLocationsCount = items.filter((i) => i.is_new_sign_location).length;
   const additionalStopsCost = newSignLocationsCount * 100;
   concreteTotal += additionalStopsCost;
-  return { concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
-};
-
-// src/components/masterInventory/inventoryNormalization.js
-var STRICT_SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
-var STRICT_UNSIGNED_EXPONENT = /^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
-var strictNumber = (value, { unsignedExponent = false } = {}) => {
-  if (typeof value !== "number" && (typeof value !== "string" || !(unsignedExponent ? STRICT_UNSIGNED_EXPONENT : STRICT_SIGNED_DECIMAL).test(value.trim()))) {
-    return null;
-  }
-  const number3 = Number(value);
-  return Number.isFinite(number3) ? number3 : null;
-};
-var inventoryFiniteNumber = (value) => strictNumber(value);
-var inventoryNonnegativeNumber = (value) => {
-  const number3 = strictNumber(value);
-  return number3 !== null && number3 >= 0 ? number3 : null;
-};
-var inventoryPositiveNumber = (value) => {
-  const number3 = strictNumber(value, { unsignedExponent: true });
-  return number3 !== null && number3 > 0 ? number3 : null;
-};
-var inventoryNonnegativeMeasurement = (value) => {
-  const number3 = strictNumber(value, { unsignedExponent: true });
-  return number3 !== null && number3 >= 0 ? number3 : null;
-};
-var inventoryIsPositiveWhole = (value) => {
-  const number3 = inventoryFiniteNumber(value);
-  const whole3 = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
-  return whole3 && Number.isSafeInteger(number3) && number3 > 0;
-};
-var inventorySettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
-var inventorySettingNumber = (value, fallback) => inventoryNonnegativeNumber(inventorySettingValue(value, fallback));
-var inventoryPositiveSettingNumber = (value, fallback) => inventoryPositiveNumber(inventorySettingValue(value, fallback));
-var FOUNDATION_MATERIAL_TYPE_ALIASES = {
-  forming: "forming_material"
-};
-var FOUNDATION_FIELD_ALIASES = [
-  ["wall_unit_length_inches", "brick_length_inches"],
-  ["wall_unit_width_inches", "brick_width_inches"],
-  ["wall_unit_height_inches", "brick_height_inches"]
-];
-var FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES = {
-  brick: "brick",
-  clay_brick: "brick",
-  face_brick: "brick",
-  veneer_brick: "brick",
-  cinderblock: "cinderblock",
-  cinder_block: "cinderblock",
-  cmu: "cinderblock",
-  concrete_block: "cinderblock",
-  cement_block: "cinderblock",
-  concrete_masonry_unit: "cinderblock",
-  masonry_block: "cinderblock",
-  block: "cinderblock",
-  stone: "stone",
-  natural_stone: "stone",
-  cut_stone: "stone",
-  stone_veneer: "stone",
-  veneer_stone: "stone",
-  limestone: "stone",
-  sandstone: "stone",
-  concrete: "concrete",
-  poured_concrete: "concrete",
-  poured: "concrete",
-  poured_in_place: "concrete",
-  cast_in_place: "concrete",
-  cast_in_place_concrete: "concrete",
-  monolithic_concrete: "concrete"
-};
-var wallMaterialSubtypeKey = (value) => typeof value === "string" ? value.trim().toLowerCase().replace(/[\s\-_]+/g, "_") : null;
-var wallMaterialSubtypeRecorded = (value) => value !== void 0 && value !== null && (typeof value !== "string" || value.trim() !== "");
-var canonicalWallMaterialSubtype = (value) => {
-  if (!wallMaterialSubtypeRecorded(value)) return null;
-  const key = wallMaterialSubtypeKey(value);
-  return key ? FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES[key] ?? null : null;
-};
-var INCHES_PER_FOOT = 12;
-function normalizeFoundationInventoryRow(row) {
-  if (!row || typeof row !== "object" || Array.isArray(row)) return row;
-  const out = { ...row };
-  const canonicalType = FOUNDATION_MATERIAL_TYPE_ALIASES[out.material_type];
-  if (canonicalType) out.material_type = canonicalType;
-  for (const [canonical, legacy] of FOUNDATION_FIELD_ALIASES) {
-    if (out[canonical] === void 0 && out[legacy] !== void 0) {
-      out[canonical] = out[legacy];
-    }
-  }
-  if (out.pole_stock_length_ft === void 0 && out.pole_stock_length_inches !== void 0) {
-    const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);
-    if (stockLengthInches !== null) out.pole_stock_length_ft = stockLengthInches / INCHES_PER_FOOT;
-  }
-  const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
-  if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
-  if (out.supplier_key === void 0) {
-    const key = inventorySupplierKey(out.supplier);
-    if (key !== null) out.supplier_key = key;
-  }
-  return out;
-}
-var normalizeFoundationInventoryRows = (rows) => Array.isArray(rows) ? rows.map(normalizeFoundationInventoryRow) : rows;
-var inventorySupplierKey = (value) => {
-  if (typeof value !== "string") return null;
-  const key = value.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
-  return key === "" ? null : key;
+  return { issues, concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
 };
 
 // src/components/estimator/foundation/foundationEquipmentBindings.js

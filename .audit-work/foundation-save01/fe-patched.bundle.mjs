@@ -63,39 +63,111 @@ function FoundationReinforcementProposalPanel(p) {
 // src/components/estimator/foundation/useFoundationReinforcementEditor.js
 import { useRef, useState as useState2 } from "react";
 
-// src/components/estimator/foundation/legacyFoundationCalc.js
-var getConcreteMixes = (invItem) => [
-  { id: "3500_ae", name: "3500 AIR ENTRAINED (AE)", price: invItem?.mix_3500_price ?? 195.4, desc: "Often used for driveways, slabs, and moderate-load footings." },
-  { id: "4000_ae", name: "4000 AIR ENTRAINED (AE)", price: invItem?.mix_4000_price ?? 201, desc: "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability." },
-  { id: "4500_ae", name: "4500 AIR ENTRAINED (AE)", price: invItem?.mix_4500_price ?? 208.7, desc: "Used for heavy-duty commercial slabs and heavy traffic areas." },
-  { id: "5000_ae", name: "5000 AIR ENTRAINED (AE)", price: invItem?.mix_5000_price ?? 214.6, desc: "High-strength mix for heavy structural columns, pillars, and extreme load conditions." },
-  { id: "fast_set", name: "FAST SET", price: invItem?.mix_fast_set_price ?? 248, desc: "Quick-curing concrete used when rapid strength gain is needed to minimize downtime." }
-];
-var getConcreteAdmixtures = (invItem) => [
-  { id: "calcium_chloride", name: "Calcium Chloride", price: invItem?.admix_calcium_chloride_price ?? 8.5, desc: "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!" },
-  { id: "set_retarding", name: "Set-Retarding Admix (Type D)", price: invItem?.admix_set_retarding_price ?? 4.5, desc: "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site." },
-  { id: "water_reducing", name: "Water-Reducing Admix (Type A)", price: invItem?.admix_water_reducing_price ?? 4.25, desc: "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar." },
-  { id: "fibers", name: "Fibers", price: invItem?.admix_fibers_price ?? 12.5, desc: "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse." },
-  { id: "winter_service", name: "Winter Service", price: invItem?.admix_winter_service_price ?? 5.5, desc: "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing." }
-];
-var getSmallLoadFee = (yards, invItem) => {
-  if (yards >= 5) return 0;
-  if (yards >= 4.5) return invItem?.small_load_fee_4_5_4_75 ?? 40;
-  if (yards >= 4) return invItem?.small_load_fee_4_4_25 ?? 80;
-  if (yards >= 3) return invItem?.small_load_fee_3_3_75 ?? 105;
-  if (yards >= 2) return invItem?.small_load_fee_2_2_75 ?? 120;
-  if (yards >= 1) return invItem?.small_load_fee_1_1_75 ?? 150;
-  return invItem?.small_load_fee_1_1_75 ?? 150;
-};
-var getFuelSurcharge = (invItem) => {
-  return invItem?.fuel_surcharge ?? 30;
-};
-var supplierPriceNumber = (value) => {
-  if (typeof value !== "number" && (typeof value !== "string" || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) return null;
+// src/components/masterInventory/inventoryNormalization.js
+var STRICT_SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+var STRICT_UNSIGNED_EXPONENT = /^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
+var strictNumber = (value, { unsignedExponent = false } = {}) => {
+  if (typeof value !== "number" && (typeof value !== "string" || !(unsignedExponent ? STRICT_UNSIGNED_EXPONENT : STRICT_SIGNED_DECIMAL).test(value.trim()))) {
+    return null;
+  }
   const number3 = Number(value);
-  return Number.isFinite(number3) && number3 >= 0 ? number3 : null;
+  return Number.isFinite(number3) ? number3 : null;
 };
-var foundationSettingNumber = (value, fallback) => supplierPriceNumber(value === 0 ? 0 : value || fallback);
+var inventoryFiniteNumber = (value) => strictNumber(value);
+var inventoryNonnegativeNumber = (value) => {
+  const number3 = strictNumber(value);
+  return number3 !== null && number3 >= 0 ? number3 : null;
+};
+var inventoryPositiveNumber = (value) => {
+  const number3 = strictNumber(value, { unsignedExponent: true });
+  return number3 !== null && number3 > 0 ? number3 : null;
+};
+var inventoryNonnegativeMeasurement = (value) => {
+  const number3 = strictNumber(value, { unsignedExponent: true });
+  return number3 !== null && number3 >= 0 ? number3 : null;
+};
+var inventoryIsPositiveWhole = (value) => {
+  const number3 = inventoryFiniteNumber(value);
+  const whole3 = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
+  return whole3 && Number.isSafeInteger(number3) && number3 > 0;
+};
+var inventorySettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
+var inventorySettingNumber = (value, fallback) => inventoryNonnegativeNumber(inventorySettingValue(value, fallback));
+var inventoryPositiveSettingNumber = (value, fallback) => inventoryPositiveNumber(inventorySettingValue(value, fallback));
+var FOUNDATION_MATERIAL_TYPE_ALIASES = {
+  forming: "forming_material"
+};
+var FOUNDATION_FIELD_ALIASES = [
+  ["wall_unit_length_inches", "brick_length_inches"],
+  ["wall_unit_width_inches", "brick_width_inches"],
+  ["wall_unit_height_inches", "brick_height_inches"]
+];
+var FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES = {
+  brick: "brick",
+  clay_brick: "brick",
+  face_brick: "brick",
+  veneer_brick: "brick",
+  cinderblock: "cinderblock",
+  cinder_block: "cinderblock",
+  cmu: "cinderblock",
+  concrete_block: "cinderblock",
+  cement_block: "cinderblock",
+  concrete_masonry_unit: "cinderblock",
+  masonry_block: "cinderblock",
+  block: "cinderblock",
+  stone: "stone",
+  natural_stone: "stone",
+  cut_stone: "stone",
+  stone_veneer: "stone",
+  veneer_stone: "stone",
+  limestone: "stone",
+  sandstone: "stone",
+  concrete: "concrete",
+  poured_concrete: "concrete",
+  poured: "concrete",
+  poured_in_place: "concrete",
+  cast_in_place: "concrete",
+  cast_in_place_concrete: "concrete",
+  monolithic_concrete: "concrete"
+};
+var wallMaterialSubtypeKey = (value) => typeof value === "string" ? value.trim().toLowerCase().replace(/[\s\-_]+/g, "_") : null;
+var wallMaterialSubtypeRecorded = (value) => value !== void 0 && value !== null && (typeof value !== "string" || value.trim() !== "");
+var canonicalWallMaterialSubtype = (value) => {
+  if (!wallMaterialSubtypeRecorded(value)) return null;
+  const key = wallMaterialSubtypeKey(value);
+  return key ? FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES[key] ?? null : null;
+};
+var INCHES_PER_FOOT = 12;
+function normalizeFoundationInventoryRow(row) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+  const out = { ...row };
+  const canonicalType = FOUNDATION_MATERIAL_TYPE_ALIASES[out.material_type];
+  if (canonicalType) out.material_type = canonicalType;
+  for (const [canonical, legacy] of FOUNDATION_FIELD_ALIASES) {
+    if (out[canonical] === void 0 && out[legacy] !== void 0) {
+      out[canonical] = out[legacy];
+    }
+  }
+  if (out.pole_stock_length_ft === void 0 && out.pole_stock_length_inches !== void 0) {
+    const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);
+    if (stockLengthInches !== null) out.pole_stock_length_ft = stockLengthInches / INCHES_PER_FOOT;
+  }
+  const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
+  if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
+  if (out.supplier_key === void 0) {
+    const key = inventorySupplierKey(out.supplier);
+    if (key !== null) out.supplier_key = key;
+  }
+  return out;
+}
+var normalizeFoundationInventoryRows = (rows) => Array.isArray(rows) ? rows.map(normalizeFoundationInventoryRow) : rows;
+var inventorySupplierKey = (value) => {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
+  return key === "" ? null : key;
+};
+
+// src/components/estimator/foundation/legacyFoundationCalc.js
 var itemSettingConsumption = (item) => {
   const has = (v) => v !== void 0 && v !== null;
   const consumed = [["foundation_pouring_cost_per_cy", 15, "pouring labor cost per CY"]];
@@ -128,7 +200,7 @@ var itemSettingConsumption = (item) => {
 var foundationItemSettingIssues = (item, settings = {}, index = 0) => {
   const issues = [];
   for (const [key, fallback, label, positive4] of itemSettingConsumption(item)) {
-    const number3 = foundationSettingNumber(settings?.[key], fallback);
+    const number3 = inventorySettingNumber(settings?.[key], fallback);
     if (number3 === null || positive4 && number3 <= 0) {
       issues.push({
         kind: "foundation",
@@ -143,8 +215,34 @@ var foundationItemSettingIssues = (item, settings = {}, index = 0) => {
   }
   return issues;
 };
+var getConcreteMixes = (invItem) => [
+  { id: "3500_ae", name: "3500 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_3500_price), field: "mix_3500_price", desc: "Often used for driveways, slabs, and moderate-load footings." },
+  { id: "4000_ae", name: "4000 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_4000_price), field: "mix_4000_price", desc: "STANDARD. Used for sign foundations, commercial flatwork, and structural footings requiring good durability." },
+  { id: "4500_ae", name: "4500 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_4500_price), field: "mix_4500_price", desc: "Used for heavy-duty commercial slabs and heavy traffic areas." },
+  { id: "5000_ae", name: "5000 AIR ENTRAINED (AE)", price: inventoryNonnegativeNumber(invItem?.mix_5000_price), field: "mix_5000_price", desc: "High-strength mix for heavy structural columns, pillars, and extreme load conditions." },
+  { id: "fast_set", name: "FAST SET", price: inventoryNonnegativeNumber(invItem?.mix_fast_set_price), field: "mix_fast_set_price", desc: "Quick-curing concrete used when rapid strength gain is needed to minimize downtime." }
+];
+var getConcreteAdmixtures = (invItem) => [
+  { id: "calcium_chloride", name: "Calcium Chloride", price: inventoryNonnegativeNumber(invItem?.admix_calcium_chloride_price), field: "admix_calcium_chloride_price", desc: "Speeds up how fast the concrete dries. SELECT THIS when pouring in cold weather so it doesn't freeze before it sets. WARNING: Do NOT select this if using Rebar, as it causes rust!" },
+  { id: "set_retarding", name: "Set-Retarding Admix (Type D)", price: inventoryNonnegativeNumber(invItem?.admix_set_retarding_price), field: "admix_set_retarding_price", desc: "Slows down how fast the concrete dries. SELECT THIS when pouring in very hot weather, or if the concrete truck has a very long drive to the site." },
+  { id: "water_reducing", name: "Water-Reducing Admix (Type A)", price: inventoryNonnegativeNumber(invItem?.admix_water_reducing_price), field: "admix_water_reducing_price", desc: "Makes the concrete easier to pour without weakening it. SELECT THIS if you need the concrete to flow better into tight forms or around lots of rebar." },
+  { id: "fibers", name: "Fibers", price: inventoryNonnegativeNumber(invItem?.admix_fibers_price), field: "admix_fibers_price", desc: "Tiny fibers mixed into the concrete to prevent small cracks. SELECT THIS for large flat slabs (like monument sign pads) or if the foundation will take physical abuse." },
+  { id: "winter_service", name: "Winter Service", price: inventoryNonnegativeNumber(invItem?.admix_winter_service_price), field: "admix_winter_service_price", desc: "A fee the plant charges to use hot water so the mix doesn't freeze. SELECT THIS always during winter months when temperatures are freezing." }
+];
+var getSmallLoadFee = (yards, invItem) => {
+  if (yards >= 5) return 0;
+  if (yards >= 4.5) return inventoryNonnegativeNumber(invItem?.small_load_fee_4_5_4_75);
+  if (yards >= 4) return inventoryNonnegativeNumber(invItem?.small_load_fee_4_4_25);
+  if (yards >= 3) return inventoryNonnegativeNumber(invItem?.small_load_fee_3_3_75);
+  if (yards >= 2) return inventoryNonnegativeNumber(invItem?.small_load_fee_2_2_75);
+  if (yards >= 1) return inventoryNonnegativeNumber(invItem?.small_load_fee_1_1_75);
+  return inventoryNonnegativeNumber(invItem?.small_load_fee_1_1_75);
+};
+var getFuelSurcharge = (invItem) => {
+  return inventoryNonnegativeNumber(invItem?.fuel_surcharge);
+};
 var calcItemCost = (item, inventory = [], settings = {}) => {
-  const getSetting = (key, def) => parseFloat(settings[key] || def);
+  const getSetting = (key, def) => parseFloat(inventorySettingValue(settings[key], def));
   const selectedConcrete = inventory.find((c) => c.id === item.selected_concrete_id);
   const conc_cost = item.custom_concrete_cost_per_cy !== null && item.custom_concrete_cost_per_cy !== void 0 ? item.custom_concrete_cost_per_cy : selectedConcrete?.cost_per_unit || 0;
   const selectedRebar = inventory.find((r) => r.material_type === "rebar" && r.rebar_size === item.rebar_size);
@@ -289,7 +387,91 @@ var calcConcreteDelivery = (project, items = [], inventory = []) => {
   const firstConcreteInv = firstConcreteItem ? inventory.find((inv) => inv.id === firstConcreteItem.selected_concrete_id) : null;
   const availableMixes = getConcreteMixes(firstConcreteInv);
   const availableAdmixes = getConcreteAdmixtures(firstConcreteInv);
+  const issues = [];
+  const add = (field, code, message) => issues.push({
+    kind: "concrete_delivery",
+    index: null,
+    componentId: null,
+    field,
+    inventoryId: firstConcreteInv?.id ?? null,
+    code,
+    message: `Concrete delivery: ${message}.`
+  });
   const mix = availableMixes.find((m) => m.id === project.project_concrete_type) || availableMixes.find((m) => m.id === "4000_ae");
+  if (roundedYards > 0) {
+    if (firstConcreteInv === null) {
+      add(
+        "selected_concrete_id",
+        "supplier_unavailable",
+        "no ready-mix concrete supplier is assigned \u2014 select a supplier with catalog prices before repricing"
+      );
+    } else {
+      if (project.project_concrete_type && !availableMixes.some((m) => m.id === project.project_concrete_type)) {
+        add(
+          "project_concrete_type",
+          "supplier_price_unavailable",
+          "the saved mix selection is not in the supplier catalog \u2014 pick a listed mix before repricing"
+        );
+      }
+      if (!mix || inventoryNonnegativeNumber(mix.price) === null) {
+        add(
+          mix?.field || "mix_price",
+          "supplier_price_unavailable",
+          `record a finite, nonnegative ${mix?.name || "selected mix"} price on the concrete supplier before repricing`
+        );
+      }
+      for (const admixId of project.project_concrete_admixtures || []) {
+        const admix = availableAdmixes.find((x) => x.id === admixId);
+        if (!admix) {
+          add(
+            "project_concrete_admixtures",
+            "supplier_price_unavailable",
+            "the saved admixture selection is not in the supplier catalog \u2014 pick a listed admixture before repricing"
+          );
+        } else if (inventoryNonnegativeNumber(admix.price) === null) {
+          add(
+            admix.field || "admix_price",
+            "supplier_price_unavailable",
+            `record a finite, nonnegative ${admix.name} price on the concrete supplier before repricing`
+          );
+        }
+      }
+      if (inventoryNonnegativeNumber(firstConcreteInv.fuel_surcharge) === null) {
+        add(
+          "fuel_surcharge",
+          "supplier_price_unavailable",
+          "record a finite, nonnegative fuel surcharge on the concrete supplier before repricing"
+        );
+      }
+      let scanYards = roundedYards;
+      while (scanYards > 0) {
+        const truckYards = Math.min(scanYards, 9);
+        scanYards -= truckYards;
+        const roundedTruckYards = Math.ceil(truckYards * 4) / 4;
+        if (getSmallLoadFee(roundedTruckYards, firstConcreteInv) === null) {
+          add(
+            "small_load_fee",
+            "supplier_price_unavailable",
+            `record a finite, nonnegative small-load fee for the ${roundedTruckYards} CY truck bracket on the concrete supplier before repricing`
+          );
+          break;
+        }
+      }
+    }
+  }
+  if (issues.length) {
+    return {
+      pricingUnavailable: true,
+      issues,
+      concreteTotal: null,
+      roundedYards,
+      ratePerYard: null,
+      trucksList: [],
+      additionalStopsCost: null,
+      availableMixes,
+      availableAdmixes
+    };
+  }
   const mixPrice = mix ? mix.price : 201;
   const admixPrice = (project.project_concrete_admixtures || []).reduce((sum, admixId) => {
     const a = availableAdmixes.find((x) => x.id === admixId);
@@ -313,111 +495,7 @@ var calcConcreteDelivery = (project, items = [], inventory = []) => {
   const newSignLocationsCount = items.filter((i) => i.is_new_sign_location).length;
   const additionalStopsCost = newSignLocationsCount * 100;
   concreteTotal += additionalStopsCost;
-  return { concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
-};
-
-// src/components/masterInventory/inventoryNormalization.js
-var STRICT_SIGNED_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
-var STRICT_UNSIGNED_EXPONENT = /^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
-var strictNumber = (value, { unsignedExponent = false } = {}) => {
-  if (typeof value !== "number" && (typeof value !== "string" || !(unsignedExponent ? STRICT_UNSIGNED_EXPONENT : STRICT_SIGNED_DECIMAL).test(value.trim()))) {
-    return null;
-  }
-  const number3 = Number(value);
-  return Number.isFinite(number3) ? number3 : null;
-};
-var inventoryFiniteNumber = (value) => strictNumber(value);
-var inventoryNonnegativeNumber = (value) => {
-  const number3 = strictNumber(value);
-  return number3 !== null && number3 >= 0 ? number3 : null;
-};
-var inventoryPositiveNumber = (value) => {
-  const number3 = strictNumber(value, { unsignedExponent: true });
-  return number3 !== null && number3 > 0 ? number3 : null;
-};
-var inventoryNonnegativeMeasurement = (value) => {
-  const number3 = strictNumber(value, { unsignedExponent: true });
-  return number3 !== null && number3 >= 0 ? number3 : null;
-};
-var inventoryIsPositiveWhole = (value) => {
-  const number3 = inventoryFiniteNumber(value);
-  const whole3 = typeof value !== "string" || /^[+-]?\d+(?:\.0*)?$/.test(value.trim());
-  return whole3 && Number.isSafeInteger(number3) && number3 > 0;
-};
-var inventorySettingValue = (value, fallback) => value === 0 ? 0 : value || fallback;
-var inventorySettingNumber = (value, fallback) => inventoryNonnegativeNumber(inventorySettingValue(value, fallback));
-var inventoryPositiveSettingNumber = (value, fallback) => inventoryPositiveNumber(inventorySettingValue(value, fallback));
-var FOUNDATION_MATERIAL_TYPE_ALIASES = {
-  forming: "forming_material"
-};
-var FOUNDATION_FIELD_ALIASES = [
-  ["wall_unit_length_inches", "brick_length_inches"],
-  ["wall_unit_width_inches", "brick_width_inches"],
-  ["wall_unit_height_inches", "brick_height_inches"]
-];
-var FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES = {
-  brick: "brick",
-  clay_brick: "brick",
-  face_brick: "brick",
-  veneer_brick: "brick",
-  cinderblock: "cinderblock",
-  cinder_block: "cinderblock",
-  cmu: "cinderblock",
-  concrete_block: "cinderblock",
-  cement_block: "cinderblock",
-  concrete_masonry_unit: "cinderblock",
-  masonry_block: "cinderblock",
-  block: "cinderblock",
-  stone: "stone",
-  natural_stone: "stone",
-  cut_stone: "stone",
-  stone_veneer: "stone",
-  veneer_stone: "stone",
-  limestone: "stone",
-  sandstone: "stone",
-  concrete: "concrete",
-  poured_concrete: "concrete",
-  poured: "concrete",
-  poured_in_place: "concrete",
-  cast_in_place: "concrete",
-  cast_in_place_concrete: "concrete",
-  monolithic_concrete: "concrete"
-};
-var wallMaterialSubtypeKey = (value) => typeof value === "string" ? value.trim().toLowerCase().replace(/[\s\-_]+/g, "_") : null;
-var wallMaterialSubtypeRecorded = (value) => value !== void 0 && value !== null && (typeof value !== "string" || value.trim() !== "");
-var canonicalWallMaterialSubtype = (value) => {
-  if (!wallMaterialSubtypeRecorded(value)) return null;
-  const key = wallMaterialSubtypeKey(value);
-  return key ? FOUNDATION_WALL_MATERIAL_SUBTYPE_ALIASES[key] ?? null : null;
-};
-var INCHES_PER_FOOT = 12;
-function normalizeFoundationInventoryRow(row) {
-  if (!row || typeof row !== "object" || Array.isArray(row)) return row;
-  const out = { ...row };
-  const canonicalType = FOUNDATION_MATERIAL_TYPE_ALIASES[out.material_type];
-  if (canonicalType) out.material_type = canonicalType;
-  for (const [canonical, legacy] of FOUNDATION_FIELD_ALIASES) {
-    if (out[canonical] === void 0 && out[legacy] !== void 0) {
-      out[canonical] = out[legacy];
-    }
-  }
-  if (out.pole_stock_length_ft === void 0 && out.pole_stock_length_inches !== void 0) {
-    const stockLengthInches = inventoryPositiveNumber(out.pole_stock_length_inches);
-    if (stockLengthInches !== null) out.pole_stock_length_ft = stockLengthInches / INCHES_PER_FOOT;
-  }
-  const canonicalSubtype = canonicalWallMaterialSubtype(out.wall_material_subtype);
-  if (canonicalSubtype !== null) out.wall_material_subtype = canonicalSubtype;
-  if (out.supplier_key === void 0) {
-    const key = inventorySupplierKey(out.supplier);
-    if (key !== null) out.supplier_key = key;
-  }
-  return out;
-}
-var normalizeFoundationInventoryRows = (rows) => Array.isArray(rows) ? rows.map(normalizeFoundationInventoryRow) : rows;
-var inventorySupplierKey = (value) => {
-  if (typeof value !== "string") return null;
-  const key = value.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
-  return key === "" ? null : key;
+  return { issues, concreteTotal, roundedYards, ratePerYard, trucksList, additionalStopsCost, availableMixes, availableAdmixes };
 };
 
 // src/components/estimator/foundation/foundationEquipmentBindings.js
@@ -517,6 +595,7 @@ function wallCapCutLengthValue(cap) {
   if (!cap || typeof cap !== "object" || Array.isArray(cap)) return void 0;
   return Object.prototype.hasOwnProperty.call(cap, "length_inches") ? cap.length_inches : cap.cut_length_inches;
 }
+var WALL_CAP_SUPPORTED_END_TREATMENTS = ["straight", "mitered", "returned"];
 var known = (value) => typeof value === "number" && Number.isFinite(value);
 var assigned2 = (id) => typeof id === "string" && id.trim() !== "" || typeof id === "number" && Number.isFinite(id);
 var sumKnown = (rows) => {
@@ -578,7 +657,7 @@ function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
     const inv = matches[0];
     const SUPPORTED_PROFILES = ["flat", "sloped", "beveled", "rounded"];
     const SUPPORTED_SLOPES = ["flat", "single", "double"];
-    const SUPPORTED_END_TREATMENTS = ["straight", "mitered", "returned"];
+    const SUPPORTED_END_TREATMENTS = WALL_CAP_SUPPORTED_END_TREATMENTS;
     if (cap?.profile != null && cap.profile !== "" && !SUPPORTED_PROFILES.includes(cap.profile)) {
       issue("profile", "wall_cap_profile_unsupported", `profile ${JSON.stringify(cap.profile)} is not a supported cap profile (${SUPPORTED_PROFILES.join(", ")}).`);
     }
@@ -597,7 +676,7 @@ function calcWallCaps(wallCaps = [], inventory = [], options = {}) {
       issue(
         "cap_inventory_id",
         availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
-        availability === "deleted" ? "the selected catalog material is marked deleted \xE2\u20AC\u201D pick a replacement." : "the selected catalog material is inactive \xE2\u20AC\u201D reactivate it or pick a replacement."
+        availability === "deleted" ? "the selected catalog material is marked deleted \u2014 pick a replacement." : "the selected catalog material is inactive \u2014 reactivate it or pick a replacement."
       );
       return held(cap);
     }
@@ -808,7 +887,12 @@ function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includ
   const courseH = unitH + mortar;
   const numCourses = isConcrete ? 0 : wallHeightInches / courseH;
   const brickPitch = unitL + (isConcrete ? 0 : mortar);
-  const totalLinearInches = wallShape.segments.reduce((s, seg) => s + seg.length, 0);
+  const outerSegCount = wallShape.segments.length;
+  const isClosedOutline = wallShape.closed !== false;
+  const outerCorners = isClosedOutline ? outerSegCount : Math.max(0, outerSegCount - 1);
+  const outerReductionPerSeg = outerSegCount ? unitW * outerCorners / outerSegCount : 0;
+  const outerSegLength = (seg) => Math.max(0, seg.length - outerReductionPerSeg);
+  const totalLinearInches = wallShape.segments.reduce((s, seg) => s + outerSegLength(seg), 0);
   const grossSqFt = totalLinearInches * wallHeightInches / 144;
   const openings = Array.isArray(wall?.openings) ? wall.openings : [];
   const openingsValid = openings.every((o) => {
@@ -824,7 +908,7 @@ function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includ
     const bond = Number.isFinite(Number(wall?.bond_fraction)) && Number(wall.bond_fraction) > 0 && Number(wall.bond_fraction) < 1 ? Number(wall.bond_fraction) : 0;
     const staggeredBricks = bond > 0 && numCoursesRounded > 1 ? numCoursesRounded - 1 : 0;
     wallShape.segments.forEach((seg) => {
-      const bricksThisCourse = Math.ceil(seg.length / brickPitch);
+      const bricksThisCourse = Math.ceil(outerSegLength(seg) / brickPitch);
       totalBricks += bricksThisCourse * numCoursesRounded + staggeredBricks;
     });
   }
@@ -871,8 +955,9 @@ function calcWallCosts({ wall, wallShape, wallMaterial, internalMaterial, includ
     const intCourseH = intUnitH + intMortar;
     const intNumCourses = Math.ceil(internalWallHeightInches / intCourseH);
     const intBrickPitch = intUnitL + intMortar;
-    const isClosed = wallShape.closed !== false;
-    const lengthReduction = isClosed ? unitW + intUnitW : 0;
+    const intSegCount = wallShape.segments.length;
+    const intCorners = isClosedOutline ? intSegCount : Math.max(0, intSegCount - 1);
+    const lengthReduction = intSegCount ? (unitW + intUnitW) * intCorners / intSegCount : 0;
     wallShape.segments.forEach((seg) => {
       const innerSegLength = Math.max(0, seg.length - lengthReduction);
       internalTotalLinearInches += innerSegLength;
@@ -1069,7 +1154,7 @@ function wallPricing(wall, inventory = [], index = 0, settings = {}) {
     if (availability !== "active") {
       add2(
         availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
-        availability === "deleted" ? "selected catalog material is marked deleted \xE2\u20AC\u201D pick a replacement" : "selected catalog material is inactive \xE2\u20AC\u201D reactivate it or pick a replacement"
+        availability === "deleted" ? "selected catalog material is marked deleted \u2014 pick a replacement" : "selected catalog material is inactive \u2014 reactivate it or pick a replacement"
       );
       return null;
     }
@@ -1095,7 +1180,7 @@ function wallPricing(wall, inventory = [], index = 0, settings = {}) {
         if (!POURED_CONCRETE_UNIT_BASIS.has(unitKey)) {
           add2(
             "wall_material_unit_mismatch",
-            "poured concrete is priced per cubic yard \xE2\u20AC\u201D record the unit as CY (or clear it) so the cost basis is unambiguous before repricing"
+            "poured concrete is priced per cubic yard \u2014 record the unit as CY (or clear it) so the cost basis is unambiguous before repricing"
           );
         }
       }
@@ -1282,7 +1367,7 @@ function calcWalls(project, inventory, settings = {}, options = {}) {
           // CMP-D03: poured-concrete walls carry the quantity basis on the
           // snapshot ("cy" placed volume, vs the unit-masonry count) so saved
           // rows, BOM and Builder parts can label the quantity honestly. Unit
-          // masonry is untouched â€” no extra keys on unchanged paths.
+          // masonry is untouched — no extra keys on unchanged paths.
           ...wallMaterial?.wall_material_subtype === "concrete" ? { materialQuantityUnit: "cy" } : {},
           ...wall.includeInternalWall && internalMaterial?.wall_material_subtype === "concrete" ? { internalMaterialQuantityUnit: "cy" } : {}
         }
@@ -1378,7 +1463,7 @@ function foundationPoleGeometry(pole, inv = null) {
       add(
         "embedment_inches",
         "pole_embedment_conflict",
-        "embedment and legacy depth-in-ground record different values \xE2\u20AC\u201D clear one before repricing"
+        "embedment and legacy depth-in-ground record different values \u2014 clear one before repricing"
       );
     }
   }
@@ -1426,7 +1511,7 @@ function foundationPoleGeometry(pole, inv = null) {
       add(
         "total_length_inches",
         "pole_total_length_conflict",
-        "total stock length is shorter than height above grade plus embedment \xE2\u20AC\u201D lengthen it or clear it before repricing"
+        "total stock length is shorter than height above grade plus embedment \u2014 lengthen it or clear it before repricing"
       );
     }
   } else if (height !== null && embedment !== null) {
@@ -1442,7 +1527,7 @@ function foundationPoleGeometry(pole, inv = null) {
       add(
         "pole_shape",
         "pole_shape_unavailable",
-        "recorded pole shape must be a value like round or square \xE2\u20AC\u201D clear or correct it before repricing"
+        "recorded pole shape must be a value like round or square \u2014 clear or correct it before repricing"
       );
     } else {
       shape = shapeRaw.trim().toLowerCase();
@@ -1498,7 +1583,7 @@ function polePricing(pole, inventory = [], index = 0, settings = {}) {
     add(
       "pole_origin",
       "pole_legacy_representation",
-      "legacy item-pole data cannot price here \xE2\u20AC\u201D migrate it into the Poles section or remove it"
+      "legacy item-pole data cannot price here \u2014 migrate it into the Poles section or remove it"
     );
     return { issues, inv: null, geometry: null, painting: false, rate: null, stockLengthInches: null, widthInches: null, paint };
   }
@@ -1519,7 +1604,7 @@ function polePricing(pole, inventory = [], index = 0, settings = {}) {
         add(
           "pole_id",
           availability === "deleted" ? "catalog_item_deleted" : "catalog_item_inactive",
-          availability === "deleted" ? "selected catalog material is marked deleted \xE2\u20AC\u201D pick a replacement" : "selected catalog material is inactive \xE2\u20AC\u201D reactivate it or pick a replacement"
+          availability === "deleted" ? "selected catalog material is marked deleted \u2014 pick a replacement" : "selected catalog material is inactive \u2014 reactivate it or pick a replacement"
         );
       } else {
         inv = matches[0];
@@ -1700,7 +1785,7 @@ var FOUNDATION_METHOD_WORKED_EXAMPLES = Object.freeze([
     domain: "pole embedment",
     inputs: { height_inches: 120, pole_diameter_inches: 8 },
     derivation: "embedment = ceil(height * embedment_min_ratio); shaft_diameter = ceil(pole_dia * shaft_diameter_min_ratio)",
-    output: { embedment_inches: 42, shaft_diameter_inches: 10 },
+    output: { embedment_inches: 40, shaft_diameter_inches: 16 },
     note: "the domain's ratios applied to the authored height/diameter -- inside the documented domain, never an unexplained multiplier"
   },
   {
@@ -2461,8 +2546,17 @@ var FOUNDATION_SOURCE_TOPIC_INDEX = Object.freeze({
   "support.placement.spacing": "spacing/count ceilings per bearing mode",
   "support.density": "density/count caps (never a universal entitlement)",
   "support.compatibility": "member-type vs support-kind compatibility (pillar/base-plate/drilled-shaft)",
-  "support.catalog": "per-SKU catalog-row modeling rules",
+  "support.catalog": "per-SKU catalog-row modeling rules + held capacity seed",
   "support.placement": "placement rules (bracing, plates, coatings)",
+  "support.geometry": "support height/geometry rules + held height seed",
+  "method.sign_wind": "held sign-wind method seed \u2014 no encoded formula; design_basis.sign_wind carries the operator basis",
+  "method.footing": "held footing-bearing method seed (bearing/overturn/sliding/uplift) \u2014 design_basis.bearing carries the basis",
+  "method.shaft": "held drilled-shaft/embedment method seed \u2014 design_basis.shaft carries the basis",
+  "method.pillar_bar": "held pillar-bar method seed \u2014 design_basis.pillar_bar carries the basis",
+  "method.base_plate": "held base-plate method seed \u2014 design_basis.base_plate carries the basis",
+  "method.lateral": "held lateral-load method seed \u2014 design_basis.lateral carries the basis",
+  "method.frost_depth": "held frost-depth method seed + source index \u2014 design_basis.frost_depth carries the basis",
+  "masonry.cap_detail": "held masonry cap-detail seeds (coping/drip/mortar) \u2014 design_basis.cap_detail carries the basis",
   "authority": "citation/authority markers (paid standards, licensed-only)"
 });
 var FOUNDATION_RULE_SOURCES = deepFreeze({
@@ -3299,14 +3393,18 @@ var FOUNDATION_RULE_SEEDS = deepFreeze([
   },
   {
     rule_id: "SUP-COMPAT-BASE-PLATE-ON-SHAFT",
-    member_types: ["base_plate"],
-    usages: ["sign_pole", "shaft_mount"],
+    domain: "support.compatibility",
     statement: "A base plate mounts the sign pole on the drilled shaft's top \u2014 the plate's support kind is the shaft-mount class, not a flat-slab chair. The base plate's support is the shaft's top bearing, never a mat support.",
-    usage_note: "base_plate member_types + sign_pole/shaft_mount usages record the support-kind distinction",
+    params: {},
+    units: null,
+    logic: null,
     source_ref: src("CMP-SUP-024", "base-plate mounting via manufacturer catalog", "candidate"),
+    corroborating_register_ids: [],
+    applicability: { member_types: ["base_plate"], usages: ["sign_pole", "shaft_mount"] },
+    limits: ["base_plate member_types + sign_pole/shaft_mount usages record the support-kind distinction"],
+    unsupported: ["base-plate anchor bolt sizing is a structural design input, not a register constant \u2014 the entry records the support kind only"],
     rule_version: "1.0.0",
-    status: "active",
-    unsupported: ["base-plate anchor bolt sizing is a structural design input, not a register constant \u2014 the entry records the support kind only"]
+    status: "active"
   },
   {
     rule_id: "SUP-PLACE-PILLAR-CAGE-STAND",
@@ -4031,6 +4129,84 @@ var FOUNDATION_RULE_SEEDS = deepFreeze([
     unsupported: ["frost-depth sizing; footing embedment"],
     rule_version: "0.0.0",
     status: "held"
+  },
+  // ===== support/masonry held encodings — O-111 support-basis + O-112
+  // masonry-caps bounded subunits. Same held-seed contract: the named gap is
+  // registered so consumers can cite it; nothing is encoded to gate on. =====
+  {
+    rule_id: "SUP-HEIGHT-HELD",
+    domain: "support.geometry",
+    statement: "Support height/stand-height basis beyond the cited geometry rows is held pending a real cited height method; no invented chair/bolster height ceiling is encoded.",
+    params: null,
+    units: null,
+    logic: null,
+    source_ref: null,
+    corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no support-height method is encoded beyond the cited SUP-GEOMETRY rows; the operator's authored basis carries the entry"],
+    unsupported: ["support height ceilings; stand-height sizing; tall-chair thresholds not already cited"],
+    rule_version: "0.0.0",
+    status: "held"
+  },
+  {
+    rule_id: "SUP-CAPACITY-HELD",
+    domain: "support.catalog",
+    statement: "Support load/capacity basis is held pending a real cited capacity method; no invented per-SKU load rating or universal capacity is encoded.",
+    params: null,
+    units: null,
+    logic: null,
+    source_ref: null,
+    corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no support-capacity method is encoded; per-SKU load data must come from a cited catalog row or the operator's authored basis"],
+    unsupported: ["per-SKU load ratings; universal capacity tables; chair/bolster strength limits"],
+    rule_version: "0.0.0",
+    status: "held"
+  },
+  {
+    rule_id: "CAP-COPING-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap coping profile/material basis is held pending a real cited coping method; the design-basis cap_detail field carries the operator's entry.",
+    params: null,
+    units: null,
+    logic: null,
+    source_ref: null,
+    corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no coping profile/material method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["coping profile selection; coping material spec; overhang/drip geometry"],
+    rule_version: "0.0.0",
+    status: "held"
+  },
+  {
+    rule_id: "CAP-DRIP-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap drip-edge/wash basis is held pending a real cited drip-detail method; the design-basis cap_detail field carries the operator's entry.",
+    params: null,
+    units: null,
+    logic: null,
+    source_ref: null,
+    corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no drip-edge/wash method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["drip-edge geometry; cap wash/slope; weep placement"],
+    rule_version: "0.0.0",
+    status: "held"
+  },
+  {
+    rule_id: "CAP-MORTAR-HELD",
+    domain: "masonry.cap_detail",
+    statement: "Masonry cap mortar-joint/attachment basis is held pending a real cited mortar-detail method; the design-basis cap_detail field carries the operator's entry.",
+    params: null,
+    units: null,
+    logic: null,
+    source_ref: null,
+    corroborating_register_ids: [],
+    applicability: {},
+    limits: ["no mortar-joint/attachment method is encoded; the authored cap_detail field carries the operator's basis"],
+    unsupported: ["mortar joint profile; cap attachment method; sealant spec"],
+    rule_version: "0.0.0",
+    status: "held"
   }
 ]);
 function gatedChecks(params) {
@@ -4056,9 +4232,17 @@ function normalizeRule(rule) {
   if (!domain || !DOMAIN_ID.test(domain)) errors.push("domain must be a lowercase dotted identifier");
   const statement = text(rule.statement);
   if (!statement || statement.length > 4e3) errors.push("statement must be 1-4000 characters");
+  let status = text(rule.status) || "active";
+  if (!STATUSES.has(status)) {
+    errors.push("status must be 'active' or 'held'");
+    status = "held";
+  }
+  const isHeld = status === "held";
   const params = rule.params === void 0 ? {} : rule.params;
-  if (!isRecord2(params)) errors.push("params must be a plain record when present");
-  else {
+  if (params === null && isHeld) {
+  } else if (!isRecord2(params)) {
+    errors.push("params must be a plain record when present");
+  } else {
     for (const [key, value] of Object.entries(params)) {
       if (!text(key)) errors.push("params keys must be nonempty strings");
       if (typeof value === "number" && !Number.isFinite(value)) errors.push(`params.${key} must be finite`);
@@ -4069,7 +4253,9 @@ function normalizeRule(rule) {
   }
   const sref = rule.source_ref;
   if (!isRecord2(sref)) {
-    errors.push("source_ref is required for every registry rule");
+    if (!(isHeld && (sref === null || sref === void 0))) {
+      errors.push("source_ref is required for every registry rule");
+    }
   } else {
     if (!text(sref.register_id) || !REGISTER_ID.test(sref.register_id)) {
       errors.push("source_ref.register_id must match the CMP-SUP-### register-id shape");
@@ -4088,11 +4274,6 @@ function normalizeRule(rule) {
     if (sref.url !== void 0 && sref.url !== null && typeof sref.url !== "string") {
       errors.push("source_ref.url must be a string or null");
     }
-  }
-  let status = text(rule.status) || "active";
-  if (!STATUSES.has(status)) {
-    errors.push("status must be 'active' or 'held'");
-    status = "held";
   }
   if (isRecord2(sref) && sref.verified !== true && status === "active") {
     warnings.push(`rule ${rule_id} declared active with source verified=${String(sref.verified)}; coerced to held`);
@@ -4140,10 +4321,10 @@ function normalizeRule(rule) {
     rule_id,
     domain,
     statement,
-    params: { ...params },
+    params: isRecord2(params) ? { ...params } : {},
     units: rule.units ?? null,
     logic: rule.logic ?? null,
-    source_ref: {
+    source_ref: isRecord2(sref) ? {
       register_id: sref.register_id.trim(),
       authority: sref.authority.trim(),
       title: sref.title.trim(),
@@ -4151,7 +4332,7 @@ function normalizeRule(rule) {
       section: sref.section ?? null,
       url: sref.url ?? null,
       verified: sref.verified
-    },
+    } : null,
     corroborating_register_ids: Array.isArray(rule.corroborating_register_ids) ? [...rule.corroborating_register_ids] : [],
     applicability: { ...applicability },
     limits: Array.isArray(rule.limits) ? [...rule.limits] : [],
@@ -9956,7 +10137,7 @@ var calcProject2 = (p) => globalThis.__calcFromArg ? { items: p.items || [], ite
 var money2 = (v) => v;
 
 // stub:@/components/estimator/foundation/legacyFoundationCalc
-var normalizeConcreteSupplier = (x) => x;
+var normalizeConcreteSupplier2 = (x) => x;
 
 // stub:@/components/estimator/builder/builderService
 var FIELDS = ["total_concrete_cost", "total_rebar_cost", "total_excavation_cost", "total_forming_materials_cost", "total_labor_cost", "total_wall_cost", "total_pole_cost", "total_pole_painting_cost", "total_equipment_cost", "total_wall_cap_cost", "total_signage_cabinet_cost", "total_landscape_cost"];
@@ -10078,6 +10259,10 @@ var FOUNDATION_DRAFT_FIELDS = [
   // O-104/O-105 — design-basis + site/hazard capture blocks.
   "design_basis",
   "site_hazard",
+  // O-101 — operator-recorded walkthrough position + video link: authored
+  // project state, so an unsent draft must carry them or restore drops them.
+  "walkthrough_step",
+  "walkthrough_video_url",
   // Customer Pricing tab surface — markup %, manual price override, and the
   // applied-tier record (applied/tier_number). Persisted by payload(); restored
   // verbatim through the assembly normalizer's passthrough.
@@ -10721,7 +10906,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
       } else {
         setRecoveryRequired(false);
       }
-      setInventory(normalizeFoundationInventoryRows([...inv || [], ...(concreteServices || []).map(normalizeConcreteSupplier)]));
+      setInventory(normalizeFoundationInventoryRows([...inv || [], ...(concreteServices || []).map(normalizeConcreteSupplier2)]));
       setSettings(
         Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
       );
@@ -10770,7 +10955,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
       ]);
       if (!isCurrentFlight(flight)) return;
       bumpEdit();
-      setInventory(normalizeFoundationInventoryRows([...inv || [], ...(concreteServices || []).map(normalizeConcreteSupplier)]));
+      setInventory(normalizeFoundationInventoryRows([...inv || [], ...(concreteServices || []).map(normalizeConcreteSupplier2)]));
       setSettings(Object.fromEntries((settingRows || []).map((r) => [r.setting_name, r.setting_value])));
       setAutoSave(false);
       setDirty(true);
@@ -10911,7 +11096,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
     },
     commit: (updater) => commit(updater)
   });
-  if (loading) return /* @__PURE__ */ jsx("div", { className: "p-10 text-center text-gray-400", children: "Loading section\xE2\u20AC\xA6" });
+  if (loading) return /* @__PURE__ */ jsx("div", { className: "p-10 text-center text-gray-400", children: "Loading section\u2026" });
   if (loadError) return /* @__PURE__ */ jsxs("div", { className: "p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded", children: [
     "Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. ",
     loadError
@@ -10936,7 +11121,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
     if (result.status === "stored") {
       session.revision = result.revision;
       session.pending = false;
-      setDraftOffer({ store: draftStore, backedUp: true, message: "Design and customer-pricing edits backed up in this browser tab only \xE2\u20AC\u201D closing the tab loses them; save to keep all changes." });
+      setDraftOffer({ store: draftStore, backedUp: true, message: "Design and customer-pricing edits backed up in this browser tab only \u2014 closing the tab loses them; save to keep all changes." });
     } else if (result.status === "conflict") {
       const latest = session.store.read();
       session.revision = latest.status !== "unavailable" ? latest.revision ?? null : result.revision ?? session.revision;
@@ -11332,6 +11517,10 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
     ai_engineering_data: project.ai_engineering_data,
     design_basis: project.design_basis,
     site_hazard: project.site_hazard,
+    // O-101 (CMP-H10) -- authored on the panel via patch(); must ride the
+    // payload or every save drops the recorded walkthrough position.
+    walkthrough_step: project.walkthrough_step,
+    walkthrough_video_url: project.walkthrough_video_url,
     concrete_delivery_snapshot: captureConcreteDeliverySnapshot(calc.delivery),
     total_concrete_cost: calc.totals.total_concrete_cost,
     total_rebar_cost: calc.totals.total_rebar_cost,
@@ -11619,7 +11808,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
         project_name: `${project.project_name || "Foundation"} (Copy)`,
         client_name: project.client_name,
         customer_id: project.customer_id,
-        // Same-job metadata payload() does not own â€” a copy keeps the
+        // Same-job metadata payload() does not own — a copy keeps the
         // document link, the saved estimate-number lineage (mirroring
         // convertFoundationToBrickStone), the persisted beautify brief
         // image, and any externally-set pricing-engine context.
@@ -11729,7 +11918,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
             onClick: handleCatalogReload,
             disabled: catalogReloading || loading || saving,
             className: "mt-2 rounded-sm border border-amber-400 bg-white px-2 py-1 text-[12px] font-semibold text-amber-800 disabled:opacity-50",
-            children: catalogReloading ? "Reloading catalogs\xE2\u20AC\xA6" : "Reload catalogs"
+            children: catalogReloading ? "Reloading catalogs\u2026" : "Reload catalogs"
           }
         )
       ] }),
@@ -11783,7 +11972,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
         /* @__PURE__ */ jsx("ul", { className: "list-disc pl-5 mt-1 space-y-0.5", children: assemblyIssues.map((issue, i) => /* @__PURE__ */ jsx("li", { children: issue.message }, `${issue.code}-${issue.kind}-${issue.componentId || ""}-${issue.parentId || ""}-${i}`)) })
       ] }),
       constructionWarnings.length > 0 && /* @__PURE__ */ jsxs("div", { role: "status", className: "mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[12px] text-blue-900", children: [
-        /* @__PURE__ */ jsx("span", { className: "font-semibold", children: "Construction checks \xE2\u20AC\u201D verify before build" }),
+        /* @__PURE__ */ jsx("span", { className: "font-semibold", children: "Construction checks \u2014 verify before build" }),
         /* @__PURE__ */ jsx("ul", { className: "list-disc pl-5 mt-1 space-y-0.5", children: constructionWarnings.map((warning, i) => /* @__PURE__ */ jsx("li", { children: warning.message }, `${warning.code}-${warning.kind}-${warning.index ?? ""}-${i}`)) })
       ] }),
       draftVisible?.backedUp && !draftVisible?.warning && /* @__PURE__ */ jsx("div", { role: "status", className: "mb-3 rounded border border-blue-300 bg-blue-50 px-3 py-2 text-[13px] text-blue-900", children: draftVisible.message }),
@@ -11906,6 +12095,38 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
           /* @__PURE__ */ jsxs("p", { className: "pt-1 border-t border-blue-200/60", children: [
             /* @__PURE__ */ jsx("b", { children: "Worked example:" }),
             ` a 2-pole monument sign \u2014 add a 48"x48"x12" spread footing under Foundation; two 12' poles on Walls & Poles (Mount each onto the footing); a 4'x6" wall cap under Wall Caps; the cabinet on Signage & Landscape (Mount onto a pole at 8'). The canvas selects the footing (tree + breadcrumb); Diagnostics flags the pole off its footing until you Mount it; the 3D preview shows the footing + poles + cap; Cost Summary prices concrete + rebar + labor; the BOM prints the labeled field sheet.`
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-3 pt-1", children: [
+            /* @__PURE__ */ jsxs("label", { className: "text-[11px] text-blue-900/80", children: [
+              "Walkthrough step",
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  min: "0",
+                  step: "1",
+                  placeholder: "0",
+                  value: project?.walkthrough_step ?? "",
+                  onChange: (e) => patch({ walkthrough_step: e.target.value === "" ? void 0 : Number(e.target.value) }),
+                  className: "ml-1 h-7 w-16 rounded-sm border border-blue-300 bg-white px-1 text-[11px]",
+                  "aria-label": "Walkthrough step"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("label", { className: "text-[11px] text-blue-900/80", children: [
+              "Walkthrough video",
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "url",
+                  placeholder: "https://...",
+                  value: project?.walkthrough_video_url ?? "",
+                  onChange: (e) => patch({ walkthrough_video_url: e.target.value === "" ? void 0 : e.target.value }),
+                  className: "ml-1 h-7 w-56 rounded-sm border border-blue-300 bg-white px-1 text-[11px]",
+                  "aria-label": "Walkthrough video URL"
+                }
+              )
+            ] })
           ] })
         ] }),
         /* @__PURE__ */ jsx(FoundationGuidedSteps, { project, calc, savedSourceProject, onStepClick: setMainTab }),
@@ -11962,7 +12183,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
                   }, className: "px-3 py-1.5 rounded-sm border border-gray-300 text-gray-700 text-[11px] font-semibold hover:bg-gray-50", "data-mode": "template", children: "Use a template" }),
                   /* @__PURE__ */ jsx("button", { type: "button", className: "px-3 py-1.5 rounded-sm border border-gray-200 text-gray-500 text-[11px] font-semibold", "data-mode": "manual", "aria-disabled": "true", title: "Author items directly below", children: "Build manually" })
                 ] }),
-                "No foundations yet \xE2\u20AC\u201D add a spread footing or pillar to start."
+                "No foundations yet \u2014 add a spread footing or pillar to start."
               ] }) : /* @__PURE__ */ jsx("div", { className: "space-y-3", children: calc.items.map((item, index) => {
                 const componentId = item.component_id;
                 const proposalState = reinforcementEditor.read(componentId);
@@ -12065,6 +12286,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
                 LandscapeDesigner,
                 {
                   landscape: project.landscape,
+                  items: project.items,
                   onChange: (landscape) => patch({ landscape })
                 }
               )
@@ -12137,7 +12359,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
                   {
                     to: "/FoundationCatalog",
                     className: "inline-block mt-3 text-[12px] text-gray-600 hover:text-red-600",
-                    children: "Manage foundation catalog \xE2\u2020\u2019"
+                    children: "Manage foundation catalog \u2192"
                   }
                 ),
                 diffRows2.length > 0 && /* @__PURE__ */ jsxs("details", { className: "mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2", children: [
@@ -12271,7 +12493,7 @@ function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEsti
         conflict: syncConflict.conflict,
         busy: saving || syncConflict.resolving,
         disabled: {
-          keep_draft: sourceRefreshRef.current ? "The project must be reloaded after the earlier save finished \xE2\u20AC\u201D reload before applying draft edits." : null
+          keep_draft: sourceRefreshRef.current ? "The project must be reloaded after the earlier save finished \u2014 reload before applying draft edits." : null
         },
         onKeepDraft: handleConflictKeepDraft,
         onKeepSaved: handleConflictKeepSaved,
