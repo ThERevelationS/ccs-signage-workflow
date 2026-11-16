@@ -8,7 +8,7 @@ import { foundationDimensionFieldMeta } from "./foundationGeometryInputs";
 import { foundationWallCapCatalogIssues, wallCapInputNumber, wallCapCutLengthValue } from "./wallCapCalculator";
 
 // O-093 (CMP-H02): the cut-length field takes feet/inches entry through the
-// shared dimension field ‐ same verbatim-draft contract as the CMP-A08
+// shared dimension field — same verbatim-draft contract as the CMP-A08
 // boundary it replaces, canonical inches stored, plain-language label + help +
 // suggested-format placeholder from the field meta map (never stored defaults).
 const capDimMeta = (field) => foundationDimensionFieldMeta("wallCap", field);
@@ -386,7 +386,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
 
       {options.length === 0 && (
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-          Wall cap catalog unavailable ‐ existing rows remain editable; new caps cannot be added.
+          Wall cap catalog unavailable — existing rows remain editable; new caps cannot be added.
         </div>
       )}
       {cutList.length > 0 && (
