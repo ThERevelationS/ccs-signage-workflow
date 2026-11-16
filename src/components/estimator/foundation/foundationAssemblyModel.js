@@ -15,7 +15,7 @@ const isReserved = (v) => typeof v === "string" && v.startsWith(UNRESOLVED_PREFI
 const isUnresolvedToken = (v) => Object.values(UNRESOLVED).includes(v);
 const deepClone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 // Preserve a malformed value raw when it cannot be JSON-cloned (functions,
-// cycles) ‐ the copy path must not crash on legacy data.
+// cycles) — the copy path must not crash on legacy data.
 const cloneRawValue = (v) => {
   try { return deepClone(v); } catch { return v; }
 };
@@ -320,9 +320,9 @@ export function foundationAssemblyIssues(project) {
 export function cloneFoundationComponents(project, { createId } = {}) {
   if (typeof createId !== "function") throw new Error("foundation assembly: createId(kind) factory is required");
   if (!isRecord(project)) throw new Error("foundation assembly: project must be a record");
-  // Legacy rows can carry a malformed wall outline ‐ a nonarray `shape.segments`
+  // Legacy rows can carry a malformed wall outline — a nonarray `shape.segments`
   // value on a stored row. The copy path must not crash on them: detach the
-  // field for normalization, then restore the authored value raw on the clone ‐
+  // field for normalization, then restore the authored value raw on the clone —
   // no id remap is possible on a non-array, so none is attempted.
   const rawWallSegments = new Map();
   const wallsForNormalize = (Array.isArray(project.walls) ? project.walls : []).map((w, i) => {
