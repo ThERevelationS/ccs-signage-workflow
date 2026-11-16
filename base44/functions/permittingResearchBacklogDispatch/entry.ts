@@ -193,6 +193,7 @@ Deno.serve(async (req) => {
         fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+        blobEntity: base44.asServiceRole.entities.PermitArchiveBlob,
       });
       } catch(error) { archiveContinuation={success:false,status:'archive_continuation_failed',error:String(error?.message || error)}; }
       // Isolate parser loading/failure from the research dispatcher. No LLM call.
