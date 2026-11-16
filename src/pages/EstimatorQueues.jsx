@@ -37,7 +37,7 @@ const STATUSES = [
 const SORTS = [
   { key: "newest", label: "Newest" },
   { key: "oldest", label: "Oldest" },
-  { key: "value_desc", label: "$ high â†’ low" },
+  { key: "value_desc", label: "$ high → low" },
   { key: "expiring", label: "Expiring first" },
 ];
 
