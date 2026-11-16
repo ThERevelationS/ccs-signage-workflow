@@ -118,11 +118,11 @@ export function buildScene(scene, project, solid, showGround, highlight, explode
   });
 
   (project.poles || []).slice(0, MAX_POLE_MESHES).forEach((p) => {
-    // CMP-E02: distinct quantities ‐ the pole top sits at base offset plus
+    // CMP-E02: distinct quantities — the pole top sits at base offset plus
     // height above grade; embedment extends BELOW grade (canonical
     // embedment_inches; the legacy y_offset_inches spelling carries the same
     // authored "depth in ground" quantity and is no longer read as an upward
-    // elevation ‐ CMP-AUD07). Cross-section follows the authored/resolved
+    // elevation — CMP-AUD07). Cross-section follows the authored/resolved
     // pole_shape; unspecified stays the round default.
     const height = (Number(p.height_inches) || 96) * IN;
     const embed = (Number(p.embedment_inches ?? p.y_offset_inches) || 0) * IN;
