@@ -4,7 +4,7 @@
 // formats: date "YYYY-MM-DD", datetime "YYYY-MM-DDTHH:MM", time "HH:MM".
 // onChange emits a synthetic { target: { value } } event so call sites keep
 // their existing e.target.value handlers.
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { MantineProvider, Menu, createTheme } from "@mantine/core";
@@ -33,9 +33,39 @@ function useDarkScheme() {
   );
 }
 
+// Radix dialogs trap focus inside their content: a document-level focusin/
+// focusout listener pulls focus back into the dialog whenever it lands
+// outside, which makes inputs inside portaled Mantine overlays (pickers,
+// menus, modals) impossible to click into or type in — pointer-only elements
+// like day buttons still work, which is why the bug hides on calendar clicks.
+// Stopping those events at <body> — after the field's own handlers have run —
+// keeps the trap asleep while focus stays inside a Mantine portal.
+const MANTINE_PORTAL_SELECTOR = [
+  ".mantine-Popover-dropdown",
+  ".mantine-Modal-root",
+  ".mantine-Menu-dropdown",
+  ".mantine-HoverCard-dropdown",
+  ".mantine-Notification-root",
+].join(",");
+
+function useMantinePortalFocusGuard() {
+  useEffect(() => {
+    const inPortal = (el) => !!(el && el.closest && el.closest(MANTINE_PORTAL_SELECTOR));
+    const onFocusIn = (e) => { if (inPortal(e.target)) e.stopPropagation(); };
+    const onFocusOut = (e) => { if (inPortal(e.relatedTarget)) e.stopPropagation(); };
+    document.body.addEventListener("focusin", onFocusIn);
+    document.body.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.body.removeEventListener("focusin", onFocusIn);
+      document.body.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+}
+
 // Mount once near the app root so Mantine picks up the shell's light/dark mode.
 export function CcsMantineProvider({ children }) {
   const dark = useDarkScheme();
+  useMantinePortalFocusGuard();
   return (
     <MantineProvider theme={theme} forceColorScheme={dark ? "dark" : "light"}>
       {children}
