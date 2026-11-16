@@ -16,6 +16,7 @@ Deno.serve(async req=>{
   const options={entity,collectionId:body.collection_id,documentId:body.document_id,actor,
    fetchSource:(url:string,init:any,host:string|null)=>safeExternalFetch(url,init,3,host?(candidate:any)=>candidate.protocol==='https:'&&candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
    uploadFile:(data:any)=>client.asServiceRole.integrations.Core.UploadFile(data),
+   blobEntity: client.asServiceRole.entities.PermitArchiveBlob,
    onProgress:(event:any)=>reporter.emit(event,event.progress || {})};
   const result=referral?await archiveOwnedAddressResearchReferral({...options,selection:{url:body.referral_url,source_page_url:body.source_page_url}}):await archiveOwnedAddressResearchFile(options);
   const {jurisdiction,...safe}=result;
