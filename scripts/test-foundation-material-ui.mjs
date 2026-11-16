@@ -256,9 +256,9 @@ await ok('BOM mixed: resolved groups = ONE case1; blocked f1 saved rows; no dup;
     ['Bagged concrete Item volume converted to bag count at the supplier bag rate.', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
     [`Rebar (${formatQty(exp.rebar_weight_lbs, 'lbs')}) Aggregate authored rebar feet and weight on legacy items.`, formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
     ['Forming material Form units from item perimeter x depth.', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
-    ['Foundation f1 (saved) ‐ concrete', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
-    ['Foundation f1 (saved) ‐ rebar', formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
-    ['Foundation f1 (saved) ‐ forming', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
+    ['Foundation f1 (saved) - concrete', formatQty(exp.concrete_bags, 'bags'), M(exp.concrete_cost)],
+    ['Foundation f1 (saved) - rebar', formatQty(exp.rebar_feet, 'LF'), M(exp.rebar_cost)],
+    ['Foundation f1 (saved) - forming', formatQty(exp.forming_qty, 'units'), M(exp.forming_cost)],
   ]);
   assert.ok(t.includes('Pricing unavailable'), 'footer flag');
   assert.ok(t.includes(M(exp.rebar_cost)), `resolved rebar cost ${exp.rebar_cost}`);
