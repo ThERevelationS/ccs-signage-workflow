@@ -1278,7 +1278,7 @@ export default function EstimateDetail() {
       }
 
       // The immutable acceptance is the idempotency anchor for exactly one
-      // Sent â†’ Approved lifecycle revision.
+      // Sent → Approved lifecycle revision.
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `customer_acceptance:${acceptance.id}`,
         sessionToken,
