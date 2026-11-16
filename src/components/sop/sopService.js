@@ -5,7 +5,7 @@ import { newRequestKey } from "./sopModel";
 // carries the EmailGate session token (injected by invokeFleet); the backend
 // enforces viewer/editor/admin visibility itself.
 const invoke = (action, payload = {}) =>
-  invokeFleet("manageSops", { action, ...payload });
+  invokeFleet("manageSops", { action, ...payload }).then((r) => r?.data ?? r);
 
 export const sopBootstrap = () => invoke("bootstrap");
 
