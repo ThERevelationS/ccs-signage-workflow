@@ -148,7 +148,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
                     <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
-                      {status} <b>Ó{count}</b>
+                      {status} <b>×{count}</b>
                     </span>
                   ))}
                 </div>
