@@ -127,11 +127,11 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   // Blank clears the override (null); a malformed draft is preserved verbatim so
   // the item validation reports it instead of a NaN leaking into saved costs.
-  // Delegates to the boundary's catalog draft (CMP-A08) ‐ identical contract,
+  // Delegates to the boundary's catalog draft (CMP-A08) — identical contract,
   // plus whitespace-only drafts clear to null instead of minting Number(" ")=0.
   const nullSet = (key) => (e) => set({ [key]: inventoryNumberInput(e.target.value) });
   const isPillar = item.foundation_type === "pillar";
-  // Versioned items price steel from the accepted reinforcement design ‐ the
+  // Versioned items price steel from the accepted reinforcement design — the
   // legacy implicit fields below do not apply to them and stay hidden.
   const legacyReinforcement = item.reinforcement_calculation_version == null || item.reinforcement_calculation_version === 1;
   const unavailable = pricing?.available === false;
