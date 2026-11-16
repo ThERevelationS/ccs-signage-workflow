@@ -67,7 +67,7 @@ export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false
 
 // A split keeps the duplicate's header/settings but carries only the selected
 // line items, and records `split_from_estimate_id` so the child can trace back
-// to its parent. The parent estimate is unchanged ‐ the split is a new draft.
+// to its parent. The parent estimate is unchanged — the split is a new draft.
 export function estimateLineSelectionKey(line, index) {
   return line?.line_id || line?.builder_product_id || line?.project_id || `i${index}`;
 }
