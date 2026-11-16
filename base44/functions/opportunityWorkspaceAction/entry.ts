@@ -10,7 +10,7 @@ import {
   replaceEstimatingRequestFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
 
-// Emitting an automation event must never break the workspace action itself ‐
+// Emitting an automation event must never break the workspace action itself —
 // a failed rule evaluation is a missed notification, not a failed save.
 async function emitOpportunityAutomation(base44: any, eventType: string, opportunityId: string, actor: string) {
   try {
@@ -137,7 +137,7 @@ async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request
   const estimateId = clean(request?.estimate_id);
   if (!estimateId) return { request, completed: false };
   const estimate = await Estimate.get(estimateId).catch(() => null);
-  // A trashed estimate never closes an open estimating request ‐ the request
+  // A trashed estimate never closes an open estimating request — the request
   // stays open until a live estimate actually goes to the customer.
   if (!estimate?.id || estimate?.deleted === true || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
   const now = new Date().toISOString();
@@ -381,10 +381,10 @@ Deno.serve(async (req) => {
     // returns matching rules so the UI can surface "watch hit" notifications.
     const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
     const loadWatchConfig = async () => {
-      const rows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
+      const rows = await GlobalSettings.filter({ setting_key: "watch_rules" }).catch(() => []);
       const row = Array.isArray(rows) && rows.length ? rows[0] : null;
       let map: Record<string, any[]> = {};
-      try { map = JSON.parse(String(row?.watch_rules || "{}") || "{}"); } catch { map = {}; }
+      try { map = JSON.parse(String(row?.setting_value?.watch_rules || "{}") || "{}"); } catch { map = {}; }
       return { row, map };
     };
     if (action === "set_watch") {
@@ -401,8 +401,8 @@ Deno.serve(async (req) => {
       if (!rule.entity || !rule.record_id || !rule.field) throw bad("entity, record_id and field are required to watch a record.", 400);
       map[key] = (map[key] || []).filter((w: any) => !(w.entity === rule.entity && w.record_id === rule.record_id && w.field === rule.field));
       map[key].push(rule);
-      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
-      else await GlobalSettings.create({ config_name: "watch_rules", watch_rules: JSON.stringify(map) });
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
+      else await GlobalSettings.create({ setting_key: "watch_rules", setting_value: { watch_rules: JSON.stringify(map) } });
       return Response.json({ success: true, action, rule, count: map[key].length });
     }
     if (action === "list_watches") {
@@ -416,7 +416,7 @@ Deno.serve(async (req) => {
       const idx = Number(body?.index);
       if (!Number.isInteger(idx)) throw bad("A watch index is required.", 400);
       map[key] = (map[key] || []).filter((_: any, i: number) => i !== idx);
-      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
+      if (row) await GlobalSettings.update(row.id, { setting_value: { watch_rules: JSON.stringify(map) } });
       return Response.json({ success: true, action, watches: map[key] });
     }
     // Evaluate the caller's watched records and surface any that match.
@@ -736,7 +736,7 @@ Deno.serve(async (req) => {
         created_date: clean(c?.created_date),
       })), 100);
 
-      // Sent estimates aging past 7 days without a response ‐ surfaces quotes
+      // Sent estimates aging past 7 days without a response — surfaces quotes
       // that aren't opportunity-linked (which list_follow_ups already covers).
       const staleSentEstimates = section("stale_sent_estimates", list(sentEstimates)
         .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7)
@@ -987,7 +987,7 @@ Deno.serve(async (req) => {
         .map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 }))
         .sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value)
         .slice(0, 12);
-      // Estimate-status funnel ‐ the same shape as the opportunity funnel but
+      // Estimate-status funnel — the same shape as the opportunity funnel but
       // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
       // so the dashboard can show quote-side conversion separately from pipeline.
       const estimateRows = await loadAllEntityRows({ entity: Estimate, sort: "-created_date", label: "Estimate funnel rows" }).catch(() => []);
@@ -1452,7 +1452,7 @@ Deno.serve(async (req) => {
         await logActivity(Activity, {
           opportunity_id: opportunityId, actor,
           event_type: "reconciled",
-          summary: "Stage advanced to quoted ‐ linked estimate sent/approved",
+          summary: "Stage advanced to quoted — linked estimate sent/approved",
           details: { from_stage: clean(opportunity.stage), to_stage: "quoted" },
         });
         if (clean(finalOpportunity?.stage) === "quoted" && clean(opportunity.stage) !== "quoted") {
@@ -1598,8 +1598,8 @@ Deno.serve(async (req) => {
           stage: "quoted",
           salesperson: clean(o?.salesperson),
           next_action: expired
-            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) ‐ re-issue or follow up`
-            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago ‐ no response`,
+            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) — re-issue or follow up`
+            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago — no response`,
           next_action_due: new Date(issuedMs + Math.min(validDays, ageDays + 3) * 86400000).toISOString().slice(0, 10),
           next_action_assignee: clean(o?.next_action_assignee),
           overdue: expired,
@@ -1866,7 +1866,7 @@ Deno.serve(async (req) => {
           opportunity_id: opportunityId, actor,
           event_type: stageChanged ? "stage_changed" : "updated",
           summary: stageChanged
-            ? `Stage ${clean(current.stage) || "new"} ⅎ ${desired.stage}`
+            ? `Stage ${clean(current.stage) || "new"} → ${desired.stage}`
             : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "…" : ""}`,
           details: { fields: changed, from_stage: clean(current.stage), to_stage: clean(saved?.stage) },
         });
@@ -2096,7 +2096,7 @@ Deno.serve(async (req) => {
       let request = requestResult.record;
 
       const displayName = clean(customer?.company_name || opportunity.customer_display_name) || "Customer";
-      const projectName = clean(opportunity.title) || `${displayName} ‐ New estimate`;
+      const projectName = clean(opportunity.title) || `${displayName} — New estimate`;
       const requirementSummary = [
         ["Survey", snapshot.survey_requirement],
         ["Permit", snapshot.permit_requirement],
@@ -2109,7 +2109,7 @@ Deno.serve(async (req) => {
         .join(" · ");
       const notesText = [
         clean(snapshot.job_description),
-        requirementSummary ? `Requirements ‐ ${requirementSummary}` : "",
+        requirementSummary ? `Requirements — ${requirementSummary}` : "",
         clean(snapshot.notes),
       ].filter(Boolean).join("\n");
       const estimateData: any = {
@@ -2169,7 +2169,7 @@ Deno.serve(async (req) => {
       await logActivity(Activity, {
         opportunity_id: opportunityId, actor,
         event_type: "estimate_requested",
-        summary: `Estimate requested ‐ ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
+        summary: `Estimate requested — ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
         details: {
           estimating_request_id: clean(request?.id),
           estimate_id: clean(estimate?.id),
