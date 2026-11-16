@@ -1,0 +1,1 @@
+fatal: path 'base44/entities/FileBridgeSpikeRow.jsonc' exists on disk, but not in '41081f64c'
