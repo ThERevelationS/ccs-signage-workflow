@@ -41,6 +41,7 @@ Deno.serve(async req => {
       catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
       fetchSource: safeExternalFetch,
       uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+      blobEntity: base44.asServiceRole.entities.PermitArchiveBlob,
       manual: !automatic,
     };
     if (body.external_referral) return respond(await archiveExternalJurisdictionReferral({
