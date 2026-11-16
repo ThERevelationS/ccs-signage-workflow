@@ -21,7 +21,7 @@ const SALES_CENTERS = ["Cincinnati Custom Signs"];
 // Header-level fields copied when the user picks a "duplicate from" source
 // estimate. Every key is a real AllInOneEstimate schema field. Some are not
 // rendered by Step 1 (site_address, payment_terms, quote_valid_days,
-// deposit_percent, scope_*, hide_section_prices, company_*) â€” they still ride
+// deposit_percent, scope_*, hide_section_prices, company_*) — they still ride
 // through handleSave's `...form` spread into the created estimate. Schema has
 // no separate tax group id: tax_group is the TaxGroup name and pairs with
 // tax_percent.
@@ -287,14 +287,14 @@ export default function NewAllInOneEstimate() {
         <div className="flex-1 min-w-0">
           <div className="bg-white border border-gray-200 rounded-md px-3 py-2 mb-2 max-w-4xl">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existingâ€¦</span>
+              <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existing…</span>
               <div className="relative flex-1">
                 {dupSources.some((e) => e?.is_template === true && e?.deleted !== true) && (
                   <div className="flex flex-wrap items-center gap-1 mb-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mr-1">Templates</span>
                     {dupSources.filter((e) => e?.is_template === true && e?.deleted !== true).slice(0, 8).map((t) => (
                       <button key={t.id} type="button" onClick={() => applyDuplicateSource(t)} className="h-6 px-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-semibold hover:border-indigo-300">
-                        {t.project_name || `#${t.estimate_number || "â€”"}`}
+                        {t.project_name || `#${t.estimate_number || "—"}`}
                       </button>
                     ))}
                   </div>
@@ -325,9 +325,9 @@ export default function NewAllInOneEstimate() {
                           }}
                           className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-lime-50 border-b border-slate-100 last:border-0"
                         >
-                          <span className="font-semibold text-gray-800">#{e.estimate_number || "â€”"}</span>
-                          <span className="text-slate-600"> Â· {e.client_name || "No customer"}</span>
-                          <span className="text-slate-400"> Â· {e.project_name || ""}</span>
+                          <span className="font-semibold text-gray-800">#{e.estimate_number || "—"}</span>
+                          <span className="text-slate-600"> · {e.client_name || "No customer"}</span>
+                          <span className="text-slate-400"> · {e.project_name || ""}</span>
                         </button>
                       ))
                     )}
@@ -345,11 +345,11 @@ export default function NewAllInOneEstimate() {
               )}
             </div>
             <p className="text-[10px] text-gray-400 mt-1">
-              Prefills customer &amp; quote settings â€” sections are not copied.
+              Prefills customer &amp; quote settings — sections are not copied.
               {dupSource && (
                 <span className="text-slate-500">
-                  {" "}Source: #{dupSource.estimate_number || "â€”"}
-                  {dupSource.client_name ? ` â€” ${dupSource.client_name}` : ""}
+                  {" "}Source: #{dupSource.estimate_number || "—"}
+                  {dupSource.client_name ? ` — ${dupSource.client_name}` : ""}
                 </span>
               )}
             </p>
@@ -383,7 +383,7 @@ export default function NewAllInOneEstimate() {
               disabled={saving}
               className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[13px] font-semibold text-gray-800 disabled:opacity-60"
             >
-              Next Step â†’
+              Next Step →
             </button>
           </div>
         </div>
