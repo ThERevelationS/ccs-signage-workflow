@@ -1,0 +1,132 @@
+{
+  "results": [
+    {
+      "name": "valid supplier prices produce identical truck math; no authored mutation",
+      "ok": true
+    },
+    {
+      "name": "availableMixes/admixes carry finite catalog prices and authored field names",
+      "ok": true
+    },
+    {
+      "name": "calcProject totals match ported math for valid supplier + item",
+      "ok": true
+    },
+    {
+      "name": "$100 new-location stop is an authored constant — counted, not config-priced",
+      "ok": true
+    },
+    {
+      "name": "multi-truck delivery prices each bracket identically to ported math",
+      "ok": true
+    },
+    {
+      "name": "explicit-zero catalog prices are legitimate free prices",
+      "ok": true
+    },
+    {
+      "name": "explicit-0 settings are honored — the ported `|| def` overrode them",
+      "ok": true
+    },
+    {
+      "name": "numeric-string supplier prices normalize on the calculation copy only",
+      "ok": true
+    },
+    {
+      "name": "unselected mix/admixture prices are not consumed",
+      "ok": true
+    },
+    {
+      "name": "unconsumed small-load bracket is not checked",
+      "ok": true
+    },
+    {
+      "name": "zero-yard delivery consumes no supplier prices",
+      "ok": true
+    },
+    {
+      "name": "bagged-concrete items never consume ready-mix supplier prices",
+      "ok": true
+    },
+    {
+      "name": "missing mix price → supplier_price_unavailable + acknowledged hold",
+      "ok": true
+    },
+    {
+      "name": "invalid mix price holds (negative)",
+      "ok": true
+    },
+    {
+      "name": "invalid mix price holds (malformed)",
+      "ok": true
+    },
+    {
+      "name": "invalid mix price holds (NaN)",
+      "ok": true
+    },
+    {
+      "name": "invalid mix price holds (record)",
+      "ok": true
+    },
+    {
+      "name": "invalid mix price holds (empty string)",
+      "ok": true
+    },
+    {
+      "name": "missing selected admixture price holds",
+      "ok": true
+    },
+    {
+      "name": "missing fuel surcharge holds",
+      "ok": true
+    },
+    {
+      "name": "missing small-load bracket holds",
+      "ok": true
+    },
+    {
+      "name": "mix selection not in the supplier catalog holds (was silently repriced to 4000 AE)",
+      "ok": true
+    },
+    {
+      "name": "admixture selection not in the supplier catalog holds (was silently $0)",
+      "ok": true
+    },
+    {
+      "name": "no ready-mix supplier assigned + yards to ship → supplier_unavailable",
+      "ok": true
+    },
+    {
+      "name": "normalized labor-services supplier without authored prices holds (was silently $0)",
+      "ok": true
+    },
+    {
+      "name": "normalized supplier with authored prices prices identically to a raw row",
+      "ok": true
+    },
+    {
+      "name": "unsaved held delivery has no acknowledged snapshot — totals withheld, not guessed",
+      "ok": true
+    },
+    {
+      "name": "non-explicit snapshot keeps authored delivery basis — no saved project arg",
+      "ok": true
+    },
+    {
+      "name": "captureConcreteDeliverySnapshot round-trips the acknowledged hold",
+      "ok": true
+    },
+    {
+      "name": "supplier issues merge once into catalogIssues and never attach to an item",
+      "ok": true
+    },
+    {
+      "name": "unavailable items still short-circuit delivery — no duplicate supplier scan",
+      "ok": true
+    },
+    {
+      "name": "getSmallLoadFee/getFuelSurcharge return null, never a guessed amount",
+      "ok": true
+    }
+  ]
+}
