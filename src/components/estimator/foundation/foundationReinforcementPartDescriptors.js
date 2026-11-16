@@ -90,7 +90,7 @@ export function foundationReinforcementPartDescriptors({ item, itemIndex } = {})
 
   // Support economics (O-026/O-027): a modeled plan carries snapshot.supports
   // with per-selection catalog picks; an item accepted before support modeling
-  // has no snapshot.supports and no support fields ‐ that is legal and emits no
+  // has no snapshot.supports and no support fields — that is legal and emits no
   // support parts. Any support amount on the item REQUIRES the snapshot to
   // prove it; mismatched or unverifiable support data fails the handoff rather
   // than passing a guessed part through.
