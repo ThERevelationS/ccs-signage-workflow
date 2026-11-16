@@ -31,6 +31,8 @@ fs.mkdirSync('.audit-work/foundation-template05', { recursive: true });
 const dlgMod = await mk('src/components/estimator/foundation/FoundationTemplateDialog.jsx', '.audit-work/foundation-template05/dlg.bundle.mjs');
 const svcMod = await mk('src/components/estimator/foundation/foundationTemplateService.js', '.audit-work/foundation-template05/svc.bundle.mjs');
 const model = await import('../src/components/estimator/foundation/foundationTemplateModel.js');
+const presetMod = await mk('src/components/estimator/foundation/foundationAssemblyPresets.js', '.audit-work/foundation-template05/presets.bundle.mjs');
+const { FOUNDATION_ASSEMBLY_PRESETS, foundationAssemblyPresetTemplateData } = presetMod;
 const { createFoundationTemplateSnapshot, prepareFoundationTemplatePatch, FOUNDATION_TEMPLATE_FIELDS } = model;
 const Dialog = dlgMod.default;
 const { deleteFoundationTemplate, saveFoundationTemplate } = svcMod;
@@ -125,7 +127,14 @@ const mountDlg = async (props = {}) => {
   await flush();
   const alerts = () => c.root.findAll(el => el?.props?.role === 'alert').map(el => el.props.children);
   const btn = (label) => c.root.findAll(el => el?.props?.children === label).map(el => el.props);
-  return { c, alerts, btn, cleanup: async () => act(async () => { c.unmount(); }) };
+  // The load view lists O-094 assembly presets first, then saved templates;
+  // Apply lookups are scoped to their section so the two lists never mix.
+  const section = (heading) => c.root.findAll(el => el.type === 'div' && (el.children || []).some(ch => ch?.type === 'p'
+    && (Array.isArray(ch.props?.children) ? ch.props.children : [ch.props?.children]).includes(heading)));
+  const inSection = (heading, label) => section(heading).flatMap(s => s.findAll(el => el?.props?.children === label).map(el => el.props));
+  const tplBtn = (label) => inSection('Saved templates', label);
+  const presetBtn = (label) => inSection('Start from an assembly preset', label);
+  return { c, alerts, btn, tplBtn, presetBtn, cleanup: async () => act(async () => { c.unmount(); }) };
 };
 
 await ok('dialog: save builds full snapshot data + single flight', async () => {
@@ -181,10 +190,10 @@ await ok('dialog: lost-reply retry same key+data; name change => new key', async
 
 await ok('dialog: load failure visible + retry; failed delete keeps row', async () => {
   const m = await mountDlg({ rows: [{ id: 't1', template_name: 'A', project_data: { items: [] } }] });
-  assert.equal(m.btn('Apply').length, 1);
+  assert.equal(m.tplBtn('Apply').length, 1);
   globalThis.__tplGet = () => Promise.reject(Object.assign(new Error('server'), { status: 500 }));
   await act(async () => { m.c.root.findAll(el => el?.props?.onClick && typeof el.props.onClick === 'function' && el.props.className?.includes('hover:text-red-600'))[0].props.onClick(); });
-  assert.equal(m.btn('Apply').length, 1, 'row retained after failed delete');
+  assert.equal(m.tplBtn('Apply').length, 1, 'row retained after failed delete');
   assert.ok(m.alerts().length >= 1, 'delete error visible');
   await m.cleanup();
   const mL2 = await mountDlg({ loadErr: new Error('load fail') });
@@ -193,19 +202,48 @@ await ok('dialog: load failure visible + retry; failed delete keeps row', async 
   globalThis.__tplRows = [{ id: 't9', template_name: 'B', project_data: {} }];
   await act(async () => { mL2.btn('Retry')[0].onClick(); });
   await flush();
-  assert.equal(mL2.btn('Apply').length, 1, 'retry reloads rows');
+  assert.equal(mL2.tplBtn('Apply').length, 1, 'retry reloads rows');
   await mL2.cleanup();
+});
+
+await ok('dialog: O-094 assembly presets listed; apply rides onApply with the exact preset template data', async () => {
+  assert.ok(FOUNDATION_ASSEMBLY_PRESETS.length >= 1, 'preset catalog is non-empty');
+  let got = null; globalThis.__closed = false;
+  const m = await mountDlg({ rows: [{ id: 't1', template_name: 'A', project_data: { items: [] } }], onApply: (data) => { got = data; return true; } });
+  assert.equal(m.presetBtn('Apply').length, FOUNDATION_ASSEMBLY_PRESETS.length, 'one Apply per preset');
+  assert.equal(m.tplBtn('Apply').length, 1, 'saved-template rows listed separately');
+  await act(async () => { m.presetBtn('Apply')[0].onClick(); });
+  assert.deepEqual(got, foundationAssemblyPresetTemplateData(FOUNDATION_ASSEMBLY_PRESETS[0]), 'exact preset data');
+  assert.equal(globalThis.__closed, true, 'accepted preset closes');
+  globalThis.__closed = false;
+  const r = await mountDlg({ onApply: () => false });
+  await act(async () => { r.presetBtn('Apply')[0].onClick(); });
+  assert.equal(globalThis.__closed, false, 'rejected preset keeps dialog open');
+  assert.ok(r.alerts().length >= 1, 'rejection surfaced');
+  await m.cleanup(); await r.cleanup();
+});
+
+await ok('dialog: save is blocked with the page-supplied reason while pricing is unavailable', async () => {
+  let calls = 0; globalThis.__tplSave = () => { calls++; return Promise.resolve({ id: 't1' }); };
+  const m = await mountDlg({ mode: 'save', saveDisabled: true, saveDisabledReason: 'Pricing unavailable: test reason' });
+  const reason = m.c.root.findAll(el => el.type === 'p' && el.props?.children === 'Pricing unavailable: test reason');
+  assert.equal(reason.length, 1, 'reason rendered');
+  const save = m.btn('Save Template')[0];
+  assert.equal(save.disabled, true, 'Save Template disabled');
+  await act(async () => { await save.onClick?.(); });
+  assert.equal(calls, 0, 'no save request while disabled');
+  await m.cleanup();
 });
 
 await ok('dialog: apply rejection stays open; apply success closes', async () => {
   globalThis.__closed = false;
   const m = await mountDlg({ rows: [{ id: 't1', template_name: 'A', project_data: { items: [{ id: 'x' }] } }], onApply: () => false });
-  await act(async () => { m.btn('Apply')[0].onClick(); });
+  await act(async () => { m.tplBtn('Apply')[0].onClick(); });
   assert.equal(globalThis.__closed, false, 'rejected apply keeps dialog open');
   assert.ok(m.alerts().length >= 1, 'rejection surfaced');
   const m2 = await mountDlg({ rows: [{ id: 't1', template_name: 'A', project_data: {} }], onApply: () => true });
   globalThis.__closed = false;
-  await act(async () => { m2.btn('Apply')[0].onClick(); });
+  await act(async () => { m2.tplBtn('Apply')[0].onClick(); });
   assert.equal(globalThis.__closed, true, 'accepted apply closes');
   await m.cleanup(); await m2.cleanup();
 });
@@ -328,7 +366,7 @@ await ok('dialog: stale apply/delete callbacks after close or unmount have no ef
   });
   globalThis.__tplGet = async () => { reads++; return { id: 't1' }; };
   window.confirm = () => { confirmations++; return true; };
-  const apply = m.btn('Apply')[0].onClick;
+  const apply = m.tplBtn('Apply')[0].onClick;
   const remove = m.c.root.findAll(el => el.type === 'button' && el.props.className?.includes('hover:text-red-600'))[0].props.onClick;
   try {
     await act(async () => { m.c.update(React.createElement(Dialog, {
