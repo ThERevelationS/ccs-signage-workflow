@@ -12,7 +12,7 @@ import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
-import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
+import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner.jsx";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import {
   AlertDialog,

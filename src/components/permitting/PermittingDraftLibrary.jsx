@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import PermitWorkflowDesigner from './PermitWorkflowDesigner';
+import PermitWorkflowDesigner from './PermitWorkflowDesigner.jsx';
 import { PLANNING_REVIEW_DECISIONS, PLANNING_FOLLOW_UP_AREAS, planningReviewDecisionLabel } from './workflowPlanningReview.mjs';
 import { savedDraftReviewView } from './savedDraftReviewFilters.mjs';
 import { staffEntities } from "@/components/staff/staffEntities";

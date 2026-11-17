@@ -40,7 +40,7 @@ import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
 import JurisdictionRequirements from "./JurisdictionRequirements";
 import SourceMonitorPanel from "./SourceMonitorPanel";
 import DocumentRepositoryBrowser from './DocumentRepositoryBrowser';
-import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
+import PermitWorkflowDesigner from "./PermitWorkflowDesigner.jsx";
 import { createElectricalPlanningHandoff } from "./permitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";

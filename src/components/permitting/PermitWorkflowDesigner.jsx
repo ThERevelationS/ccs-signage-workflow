@@ -16,7 +16,7 @@ import PermittingDraftHistory from "./PermittingDraftHistory";
 import WorkflowSourceEvidenceDialog from "./WorkflowSourceEvidenceDialog";
 import WorkflowReviewPacket from "./WorkflowReviewPacket";
 import ElectricalOfficeResponseContext from "./ElectricalOfficeResponseContext";
-import WorkflowPlanningReview from "./WorkflowPlanningReview";
+import WorkflowPlanningReview from "./WorkflowPlanningReview.jsx";
 import { editPlanningReview, invalidatePlanningReview, planningReviewIssues, planningReviewSummary } from "./workflowPlanningReview.mjs";
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];

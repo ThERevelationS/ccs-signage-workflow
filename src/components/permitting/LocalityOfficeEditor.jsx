@@ -1,6 +1,6 @@
 import OfficeRescanButton from "./OfficeRescanButton";
 import OpenNowBadge from "./OpenNowBadge";
-import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence";
+import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence.jsx";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,5 +1,5 @@
-import OfficeResearchResponses from './OfficeResearchResponses';
-import ElectricalOfficeInquiry from './ElectricalOfficeInquiry';
+import OfficeResearchResponses from './OfficeResearchResponses.jsx';
+import ElectricalOfficeInquiry from './ElectricalOfficeInquiry.jsx';
 import { Button } from '@/components/ui/button';
 import { officeResearchChecklist, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';
 import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog';

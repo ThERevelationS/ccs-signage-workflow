@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import OfficeRoleOverview from "./OfficeRoleOverview";
 import ElectricalResearchTasks from "./ElectricalResearchTasks";
-import OfficeResearchIdentityComparison from "./OfficeResearchIdentityComparison";
+import OfficeResearchIdentityComparison from "./OfficeResearchIdentityComparison.jsx";
 import { officeResearchChecklist, officeResearchFieldLabels } from "../../../base44/shared/permittingOfficeResearch.mjs";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import { updateOfficeResearchDraft } from "./officeResearchDraftEditing.mjs";
