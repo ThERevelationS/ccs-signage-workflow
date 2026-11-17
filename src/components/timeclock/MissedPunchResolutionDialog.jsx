@@ -25,6 +25,7 @@ export default function MissedPunchResolutionDialog({
   error = "",
   onMissedClockOut,
   onWorkedThrough,
+  onCancel,
 }) {
   const [claimedClockOut, setClaimedClockOut] = useState("");
   const [localError, setLocalError] = useState("");
@@ -53,12 +54,11 @@ export default function MissedPunchResolutionDialog({
   const validClockIn = entry?.clock_in && formatCompanyDateTime(entry.clock_in) !== "Invalid time";
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onCancel?.(); }}>
       <DialogContent
         className="max-w-xl border-2 border-amber-300 bg-white shadow-2xl dark:border-amber-700 dark:bg-slate-950"
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <DialogHeader>
           <div className="mb-2 flex items-center gap-3">

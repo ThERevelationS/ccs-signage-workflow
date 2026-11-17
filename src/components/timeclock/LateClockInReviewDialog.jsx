@@ -23,6 +23,7 @@ export default function LateClockInReviewDialog({
   error = "",
   onRecoverMissedClockIn,
   onClockInNow,
+  onCancel,
 }) {
   const [claimedClockIn, setClaimedClockIn] = useState("");
   const [localError, setLocalError] = useState("");
@@ -49,12 +50,11 @@ export default function LateClockInReviewDialog({
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onCancel?.(); }}>
       <DialogContent
         className="max-w-xl border-2 border-blue-300 bg-white shadow-2xl dark:border-blue-800 dark:bg-slate-950"
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <DialogHeader>
           <div className="mb-2 flex items-center gap-3">

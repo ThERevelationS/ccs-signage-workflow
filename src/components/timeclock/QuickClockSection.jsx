@@ -1870,6 +1870,7 @@ export default function QuickClockSection({
         error={punchResolutionError}
         onMissedClockOut={handleMissedClockOutResolution}
         onWorkedThrough={handleWorkedThroughResolution}
+        onCancel={resetState}
       />
 
       <LateClockInReviewDialog
@@ -1880,6 +1881,7 @@ export default function QuickClockSection({
         error={lateClockInError}
         onRecoverMissedClockIn={handleRecoverMissedClockIn}
         onClockInNow={handleLateClockInClockInNow}
+        onCancel={resetState}
       />
 
       <MissedClockInDialog
