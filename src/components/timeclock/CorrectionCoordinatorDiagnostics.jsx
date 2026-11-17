@@ -188,7 +188,7 @@ export default function CorrectionCoordinatorDiagnostics({
     }
     setResult({ token: sessionToken, status: "loading", data: null, error: "", checkedAt: null });
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_correction_gate_diagnostics", session_token: sessionToken,
       });
       const data = response?.data || response;

@@ -297,7 +297,7 @@ export default function WorkPauseOverlay({
     setResumeBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "work_pause_resume",
         request_id: requestId,
         ...credentialPayload,

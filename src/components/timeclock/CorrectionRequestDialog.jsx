@@ -117,7 +117,7 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         ...payload,
         session_token: sessionToken,
         request_id: activeRequestId,

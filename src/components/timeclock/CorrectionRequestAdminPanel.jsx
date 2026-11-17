@@ -78,7 +78,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
     setLoading(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "list_correction_requests",
         session_token: sessionToken,
         scope: "admin",
@@ -177,7 +177,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", payload);
+      const response = await base44.functions.invoke("timeClockActionV2", payload);
       const data = response?.data || response;
       if (!data?.success) {
         const serverError = new Error(data?.error || "The manager decision was not confirmed by the server.");
@@ -246,7 +246,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
     const failed = [];
     for (const request of requests.filter((r) => checkedIds.has(r.id))) {
       try {
-        const response = await base44.functions.invoke("timeClockAction", {
+        const response = await base44.functions.invoke("timeClockActionV2", {
           action: "review_correction_request",
           session_token: sessionToken,
           target_email: request.user_email,

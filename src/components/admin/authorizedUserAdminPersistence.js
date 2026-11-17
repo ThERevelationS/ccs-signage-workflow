@@ -143,20 +143,28 @@ export async function updateAuthorizedUserAdmin({ record, nextFields, sessionTok
 }
 
 // Face enrollment: descriptors never leave the backend (staffDataRead denylist),
-// so the stored set is merged server-side in manageAuthorizedUsers.enroll_face.
+// so the stored set is merged server-side. Uses the standalone enrollFaceAction —
+// the manageAuthorizedUsers copy is admin-gated, which would block employees
+// self-enrolling from the Time Clock settings.
 // Returns { added, stored, dropped, total } from the verified write.
 export async function enrollFaceDescriptorsAdmin({ record, descriptors, sessionToken } = {}) {
   if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving face data.");
   if (!Array.isArray(descriptors) || descriptors.length === 0) {
     throw new Error("No face captures were supplied for enrollment.");
   }
-  const result = await invokeAdminUsers({
-    action: "enroll_face",
-    id: record.id,
-    email: record.email,
-    face_descriptors: descriptors,
-    session_token: requireSessionToken(sessionToken),
-  });
+  let result;
+  try {
+    const response = await base44.functions.invoke("enrollFaceAction", {
+      id: record.id,
+      email: record.email,
+      face_descriptors: descriptors,
+      session_token: requireSessionToken(sessionToken),
+    });
+    result = response?.data || response;
+    if (result?.error) throw new Error(result.error);
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Face enrollment could not be completed safely.");
+  }
   if (!result?.success) throw new Error("Face enrollment could not be verified.");
   return result;
 }

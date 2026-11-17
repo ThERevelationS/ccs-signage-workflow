@@ -46,7 +46,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
     setLoading(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "list_time_off_requests",
         session_token: sessionToken,
         scope: "admin",
@@ -114,7 +114,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", payload);
+      const response = await base44.functions.invoke("timeClockActionV2", payload);
       const data = response?.data || response;
       if (!data?.success) {
         const serverError = new Error(data?.error || "The time-off decision was not confirmed by the server.");

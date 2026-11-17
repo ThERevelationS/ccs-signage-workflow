@@ -222,7 +222,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
   const ackAdminNote = async (note) => {
     if (!sessionToken || !note?.id || !note?.updated_date) return;
     try {
-      const r = await base44.functions.invoke("timeClockAction", {
+      const r = await base44.functions.invoke("timeClockActionV2", {
         action: "acknowledge_admin_note",
         session_token: sessionToken,
         note_id: note.id,
@@ -303,7 +303,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     autoReviewRan.current = true;
     (async () => {
       try {
-        const res = await base44.functions.invoke("timeClockAction", {
+        const res = await base44.functions.invoke("timeClockActionV2", {
           action: "admin_auto_review", session_token: sessionToken, request_id: newRequestId(),
         });
         const d = functionData(res);
@@ -324,7 +324,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
       // One invoke for the whole panel — the backend pages each collection
       // internally, so a single rate-limit retry covers the entire load
       // instead of eight independent calls each burning one.
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_load_all",
         session_token: sessionToken,
       });
@@ -600,7 +600,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
         setCorrectionRequestId(requestId);
         persistAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
       }
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_correct_entry",
         session_token: sessionToken,
         target_email: editingEntryBaseline.user_email,
@@ -670,7 +670,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     let loadNotice = "";
     if (entry?.id && sessionToken) {
       try {
-        const res = await base44.functions.invoke("timeClockAction", {
+        const res = await base44.functions.invoke("timeClockActionV2", {
           action: "admin_get_entry", session_token: sessionToken,
           target_email: entry.user_email, entry_id: entry.id, request_id: newRequestId(),
         });
@@ -718,7 +718,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     const failed = [];
     for (const entry of cleanReviewEntries) {
       try {
-        const response = await base44.functions.invoke("timeClockAction", {
+        const response = await base44.functions.invoke("timeClockActionV2", {
           action: "admin_set_entry_approval",
           session_token: sessionToken,
           target_email: entry.user_email,
@@ -750,7 +750,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     let failed = 0;
     for (const entry of old) {
       try {
-        const response = await base44.functions.invoke("timeClockAction", {
+        const response = await base44.functions.invoke("timeClockActionV2", {
           action: "admin_archive_entry",
           session_token: sessionToken,
           target_email: entry.user_email,
@@ -812,7 +812,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     setApprovalRetryPayload(frozenPayload);
     setPendingApprovalRecovery(frozenPayload);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_set_entry_approval",
         session_token: sessionToken,
         target_email: frozenPayload.target_email,
@@ -867,7 +867,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     const reason = releasing ? "" : (window.prompt("Payroll hold reason", "Under review") || "").slice(0, 300);
     if (!releasing && !reason) return;
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "toggle_payroll_hold", session_token: sessionToken,
         request_id: newRequestId(), entry_id: entry.id,
         expected_updated_date: entry.updated_date,
@@ -910,7 +910,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
         setArchiveRequestId(requestId);
         persistAdminRequestId("admin_archive_entry", entry.id, requestId);
       }
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_archive_entry",
         session_token: sessionToken,
         target_email: entry.user_email,
@@ -966,7 +966,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
         setRepairRequestId(requestId);
         persistAdminRequestId("admin_repair_state", state.id, requestId);
       }
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "admin_repair_state",
         session_token: sessionToken,
         request_id: requestId,
@@ -1067,7 +1067,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
     // Prefer the backend export - it carries cost codes, union locals,
     // certified flags, and excludes payroll_hold entries authoritatively.
     try {
-      const res = await base44.functions.invoke("timeClockAction", { action: "payroll_export", from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd"), session_token: sessionToken, scope: "admin", request_id: newRequestId() });
+      const res = await base44.functions.invoke("timeClockActionV2", { action: "payroll_export", from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd"), session_token: sessionToken, scope: "admin", request_id: newRequestId() });
       const data = res?.data || res;
       if (data?.success === true && Array.isArray(data.rows)) {
         const rows = ["Employee,Email,Date,Regular Hours,OT Hours,Total Hours,Cost Code,Union Local,Certified,Jobs"];
@@ -1517,7 +1517,7 @@ export default function TimeClockAdmin({ view = "entries" }) {
                     if (!parsed?.ok || new Date(parsed.iso).getTime() <= new Date(entry.clock_in).getTime()) { skipped++; continue; }
                     try {
                       const rid = newRequestId();
-                      const res = await base44.functions.invoke("timeClockAction", {
+                      const res = await base44.functions.invoke("timeClockActionV2", {
                         action: "admin_correct_entry", session_token: sessionToken,
                         target_email: entry.user_email, request_id: rid, entry_id: entry.id,
                         expected_updated_date: entry.updated_date, reason: bulkCloseReason.trim(),

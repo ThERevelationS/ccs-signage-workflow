@@ -253,7 +253,7 @@ export default function PayPeriodManager({
 
   const invoke = async (payload) => {
     try {
-      const response = await base44.functions.invoke("timeClockAction", payload);
+      const response = await base44.functions.invoke("timeClockActionV2", payload);
       const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "Pay-period action was not confirmed.");

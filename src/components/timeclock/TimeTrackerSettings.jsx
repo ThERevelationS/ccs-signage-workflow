@@ -188,7 +188,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
     setLoading(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "time_tracker_prefs_get",
         session_token: sessionToken,
         target_email: email,
@@ -223,7 +223,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
     setError("");
     setSavedAt(0);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "time_tracker_prefs_update",
         session_token: sessionToken,
         target_email: email,

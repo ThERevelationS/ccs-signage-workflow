@@ -53,7 +53,7 @@ export default function CurrentWorkCard({
     let cancelled = false;
     (async () => {
       try {
-        const res = await base44.functions.invoke("timeClockAction", { action: "my_labor_history", session_token: sessionToken, request_id: crypto.randomUUID() });
+        const res = await base44.functions.invoke("timeClockActionV2", { action: "my_labor_history", session_token: sessionToken, request_id: crypto.randomUUID() });
         const data = res?.data || res;
         if (!cancelled && data?.success === true && Array.isArray(data.recent)) setRecentJobs(data.recent);
       } catch {}
