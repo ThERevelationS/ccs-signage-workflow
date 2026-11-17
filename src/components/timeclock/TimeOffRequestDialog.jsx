@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { base44 } from "@/api/base44Client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,6 +182,7 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, ses
             <Calendar className="w-5 h-5 text-blue-600" />
             {existingRequest ? "Edit Time Off Request" : "Request Time Off"}
           </DialogTitle>
+          <DialogDescription className="sr-only">Submit a new time-off request for approval.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

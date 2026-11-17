@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
   UserPlus, 
@@ -167,6 +167,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
             <UserPlus className="w-5 h-5 text-purple-600" />
             Enroll Face for {user?.full_name || user?.email}
           </DialogTitle>
+          <DialogDescription className="sr-only">Capture camera images and save face descriptors for clock-in verification.</DialogDescription>
         </DialogHeader>
 
         {saved ? (

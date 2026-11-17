@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, CalendarRange, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -529,7 +529,7 @@ export default function PayPeriodManager({
 
       <Dialog open={!!historyPeriod} onOpenChange={(open) => { if (!open && !historyLoading) { setHistoryPeriod(null); setHistoryResult(null); } }}>
         <DialogContent className="clay-card border-none max-w-2xl">
-          <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle><DialogDescription className="sr-only">Browse previously finalized pay-period records.</DialogDescription></DialogHeader>
           {historyLoading ? (
             <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain???</div>
           ) : historyResult?.verified ? (
@@ -718,7 +718,7 @@ export default function PayPeriodManager({
 
       <Dialog open={showCreate} onOpenChange={(open) => { if (!busy) setShowCreate(open); }}>
         <DialogContent className="clay-card border-none max-w-lg">
-          <DialogHeader><DialogTitle>Create Pay Period</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Create Pay Period</DialogTitle><DialogDescription className="sr-only">Define a new pay-period range for payroll.</DialogDescription></DialogHeader>
           <div className="space-y-4">
             <div><Label>Label</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Example: Sept 1???15" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -738,6 +738,7 @@ export default function PayPeriodManager({
         <DialogContent className="clay-card border-none max-w-lg">
           <DialogHeader>
             <DialogTitle>{actionDecision === "review" ? "Begin Pay-Period Review" : actionDecision === "finalize" ? "Finalize Pay Period" : "Reopen Finalized Pay Period"}</DialogTitle>
+            <DialogDescription className="sr-only">Confirm the selected pay-period action.</DialogDescription>
           </DialogHeader>
           {actionPeriod && (
             <div className="space-y-4">

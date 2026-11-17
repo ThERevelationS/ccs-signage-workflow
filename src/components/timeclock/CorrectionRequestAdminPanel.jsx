@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -381,7 +381,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy && !retryingSelected) { setSelected(null); setRetryReview(null); } }}>
         <DialogContent className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{selected?.request_kind === "missed_clock_out" ? "Review Missed Clock Out" : "Review Time Correction"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{selected?.request_kind === "missed_clock_out" ? "Review Missed Clock Out" : "Review Time Correction"}</DialogTitle><DialogDescription className="sr-only">Review an employee time-correction request and approve or reject it.</DialogDescription></DialogHeader>
           {selected && (
             <div className="space-y-4">
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 flex gap-2 text-sm text-amber-900">

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Ban, CalendarOff, CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -211,7 +211,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy && !retryingSelected) { setSelected(null); setRetryDecision(null); } }}>
         <DialogContent className="clay-card border-none max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Review Time-Off Request</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Review Time-Off Request</DialogTitle><DialogDescription className="sr-only">Review an employee time-off request and approve or reject it.</DialogDescription></DialogHeader>
           {selected && (
             <div className="space-y-4">
               <div>

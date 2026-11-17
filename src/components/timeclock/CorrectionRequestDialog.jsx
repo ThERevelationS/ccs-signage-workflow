@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -157,7 +157,7 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next); }}>
       <DialogContent className="clay-card border-none max-w-lg">
-        <DialogHeader><DialogTitle>Request Time Correction</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Request Time Correction</DialogTitle><DialogDescription className="sr-only">Submit a request to correct one of your recorded punches.</DialogDescription></DialogHeader>
         <div className="space-y-4">
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 flex gap-2">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Layers, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   formatCompanyDateTime,
   formatMinutes,
@@ -44,6 +44,7 @@ export default function WorkDayGroupDialog({
             <Layers className="w-5 h-5 text-blue-600" />
             Same work day{userName ? ` - ${userName}` : ""}?
           </DialogTitle>
+          <DialogDescription className="sr-only">Confirm whether the listed punches belong to the same work day.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">

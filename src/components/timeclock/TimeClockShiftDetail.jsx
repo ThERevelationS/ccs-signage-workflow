@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,6 +166,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
               </Badge>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">Inspect the punches and details of a recorded shift.</DialogDescription>
         </DialogHeader>
 
         <div className="rounded-xl border bg-gray-50 p-4">

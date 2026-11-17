@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -36,7 +36,7 @@ export default function AdminNoteDialog({
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!busy && !next) onCancel?.(); }}>
       <DialogContent className="clay-card border-none max-w-md">
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><MessageSquare className="w-5 h-5 text-slate-600" /> Note to admin{userName ? ` - ${userName}` : ""}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><MessageSquare className="w-5 h-5 text-slate-600" /> Note to admin{userName ? ` - ${userName}` : ""}</DialogTitle><DialogDescription className="sr-only">Send a private note to the Time Clock administrators.</DialogDescription></DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
             Send a message straight to the Time Clock admins. It does not change any of your punches - use the correction buttons on your Time Clock page for that.
