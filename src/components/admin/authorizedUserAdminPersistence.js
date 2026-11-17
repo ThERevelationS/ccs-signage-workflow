@@ -142,6 +142,25 @@ export async function updateAuthorizedUserAdmin({ record, nextFields, sessionTok
   return result.record;
 }
 
+// Face enrollment: descriptors never leave the backend (staffDataRead denylist),
+// so the stored set is merged server-side in manageAuthorizedUsers.enroll_face.
+// Returns { added, stored, dropped, total } from the verified write.
+export async function enrollFaceDescriptorsAdmin({ record, descriptors, sessionToken } = {}) {
+  if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving face data.");
+  if (!Array.isArray(descriptors) || descriptors.length === 0) {
+    throw new Error("No face captures were supplied for enrollment.");
+  }
+  const result = await invokeAdminUsers({
+    action: "enroll_face",
+    id: record.id,
+    email: record.email,
+    face_descriptors: descriptors,
+    session_token: requireSessionToken(sessionToken),
+  });
+  if (!result?.success) throw new Error("Face enrollment could not be verified.");
+  return result;
+}
+
 export async function updateAuthorizedUserHrAdmin({ record, hrData, sessionToken } = {}) {
   if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving HR data.");
   const result = await invokeAdminUsers({

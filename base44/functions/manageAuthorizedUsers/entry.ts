@@ -138,12 +138,33 @@ function cleanManagedFields(value: any) {
     }
     out.admin_permissions = perms;
   }
-
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
   if (out.role === 'user') out.can_order_export = false;
   if (out.role === 'user') out.can_self_approve_shifts = false;
   return out;
+}
+
+// Face enrollment writes descriptors server-side: biometric templates are on
+// the staffDataRead denylist, so the client can neither read the stored set
+// nor merge against it. The action loads the real record, merges the new
+// batch against it (same distance/cap rules as the capture dialog), and CAS-
+// writes the result so two enrollment sessions cannot clobber each other.
+const FACE_TEMPLATE_MERGE_DISTANCE = 0.10;
+const FACE_TEMPLATE_MAX = 40;
+
+function cleanFaceDescriptors(value: any) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 64
+      || !value.every((d: any) => Array.isArray(d) && d.length === 128 && d.every((n: any) => Number.isFinite(n)))) {
+    throw Object.assign(new Error('Face descriptors are invalid.'), { status: 400 });
+  }
+  return value.map((d: any[]) => d.map(Number));
+}
+
+function faceDistance(a: number[], b: number[]) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i += 1) { const d = a[i] - b[i]; sum += d * d; }
+  return Math.sqrt(sum);
 }
 
 async function loadTarget(AuthorizedEmail: any, id: string, email: string) {
@@ -705,6 +726,47 @@ Deno.serve(async (req) => {
         });
       } catch { /* audit logging is best-effort — never block the save */ }
       return Response.json({ success: true, record: adminUserView(saved) });
+    }
+
+    if (action === 'enroll_face') {
+      const batch = cleanFaceDescriptors(body?.face_descriptors);
+      const stored = (Array.isArray(current?.face_descriptors) ? current.face_descriptors : [])
+        .filter((v: any) => Array.isArray(v) && v.length === 128 && v.every((n: any) => Number.isFinite(n)))
+        .map((v: any[]) => v.map(Number));
+      const merged = stored.slice();
+      let added = 0;
+      for (const d of batch) {
+        if (!merged.some((e) => faceDistance(e, d) < FACE_TEMPLATE_MERGE_DISTANCE)) {
+          merged.push(d);
+          added += 1;
+        }
+      }
+      const dropped = Math.max(0, merged.length - FACE_TEMPLATE_MAX);
+      const finalDescriptors = dropped ? merged.slice(dropped) : merged;
+      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+        entity: AuthorizedEmail,
+        user: { id, face_descriptors: stored },
+        nextFields: { face_descriptors: finalDescriptors },
+        guardFields: { email: current.email },
+        label: `Face enrollment for ${current.email}`,
+      });
+      try {
+        await base44.asServiceRole.entities.AdminAuditLog.create({
+          actor_email: actor?.email || 'unknown',
+          action: 'enroll_face',
+          target_email: current.email,
+          detail: `added ${added}, dropped ${dropped}, total ${finalDescriptors.length}`,
+          at: new Date().toISOString(),
+        });
+      } catch { /* audit logging is best-effort — never block the save */ }
+      return Response.json({
+        success: true,
+        added,
+        stored: stored.length,
+        dropped,
+        total: finalDescriptors.length,
+        record: adminUserView(saved),
+      });
     }
 
     if (action === 'update_hr') {
