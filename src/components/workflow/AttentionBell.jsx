@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Bell, Gift, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -172,14 +173,15 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
       <NotificationCenter open={open} onClose={() => setOpen(false)} onRefresh={runNow} />
       {/* Celebration/event toasts — new persisted notifications pop here on
           every page the bell renders on, including EstimatorQueues (#336). */}
-      {toasts.length > 0 && (
-        <span className="fixed bottom-4 right-4 z-[70] flex w-80 flex-col gap-2">
+      {toasts.length > 0 && createPortal(
+        <span className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-4 z-[70] flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 md:bottom-4">
           {toasts.map((t) => (
             <ToastCard key={t.id} notification={t}
               onOpen={() => { dismissToast(t.id); if (t.deep_link) navigate(t.deep_link); }}
               onDismiss={() => dismissToast(t.id)} />
           ))}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   );
