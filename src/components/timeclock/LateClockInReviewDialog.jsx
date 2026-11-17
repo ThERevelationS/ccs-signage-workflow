@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Clock3, Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 export default function LateClockInReviewDialog({
   open,
@@ -23,6 +23,7 @@ export default function LateClockInReviewDialog({
   error = "",
   onRecoverMissedClockIn,
   onClockInNow,
+  onCancel,
 }) {
   const [claimedClockIn, setClaimedClockIn] = useState("");
   const [localError, setLocalError] = useState("");
@@ -49,12 +50,11 @@ export default function LateClockInReviewDialog({
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onCancel?.(); }}>
       <DialogContent
         className="max-w-xl border-2 border-blue-300 bg-white shadow-2xl dark:border-blue-800 dark:bg-slate-950"
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <DialogHeader>
           <div className="mb-2 flex items-center gap-3">
@@ -75,22 +75,22 @@ export default function LateClockInReviewDialog({
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/20">
             <div className="flex items-center gap-2 font-semibold text-amber-950 dark:text-amber-100">
               <AlertTriangle className="h-4 w-4" />
-              Yes — I forgot to Clock In
+              Yes ??? I forgot to Clock In
             </div>
             <Label htmlFor="missed-clock-in-time" className="mt-3 block text-sm text-slate-800 dark:text-slate-100">
               What time did you actually arrive today? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
-            <Input
-              id="missed-clock-in-time"
-              type="datetime-local"
+            <CcsDateTimeField
               value={claimedClockIn}
-              onChange={(event) => {
-                setClaimedClockIn(event.target.value);
+              onChange={(e) => {
+                setClaimedClockIn(e.target.value);
                 setLocalError("");
               }}
               disabled={busy}
-              className="mt-2 bg-white dark:bg-slate-900"
-            />
+              min={new Date(new Date().setHours(0, 0, 0, 0))}
+              max={new Date()}
+              id="missed-clock-in-time"
+              />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               Enter the actual shop/company arrival time in {TIME_CLOCK_COMPANY_TIME_LABEL}. We will reconstruct the missing start from your answer, mark the shift Needs Review, keep a full audit record,
               and take you directly to the normal Clock Out screen so you can reconcile lunch and job time.
@@ -107,7 +107,7 @@ export default function LateClockInReviewDialog({
           </div>
 
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-800 dark:bg-emerald-950/20">
-            <div className="font-semibold text-emerald-900 dark:text-emerald-100">No — I am actually starting work now</div>
+            <div className="font-semibold text-emerald-900 dark:text-emerald-100">No ??? I am actually starting work now</div>
             <p className="mt-1 text-xs text-emerald-800 dark:text-emerald-200">
               Use the current server time as a normal Clock In. No earlier time will be added.
             </p>

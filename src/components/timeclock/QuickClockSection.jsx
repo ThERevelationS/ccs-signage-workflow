@@ -4,32 +4,43 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  CalendarX2,
   Camera,
   Clock,
   Clock3,
   Loader2,
-  Play,
+  LogOut,
+  MessageSquare,
   QrCode,
-  Square,
   User,
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
+import MissedShiftDialog from "@/components/timeclock/MissedShiftDialog";
+import AdminNoteDialog from "@/components/timeclock/AdminNoteDialog";
+import WorkDayGroupDialog from "@/components/timeclock/WorkDayGroupDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import CrystalShiftButton from "@/components/timeclock/CrystalShiftButton";
 import {
-  FACE_QUALITY,
   createFaceMatcher,
-  createMatchVoter,
-  detectDetailedFace,
-  estimateFaceBrightness,
+  createFaceScanSession,
   loadFaceModelsOnce,
-  passesFaceQualityGate,
+  supportsInlineQrDetection,
 } from '@/components/timeclock/faceScanRuntime';
-import { Html5Qrcode } from "html5-qrcode";
+import {
+  IDENTIFY_CAMERA_BLURB,
+  IDENTIFY_QR_BADGE_BLURB,
+  IDENTIFY_QR_BADGE_BLURB_FACE,
+  IDENTIFY_QR_ONLY_BLURB,
+  IDENTIFY_QR_BUTTON_PROMPT,
+} from '@/components/timeclock/timeClockIdentifyCopy';
+// html5-qrcode (~300KB) loads on demand when QR mode is picked — most
+// clock-ins use face or PIN, so it isn't fetched at page load.
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -37,6 +48,16 @@ function newRequestId() {
   }
   return `tc-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 }
+
+const FACE_SCAN_STATUS_TEXT = {
+  "no-face": "Look directly at the camera in even lighting.",
+  "low-quality": "Move closer and face the light for a clearer scan.",
+  dim: "Lighting is dim. Move to better light or face the light source.",
+  "no-match": "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.",
+  verifying: "Hold still - verifying your identity...",
+  liveness: "Blink or turn your head slightly to prove you're really here.",
+  ambiguous: "Two faces are matching - hold your badge up or step back so only you are in frame.",
+};
 
 function apiErrorFrom(err, fallback) {
   const data = err?.response?.data;
@@ -159,6 +180,7 @@ export default function QuickClockSection({
   const [breakStatus, setBreakStatus] = useState("working");
   const [activeBreak, setActiveBreak] = useState(null);
   const [breakSummary, setBreakSummary] = useState({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+  const paidBreakRemaining = Math.max(0, 20 - (breakSummary?.paid_minutes || 0)); // 20m paid allowance policy
   const [workPauseAllowed, setWorkPauseAllowed] = useState(false);
   const [workPauseStatus, setWorkPauseStatus] = useState("working");
   const [activeWorkPause, setActiveWorkPause] = useState(null);
@@ -169,9 +191,15 @@ export default function QuickClockSection({
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [crystalSuccess, setCrystalSuccess] = useState(null);
   const [persistenceError, setPersistenceError] = useState("");
   const [isRecognizing, setIsRecognizing] = useState(false);
-  const [recognitionMethod, setRecognitionMethod] = useState(null); // face | qr | manual
+  const [recognitionMethod, setRecognitionMethodRaw] = useState(null); // face | qr | manual
+  // Per-device preferred method - remembers how this kiosk usually identifies.
+  const setRecognitionMethod = (m) => {
+    setRecognitionMethodRaw(m);
+    if (m) { try { localStorage.setItem("ccs_kiosk_method", m); } catch {} }
+  };
   const [recognitionStatus, setRecognitionStatus] = useState("");
   const [authoritativeTransition, setAuthoritativeTransition] = useState(null);
   const [punchResolution, setPunchResolution] = useState(null);
@@ -179,15 +207,33 @@ export default function QuickClockSection({
   const [lateClockInReview, setLateClockInReview] = useState(null);
   const [lateClockInError, setLateClockInError] = useState("");
   const [missedClockInPrompt, setMissedClockInPrompt] = useState(false);
+  const [missedShiftPrompt, setMissedShiftPrompt] = useState(false);
+  const [missedShiftError, setMissedShiftError] = useState("");
+  const [adminNotePrompt, setAdminNotePrompt] = useState(false);
+  const [adminNoteError, setAdminNoteError] = useState("");
+  const [workDayPrompt, setWorkDayPrompt] = useState(null);
+  const [workDayError, setWorkDayError] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
 
   const videoRef = useRef(null);
+  const workDayDismissedRef = useRef(new Set());
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
-  const scanIntervalRef = useRef(null);
-  const faceDetectionBusyRef = useRef(false);
+  const faceScanSessionRef = useRef(null);
+  const qrLoopRef = useRef(0);
+  const healthCanvasRef = useRef(null);
+  const healthTimerRef = useRef(null);
+  const [cameraHealth, setCameraHealth] = useState("ok");
+  // Report health changes so the admin fleet view can flag kiosks that need
+  // a lens clean/reposition - throttled, fire-and-forget.
+  useEffect(() => {
+    if (cameraHealth === "ok") return;
+    const key = (() => { try { return localStorage.getItem("ccs_kiosk_device_id") || ""; } catch { return ""; } })();
+    if (!key) return;
+    invokeTimeClock({ action: "report_camera_health", device_key: key, health: cameraHealth }).catch(() => {});
+  }, [cameraHealth]);
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
@@ -196,6 +242,25 @@ export default function QuickClockSection({
   matchFaceRef.current = matchFace;
   const credentialRef = useRef(null);
   const requestRef = useRef({});
+  const lastPunchRef = useRef({ email: "", at: 0 });
+  // First-run kiosk tutorial strip; dismisses per device forever.
+  const [showKioskTutorial, setShowKioskTutorial] = useState(() => {
+    try { return localStorage.getItem("ccs_kiosk_tutorial_seen") !== "1"; } catch { return false; }
+  });
+  const dismissKioskTutorial = () => {
+    setShowKioskTutorial(false);
+    try { localStorage.setItem("ccs_kiosk_tutorial_seen", "1"); } catch {}
+  };
+  // Camera preview orientation - mirrored reads naturally for most, but
+  // some users prefer the raw feed. Persisted per kiosk device.
+  const [cameraMirrored, setCameraMirrored] = useState(() => {
+    try { return localStorage.getItem("ccs_kiosk_camera_mirror") !== "0"; } catch { return true; }
+  });
+  const toggleCameraMirror = () => setCameraMirrored((v) => {
+    const next = !v;
+    try { localStorage.setItem("ccs_kiosk_camera_mirror", next ? "1" : "0"); } catch {}
+    return next;
+  });
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
@@ -276,14 +341,69 @@ export default function QuickClockSection({
     };
   }, []);
 
+  // Abandoned identify flows must not hold the kiosk open: after 90s in
+  // identify mode, return to the idle card automatically.
+  useEffect(() => {
+    if (!isRecognizing) return undefined;
+    const timer = setTimeout(() => { void resetState(); }, 90000);
+    return () => clearTimeout(timer);
+  }, [isRecognizing]);
+
   const showNotification = (type, userName, timestamp) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     setNotification({ type, userName, time: format(new Date(timestamp), "h:mm a") });
+    setCrystalSuccess(type === "in" ? "in" : "out");
+    setTimeout(() => setCrystalSuccess(null), 1400);
+    if (!quietNow()) playSoundEffect(type === "in" ? "chime" : "ding");
     notificationTimerRef.current = setTimeout(() => setNotification(null), 5000);
   };
 
+  // Device geo stamp - captured in the background, attached to punches when fresh.
+  const geoCacheRef = useRef({ at: 0, data: null });
+  const refreshGeo = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { geoCacheRef.current = { at: Date.now(), data: { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy || 0) } }; },
+      () => {},
+      { timeout: 4000, maximumAge: 600000 },
+    );
+  };
+  useEffect(() => { refreshGeo(); const t = setInterval(refreshGeo, 300000); return () => clearInterval(t); }, []);
+
+  // --- Kiosk comfort features (localStorage-gated, no backend) ---
+  const [dimmed, setDimmed] = useState(false);
+  const dimTimerRef = useRef(null);
+  const wake = () => { setDimmed(false); if (dimTimerRef.current) clearTimeout(dimTimerRef.current); dimTimerRef.current = setTimeout(() => setDimmed(true), 120000); };
+  useEffect(() => { wake(); const h = () => wake(); window.addEventListener("pointerdown", h); window.addEventListener("keydown", h); return () => { window.removeEventListener("pointerdown", h); window.removeEventListener("keydown", h); if (dimTimerRef.current) clearTimeout(dimTimerRef.current); }; }, []);
+  const [voiceOn] = useState(() => { try { return localStorage.getItem("ccs_kiosk_voice") === "1"; } catch { return false; } });
+  useEffect(() => { if (voiceOn && recognitionStatus && "speechSynthesis" in window) { try { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(recognitionStatus)); } catch {} } }, [recognitionStatus, voiceOn]);
+  const [faceFails, setFaceFails] = useState(() => { try { return Number(localStorage.getItem("ccs_face_fails") || 0); } catch { return 0; } });
+  const [holiday] = useState(() => { const d = new Date(); const key = d.toISOString().slice(0, 10); const map = { "2026-01-01": "New Year's Day", "2026-07-04": "Independence Day", "2026-11-26": "Thanksgiving", "2026-12-25": "Christmas" }; return map[key] || null; });
+  const quietNow = () => { try { const w = localStorage.getItem("ccs_kiosk_quiet"); if (!w) return false; const [a, b] = w.split("-").map(Number); const h = new Date().getHours(); return a <= b ? h >= a && h < b : h >= a || h < b; } catch { return false; } };
+  const [gloveMode] = useState(() => { try { return localStorage.getItem("ccs_kiosk_glove") === "1"; } catch { return false; } });
+
+  // Device heartbeat - register this kiosk so the admin sees it in the
+  // device list with a live last_seen stamp. Id is stable per browser.
+  useEffect(() => {
+    try {
+      let key = localStorage.getItem("ccs_kiosk_device_id");
+      if (!key) { key = `kiosk-${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem("ccs_kiosk_device_id", key); }
+      const regPayload = () => ({ action: "register_device", device_key: key, device_name: `Kiosk ${key.slice(-4)}`, scope: "kiosk", request_id: `devreg-${Date.now().toString(36)}` });
+      base44.functions.invoke("timeClockAction", regPayload()).catch(() => {
+        // First attempt lost (429/offline) — retry once after the mount burst; a
+        // failed registration silently drops this kiosk from the device list.
+        setTimeout(() => base44.functions.invoke("timeClockAction", regPayload()).catch((e) => console.warn("Kiosk device registration failed:", e?.message || e)), 15000);
+      });
+    } catch {}
+  }, []);
+  const geoStamp = () => (geoCacheRef.current.data && Date.now() - geoCacheRef.current.at < 600000 ? geoCacheRef.current.data : null);
+
   const invokeTimeClock = async (payload) => {
     cancelDisplayReset();
+    if (["clock_in", "clock_out", "break_start", "labor_start", "missed_clock_in"].includes(payload?.action) && !payload.geo) {
+      const g = geoStamp();
+      if (g) payload = { ...payload, geo: g };
+    }
     if (payload?.action !== "status" && payload?.action !== "labor_allocation_preview") {
       workViewEpochRef.current += 1;
     }
@@ -345,11 +465,11 @@ export default function QuickClockSection({
 
   const stopFaceCamera = () => {
     faceRunRef.current += 1;
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-    faceDetectionBusyRef.current = false;
+    qrLoopRef.current += 1;
+    if (healthTimerRef.current) clearTimeout(healthTimerRef.current);
+    setCameraHealth("ok");
+    faceScanSessionRef.current?.stop();
+    faceScanSessionRef.current = null;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -520,6 +640,11 @@ export default function QuickClockSection({
       if (!isCurrentRefresh()) return null;
       const status = response?.data || response;
       if (!status?.success) throw new Error(status?.error || "Authoritative Time Clock status could not be restored.");
+      const liveWorkDayPrompt = status?.work_day_prompt?.signature ? status.work_day_prompt : null;
+      if (liveWorkDayPrompt && !workDayDismissedRef.current.has(liveWorkDayPrompt.signature)) {
+        setWorkDayError("");
+        setWorkDayPrompt(liveWorkDayPrompt);
+      }
       const restored = applyAuthoritativeStatus(status, authoritativeSessionUser, { sessionToken: authoritativeSessionToken });
       const unresolvedPunchCount = Number(status?.unresolved_punch_review?.count || 0);
       const hasUnresolvedPunchReview = Number.isFinite(unresolvedPunchCount) && unresolvedPunchCount > 0;
@@ -615,6 +740,8 @@ export default function QuickClockSection({
     setLateClockInReview(null);
     setLateClockInError("");
     setMissedClockInPrompt(false);
+    setWorkDayPrompt(null);
+    setWorkDayError("");
     identifyIntentRef.current = "clock_in";
     setUsernameInput("");
     setManualPassword("");
@@ -639,6 +766,15 @@ export default function QuickClockSection({
   const performClockIn = async (user, credential) => {
     const email = user?.email;
     if (!email) throw new Error("Verified employee identity is missing an email address.");
+
+    // Client-side duplicate debounce: a fast double scan within 5s of a
+    // confirmed punch must not send a second request at all.
+    const normEmail = String(email).trim().toLowerCase();
+    if (lastPunchRef.current.email === normEmail && Date.now() - lastPunchRef.current.at < 5000) {
+      setRecognitionStatus("Already clocked in. Duplicate punch ignored.");
+      scheduleDisplayReset(3000);
+      return null;
+    }
 
     const clockScope = currentActionScope();
     const stillCurrent = () => clockScope === currentActionScope();
@@ -672,14 +808,28 @@ export default function QuickClockSection({
       setLaborSummary(data.labor_summary || { count: 0, total_minutes: 0 });
 
       if (data.status === "already_clocked_in") {
+        lastPunchRef.current = { email: normEmail, at: Date.now() };
         setActiveEntry(data.entry || null);
         setRecognitionStatus("Already clocked in. No duplicate entry was created.");
         scheduleDisplayReset(3000);
         return data;
       }
 
+      lastPunchRef.current = { email: normEmail, at: Date.now() };
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
-      setRecognitionStatus("Clock-in confirmed by server.");
+      const clockInPrompt = data.work_day_prompt?.signature ? data.work_day_prompt : null;
+      if (clockInPrompt && !workDayDismissedRef.current.has(clockInPrompt.signature)) {
+        setWorkDayError("");
+        setWorkDayPrompt(clockInPrompt);
+      }
+      const clockInAt = data.entry?.clock_in ? new Date(data.entry.clock_in) : new Date();
+      const lunchEta = new Date(clockInAt.getTime() + 4.5 * 3600000);
+      const schedStart = data.todays_schedule?.scheduled_start || data.todays_schedule?.start_time || "";
+      const early = schedStart ? (() => { const [sh, sm] = String(schedStart).split(":").map(Number); const sMin = sh * 60 + (sm || 0); const pMin = clockInAt.getHours() * 60 + clockInAt.getMinutes(); return sMin - pMin > 20 ? Math.round(sMin - pMin) : 0; })() : 0;
+      setRecognitionStatus(
+        `Clocked in at ${format(clockInAt, "h:mm a")} — lunch reminder ~${format(lunchEta, "h:mm a")}.` +
+        (early ? ` (${early}m ahead of your ${schedStart} schedule)` : "")
+      );
       setClockOutDismissed(data.entry?.id, true);
       scheduleDisplayReset(5000);
       return data;
@@ -710,12 +860,36 @@ export default function QuickClockSection({
       if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
 
       const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
+      if (identifyIntentRef.current === "missed_shift") {
+        identifyIntentRef.current = "clock_in";
+        setMissedShiftError("");
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Enter the shift that was missed.`);
+        setMissedShiftPrompt(true);
+        return;
+      }
+      if (identifyIntentRef.current === "admin_note") {
+        identifyIntentRef.current = "clock_in";
+        setAdminNoteError("");
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}.`);
+        setAdminNotePrompt(true);
+        return;
+      }
       if (resolvedStatus === "clocked_in") {
         if (identifyIntentRef.current === "missed_clock_in") {
           identifyIntentRef.current = "clock_in";
           setClockOutDismissed(status?.entry?.id, true);
           setShowClockOut(false);
-          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in - no missed Clock In to report.`);
+          return;
+        }
+        if (identifyIntentRef.current === "missed_clock_out") {
+          identifyIntentRef.current = "clock_in";
+          // Still-open shift that never tripped the stale flag - the audited
+          // missed-Clock-Out path only exists on flagged shifts, so this one
+          // is simply clocked out now.
+          setClockOutDismissed(status?.entry?.id, false);
+          setShowClockOut(true);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, this shift is still open - clock out now. For an older shift that ended wrong, request a correction on your Time Clock page.`);
           return;
         }
         // Deliberate identification while clocked in is the Clock Out path:
@@ -726,10 +900,21 @@ export default function QuickClockSection({
         return;
       }
       if (resolvedStatus === "punch_resolution") {
-        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
+        if (identifyIntentRef.current === "missed_clock_out") {
+          identifyIntentRef.current = "clock_in";
+          setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email} - tell us when you actually left and we'll send the fix to your manager.`);
+        } else {
+          setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
+        }
         return;
       }
       if (resolvedStatus === "transition") return;
+
+      if (identifyIntentRef.current === "missed_clock_out") {
+        identifyIntentRef.current = "clock_in";
+        setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, there's no open shift to fix. To correct a finished shift, use Request a correction on your Time Clock page.`);
+        return;
+      }
 
       if (identifyIntentRef.current === "missed_clock_in") {
         // The employee explicitly chose the missed Clock In flow; the
@@ -782,39 +967,36 @@ export default function QuickClockSection({
     }
   };
 
-  const startFaceMode = async () => {
+  const startCameraMode = async () => {
     await stopAllMedia();
     identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
-    setRecognitionMethod("face");
+    setRecognitionMethod("camera");
     setUsernameError("");
 
-    if (!authoritativeSessionToken) {
-      setRecognitionStatus("Face mode requires a signed-in employee or admin kiosk session. Use Secure QR or Username instead.");
-      return;
-    }
-    if (!canUseFace) {
-      setRecognitionStatus("No enrolled faces are available to this signed-in session. Use Secure QR or Username instead.");
-      return;
-    }
+    // Face runs only when a signed session + enrolled faces exist; QR always
+    // works. Either detector can identify the employee - no method selection.
+    const faceEnabled = Boolean(authoritativeSessionToken) && canUseFace;
 
     setRecognitionStatus("Starting camera...");
     const faceRun = faceRunRef.current;
     try {
       const [modelsReady, stream] = await Promise.all([
-        loadFaceModels(),
-        navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        faceEnabled ? loadFaceModels() : Promise.resolve(false),
+        Promise.race([
+          navigator.mediaDevices.getUserMedia({
+          video: (() => {
+            const pref = (() => { try { return localStorage.getItem("ccs_kiosk_camera_id"); } catch { return null; } })();
+            const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
+            return pref ? { ...base, deviceId: { exact: pref } } : { ...base, facingMode: "user" };
+          })(),
         }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Camera start timed out. Check that the camera is connected and permissions are granted.")), 12000)),
+        ]),
       ]);
       if (faceRun !== faceRunRef.current) {
         stream.getTracks().forEach((track) => track.stop());
-        return;
-      }
-      if (!modelsReady) {
-        stream.getTracks().forEach((track) => track.stop());
-        setRecognitionStatus("Face models could not load. Use Secure QR or Username instead.");
         return;
       }
 
@@ -824,48 +1006,96 @@ export default function QuickClockSection({
         await videoRef.current.play();
       }
       if (faceRun !== faceRunRef.current) return;
-      setRecognitionStatus("Look directly at the camera...");
 
-      const voter = createMatchVoter({ required: 3, window: 5 });
-      scanIntervalRef.current = setInterval(async () => {
-        if (!videoRef.current || faceDetectionBusyRef.current || recognitionLockedRef.current) return;
-        faceDetectionBusyRef.current = true;
-        try {
-          const detection = await detectDetailedFace(videoRef.current);
-          if (faceRun !== faceRunRef.current) return;
-          if (!detection || !passesFaceQualityGate(detection)) {
-            voter(null);
-            setRecognitionStatus(detection
-              ? "Move closer and face the light for a clearer scan."
-              : "Look directly at the camera in even lighting.");
+      // QR badge detection on the same stream - no second camera. Only
+      // TIMECLOCK2 badge payloads act; any other code in frame is ignored.
+      if (supportsInlineQrDetection()) {
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const qrRun = ++qrLoopRef.current;
+        const tick = async () => {
+          if (qrRun !== qrLoopRef.current || faceRun !== faceRunRef.current) return;
+          const v = videoRef.current;
+          if (v && v.readyState >= 2 && !recognitionLockedRef.current) {
+            try {
+              const codes = await detector.detect(v);
+              const hit = (codes || []).find((c) => String(c?.rawValue || "").startsWith("TIMECLOCK2:"));
+              if (hit) { void handleQrDecoded(hit.rawValue); return; }
+            } catch {}
+          }
+          setTimeout(tick, 350);
+        };
+        setTimeout(tick, 400);
+      }
+
+      // Camera health self-test - sample frame brightness every 5s and warn
+      // when the lens is dark/dirty so scan failures aren't silent.
+      const healthRun = faceRun;
+      const healthTick = () => {
+        if (healthRun !== faceRunRef.current) return;
+        const v = videoRef.current;
+        if (v && v.readyState >= 2) {
+          try {
+            const c = healthCanvasRef.current || (healthCanvasRef.current = document.createElement("canvas"));
+            c.width = 32; c.height = 24;
+            c.getContext("2d").drawImage(v, 0, 0, 32, 24);
+            const d = c.getContext("2d").getImageData(0, 0, 32, 24).data;
+            let sum = 0; for (let i = 0; i < d.length; i += 4) sum += (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11);
+            const brightness = sum / (d.length / 4);
+            setCameraHealth(brightness < 30 ? "dark" : brightness > 225 ? "blown" : "ok");
+          } catch {}
+        }
+        healthTimerRef.current = setTimeout(healthTick, 5000);
+      };
+      healthTimerRef.current = setTimeout(healthTick, 2000);
+
+      if (!faceEnabled || !modelsReady) {
+        const qrHint = supportsInlineQrDetection() ? IDENTIFY_QR_ONLY_BLURB : IDENTIFY_QR_BUTTON_PROMPT;
+        const faceHint = authoritativeSessionToken && !canUseFace ? " Face scan is unavailable right now - retrying in the background." : "";
+        setRecognitionStatus(qrHint + faceHint);
+        return;
+      }
+      setRecognitionStatus(IDENTIFY_CAMERA_BLURB);
+
+      // Same shared scan session as the reusable FaceRecognition component -
+      // one cadence, quality gate, brightness check, and voter for every
+      // face-recognition surface in the app.
+      const session = createFaceScanSession({
+        getVideo: () => videoRef.current,
+        matchFace: (descriptor) => findMatchingUser(descriptor),
+        isActive: () => !recognitionLockedRef.current,
+        onFrame: ({ status, winner, votes }) => {
+          if (faceRun !== faceRunRef.current) {
+            session.stop();
             return;
           }
-          const dim = estimateFaceBrightness(videoRef.current, detection.detection.box);
-          const matched = dim !== null && dim < FACE_QUALITY.minBrightness
-            ? null
-            : findMatchingUser(detection.descriptor);
-          const winner = voter(matched);
-          if (dim !== null && dim < FACE_QUALITY.minBrightness) {
-            setRecognitionStatus("Lighting is dim. Move to better light or face the light source.");
-          } else if (winner) {
-            await handleFaceRecognized(winner);
-          } else {
-            setRecognitionStatus(matched
-              ? "Hold still - verifying your identity..."
-              : "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+          if (status === "recognized" && winner) {
+            session.stop();
+            void handleFaceRecognized(winner);
+            return;
           }
-        } catch (err) {
-          console.warn("Face scan warning:", err);
-        } finally {
-          if (faceRun === faceRunRef.current) faceDetectionBusyRef.current = false;
-        }
-      }, 120);
+          setRecognitionStatus(status === "verifying" && votes?.required
+            ? `Hold still - verifying your identity... ${votes.count}/${votes.required}`
+            : FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
+        },
+      });
+      faceScanSessionRef.current = session;
+      session.start();
     } catch (err) {
       console.error("Camera error:", err);
       stopFaceCamera();
       setRecognitionStatus("Camera unavailable. Use Secure QR or Username instead.");
     }
   };
+
+  // The face roster loads async and can arrive after the camera is already
+  // open in QR-only mode (e.g. a transient entity-budget 429 delayed it). When
+  // it lands mid-session, start the face pass without making the user re-tap.
+  useEffect(() => {
+    if (canUseFace && isRecognizing && recognitionMethod === "camera" && !faceScanSessionRef.current?.isRunning?.()) {
+      void startCameraMode();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUseFace, isRecognizing, recognitionMethod]);
 
   const handleQrDecoded = async (decodedText) => {
     if (recognitionLockedRef.current) return;
@@ -885,12 +1115,13 @@ export default function QuickClockSection({
       await resolveVerifiedIdentity({ credential: { badgeCode: decodedText } });
     } catch {
       setIsRecognizing(true);
-      setRecognitionMethod("qr");
+      setRecognitionMethod("camera");
       recognitionLockedRef.current = false;
     }
   };
 
   const startQrScannerWithFacingMode = async (facingMode) => {
+    const { Html5Qrcode } = await import("html5-qrcode");
     const scanner = new Html5Qrcode("hybrid-qr-reader");
     qrScannerRef.current = scanner;
     await scanner.start(
@@ -910,9 +1141,7 @@ export default function QuickClockSection({
     setRecognitionStatus("Starting QR camera...");
     setUsernameError("");
 
-    const qrPrompt = canUseFace
-      ? "Show your face or scan your secure Time Clock QR badge."
-      : "Scan your secure Time Clock QR badge.";
+    const qrPrompt = canUseFace ? IDENTIFY_QR_BADGE_BLURB_FACE : IDENTIFY_QR_BADGE_BLURB;
     try {
       await startQrScannerWithFacingMode("environment");
       setRecognitionStatus(qrPrompt);
@@ -955,8 +1184,7 @@ export default function QuickClockSection({
     setActiveEntry(null);
     credentialRef.current = null;
     requestRef.current = {};
-    if (canUseFace) await startFaceMode();
-    else await startQrMode();
+    await startCameraMode();
   };
 
   const handleManualSubmit = async () => {
@@ -1212,7 +1440,7 @@ export default function QuickClockSection({
     }
   };
 
-  const handlePunchResolution = async ({ response, claimedClockOut = "" }) => {
+  const handlePunchResolution = async ({ response, claimedClockOut = "", skipClockIn = false }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Punch-resolution identity is no longer verified. Identify again before continuing.");
     }
@@ -1253,6 +1481,11 @@ export default function QuickClockSection({
       if (result?.punch_resolution_pending === true && result?.status === "clocked_out") {
         setPunchResolution(null);
         setActiveEntry(null);
+        if (skipClockIn) {
+          setRecognitionStatus("Missed Clock Out recorded and sent to manager review. You're clocked out — clock in whenever you're ready.");
+          scheduleDisplayReset(3000);
+          return result;
+        }
         setRecognitionStatus("Previous shift sent to manager review. Clocking you in now...");
         await performClockIn(result.user || user, credential);
         return result;
@@ -1274,8 +1507,8 @@ export default function QuickClockSection({
     }
   };
 
-  const handleMissedClockOutResolution = (claimedClockOut) =>
-    handlePunchResolution({ response: "missed_clock_out", claimedClockOut });
+  const handleMissedClockOutResolution = (claimedClockOut, { skipClockIn = false } = {}) =>
+    handlePunchResolution({ response: "missed_clock_out", claimedClockOut, skipClockIn });
 
   const handleWorkedThroughResolution = () =>
     handlePunchResolution({ response: "worked_through" });
@@ -1380,9 +1613,10 @@ export default function QuickClockSection({
       setWorkPauseSummary({ count: 0, total_minutes: 0 });
       setActiveLabor(null);
       setLaborSummary({ count: 0, total_minutes: 0 });
-      setShowClockOut(true);
+      setClockOutDismissed(result.entry?.id, true);
       showNotification("in", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Shift started from your reported arrival time. A manager will review this Clock In.");
+      scheduleDisplayReset(5000);
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest("report_missed_clock_in", email, requestId);
@@ -1392,6 +1626,129 @@ export default function QuickClockSection({
         setRecognitionStatus(err?.retrySameRequest
           ? "Missed Clock In may have been saved. Retry the same report to finish safely."
           : "Missed Clock In report is blocked. Review the message in the window.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
+  const handleReportMissedShift = async ({ claimed_clock_in, claimed_clock_out, lunch_minutes, reason }) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Missed-shift identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("report_missed_shift", email);
+    let actionEpoch = workViewEpochRef.current;
+    setMissedShiftError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "report_missed_shift",
+        request_id: requestId,
+        claimed_clock_in,
+        claimed_clock_out,
+        lunch_minutes,
+        reason,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      assertEmployeeAcknowledgement(result, email, "Missed shift report");
+      clearRequest("report_missed_shift", email, requestId);
+      if (result?.success !== true || !result?.entry?.id || result.entry.status !== "clocked_out") {
+        throw new Error("Missed shift report returned an unexpected response. Reload before continuing.");
+      }
+      // A poll bumping workViewEpoch mid-submit must not swallow a confirmed
+      // report — close + announce whenever the same user context still holds.
+      if (!stillCurrent()) return null;
+      setMissedShiftPrompt(false);
+      setMissedShiftError("");
+      setRecognitionStatus("Missed shift reported - a manager will review and approve those hours.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("report_missed_shift", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setMissedShiftError(err?.message || "Missed shift report was not confirmed by the server.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
+  const handleSendAdminNote = async (note) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Note identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("send_admin_note", email);
+    setAdminNoteError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "send_admin_note",
+        request_id: requestId,
+        note,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      if (result?.success !== true || !result?.note?.id ||
+          String(result.note.user_email || "").trim().toLowerCase() !== email.trim().toLowerCase()) {
+        throw new Error("The note was not confirmed by the server.");
+      }
+      clearRequest("send_admin_note", email, requestId);
+      if (!stillCurrent()) return null;
+      setAdminNotePrompt(false);
+      setAdminNoteError("");
+      setRecognitionStatus("Note sent to the admins.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("send_admin_note", email, requestId);
+      if (stillCurrent()) {
+        setAdminNoteError(err?.message || "The note could not be sent.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
+  const handleResolveWorkDay = async (decision) => {
+    if (!selectedUser?.email || !credentialRef.current || !workDayPrompt?.signature) {
+      throw new Error("Work-day identity is no longer verified. Identify again before continuing.");
+    }
+    const email = selectedUser.email;
+    const signature = workDayPrompt.signature;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("resolve_work_day", email);
+    setWorkDayError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "resolve_work_day",
+        request_id: requestId,
+        decision,
+        signature,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      assertEmployeeAcknowledgement(result, email, "Work-day decision");
+      clearRequest("resolve_work_day", email, requestId);
+      if (!stillCurrent()) return null;
+      workDayDismissedRef.current.add(signature);
+      setWorkDayPrompt(null);
+      setWorkDayError("");
+      setRecognitionStatus(decision === "same_day"
+        ? "Work day confirmed - all listed shifts count toward it."
+        : "Got it - those shifts stay on separate days.");
+      if (!activeEntry?.id) scheduleDisplayReset(2000);
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("resolve_work_day", email, requestId);
+      if (stillCurrent()) {
+        setWorkDayError(err?.message || "The work-day answer was not confirmed by the server.");
       }
       throw err;
     } finally {
@@ -1473,7 +1830,14 @@ export default function QuickClockSection({
         setShowClockOut(false);
         setActiveEntry(null);
         setRecognitionStatus("Clock-out confirmed by server.");
-        scheduleDisplayReset(2500);
+        if (result?.work_day_prompt?.signature) {
+          // Same-work-day question rides the clock-out response - keep the
+          // session open so the employee can answer it before the kiosk resets.
+          setWorkDayError("");
+          setWorkDayPrompt(result.work_day_prompt);
+        } else {
+          scheduleDisplayReset(2500);
+        }
       }
       return result;
     } catch (err) {
@@ -1506,6 +1870,7 @@ export default function QuickClockSection({
         error={punchResolutionError}
         onMissedClockOut={handleMissedClockOutResolution}
         onWorkedThrough={handleWorkedThroughResolution}
+        onCancel={resetState}
       />
 
       <LateClockInReviewDialog
@@ -1516,6 +1881,7 @@ export default function QuickClockSection({
         error={lateClockInError}
         onRecoverMissedClockIn={handleRecoverMissedClockIn}
         onClockInNow={handleLateClockInClockInNow}
+        onCancel={resetState}
       />
 
       <MissedClockInDialog
@@ -1525,6 +1891,40 @@ export default function QuickClockSection({
         error={lateClockInError}
         onReport={handleReportMissedClockIn}
         onCancel={resetState}
+      />
+
+      <MissedShiftDialog
+        open={missedShiftPrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={missedShiftError}
+        onReport={handleReportMissedShift}
+        onCancel={() => { setMissedShiftPrompt(false); setMissedShiftError(""); }}
+      />
+
+      <AdminNoteDialog
+        open={adminNotePrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={adminNoteError}
+        onSend={handleSendAdminNote}
+        onCancel={() => { setAdminNotePrompt(false); setAdminNoteError(""); }}
+      />
+
+      <WorkDayGroupDialog
+        open={Boolean(workDayPrompt?.signature)}
+        prompt={workDayPrompt}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={workDayError}
+        onSameDay={() => handleResolveWorkDay("same_day")}
+        onSeparate={() => handleResolveWorkDay("separate")}
+        onLater={() => {
+          if (workDayPrompt?.signature) workDayDismissedRef.current.add(workDayPrompt.signature);
+          setWorkDayPrompt(null);
+          setWorkDayError("");
+          if (!activeEntry?.id) scheduleDisplayReset(1200);
+        }}
       />
 
       <WorkPauseOverlay
@@ -1563,11 +1963,47 @@ export default function QuickClockSection({
         </div>
       )}
 
-      <div className="clay-card p-6 mb-6">
+      <div className="clay-card p-6 mb-6" style={{ zoom: gloveMode ? 1.5 : 1 }}>
         <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
         </h2>
+
+        {(() => {
+          // Rotating shop safety tip - changes daily, no network needed.
+          const tips = ["Check your harness before any lift work.", "Lock out power before changing signage wiring.", "Report spills - wet concrete is a fall hazard.", "Eye protection on the shop floor, always.", "Keep exits and extinguisher paths clear.", "Lift with your legs, not your back.", "Verify the permit copy is on the job site.", "Hydrate - shop temps run high in summer."];
+          const tip = tips[Math.floor(Date.now() / 86400000) % tips.length];
+          const lastAction = (() => { try { return localStorage.getItem("ccs_last_action"); } catch { return null; } })();
+          return (
+            <>
+              {lastAction && (
+                <p className="mb-2 rounded-md bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-800">Last action: {lastAction}</p>
+              )}
+              <p className="mb-3 text-center text-[11px] italic text-slate-500">Safety tip: {tip}</p>
+            </>
+          );
+        })()}
+        {dimmed && <div className="kiosk-dim-overlay fixed inset-0 z-50 bg-slate-900/90 transition-opacity" onClick={wake} />}
+        {holiday && <p className="mb-2 rounded-md bg-amber-50 px-3 py-1.5 text-center text-sm font-semibold text-amber-800">Happy {holiday}! Holiday hours apply today.</p>}
+        {faceFails >= 5 && <p className="mb-2 rounded-md bg-red-50 px-3 py-1.5 text-[11px] font-medium text-red-700">Face not recognizing you? Ask a manager to re-enroll your photo.</p>}
+        {showKioskTutorial && (
+          <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/80 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">First time? It's three steps:</p>
+                <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-xs text-indigo-800">
+                  <li>Choose Face, Badge, or Email below</li>
+                  <li>Look at the camera or enter your code</li>
+                  <li>Clock In or Clock Out - done</li>
+                </ol>
+              </div>
+              <button type="button" onClick={dismissKioskTutorial}
+                className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-indigo-500 hover:bg-indigo-100">
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
 
         {persistenceError && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
@@ -1602,7 +2038,7 @@ export default function QuickClockSection({
         )}
 
         {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && selectedUser && activeEntry && (
-          <div className="flex flex-col items-center gap-4 w-64" data-summary-entry-id={activeEntry.id}>
+          <div className="flex flex-col items-center gap-4 w-72" data-summary-entry-id={activeEntry.id}>
             <div className="w-full rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-2.5 w-2.5">
@@ -1615,19 +2051,17 @@ export default function QuickClockSection({
                 {selectedUser.full_name || selectedUser.email}
               </p>
               <p className="text-xs text-emerald-700/80">
-                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}`}
+                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}${new Date(activeEntry.clock_in).toDateString() !== new Date().toDateString() ? ` (${format(new Date(activeEntry.clock_in), "EEE, MMM d")})` : ""}`}
                 {activeEntry.approval_status === "needs_review" && " - pending manager review"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
+            <CrystalShiftButton
+              single="out"
+              onClockOut={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
               disabled={isLoading}
-              className="w-64 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-[transform,box-shadow] duration-200 hover:shadow-xl motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/60"
-            >
-              <Square className="w-4 h-4 fill-current" />
-              Clock Out
-            </button>
+              verifying={isLoading}
+              success={crystalSuccess}
+            />
             <button
               type="button"
               onClick={resetState}
@@ -1636,6 +2070,26 @@ export default function QuickClockSection({
             >
               Not you? Identify a different employee
             </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setMissedShiftError(""); setMissedShiftPrompt(true); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 to-amber-50/90 px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <CalendarX2 className="w-3.5 h-3.5" />
+                Missed a shift?
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAdminNoteError(""); setAdminNotePrompt(true); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Note to admin
+              </button>
+            </div>
           </div>
         )}
 
@@ -1648,45 +2102,82 @@ export default function QuickClockSection({
               type="button"
               onClick={() => { identifyIntentRef.current = "missed_clock_in"; startRecognition(); }}
               disabled={isLoading}
-              className="w-64 flex items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-md motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
+              className="group relative w-72 sm:w-80 flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 via-white/95 to-amber-100/90 px-4 py-3 text-sm font-bold text-amber-900 shadow-lg shadow-amber-900/10 backdrop-blur-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-900/15 motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 touch-manipulation"
             >
-              <Clock3 className="w-4 h-4" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-200/70 ring-1 ring-amber-300/80 transition-transform duration-200 group-hover:scale-110">
+                <Clock3 className="w-4 h-4" />
+              </span>
               Forgot to Clock In? Set arrival time
+              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
             </button>
             <button
-              onClick={startRecognition}
+              type="button"
+              onClick={() => { identifyIntentRef.current = "missed_clock_out"; startRecognition(); }}
               disabled={isLoading}
-              className="group relative w-64 h-32 rounded-3xl shadow-xl shadow-emerald-900/25 hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-[1.04] motion-safe:active:scale-[0.96] transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
+              className="group relative w-72 sm:w-80 flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 via-white/95 to-amber-100/90 px-4 py-3 text-sm font-bold text-amber-900 shadow-lg shadow-amber-900/10 backdrop-blur-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-900/15 motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 touch-manipulation"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-700" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-0 bg-gradient-to-tl from-rose-400 via-red-500 to-red-700" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.55) 50%, transparent calc(50% + 1px))" }} />
-              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
-              <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/25 to-transparent" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/20 to-transparent" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="punch-sheen absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-              <div className="absolute top-4 left-5 text-white flex items-center gap-2.5 drop-shadow-md">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
-                  <Play className="w-4 h-4 fill-current" />
-                </span>
-                <span className="text-xl font-bold tracking-wide">In</span>
-              </div>
-              <div className="absolute bottom-4 right-5 text-white flex items-center gap-2.5 drop-shadow-md">
-                <span className="text-xl font-bold tracking-wide">Out</span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
-                  <Square className="w-4 h-4 fill-current" />
-                </span>
-              </div>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-200/70 ring-1 ring-amber-300/80 transition-transform duration-200 group-hover:scale-110">
+                <LogOut className="w-4 h-4" />
+              </span>
+              Forgot to Clock Out? Report it
+              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
             </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => { identifyIntentRef.current = "missed_shift"; startRecognition(); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 to-amber-50/90 px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <CalendarX2 className="w-3.5 h-3.5" />
+                Missed a whole shift?
+              </button>
+              <button
+                type="button"
+                onClick={() => { identifyIntentRef.current = "admin_note"; startRecognition(); }}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-400 hover:shadow disabled:opacity-50 touch-manipulation"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Note to admin
+              </button>
+            </div>
+            <CrystalShiftButton
+              onClockIn={startRecognition}
+              onClockOut={startRecognition}
+              disabled={isLoading}
+              verifying={isLoading}
+              success={crystalSuccess}
+            />
             {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
           </div>
         )}
 
         {isRecognizing && (
           <div className="flex flex-col items-center">
-            {recognitionMethod === "face" && (
+            {!recognitionMethod && (() => {
+              const allowedMethods = (() => { try { const m = localStorage.getItem("ccs_kiosk_methods"); return m ? m.split(",").map((x) => x.trim()).filter(Boolean) : ["face", "qr", "manual"]; } catch { return ["face", "qr", "manual"]; } })();
+              const stored = (() => { try { return localStorage.getItem("ccs_kiosk_method"); } catch { return null; } })();
+              const preferred = allowedMethods.includes(stored) ? stored : allowedMethods[0];
+              return preferred ? (
+                <p className="mb-3 text-[10px] text-slate-400">Last used on this kiosk: <span className="font-semibold text-slate-600">{preferred === "face" || preferred === "camera" ? "Camera" : preferred === "qr" ? "QR Badge" : "Email"}</span></p>
+              ) : null;
+            })()}
+            {(recognitionMethod === "face" || recognitionMethod === "camera") && (
               <div className="relative mb-4">
-                <video ref={videoRef} autoPlay muted playsInline className="w-80 h-60 object-cover rounded-2xl bg-gray-900 scale-x-[-1]" />
+                <div className="relative inline-block">
+                  <video ref={videoRef} autoPlay muted playsInline className={`w-80 h-60 object-cover rounded-2xl bg-gray-900 ${cameraMirrored ? "scale-x-[-1]" : ""}`} />
+                  {cameraHealth !== "ok" && (
+                    <p className="absolute bottom-2 left-2 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {cameraHealth === "dark" ? "Camera too dark - check lighting/lens" : "Camera too bright - adjust angle"}
+                    </p>
+                  )}
+                  <button type="button" onClick={toggleCameraMirror}
+                    className="absolute right-2 top-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-black/70"
+                    title="Flip camera preview">
+                    {cameraMirrored ? "Unflip" : "Mirror"}
+                  </button>
+                </div>
                 <div className="scan-reticle scan-tone-scanning" aria-hidden="true">
                   <div className="scan-bracket tl" />
                   <div className="scan-bracket tr" />
@@ -1745,33 +2236,25 @@ export default function QuickClockSection({
 
             <div className="px-4 py-2 rounded-full mb-4 bg-purple-100 text-purple-700 text-center">
               <p className="font-medium flex items-center justify-center gap-2">
-                {(recognitionMethod === "face" || recognitionMethod === "qr" || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
-                {recognitionStatus || "Choose an identification method."}
+                {(recognitionMethod === "face" || recognitionMethod === "camera" || recognitionMethod === "qr" || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
+                {recognitionStatus || IDENTIFY_CAMERA_BLURB}
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                type="button"
-                variant={recognitionMethod === "face" ? "default" : "outline"}
-                onClick={startFaceMode}
-                disabled={isLoading || !canUseFace}
-                className="gap-2"
-                title={!authoritativeSessionToken ? "Sign in an employee or admin kiosk session to use face recognition" : undefined}
-              >
-                <Camera className="w-4 h-4" /> Face
-              </Button>
-              <Button type="button" variant={recognitionMethod === "qr" ? "default" : "outline"} onClick={startQrMode} disabled={isLoading} className="gap-2">
-                <QrCode className="w-4 h-4" /> Secure QR
-              </Button>
+              {!supportsInlineQrDetection() && (
+                <Button type="button" variant="outline" onClick={startQrMode} disabled={isLoading} className="gap-2">
+                  <QrCode className="w-4 h-4" /> Scan QR badge
+                </Button>
+              )}
               <Button type="button" variant={recognitionMethod === "manual" ? "default" : "outline"} onClick={startManualMode} disabled={isLoading} className="gap-2">
-                <User className="w-4 h-4" /> Username
+                <User className="w-4 h-4" /> Type username instead
               </Button>
             </div>
 
             {!authoritativeSessionToken && (
               <p className="mt-3 text-xs text-gray-500 text-center max-w-md">
-                Face mode is disabled until an employee or admin kiosk session is signed in. Secure QR and username/password remain available.
+                QR badge scanning works for everyone. Face recognition also runs automatically once an employee or admin kiosk session is signed in.
               </p>
             )}
             {authoritativeSessionToken && authoritativeSessionUser && (
