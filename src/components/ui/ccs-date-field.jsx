@@ -193,7 +193,17 @@ export function CcsDateTimeField({
       clearable={clearable}
       dropdownType={dropdownType}
       presets={dropdownType !== "modal" && presets !== false ? presets : undefined}
-      timePickerProps={{ withDropdown: true, format: "12h", minutesStep: 5 }}
+      // withinPortal: false keeps the time dropdown inside the picker's own
+      // popover — portaled to body it counted as an outside click and closed
+      // the whole picker after every hour/minute/AM-PM selection. 360px fits
+      // all 12 options per column, so no scrolling is needed inside dialogs.
+      timePickerProps={{
+        withDropdown: true,
+        format: "12h",
+        minutesStep: 5,
+        maxDropdownContentHeight: 360,
+        popoverProps: { withinPortal: false },
+      }}
       weekendDays={[0, 6]}
       {...rest}
     />
@@ -216,6 +226,7 @@ export function CcsTimeField({
       format="12h"
       minutesStep={5}
       withDropdown
+      maxDropdownContentHeight={360}
       {...rest}
     />
   );
