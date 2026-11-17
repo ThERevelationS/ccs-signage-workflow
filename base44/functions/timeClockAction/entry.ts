@@ -3423,6 +3423,28 @@ Deno.serve(async (req) => {
       return Response.json(summary);
     }
 
+    // Kiosk device heartbeat runs before the session/badge gate: a kiosk at
+    // idle has no credential yet, and registering itself so admins can see it
+    // in the device list is the whole point of the announce. Payload is still
+    // sanitized below (device_key shape, trimmed strings, upsert by key).
+    if (action === 'register_device') {
+      const key = typeof body.device_key === 'string' && body.device_key.trim().length >= 3 && body.device_key.trim().length <= 100 ? body.device_key.trim() : '';
+      if (!key) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
+      const name = typeof body.device_name === 'string' ? body.device_name.trim().slice(0, 100) : '';
+      const loc = typeof body.location === 'string' ? body.location.trim().slice(0, 100) : '';
+      const ver = typeof body.firmware_version === 'string' ? body.firmware_version.trim().slice(0, 50) : '';
+      const nowIso = new Date().toISOString();
+      const existing = await deviceEntity.filter({ device_key: key }, '-updated_date', 1).catch(() => []);
+      const device = Array.isArray(existing) && existing.length > 0 ? existing[0] : null;
+      if (device?.id) {
+        await deviceEntity.update(device.id, { device_name: name || device.device_name, location: loc || device.location, firmware_version: ver || device.firmware_version, last_seen_at: nowIso, status: 'active', is_active: true }).catch(() => null);
+        return Response.json({ success: true, device_id: device.id, registered: false });
+      }
+      const created = await deviceEntity.create({ device_key: key, device_name: name || key, location: loc, device_type: 'kiosk', firmware_version: ver, status: 'active', is_active: true, last_seen_at: nowIso, provisioned_at: nowIso, provisioned_by_email: '' }).catch(() => null);
+      if (!created?.id) return Response.json({ success: false, error: 'Device registration failed.' }, { status: 500 });
+      return Response.json({ success: true, device_id: created.id, registered: true });
+    }
+
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
 
@@ -8316,26 +8338,6 @@ Deno.serve(async (req) => {
       // dispute defense.
       await auditEntity.create({ action: 'payroll_export', outcome: 'confirmed', user_email: actor.email, server_timestamp: new Date().toISOString(), request_id: requestId, details: { from, to, rows: exportRows.length, on_hold: rows.length - included.length } }).catch(() => null);
       return Response.json({ success: true, rows: exportRows, on_hold: rows.length - included.length });
-    }
-
-    if (action === 'register_device') {
-      // Idempotent kiosk heartbeat - the kiosk registers on load and on every
-      // punch so the admin sees it in the device list with a last_seen stamp.
-      const key = typeof body.device_key === 'string' && body.device_key.trim().length >= 3 && body.device_key.trim().length <= 100 ? body.device_key.trim() : '';
-      if (!key) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
-      const name = typeof body.device_name === 'string' ? body.device_name.trim().slice(0, 100) : '';
-      const loc = typeof body.location === 'string' ? body.location.trim().slice(0, 100) : '';
-      const ver = typeof body.firmware_version === 'string' ? body.firmware_version.trim().slice(0, 50) : '';
-      const nowIso = new Date().toISOString();
-      const existing = await deviceEntity.filter({ device_key: key }, '-updated_date', 1).catch(() => []);
-      const device = Array.isArray(existing) && existing.length > 0 ? existing[0] : null;
-      if (device?.id) {
-        await deviceEntity.update(device.id, { device_name: name || device.device_name, location: loc || device.location, firmware_version: ver || device.firmware_version, last_seen_at: nowIso, status: 'active', is_active: true }).catch(() => null);
-        return Response.json({ success: true, device_id: device.id, registered: false });
-      }
-      const created = await deviceEntity.create({ device_key: key, device_name: name || key, location: loc, device_type: 'kiosk', firmware_version: ver, status: 'active', is_active: true, last_seen_at: nowIso, provisioned_at: nowIso, provisioned_by_email: actor.email || '' }).catch(() => null);
-      if (!created?.id) return Response.json({ success: false, error: 'Device registration failed.' }, { status: 500 });
-      return Response.json({ success: true, device_id: created.id, registered: true });
     }
 
     if (action === 'list_devices') {
