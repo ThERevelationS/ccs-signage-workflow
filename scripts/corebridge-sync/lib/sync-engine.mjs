@@ -132,6 +132,8 @@ function historyLog(history) {
 async function estimateFor(order, customer, context, fromWatch = false) {
   const { app, journal, apply, report, references } = context;
   const id = String(order.order_id);
+  const contactId = order.header.OrderContactId;
+  if (contactId != null && contactId !== 0 && !references.contacts.has(contactId)) throw new Error(`Order ${id} contact ${contactId} missing from CoreBridge contact list.`);
   const mapped = estimateRecord(order, { contact: references.contacts.get(order.header.OrderContactId), categories: references.categories });
   const matches = await app.byKey('AllInOneEstimate', `cb:estimates:${id}`);
   if (matches.length > 1) throw new Error(`Duplicate estimate for order ${id}.`);

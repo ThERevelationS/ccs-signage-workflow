@@ -68,7 +68,7 @@ export class AppClient {
         signal: AbortSignal.timeout(120000),
       });
     } catch (error) {
-      throw new AppCallError(`${fn}: network request failed.`, { ambiguous: write, cause: error });
+      throw new AppCallError(`${fn}${payload?.entity ? ` ${payload.entity}` : ""}${payload?.action ? ` ${payload.action}` : ""}: network request failed (${error?.name || "error"}).`, { ambiguous: write, cause: error });
     }
     let envelope;
     try { envelope = await response.json(); }
@@ -131,11 +131,14 @@ export class AppClient {
       entity, op: 'updateMany', id: current.id, query: { id: current.id, updated_date: current.updated_date },
       update: { $set: patch },
     }, { write: true });
-    const result = await this.get(entity, current.id);
-    for (const [key, value] of Object.entries(patch)) {
-      if (JSON.stringify(result[key]) !== JSON.stringify(value)) throw new Error(`${entity} ${current.id} CAS readback differs for ${key}.`);
+    // Reads trail writes by up to about a minute; poll before declaring a mismatch.
+    for (let attempt = 0; ; attempt++) {
+      const result = await this.get(entity, current.id);
+      const differs = Object.entries(patch).find(([key, value]) => JSON.stringify(result[key]) !== JSON.stringify(value));
+      if (!differs) return result;
+      if (attempt >= (this.confirmAttempts ?? 8)) throw new Error(`${entity} ${current.id} CAS readback differs for ${differs[0]}.`);
+      await (this.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms))))(this.confirmDelayMs ?? 15000);
     }
-    return result;
   }
 
   async byKey(entity, key) {

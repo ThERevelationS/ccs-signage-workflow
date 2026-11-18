@@ -77,8 +77,15 @@ export class Journal {
       }
       result = { status: 'existing', target_id: map.target_id };
     }
-    const map = await this.goodLedger(source_entity, source_id);
-    const matches = await this.app.byKey(entity, key);
+    // App reads trail writes by up to about a minute; poll before declaring the write unconfirmed.
+    let map, matches;
+    for (let attempt = 0; ; attempt++) {
+      map = await this.goodLedger(source_entity, source_id);
+      matches = await this.app.byKey(entity, key);
+      if (map && matches.length === 1 && matches[0].id === result.target_id && map.target_id === result.target_id) break;
+      if (matches.length > 1 || attempt >= (this.confirmAttempts ?? 8)) break;
+      await (this.sleep || ((ms) => new Promise((r) => setTimeout(r, ms))))(this.confirmDelayMs ?? 15000);
+    }
     if (!map || matches.length !== 1 || matches[0].id !== result.target_id || map.target_id !== result.target_id) {
       throw new Error(`Write ${key} was not confirmed in target and ledger.`);
     }

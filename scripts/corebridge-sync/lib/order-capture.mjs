@@ -71,23 +71,31 @@ export async function loadOrderReferences(session) {
   const categoryData = await post('/SalesModule/Orders/OrderEntry.asmx/GetProductCategories', {});
   if (!Array.isArray(categoryData?.productCategories)) throw new Error('Product category reference is unavailable.');
   const categories = new Map(categoryData.productCategories.map((item) => [item.id, item.name]));
+  // CoreBridge's contact grid pages on an unstable sort: rows can repeat
+  // across pages and others never appear. Union an ascending and a descending
+  // pass; orders whose contact is still missing fail closed in the engine.
   const contacts = new Map();
-  for (let start = 0; ; start += 500) {
-    if (start >= 100000) throw new Error('Contact reference exceeds the safety limit.');
-    const data = await post('/SalesModule/Contacts/Contact.asmx/GetAllContacts', {
-      txSearch: '', sSearch_1: '', sSearch_2: '', sSearch_6: '', sSearch_7: '', sSearch_8: '', sSearch_9: '',
-      pageIndex: Math.floor(start / 500) + 1, iDisplayStart: start, iDisplayLength: 500,
-      includeInactiveCompanies: true, includeInactiveContacts: true, sEcho: 1, sColumns: '', iColumns: 0, iSortCol_0: 0, sSortDir_0: 'asc',
-    });
-    if (!Array.isArray(data?.aaData) || !Number.isFinite(Number(data.iTotalRecords))) throw new Error('Contact reference is unavailable.');
-    for (const row of data.aaData) {
-      if (row.Id == null || contacts.has(row.Id)) throw new Error('Contact reference has missing or duplicate IDs.');
-      contacts.set(row.Id, scrub(row));
+  let total = 0;
+  for (const dir of ['asc', 'desc']) {
+    for (let start = 0; ; start += 500) {
+      if (start >= 100000) throw new Error('Contact reference exceeds the safety limit.');
+      const data = await post('/SalesModule/Contacts/Contact.asmx/GetAllContacts', {
+        txSearch: '', sSearch_1: '', sSearch_2: '', sSearch_6: '', sSearch_7: '', sSearch_8: '', sSearch_9: '',
+        pageIndex: Math.floor(start / 500) + 1, iDisplayStart: start, iDisplayLength: 500,
+        includeInactiveCompanies: true, includeInactiveContacts: true, sEcho: 1, sColumns: '', iColumns: 0, iSortCol_0: 0, sSortDir_0: dir,
+      });
+      if (!Array.isArray(data?.aaData) || !Number.isFinite(Number(data.iTotalRecords))) throw new Error('Contact reference is unavailable.');
+      total = Number(data.iTotalRecords);
+      for (const row of data.aaData) {
+        if (row.Id == null) throw new Error('Contact reference has a missing ID.');
+        if (!contacts.has(row.Id)) contacts.set(row.Id, scrub(row));
+      }
+      if (!data.aaData.length || start + 500 >= total) break;
     }
-    if (contacts.size >= Number(data.iTotalRecords)) break;
-    if (!data.aaData.length) throw new Error('Contact reference pagination ended early.');
+    if (contacts.size >= total) break;
   }
-  return { categories, contacts };
+  const missingContacts = Math.max(0, total - contacts.size);
+  return { categories, contacts, missingContacts };
 }
 
 export async function captureOrder(session, id) {
