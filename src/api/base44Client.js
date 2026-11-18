@@ -84,7 +84,7 @@ const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
 const SALESFILTER_READ_ACTIONS = new Set(['preferences_get', 'default_sort_get', 'roster']);
 
 function isReadFunctionInvocation(fnName, payload) {
-  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'appBootstrap', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'appBootstrap', 'verifySession', 'permittingScanStatus', 'customerHistoryFeed'].includes(fnName)) return true;
   // V2 mirrors the managed-source name: production functions serve the
   // builder's managed source, so the frontend calls the V2 lane copy (same
   // actions, same read/write split).
