@@ -10,7 +10,7 @@ const EMPTY_CUSTOMERS = [];
 const masterLabel = (c) =>
   c?.master_account ? `${c.master_account}` : (c?.master_account_id ? "(linked account)" : "");
 
-// Merge two Customer records through the manageCustomerLifecycle backend
+// Merge two Customer records through the customerMergeV2 backend
 // (masterplan G-14). ALL business logic lives server-side +
 // base44/shared/customerMergeModel.ts — this dialog only renders the preview
 // plan, the master-account context and the per-entity progress/result the
@@ -53,7 +53,7 @@ export default function CustomerMergeDialog({ open, customers = EMPTY_CUSTOMERS,
     setResult(null);
     setError("");
     try {
-      const body = await invokeFleet("manageCustomerLifecycle", {
+      const body = await invokeFleet("customerMergeV2", {
         action: "preview_customer_merge",
         keep_id: keepCustomer.id,
         lose_id: loseCustomer.id,
@@ -76,7 +76,7 @@ export default function CustomerMergeDialog({ open, customers = EMPTY_CUSTOMERS,
     setBusy(true);
     setError("");
     try {
-      const body = await invokeFleet("manageCustomerLifecycle", {
+      const body = await invokeFleet("customerMergeV2", {
         action: "merge_customers",
         keep_id: keep.id,
         lose_id: lose.id,

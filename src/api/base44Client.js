@@ -89,6 +89,7 @@ function isReadFunctionInvocation(fnName, payload) {
   // builder's managed source, so the frontend calls the V2 lane copy (same
   // actions, same read/write split).
   if (fnName === 'timeClockAction' || fnName === 'timeClockActionV2') return TIMECLOCK_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'customerMergeV2') return payload?.action === 'preview_customer_merge';
   if (fnName === 'notificationAction') return NOTIFICATION_READ_ACTIONS.has(payload?.action);
   if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
   if (fnName === 'workspacePrefsAction') return WORKSPACE_PREFS_READ_ACTIONS.has(payload?.action);
