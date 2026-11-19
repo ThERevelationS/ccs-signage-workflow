@@ -30,6 +30,7 @@ function mergeFaceDescriptors(existing = [], batch = []) {
   const stored = merged.length;
   let added = 0;
   for (const d of batch || []) {
+    if (!(Array.isArray(d) || ArrayBuffer.isView(d)) || d.length !== 128) continue;
     if (!merged.some(e => descriptorDistance(e, d) < FACE_TEMPLATE_MERGE_DISTANCE)) {
       merged.push(Array.from(d));
       added += 1;

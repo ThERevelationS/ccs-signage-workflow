@@ -245,8 +245,12 @@ export function createFaceScanSession({
       // Liveness gate: a static photo cannot blink or drift - recognition is
       // held until the probe proves a live face, then normal matching runs.
       const live = dim ? false : livenessSample(detection, livenessState);
+      // Descriptor compute is deferred until liveness is proved, so the very
+      // frame that first proves liveness was detected without one. Treat that
+      // frame as verifying instead of reading a missing descriptor.
+      const hasDescriptor = !!detection.descriptor && detection.descriptor.length > 0;
       if (captureMode) {
-        if (live && !dim) {
+        if (live && !dim && hasDescriptor) {
           // Good live frame - bank the descriptor (JSON-safe array) toward the
           // probe batch the caller ships to the backend matcher.
           captured.push(Array.from(detection.descriptor));
@@ -262,10 +266,16 @@ export function createFaceScanSession({
             votes: { count: captured.length, required: FACE_SCAN.captureFrames },
           };
         } else {
-          result = { status: dim ? "dim" : "liveness", detection, dim, livenessProved: livenessState.proved };
+          result = {
+            status: dim ? "dim" : !live ? "liveness" : "verifying",
+            detection,
+            dim,
+            livenessProved: livenessState.proved,
+            votes: { count: captured.length, required: FACE_SCAN.captureFrames },
+          };
         }
       } else {
-        const matched = !live || dim ? null : matchFace?.(detection.descriptor) || null;
+        const matched = !live || dim || !hasDescriptor ? null : matchFace?.(detection.descriptor) || null;
         const winner = voter(matched);
         // Ambiguous-match (#8): two distinct identities competing in the vote
         // window without a runaway winner means the frame is telling us the
@@ -273,7 +283,7 @@ export function createFaceScanSession({
         // instead of silently locking onto the wrong person.
         const ambiguous = !winner && voter.distinctCount >= 2 && voter.lastCount < (voter.required || 0);
         result = {
-          status: dim ? "dim" : winner ? "recognized" : !live ? "liveness" : ambiguous ? "ambiguous" : matched ? "verifying" : "no-match",
+          status: dim ? "dim" : winner ? "recognized" : !live ? "liveness" : !hasDescriptor ? "verifying" : ambiguous ? "ambiguous" : matched ? "verifying" : "no-match",
           detection,
           dim,
           matched,
