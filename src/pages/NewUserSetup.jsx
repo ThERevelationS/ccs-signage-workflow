@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,21 @@ import {
   Lock, 
   Camera,
   ArrowRight,
+  ArrowLeft,
+  Eye,
+  EyeOff,
   Shield,
   ClipboardList
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
+
+const apiError = (err, fallback) =>
+  err?.response?.data?.error ||
+  (err?.message && !/status code/i.test(err.message) ? err.message : "") ||
+  fallback;
+
+const STEP_LABELS = ["Start", "Login", "Face ID", "Info"];
 
 export default function NewUserSetup() {
   const resetMode = typeof window !== "undefined" && window.location.pathname.toLowerCase() === "/resetpassword";
@@ -31,16 +41,77 @@ export default function NewUserSetup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState(""); // "" | "checking" | "available" | reason text
+  const usernameSeq = useRef(0);
   
   // Face enrollment state
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
   const [faceDescriptors, setFaceDescriptors] = useState([]);
 
+  const getToken = () => new URLSearchParams(window.location.search).get("token") || "";
+
+  const hasExistingCredentials = user?.has_credentials === true;
+  const passwordFieldsEnabled = !hasExistingCredentials || password.length > 0 || confirmPassword.length > 0;
+
+  const passwordScore = [
+    password.length >= 8,
+    password.length >= 12,
+    /[a-z]/.test(password) && /[A-Z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ].filter(Boolean).length;
+  const passwordStrength = !password
+    ? null
+    : passwordScore <= 1
+      ? { label: "Weak", segments: 1, bar: "bg-red-400", text: "text-red-600" }
+      : passwordScore === 2
+        ? { label: "Fair", segments: 2, bar: "bg-amber-400", text: "text-amber-600" }
+        : passwordScore === 3
+          ? { label: "Good", segments: 3, bar: "bg-lime-500", text: "text-lime-600" }
+          : { label: "Strong", segments: 4, bar: "bg-green-500", text: "text-green-700" };
+
   useEffect(() => {
     validateToken();
   }, []);
+
+  // Debounced live username availability check on the credentials step.
+  useEffect(() => {
+    if (resetMode || step !== 2) return;
+    const value = username.trim().toLowerCase();
+    if (value.length < 3) {
+      usernameSeq.current += 1;
+      setUsernameStatus("");
+      return;
+    }
+    const seq = ++usernameSeq.current;
+    setUsernameStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const response = await base44.functions.invoke("onboardingAccountActionV2", {
+          action: "check_username",
+          token: getToken(),
+          username: value,
+        });
+        if (seq !== usernameSeq.current) return;
+        const result = response?.data || response;
+        if (!result?.success) {
+          setUsernameStatus("");
+        } else if (result.valid === false || result.available === false) {
+          setUsernameStatus(result.reason || "This username is already in use");
+        } else {
+          setUsernameStatus("available");
+        }
+      } catch {
+        if (seq === usernameSeq.current) setUsernameStatus("");
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [username, step, resetMode]);
 
   const validateToken = async () => {
     setLoading(true);
@@ -63,7 +134,7 @@ export default function NewUserSetup() {
     }
     
     try {
-      const response = await base44.functions.invoke("onboardingAccountAction", {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
         action: "validate",
         token,
       });
@@ -86,14 +157,15 @@ export default function NewUserSetup() {
           : nameParts[0];
         setUsername(suggestedUsername.replace(/[^a-z0-9]/g, ''));
       }
-      
-      // Pre-fill face descriptors if user already has them
-      if (foundUser.face_descriptors?.length > 0) {
-        setFaceDescriptors(foundUser.face_descriptors);
+
+      // Users who already saved a login resume at the personal-info step;
+      // they can use Back to change their credentials.
+      if (foundUser.has_credentials) {
+        setStep(4);
       }
     } catch (err) {
       console.error("Error validating token:", err);
-      setError("An error occurred. Please try again or contact your administrator.");
+      setError(`${apiError(err, "This registration link could not be verified.")} Please contact your administrator for a new invitation.`);
     }
     
     setLoading(false);
@@ -101,7 +173,7 @@ export default function NewUserSetup() {
 
   const handleResetPasswordSubmit = async () => {
     setFormError("");
-    const token = new URLSearchParams(window.location.search).get("token") || "";
+    const token = getToken();
     if (!token) {
       setFormError("This password reset link is incomplete. Request a new reset email.");
       return;
@@ -125,7 +197,7 @@ export default function NewUserSetup() {
       setConfirmPassword("");
       setResetComplete(true);
     } catch (err) {
-      setFormError(err?.response?.data?.error || err?.message || "This reset link could not be used. Request a new password reset email.");
+      setFormError(apiError(err, "This reset link could not be used. Request a new password reset email."));
     } finally {
       setSaving(false);
     }
@@ -133,40 +205,56 @@ export default function NewUserSetup() {
 
   const handleCredentialsSubmit = async () => {
     setFormError("");
-    
+    const errors = {};
     if (!fullName.trim()) {
-      setFormError("Please enter your full name");
-      return;
+      errors.fullName = "Please enter your full name";
     }
-    
-    if (!username.trim()) {
-      setFormError("Please enter a username");
-      return;
+    const cleanUsername = username.trim().toLowerCase();
+    if (!cleanUsername) {
+      errors.username = "Please enter a username";
+    } else if (cleanUsername.length < 3) {
+      errors.username = "Username must be at least 3 characters";
     }
-    
-    if (username.length < 3) {
-      setFormError("Username must be at least 3 characters");
-      return;
+    if (passwordFieldsEnabled) {
+      if (!password) {
+        errors.password = "Please enter a password";
+      } else if (password.length < 8) {
+        errors.password = "Password must be at least 8 characters";
+      }
+      if (password !== confirmPassword) {
+        errors.confirm = "Passwords do not match";
+      }
     }
-    
-    if (!password) {
-      setFormError("Please enter a password");
-      return;
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    // Check availability now so a taken username lands on the step that can fix it.
+    setSaving(true);
+    try {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
+        action: "check_username",
+        token: getToken(),
+        username: cleanUsername,
+      });
+      const result = response?.data || response;
+      if (!result?.success) {
+        throw new Error(result?.error || "Username could not be verified.");
+      }
+      if (result.valid === false || result.available === false) {
+        setFieldErrors((prev) => ({ ...prev, username: result.reason || "This username is already in use" }));
+        return;
+      }
+      setStep(3);
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 409) {
+        setError(apiError(err, "This onboarding link is no longer valid. Please contact your administrator for a new invitation."));
+        return;
+      }
+      setFormError(apiError(err, "Username could not be verified. Please try again."));
+    } finally {
+      setSaving(false);
     }
-    
-    if (password.length < 8) {
-      setFormError("Password must be at least 8 characters");
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      setFormError("Passwords do not match");
-      return;
-    }
-    
-    // Username uniqueness is revalidated server-side when credentials are saved.
-    // Move to face enrollment step
-    setStep(3);
   };
 
   const handleFaceCapture = (descriptors) => {
@@ -179,10 +267,9 @@ export default function NewUserSetup() {
     setFormError("");
 
     try {
-      const token = new URLSearchParams(window.location.search).get("token") || "";
-      const response = await base44.functions.invoke("onboardingAccountAction", {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
         action: "save_credentials",
-        token,
+        token: getToken(),
         full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
         password,
@@ -196,7 +283,12 @@ export default function NewUserSetup() {
       setStep(4);
     } catch (err) {
       console.error("Error saving:", err);
-      setFormError(err?.message || "Failed to save your information safely. Please reload your invitation and try again.");
+      const status = err?.response?.status;
+      if (status === 401 || status === 409) {
+        setError(apiError(err, "This onboarding link is no longer valid. Please contact your administrator for a new invitation."));
+      } else {
+        setFormError(apiError(err, "Failed to save your information safely. Please reload your invitation and try again."));
+      }
     }
 
     setSaving(false);
@@ -207,10 +299,9 @@ export default function NewUserSetup() {
     setFormError("");
     
     try {
-      const token = new URLSearchParams(window.location.search).get("token") || "";
-      const response = await base44.functions.invoke("onboardingAccountAction", {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
         action: "complete",
-        token,
+        token: getToken(),
       });
       const result = response?.data || response;
       if (!result?.success || !result?.user?.id) {
@@ -220,35 +311,57 @@ export default function NewUserSetup() {
       setStep(5);
     } catch (err) {
       console.error("Error completing setup:", err);
-      setFormError(err?.message || "Failed to complete setup safely. Reload your invitation before retrying.");
+      const status = err?.response?.status;
+      if (status === 401 || status === 409) {
+        setError(apiError(err, "This onboarding link is no longer valid. Please contact your administrator for a new invitation."));
+      } else {
+        setFormError(apiError(err, "Failed to complete setup safely. Reload your invitation before retrying."));
+      }
     }
     
     setSaving(false);
   };
 
   const saveOnboardingHrData = async (hrData) => {
-    const token = new URLSearchParams(window.location.search).get("token") || "";
-    const response = await base44.functions.invoke("onboardingAccountAction", {
-      action: "save_hr",
-      token,
-      hr_data: hrData,
-    });
-    const result = response?.data || response;
-    if (!result?.success || !result?.user?.id) {
-      throw new Error(result?.error || "HR data could not be saved.");
+    const token = getToken();
+    try {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
+        action: "save_hr",
+        token,
+        hr_data: hrData,
+      });
+      const result = response?.data || response;
+      if (!result?.success || !result?.user?.id) {
+        throw new Error(result?.error || "HR data could not be saved.");
+      }
+      setUser(result.user);
+      return result.user;
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 409) {
+        setError(apiError(err, "This onboarding link is no longer valid. Please contact your administrator for a new invitation."));
+      }
+      throw new Error(apiError(err, "HR data could not be saved."));
     }
-    setUser(result.user);
-    return result.user;
   };
 
   const reloadUser = async () => {
-    const token = new URLSearchParams(window.location.search).get("token") || "";
+    const token = getToken();
     if (!token || resetMode) return user;
-    const response = await base44.functions.invoke("onboardingAccountAction", { action: "validate", token });
-    const result = response?.data || response;
-    if (!result?.success || !result?.user?.id) return null;
-    setUser(result.user);
-    return result.user;
+    try {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", { action: "validate", token });
+      const result = response?.data || response;
+      if (!result?.success || !result?.user?.id) return null;
+      setUser(result.user);
+      return result.user;
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 409) {
+        setError(apiError(err, "This onboarding link is no longer valid. Please contact your administrator for a new invitation."));
+        return null;
+      }
+      throw new Error(apiError(err, "This registration link could not be verified."));
+    }
   };
 
   if (loading) {
@@ -288,21 +401,21 @@ export default function NewUserSetup() {
               <Button onClick={() => window.location.href = "/TimeClock"} className="w-full bg-purple-600 hover:bg-purple-700 text-white">Continue to Sign Shop Workflow</Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleResetPasswordSubmit(); }} className="space-y-4">
               <div>
-                <Label>New Password</Label>
-                <Input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
+                <Label htmlFor="resetPassword">New Password</Label>
+                <Input id="resetPassword" type="password" value={password} onChange={(e) => { setPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
               </div>
               <div>
-                <Label>Confirm New Password</Label>
-                <Input type="password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
+                <Label htmlFor="resetConfirmPassword">Confirm New Password</Label>
+                <Input id="resetConfirmPassword" type="password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
               </div>
-              {formError && <p className="text-red-500 text-sm">{formError}</p>}
-              <Button onClick={handleResetPasswordSubmit} disabled={saving} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+              {formError && <p aria-live="polite" className="text-red-500 text-sm">{formError}</p>}
+              <Button type="submit" disabled={saving} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Set New Password
               </Button>
-            </div>
+            </form>
           )}
         </div>
       </div>
@@ -363,20 +476,23 @@ export default function NewUserSetup() {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-start justify-center gap-1 sm:gap-2 mb-8 flex-wrap">
           {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
-              <div 
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                  step >= s 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
+              <div className="flex flex-col items-center w-12">
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                    step >= s 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
+                </div>
+                <span className="text-[10px] mt-1 text-gray-500 whitespace-nowrap">{STEP_LABELS[s - 1]}</span>
               </div>
               {s < 4 && (
-                <div className={`w-8 h-1 rounded ${step > s ? 'bg-purple-600' : 'bg-gray-200'}`} />
+                <div className={`w-6 sm:w-8 h-1 rounded mt-3.5 ${step > s ? 'bg-purple-600' : 'bg-gray-200'}`} />
               )}
             </React.Fragment>
           ))}
@@ -402,96 +518,180 @@ export default function NewUserSetup() {
         )}
 
         {step === 2 && (
-          <div className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleCredentialsSubmit(); }} className="space-y-4">
             <div>
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="fullName" className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 Full Name
               </Label>
               <Input
+                id="fullName"
                 placeholder="Enter your full name"
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, fullName: "" }));
                   setFormError("");
                 }}
+                aria-invalid={!!fieldErrors.fullName}
                 className="mt-1"
               />
+              {fieldErrors.fullName && (
+                <p aria-live="polite" className="text-red-500 text-xs mt-1">{fieldErrors.fullName}</p>
+              )}
             </div>
 
             <div>
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="username" className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 Username
               </Label>
               <Input
+                id="username"
                 placeholder="Choose a username"
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                  setFieldErrors((prev) => ({ ...prev, username: "" }));
                   setFormError("");
                 }}
+                aria-invalid={!!fieldErrors.username}
                 className="mt-1"
                 autoComplete="off"
                 data-lpignore="true"
                 data-form-type="other"
               />
-              <p className="text-xs text-gray-500 mt-1">Letters and numbers only, no spaces</p>
+              {fieldErrors.username ? (
+                <p aria-live="polite" className="text-red-500 text-xs mt-1">{fieldErrors.username}</p>
+              ) : usernameStatus === "checking" ? (
+                <p aria-live="polite" className="text-gray-500 text-xs mt-1 flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Checking availability...
+                </p>
+              ) : usernameStatus === "available" ? (
+                <p aria-live="polite" className="text-green-600 text-xs mt-1">✓ Available</p>
+              ) : usernameStatus ? (
+                <p aria-live="polite" className="text-red-500 text-xs mt-1">{usernameStatus}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Letters and numbers only, no spaces</p>
+              )}
             </div>
 
             <div>
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="password" className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-gray-500" />
                 Password
               </Label>
-              <Input
-                type="password"
-                placeholder="Choose a password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setFormError("");
-                }}
-                className="mt-1"
-                autoComplete="new-password"
-                data-lpignore="true"
-                data-form-type="other"
-              />
+              <div className="relative mt-1">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Choose a password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, password: "" }));
+                    setFormError("");
+                  }}
+                  aria-invalid={!!fieldErrors.password}
+                  className="pr-10"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {hasExistingCredentials && (
+                <p className="text-xs text-gray-500 mt-1">Leave blank to keep your current password</p>
+              )}
+              {passwordStrength && (
+                <div className="mt-2" aria-live="polite">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className={`h-1.5 flex-1 rounded ${i < passwordStrength.segments ? passwordStrength.bar : 'bg-gray-200'}`} />
+                    ))}
+                  </div>
+                  <p className={`text-xs mt-1 ${passwordStrength.text}`}>{passwordStrength.label}</p>
+                </div>
+              )}
+              {fieldErrors.password && (
+                <p aria-live="polite" className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>
+              )}
             </div>
 
             <div>
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="confirmPassword" className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-gray-500" />
                 Confirm Password
               </Label>
-              <Input
-                type="password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setFormError("");
-                }}
-                className="mt-1"
-                autoComplete="new-password"
-                data-lpignore="true"
-                data-form-type="other"
-              />
+              <div className="relative mt-1">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, confirm: "" }));
+                    setFormError("");
+                  }}
+                  aria-invalid={!!fieldErrors.confirm}
+                  className="pr-10"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                />
+                <button
+                  type="button"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && (
+                <p aria-live="polite" className={`text-xs mt-1 ${password === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+                  {password === confirmPassword ? "Passwords match" : "Passwords do not match"}
+                </p>
+              )}
+              {fieldErrors.confirm && (
+                <p aria-live="polite" className="text-red-500 text-xs mt-1">{fieldErrors.confirm}</p>
+              )}
             </div>
 
             {formError && (
-              <p className="text-red-500 text-sm">{formError}</p>
+              <p aria-live="polite" className="text-red-500 text-sm">{formError}</p>
             )}
 
-            <Button
-              onClick={handleCredentialsSubmit}
-              className="w-full clay-button border-none text-gray-800"
-              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
-            >
-              Continue
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                disabled={saving}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving}
+                className="flex-1 clay-button border-none text-gray-800"
+                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </form>
         )}
 
         {/* Step 3: Face Enrollment */}
@@ -513,15 +713,21 @@ export default function NewUserSetup() {
                       <p className="text-sm text-green-600">{faceDescriptors.length} face scan(s) captured</p>
                     </div>
                   </div>
+                ) : user?.face_count > 0 ? (
+                  <div className="p-4 bg-green-50 rounded-lg flex items-center gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <p className="font-medium text-green-800">Face ID enrolled ({user.face_count} scans saved)</p>
+                  </div>
                 ) : null}
 
                 <Button
                   onClick={() => setShowFaceEnroll(true)}
                   variant="outline"
                   className="w-full"
+                  disabled={saving}
                 >
                   <Camera className="w-4 h-4 mr-2" />
-                  {faceDescriptors.length > 0 ? "Re-capture Face ID" : "Set Up Face ID"}
+                  {faceDescriptors.length > 0 || user?.face_count > 0 ? "Re-capture Face ID" : "Set Up Face ID"}
                 </Button>
 
                 <Button
@@ -533,8 +739,21 @@ export default function NewUserSetup() {
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Continue
+                  Save & Continue
                   <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                {faceDescriptors.length === 0 && (
+                  <p className="text-xs text-gray-500 text-center">You can set up Face ID later in Time Clock settings</p>
+                )}
+
+                <Button
+                  onClick={() => setStep(2)}
+                  variant="outline"
+                  className="w-full"
+                  disabled={saving}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
                 </Button>
               </div>
             ) : (
@@ -548,7 +767,7 @@ export default function NewUserSetup() {
             )}
 
             {formError && (
-              <p className="text-red-500 text-sm">{formError}</p>
+              <p aria-live="polite" className="text-red-500 text-sm">{formError}</p>
             )}
           </div>
         )}
@@ -556,6 +775,13 @@ export default function NewUserSetup() {
         {/* Step 4: HR Data */}
         {step === 4 && (
           <div className="space-y-4">
+            {hasExistingCredentials && (
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  Your login is already saved. Finish your personal info below, or go back to change your login.
+                </p>
+              </div>
+            )}
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
                 Please fill out your personal information for HR records. This information is kept confidential.
@@ -586,7 +812,15 @@ export default function NewUserSetup() {
             isAdmin={false}
           />
 
-          <div className="mt-6 pt-4 border-t flex justify-end gap-3">
+          <div className="mt-6 pt-4 border-t flex justify-between gap-3">
+            <Button
+              onClick={() => setStep(3)}
+              variant="outline"
+              disabled={saving}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
             <Button
               onClick={handleComplete}
               disabled={saving}
@@ -601,7 +835,7 @@ export default function NewUserSetup() {
           </div>
 
           {formError && (
-            <p className="text-red-500 text-sm mt-2">{formError}</p>
+            <p aria-live="polite" className="text-red-500 text-sm mt-2">{formError}</p>
           )}
         </div>
       )}

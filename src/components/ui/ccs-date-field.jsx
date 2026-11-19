@@ -192,7 +192,12 @@ export function CcsDateTimeField({
       placeholder={placeholder}
       clearable={clearable}
       dropdownType={dropdownType}
-      presets={dropdownType !== "modal" && presets !== false ? presets : undefined}
+      // DateTimePicker presets must be full datetime strings — a bare
+      // "YYYY-MM-DD" round-trips through onChange/value as "YYYY-MM-DD:00",
+      // which fails to parse and resets the whole field to 12:00.
+      presets={dropdownType !== "modal" && presets !== false
+        ? presets.map((p) => ({ ...p, value: p.value && p.value.length === 10 ? `${p.value} 00:00:00` : p.value }))
+        : undefined}
       // withinPortal: false keeps the time dropdown inside the picker's own
       // popover — portaled to body it counted as an outside click and closed
       // the whole picker after every hour/minute/AM-PM selection. 360px fits
@@ -227,6 +232,10 @@ export function CcsTimeField({
       minutesStep={5}
       withDropdown
       maxDropdownContentHeight={360}
+      // withinPortal: false keeps the dropdown inside the field's own DOM —
+      // portaled to body it lands outside Radix dialogs, whose modal barrier
+      // swallows the option clicks so selections never apply.
+      popoverProps={{ withinPortal: false }}
       {...rest}
     />
   );

@@ -878,7 +878,7 @@ export default function UserManagement() {
     setSendingOnboardingEmail(user.id);
     setUserMutationError("");
     try {
-      const response = await base44.functions.invoke("onboardingAccountAction", {
+      const response = await base44.functions.invoke("onboardingAccountActionV2", {
         action: "issue_invite",
         session_token: sessionToken,
         target_email: user.email,
@@ -1510,7 +1510,7 @@ export default function UserManagement() {
       }
 
       try {
-        const response = await base44.functions.invoke("onboardingAccountAction", {
+        const response = await base44.functions.invoke("onboardingAccountActionV2", {
           action: "issue_invite",
           session_token: sessionToken,
           target_email: email,
