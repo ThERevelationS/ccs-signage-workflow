@@ -489,16 +489,20 @@ function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
 }
 
 // Cache + in-flight dedupe around readOne. Concurrent identical reads in the
-// isolate share one upstream call; only 200 results are retained.
+// isolate share one upstream call; only 200 results are retained. Single-record
+// id reads skip the TTL cache: the CAS helpers re-read a record by id to get its
+// current updated_date after every write, and a cached copy made each retry
+// target a stale version ("changed repeatedly while saving").
 async function readOneCached(base44: any, user: any, request: any, deniedFieldScope: string) {
   const key = staffReadEntryKey(request, user, deniedFieldScope);
-  const hit = staffReadCache.get(key);
+  const pointRead = String(request?.id ?? '').trim() !== '';
+  const hit = pointRead ? undefined : staffReadCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.result;
   const pending = staffReadInFlight.get(key);
   if (pending) return pending;
   const promise = readOne(base44, user, request)
     .then((result: any) => {
-      if (result.status === 200) {
+      if (result.status === 200 && !pointRead) {
         if (staffReadCache.size > 300) staffReadCache.clear();
         staffReadCache.set(key, { result, expires: Date.now() + STAFF_READ_CACHE_MS });
       }
