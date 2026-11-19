@@ -524,8 +524,22 @@ function shouldWatch(order, estimate) {
   return !['cancelled', 'archived'].includes(estimate.status);
 }
 
+async function matchLeadWithMerges(name, app, customers, tombstones) {
+  const match = matchLead(name, customers);
+  if (match.kind !== 'new') return match;
+  const key = normalizeLeadName(name);
+  const survivors = new Map();
+  for (const customer of tombstones) {
+    if (normalizeLeadName(customer.company_name) !== key) continue;
+    const survivor = await resolveCustomer(app, customer.id);
+    survivors.set(survivor.id, survivor);
+  }
+  if (!survivors.size) return match;
+  return { kind: survivors.size === 1 ? 'linked' : 'ambiguous', matches: [...survivors.values()], via_merge: true };
+}
+
 async function pipeline(context) {
-  const { app, apply, journal, customers, estimates, report } = context;
+  const { app, apply, journal, customers, tombstones, estimates, report } = context;
   const jobs = await app.list('WorkOrder');
   const groups = new Map();
   const numberIndex = new Map();
@@ -580,9 +594,9 @@ async function pipeline(context) {
       continue;
     }
     if (/\d/.test(clean(row.est_inv_at))) continue;
-    const match = matchLead(row.client_name, customers);
+    const match = await matchLeadWithMerges(row.client_name, app, customers, tombstones);
     if (match.kind === 'ambiguous' || match.kind === 'invalid') {
-      report.skipped.push({ workorder_id: row.id, reason: `lead match ${match.kind}` });
+      report.skipped.push({ workorder_id: row.id, reason: `lead match ${match.kind}${match.via_merge ? ' (merged duplicates)' : ''}` });
       continue;
     }
     if (match.kind === 'linked') {
@@ -591,7 +605,7 @@ async function pipeline(context) {
         if (fresh.customer_id || fresh.estimate_id || normalizeLeadName(fresh.client_name) !== normalizeLeadName(row.client_name)) throw new Error(`Lead ${row.id} changed before linking.`);
         await app.cas('WorkOrder', fresh, { customer_id: match.matches[0].id });
       }
-      report.pipeline_links.push({ id: row.id, customer_id: match.matches[0].id });
+      report.pipeline_links.push({ id: row.id, customer_id: match.matches[0].id, ...(match.via_merge ? { via_merge: true } : {}) });
       continue;
     }
     const key = normalizeLeadName(row.client_name);
@@ -616,23 +630,33 @@ async function pipeline(context) {
       contact_office_phone: mostCommon(rows.map((item) => item.contact_phone)),
       billing_address_1: mostCommon(rows.map((item) => item.billing_address)),
       billing_address_2: mostCommon(rows.map((item) => item.billing_address_line_2)),
-      location_address_1: mostCommon(rows.map((item) => item.install_location)),
       location_address_2: mostCommon(rows.map((item) => item.address_line_2)),
     };
     for (const key of Object.keys(row)) if (empty(row[key])) delete row[key];
     let customerId = `dry-customer:${sourceId}`;
+    let viaMerge = false;
     if (apply) {
       const freshCustomers = await app.list('Customer');
-      const match = matchLead(name, freshCustomers);
-      if (match.kind !== 'new') throw new Error(`Lead ${name} now has a Customer match; regenerate the plan.`);
-      const result = await journal.create({
-        key: `cb:customers:${sourceId}`, entity: 'Customer', source_entity: 'customers', source_id: sourceId, order_id: null,
-        write: () => app.importMapped('customers', row, 'cb-customers-2026-11-17', 'sales_pipeline_leads'),
-      });
-      customerId = result.target_id;
-      customers.push(await app.get('Customer', customerId));
+      const freshTombstones = freshCustomers.filter((customer) => customer.id && customer.deleted !== true && customer.merged_into_customer_id);
+      const match = await matchLeadWithMerges(name, app, freshCustomers, freshTombstones);
+      if (match.via_merge && match.kind === 'ambiguous') {
+        for (const job of rows) report.skipped.push({ workorder_id: job.id, reason: 'lead match ambiguous (merged duplicates)' });
+        continue;
+      }
+      if (match.via_merge && match.kind === 'linked') {
+        customerId = match.matches[0].id;
+        viaMerge = true;
+      } else {
+        if (match.kind !== 'new') throw new Error(`Lead ${name} now has a Customer match; regenerate the plan.`);
+        const result = await journal.create({
+          key: `cb:customers:${sourceId}`, entity: 'Customer', source_entity: 'customers', source_id: sourceId, order_id: null,
+          write: () => app.importMapped('customers', row, 'cb-customers-2026-11-17', 'sales_pipeline_leads'),
+        });
+        customerId = result.target_id;
+        customers.push(await app.get('Customer', customerId));
+      }
     }
-    report.clients.push({ id: customerId, name, action: 'created', source: 'pipeline_lead' });
+    if (!viaMerge) report.clients.push({ id: customerId, name, action: 'created', source: 'pipeline_lead' });
     for (const job of rows) {
       if (apply) {
         const fresh = await app.get('WorkOrder', job.id);
@@ -641,7 +665,7 @@ async function pipeline(context) {
         }
         await app.cas('WorkOrder', fresh, { customer_id: customerId });
       }
-      report.pipeline_links.push({ id: job.id, customer_id: customerId });
+      report.pipeline_links.push({ id: job.id, customer_id: customerId, ...(viaMerge ? { via_merge: true } : {}) });
     }
   }
 }
@@ -706,8 +730,10 @@ export async function runSync({ app, capture, fetchAccount = null, references = 
         throw new Error('Unresolved pending writes prevent cursor advancement.');
       }
     }
-    const customers = (await app.list('Customer')).filter((row) => row.id && row.deleted !== true && !row.merged_into_customer_id);
-    const context = { app, journal, apply, customers, report, references, estimates: [], accountCustomers: new Map(),
+    const allCustomers = await app.list('Customer');
+    const customers = allCustomers.filter((row) => row.id && row.deleted !== true && !row.merged_into_customer_id);
+    const tombstones = allCustomers.filter((row) => row.id && row.deleted !== true && row.merged_into_customer_id);
+    const context = { app, journal, apply, customers, tombstones, report, references, estimates: [], accountCustomers: new Map(),
       cursor, now, blockedAccounts: new Map(cursor.held_accounts.map((item) => [item.account_id, item.name])) };
     let fixtureAttempted = false;
     if (fetchAccount) {

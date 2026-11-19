@@ -706,6 +706,89 @@ try {
     assert.equal(blocked.cursor_after.last_order_id, 11286);
     assert.equal(app.rows.Invoice.length, 0);
   }
+  {
+    const app = new FakeApp();
+    app.rows.WorkOrder = [{ id: 'lead', client_name: 'Synthetic & Lyons', customer_id: '', estimate_id: '', updated_date: 'v1' }];
+    app.rows.Customer = [
+      { id: 'loser-1', company_name: 'Synthetic & Lyons', merged_into_customer_id: 'survivor' },
+      { id: 'loser-2', company_name: 'Synthetic & Lyons', merged_into_customer_id: 'survivor' },
+      { id: 'survivor', company_name: 'Synthetic & Lyons Co' },
+    ];
+    const before = copy(app.rows.Customer);
+    const options = { app, capture: async () => null, references };
+    const dry = await runSync({ ...options, runId: 'lead-merged-dry' });
+    assert.deepEqual(dry.errors, []);
+    assert.deepEqual(dry.pipeline_links.find((item) => item.id === 'lead'), { id: 'lead', customer_id: 'survivor', via_merge: true });
+    const applied = await runSync({ ...options, apply: true, runId: 'lead-merged' });
+    assert.deepEqual(applied.errors, []);
+    assert.equal(app.rows.WorkOrder[0].customer_id, 'survivor');
+    assert.deepEqual(applied.pipeline_links.find((item) => item.id === 'lead'), { id: 'lead', customer_id: 'survivor', via_merge: true });
+    assert.equal(app.created.Customer, undefined);
+    assert.deepEqual(app.rows.Customer, before);
+  }
+  for (const race of [false, true]) {
+    const app = new FakeApp();
+    app.rows.WorkOrder = [{ id: 'ambiguous-lead', client_name: 'Synthetic duplicate', customer_id: '', estimate_id: '', updated_date: 'v1' }];
+    const merged = [
+      { id: 'loser-1', company_name: 'Synthetic duplicate', merged_into_customer_id: 'survivor-1' },
+      { id: 'loser-2', company_name: 'Synthetic duplicate', merged_into_customer_id: 'survivor-2' },
+      { id: 'survivor-1', company_name: 'Survivor one' }, { id: 'survivor-2', company_name: 'Survivor two' },
+    ];
+    if (race) {
+      const list = app.list.bind(app);
+      let customerReads = 0;
+      app.list = async (entity, query) => {
+        if (entity === 'Customer' && ++customerReads === 2) app.rows.Customer.push(...merged);
+        return list(entity, query);
+      };
+    } else app.rows.Customer.push(...merged);
+    const result = await runSync({ app, capture: async () => null, references, apply: true, runId: `lead-ambiguous-${race}` });
+    assert.deepEqual(result.errors, []);
+    assert.ok(result.skipped.some((item) => item.workorder_id === 'ambiguous-lead' && item.reason === 'lead match ambiguous (merged duplicates)'));
+    assert.equal(app.rows.WorkOrder[0].customer_id, '');
+    assert.equal(app.created.Customer, undefined);
+  }
+  {
+    const app = new FakeApp();
+    app.rows.WorkOrder = [{ id: 'race-lead', client_name: 'Synthetic race', customer_id: '', estimate_id: '', updated_date: 'v1' }];
+    const list = app.list.bind(app);
+    let customerReads = 0;
+    app.list = async (entity, query) => {
+      if (entity === 'Customer' && ++customerReads === 2) app.rows.Customer.push(
+        { id: 'late-loser', company_name: 'Synthetic race', merged_into_customer_id: 'late-survivor' },
+        { id: 'late-survivor', company_name: 'Synthetic race Co' },
+      );
+      return list(entity, query);
+    };
+    const result = await runSync({ app, capture: async () => null, references, apply: true, runId: 'lead-merged-race' });
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(result.pipeline_links.find((item) => item.id === 'race-lead'), { id: 'race-lead', customer_id: 'late-survivor', via_merge: true });
+    assert.equal(app.created.Customer, undefined);
+  }
+  {
+    const app = new FakeApp();
+    app.rows.WorkOrder = [{ id: 'new-lead', client_name: 'Synthetic prospect', customer_id: '', estimate_id: '', updated_date: 'v1',
+      install_location: '2026-02-05', address_line_2: 'Suite 10', billing_address: 'Synthetic billing' }];
+    const result = await runSync({ app, capture: async () => null, references, apply: true, runId: 'lead-date' });
+    assert.deepEqual(result.errors, []);
+    assert.equal(app.created.Customer, 1);
+    const customer = app.rows.Customer.find((item) => item.company_name === 'Synthetic prospect');
+    assert.equal(Object.hasOwn(customer, 'location_address_1'), false);
+    assert.equal(customer.location_address_2, 'Suite 10');
+    assert.equal(customer.billing_address_1, 'Synthetic billing');
+    assert.equal(app.rows.WorkOrder[0].customer_id, customer.id);
+  }
+  for (const scenario of ['cycle', 'missing', 'deleted']) {
+    const app = new FakeApp();
+    app.rows.WorkOrder = [{ id: 'bad-lead', client_name: 'Synthetic broken', customer_id: '', estimate_id: '', updated_date: 'v1' }];
+    app.rows.Customer = [{ id: 'loser', company_name: 'Synthetic broken',
+      merged_into_customer_id: scenario === 'cycle' ? 'loser' : scenario === 'missing' ? 'absent' : 'deleted' }];
+    if (scenario === 'deleted') app.rows.Customer.push({ id: 'deleted', company_name: 'Deleted survivor', deleted: true });
+    const result = await runSync({ app, capture: async () => null, references, apply: true, runId: `lead-${scenario}` });
+    assert.match(result.errors[0], { cycle: /cyclic/, missing: /missing/, deleted: /deleted/ }[scenario]);
+    assert.equal(app.created.Customer, undefined);
+    assert.equal(app.rows.WorkOrder[0].customer_id, '');
+  }
   console.log('PASS fake HTTP CoreBridge and app: held accounts and orders, retry after merge, overflow, account scans, enrichment, idempotence, watches, pipeline and recovery');
 } finally {
   server.close();
