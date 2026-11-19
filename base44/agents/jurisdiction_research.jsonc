@@ -31,9 +31,5 @@
   },
   "emails_settings": null,
   "allow_anonymous_access": false,
-<<<<<<<< HEAD:base44/agents/jurisdiction_research_agent.jsonc
-  "name": "jurisdiction_research_agent"
-========
   "name": "jurisdiction_research"
->>>>>>>> origin/main:base44/agents/jurisdiction_research.jsonc
 }
