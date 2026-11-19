@@ -54,7 +54,7 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
 
   let sourceProject = null;
   if (builder.source_entity && builder.source_project_id && currentLine.module_key !== "custom") {
-    sourceProject = await base44.entities[builder.source_entity].get(builder.source_project_id);
+    sourceProject = await staffEntities[builder.source_entity].get(builder.source_project_id);
     if (!sourceProject) throw new Error("The source Builder record could not be verified for this Product clone.");
   }
 

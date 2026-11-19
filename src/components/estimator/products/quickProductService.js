@@ -621,7 +621,7 @@ function removeRecoveryToken(notes, token, expectedOriginal) {
 
 async function ensureQuickInsertSource({ builder, blueprint }) {
   if (!blueprint.sourceEntity || !blueprint.sourceExpectedData) return { builder, sourceProject: null };
-  const entity = base44.entities[blueprint.sourceEntity];
+  const entity = staffEntities[blueprint.sourceEntity];
   if (!entity?.get || !entity?.create || !entity?.update || !entity?.filter) {
     throw new Error("The Quick Product Builder source entity is unavailable for recovery.");
   }

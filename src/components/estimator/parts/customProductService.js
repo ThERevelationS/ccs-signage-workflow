@@ -99,7 +99,7 @@ function assertLoadedPartVersion(part, expectedPartUpdatedAt = "") {
 
 async function verifyCatalogItem(catalogItem) {
   if (!catalogItem?.entity || !catalogItem?.inventoryId) throw new Error("Select a Master Inventory Part.");
-  const row = await base44.entities[catalogItem.entity].get(catalogItem.inventoryId);
+  const row = await staffEntities[catalogItem.entity].get(catalogItem.inventoryId);
   if (!row) throw new Error("This Master Inventory Part no longer exists. Reopen the picker to refresh the catalog.");
   const expected = String(catalogItem.row?.updated_date || "").trim();
   const current = String(row.updated_date || "").trim();

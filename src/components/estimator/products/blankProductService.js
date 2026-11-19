@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
@@ -70,7 +69,7 @@ async function resolveSourceProject({ estimateId, lineId, pending }) {
   if (pending.is_custom) return { source: null, estimate: await staffEntities.AllInOneEstimate.get(estimateId), line: null, pending };
   const entityName = String(pending.source_entity || "").trim();
   if (!entityName) throw new Error("The Builder source entity is missing from the new Product recovery marker.");
-  const entity = base44.entities[entityName];
+  const entity = staffEntities[entityName];
   if (!entity?.get || !entity?.filter || !entity?.create || !entity?.update) {
     throw new Error("The Builder source entity needed to recover this Product is unavailable.");
   }

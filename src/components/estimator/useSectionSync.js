@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { getModule } from "./moduleRegistry";
 import { sourceProjectTotal } from "./builder/builderService";
 import { liveCustomerUnitPrice, sourceProjectEconomics } from "./customerPricing";
@@ -14,7 +14,7 @@ export async function refreshSectionSnapshots(lineItems) {
       const mod = getModule(line.module_key);
       if (!mod || !line.project_id) return line;
 
-      const record = await base44.entities[mod.entity].get(line.project_id).catch(() => null);
+      const record = await staffEntities[mod.entity].get(line.project_id).catch(() => null);
       if (!record) return line;
 
       if (line.builder_product_id) {
@@ -83,7 +83,7 @@ export async function deleteOwnedSection(line) {
   const mod = getModule(line?.module_key);
   if (!line?.owned || !mod || !line.project_id) return false;
   try {
-    await base44.entities[mod.entity].delete(line.project_id);
+    await staffEntities[mod.entity].delete(line.project_id);
   } catch (e) {
     if (isNotFound(e)) return true;
     throw e;

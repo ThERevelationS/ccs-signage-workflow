@@ -3,7 +3,7 @@ import { Boxes, Loader2, Plus, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadMasterPartCatalog, typeDetails } from "./partCatalog";
 import { money } from "@/components/estimator/aioPricing";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
 
 export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "add", initialQuantity = 1, catalogFilter = null, suggestQuery = "" }) {
@@ -97,7 +97,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
     setQuickError("");
     try {
       const { record } = await createInventoryRecordWithRecovery({
-        entity: base44.entities.Inventory,
+        entity: staffEntities.Inventory,
         data,
         nameField: "size",
         label: "Quick-added inventory item",

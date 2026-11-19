@@ -52,7 +52,7 @@ async function loadRemovalPlan(line) {
   const mod = getModule(line?.module_key);
   let source = null;
   if (line?.owned && mod?.entity && line?.project_id) {
-    source = await base44.entities[mod.entity].get(line.project_id);
+    source = await staffEntities[mod.entity].get(line.project_id);
   }
 
   let builder = null;
@@ -127,7 +127,7 @@ async function preflightChildren(plan, builderProductId) {
 
 async function verifyRemovalPlan(plan) {
   if (plan.source) {
-    const entity = base44.entities[plan.source.entity];
+    const entity = staffEntities[plan.source.entity];
     if (!entity?.get || !entity?.deleteMany) throw new Error("The owned Builder source entity needed for Product removal is unavailable.");
     const source = await entity.get(plan.source.id);
     assertExpectedRecord(source, plan.source, "Owned Builder source");
@@ -158,7 +158,7 @@ async function applyRemovalPlan(plan) {
   await verifyRemovalPlan(plan);
 
   if (plan.source) {
-    const entity = base44.entities[plan.source.entity];
+    const entity = staffEntities[plan.source.entity];
     await deleteVerified(entity, plan.source, "Owned Builder source");
   }
 

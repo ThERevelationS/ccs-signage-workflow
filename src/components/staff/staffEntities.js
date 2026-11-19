@@ -17,6 +17,11 @@ import { noteRateLimit } from "@/api/rateLimitCooldown";
 // is a guaranteed 401 that burns budget and spams the console.
 const hasSession = () => !!getSessionToken();
 const NO_SESSION_ERR = () => new Error("Sign-in required");
+const PROJECT_WRITE_ENTITIES = new Set([
+  "FoundationProject", "ChannelLetterInstallation", "VinylProject", "CNCProject", "LaserProject",
+  "MetalProject", "BrickStoneProject", "MaintenanceProject", "Project", "CustomItemsProject",
+]);
+const writeFunction = (entity) => PROJECT_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
 
 // Per-session negative cache of denied entities. Once the gateway refuses an
 // entity for this session (403), every repeat read is a guaranteed failure
@@ -229,15 +234,15 @@ const METHODS = {
     );
   },
   create: (entity, data) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "create", data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
   update: (entity, id, data) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "update", id, data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
   updateMany: (entity, query, update) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "updateMany", id: query?.id, query, update }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
   delete: (entity, id) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => { bustReadCache(entity); return bodyOf(r).deleted === true; }) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "delete", id }).then((r) => { bustReadCache(entity); return bodyOf(r).deleted === true; }) : Promise.reject(NO_SESSION_ERR()),
   deleteMany: (entity, query) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "deleteMany", query }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "deleteMany", query }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
   // Staff sessions cannot use platform live-subscriptions (entity RLS is
   // backend-only), so subscribe polls staffDataRead and emits a synthetic
   // change event when the row set changes. Returns an unsubscribe function,
