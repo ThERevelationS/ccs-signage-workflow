@@ -93,6 +93,8 @@ function useDropdownType() {
 
 const toMantineDateTime = (v) => (v ? `${v.replace("T", " ").slice(0, 16)}:00` : null);
 const fromMantineDateTime = (v) => (v ? v.replace(" ", "T").slice(0, 16) : "");
+const dayBound = (v, endOfDay) => (!v ? undefined
+  : typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v} ${endOfDay ? "23:59:59" : "00:00:00"}` : v);
 const trimTime = (v) => (v ? String(v).slice(0, 5) : "");
 const toMantineTime = (v) => { const t = trimTime(v); return t ? `${t}:00` : ""; };
 
@@ -186,14 +188,32 @@ export function CcsDateTimeField({
       classNames={{ input: className, ...classNames }}
       value={toMantineDateTime(value)}
       onChange={(v) => fire(onChange, fromMantineDateTime(v))}
-      minDate={min || undefined}
-      maxDate={max || undefined}
+      // Mantine clamps the full picked datetime against min/max on close, so a
+      // bare "YYYY-MM-DD" bound acts as midnight and snapped same-day picks
+      // back to 12:00 AM. Date-only bounds now cover the whole day.
+      minDate={dayBound(min, false)}
+      maxDate={dayBound(max, true)}
       valueFormat="MM/DD/YYYY hh:mm A"
       placeholder={placeholder}
       clearable={clearable}
       dropdownType={dropdownType}
-      presets={dropdownType !== "modal" && presets !== false ? presets : undefined}
-      timePickerProps={{ withDropdown: true, format: "12h", minutesStep: 5 }}
+      // DateTimePicker presets must be full datetime strings — a bare
+      // "YYYY-MM-DD" round-trips through onChange/value as "YYYY-MM-DD:00",
+      // which fails to parse and resets the whole field to 12:00.
+      presets={dropdownType !== "modal" && presets !== false
+        ? presets.map((p) => ({ ...p, value: p.value && p.value.length === 10 ? `${p.value} 00:00:00` : p.value }))
+        : undefined}
+      // withinPortal: false keeps the time dropdown inside the picker's own
+      // popover — portaled to body it counted as an outside click and closed
+      // the whole picker after every hour/minute/AM-PM selection. 360px fits
+      // all 12 options per column, so no scrolling is needed inside dialogs.
+      timePickerProps={{
+        withDropdown: true,
+        format: "12h",
+        minutesStep: 5,
+        maxDropdownContentHeight: 360,
+        popoverProps: { withinPortal: false },
+      }}
       weekendDays={[0, 6]}
       {...rest}
     />
@@ -216,6 +236,11 @@ export function CcsTimeField({
       format="12h"
       minutesStep={5}
       withDropdown
+      maxDropdownContentHeight={360}
+      // withinPortal: false keeps the dropdown inside the field's own DOM —
+      // portaled to body it lands outside Radix dialogs, whose modal barrier
+      // swallows the option clicks so selections never apply.
+      popoverProps={{ withinPortal: false }}
       {...rest}
     />
   );
@@ -242,4 +267,4 @@ export function CcsDateRangeField({
       {...rest}
     />
   );
-}
+}
