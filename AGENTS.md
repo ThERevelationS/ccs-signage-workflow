@@ -22,6 +22,8 @@ GitHub `origin/main` mirrors Base44's deployed state ("External agent changes" c
 5. `npx base44@latest site deploy --no-build --publish --yes --app-id 68dfcc5e57bbbc35387da97c` — do NOT pass `--git-hash` (rejected: app source is Base44-managed).
 6. Push the commit to `origin main` for the record — GitHub push alone does NOT deploy; step 5 is what ships it.
 
+**Stale point reads (fixed 2026-11-19, site `index-DY-nnT4-`):** `staffDataRead` caches identical requests 45s per isolate and writes never invalidate it, so `staffEntities.get(id)` returned pre-save versions — every CAS retry missed and Product adds failed "Estimate changed repeatedly while saving". `staffEntities.get` now sends a unique `cursor` (id reads ignore it) so point reads always miss the cache. The server-side fix (skip TTL cache for id reads, `point_read:'live'` marker) is committed but NOT live: while sandbox credits are out, `functions deploy` of an EXISTING function never reached the public endpoint (0 marker hits after a site publish too); only brand-new functions go live. Write the staffDataRead change into the sandbox once credits return. Live site 2026-11-19 was built from `731c0aabf` + this fix — `origin/main` past `e3571f846` does not build (imports missing `foundation/foundationReinforcementPrintMaterial`).
+
 Windows gotcha: case-colliding file pairs (`Foo.jsx` + `foo.mjs`) break extensionless imports — pin `.jsx` explicitly (see commit `6ca18bf00`). Same-name entity jsonc pairs (`_Noop`/`_noop`) can't both materialize — if git shows a phantom deletion, restore via `git update-index --cacheinfo`.
 ## Permitting scan — worker topology (per Brett 2026-11-03)
 

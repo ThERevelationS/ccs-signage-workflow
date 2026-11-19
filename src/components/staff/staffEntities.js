@@ -50,6 +50,7 @@ const isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 40
 // re-reads fresh rows. Hits return a copy so in-place sorts cannot corrupt
 // the cached array for other callers.
 const READ_CACHE_TTL_MS = 30000;
+let pointReadSeq = 0;
 const readCache = new Map();
 const readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
 const cachedRead = (key) => {
@@ -208,9 +209,13 @@ const METHODS = {
         return args.paged ? page(rows) : rows;
       });
   },
+  // Single-record reads must be current: the CAS save helpers re-read by id to
+  // get the live updated_date before every retry. The gateway's in-isolate read
+  // cache keys on the request shape, so a unique cursor value (ignored by id
+  // reads) keeps a 45s-old copy from being served after a save.
   get: (entity, id) => {
     if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
-    return invokeFleet("staffDataRead", { entity, id }).then(
+    return invokeFleet("staffDataRead", { entity, id, cursor: `point-${Date.now()}-${++pointReadSeq}` }).then(
       (r) => bodyOf(r).item ?? null,
       (err) => { if (isForbidden(err)) markDenied(entity); throw err; },
     );
