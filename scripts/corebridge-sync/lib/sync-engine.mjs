@@ -3,6 +3,7 @@ import { parseCursor, scanAbove, updateWatchOrders } from '../cursor.mjs';
 import { estimateRecord, invoiceRecord, paymentRecord } from './order-model.mjs';
 import { matchAccount, matchLead, normalizeLeadName } from './matching.mjs';
 import { Journal } from './journal.mjs';
+import { accountContacts, accountCustomerRow, accountContactRows, accountAddressRows } from './account-model.mjs';
 
 const clean = (value) => String(value ?? '').trim();
 const cents = (value) => Math.round(Number(value || 0) * 100);
@@ -10,6 +11,8 @@ const valuesEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const empty = (value) => value === undefined || value === null || value === '';
 const accountId = (header) => clean(header.AccountId || header.hfOrdAccountId || header.Account?.Id);
 const accountName = (header) => clean(header.CompanyName || header.Account?.CompanyName);
+
+class HeldAccountLimitError extends Error {}
 
 function newest(rows) {
   return [...rows].sort((a, b) => clean(b.created_date).localeCompare(clean(a.created_date)) || clean(b.id).localeCompare(clean(a.id)))[0] || null;
@@ -84,16 +87,19 @@ async function enrichMatchedCustomer(app, customer, order) {
 async function customerFor(order, context) {
   const { app, journal, apply, customers, report } = context;
   const id = accountId(order.header), name = accountName(order.header);
-  if (!id || !name) return null;
+  if (!id) return null;
+  if (context.accountCustomers?.has(id)) return context.accountCustomers.get(id);
   const maps = (await app.map('customers', id)).filter((row) => row.target_id && row.target_id !== '__error__');
   if (maps.length > 1 || maps.some((row) => row.target_entity !== 'Customer')) throw new Error(`Conflicting customer ledger ${id}.`);
   if (maps.length) {
     let customer = await resolveCustomer(app, maps[0].target_id);
     let notes = {};
     try { notes = JSON.parse(maps[0].notes || '{}'); } catch { /* Older ledgers may have unstructured notes. */ }
-    if (apply && notes.account_detail_pending === true && notes.matched_existing === true) customer = await enrichMatchedCustomer(app, customer, order);
+    const completed = await app.map('__sync_account_detail__', id);
+    if (apply && !completed.length && notes.account_detail_pending === true && notes.matched_existing === true) customer = await enrichMatchedCustomer(app, customer, order);
     return customer;
   }
+  if (!name) return null;
   const row = accountRow(order), match = matchAccount(row, customers);
   if (match.kind === 'ambiguous') {
     report.skipped.push({ order_id: order.order_id, account_id: id, reason: 'multiple customer name/phone matches' });
@@ -119,6 +125,147 @@ async function customerFor(order, context) {
   }
   report.clients.push({ account_id: id, name, id: customer.id, action: match.kind === 'linked' ? 'linked' : 'created', account_detail_pending: true });
   return customer;
+}
+
+const compareText = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const comparePhone = (value) => clean(value).replace(/\D/g, '').slice(-10);
+
+function matchingChildren(entity, row, existing) {
+  return existing.filter((item) => {
+    if (item.deleted === true || item.is_active === false) return false;
+    if (entity === 'CustomerLocation') {
+      return compareText(row.address_line_1) && compareText(row.address_line_1) === compareText(item.address_line_1) &&
+        compareText(row.city) === compareText(item.city) && compareText(row.state) === compareText(item.state) &&
+        compareText(row.postal_code) === compareText(item.postal_code);
+    }
+    const email = clean(row.email).toLowerCase(), otherEmail = clean(item.email).toLowerCase();
+    if (email && otherEmail) return email === otherEmail;
+    const name = compareText(`${row.first_name || ''} ${row.last_name || ''}`);
+    const otherName = compareText(`${item.first_name || ''} ${item.last_name || ''}`);
+    const phone = comparePhone(row.phone || row.mobile_phone), otherPhone = comparePhone(item.phone || item.mobile_phone);
+    return !!name && name === otherName && (!phone || !otherPhone || phone === otherPhone);
+  });
+}
+
+async function accountChild(entity, sourceEntity, row, customer, ledger, context, existing) {
+  const { app, journal, apply, report } = context;
+  const sourceId = row.__source_id__, key = `cb:${sourceEntity}:${sourceId}`;
+  const mapped = await journal.goodLedger(sourceEntity, sourceId);
+  if (mapped) {
+    if (mapped.target_entity !== entity) throw new Error(`Ledger ${key} has the wrong target type.`);
+    const current = await app.get(entity, mapped.target_id);
+    if (current.customer_id !== customer.id && await customerIdForLink(app, current.customer_id, apply) !== customer.id) {
+      throw new Error(`Ledger ${key} points to another customer.`);
+    }
+    return { id: current.id, action: 'existing' };
+  }
+  const matches = matchingChildren(entity, row, existing);
+  if (matches.length > 1) throw new Error(`Account ${row.customer_id} has ambiguous existing ${sourceEntity}.`);
+  if (matches.length === 1) {
+    if (apply) await journal.linkExisting(entity, sourceEntity, sourceId, matches[0].id);
+    return { id: matches[0].id, action: 'linked' };
+  }
+  if (!apply) {
+    const id = `dry-${sourceEntity}:${sourceId}`;
+    existing.push({ ...row, id });
+    return { id, action: 'created' };
+  }
+  if (!ledger || ledger.target_id !== customer.id) throw new Error(`Account ${row.customer_id} has a merged customer ledger; ${sourceEntity} creation requires ledger repair.`);
+  const result = await journal.create({
+    key, entity, source_entity: sourceEntity, source_id: sourceId, order_id: null,
+    write: () => app.importMapped(sourceEntity, row, 'cb-customers-2026-11-17', 'corebridge_account_sweep'),
+  });
+  const created = await app.get(entity, result.target_id);
+  if (created.customer_id !== customer.id) throw new Error(`Created ${sourceEntity} ${sourceId} has another customer.`);
+  existing.push(created);
+  return { id: result.target_id, action: result.status };
+}
+
+async function processAccount(account, context) {
+  const { app, journal, apply, customers, report, references, cursor, blockedAccounts, now } = context;
+  const id = String(account.acct_id), name = clean(account.company_name);
+  if (!id || !name) throw new Error(`Account ${id} is missing its identity.`);
+  const ledger = await journal.goodLedger('customers', id);
+  const match = ledger ? null : matchAccount({ company_name: name, company_phone: account.company_phone }, customers);
+  if (match?.kind === 'ambiguous') {
+    const reason = 'multiple customer name/phone matches';
+    report.skipped.push({ account_id: id, name, reason, candidate_customer_ids: match.matches.map((item) => item.id) });
+    blockedAccounts.set(id, name);
+    const held = cursor.held_accounts.find((item) => item.account_id === id);
+    if (!held && cursor.held_accounts.length >= 200) throw new HeldAccountLimitError(`Held account limit reached before account ${id}.`);
+    if (held) Object.assign(held, { name, reason });
+    else cursor.held_accounts.push({ account_id: id, name, reason, first_seen: new Date(now()).toISOString() });
+    return;
+  }
+  const contacts = accountContacts(account, references);
+  const row = accountCustomerRow(account, contacts);
+  let customer, action;
+  if (ledger) {
+    if (ledger.target_entity !== 'Customer') throw new Error(`Customer ledger ${id} has an invalid target.`);
+    customer = await resolveCustomer(app, ledger.target_id);
+    action = 'enriched';
+  } else {
+    action = match.kind === 'linked' ? 'linked' : 'created';
+    if (!apply) {
+      customer = match.matches[0] || { ...row, id: `dry-customer:${id}` };
+      if (match.kind === 'new') customers.push(customer);
+    }
+    else if (match.kind === 'linked') {
+      customer = match.matches[0];
+      await journal.linkCustomer(id, customer.id, null);
+    } else {
+      const result = await journal.create({
+        key: `cb:customers:${id}`, entity: 'Customer', source_entity: 'customers', source_id: id, order_id: null,
+        write: () => app.importMapped('customers', row, 'cb-customers-2026-11-17', 'corebridge_account_sweep'),
+      });
+      customer = await resolveCustomer(app, result.target_id);
+      customers.push(customer);
+    }
+  }
+  if (apply && action !== 'created') {
+    const patch = {};
+    const authoritative = new Set(['customer_status', 'is_active', 'pricing_tier']);
+    for (const [field, value] of Object.entries(row)) {
+      if (['__source_id__', 'company_name', 'notes'].includes(field)) continue;
+      if ((authoritative.has(field) || empty(customer[field]) ||
+          (['tax_exempt', 'require_purchase_order'].includes(field) && value === true)) &&
+          !valuesEqual(customer[field], value)) patch[field] = value;
+    }
+    const oldNotes = clean(customer.notes);
+    const markers = [...oldNotes.matchAll(/CoreBridge ID:\s*(\d+)/gi)];
+    let baseNotes = oldNotes;
+    for (let markerIndex = markers.length - 1; markerIndex >= 0; markerIndex--) {
+      if (markers[markerIndex][1] !== id) continue;
+      const start = markers[markerIndex].index;
+      const end = markers[markerIndex + 1]?.index ?? oldNotes.length;
+      baseNotes = baseNotes.slice(0, start) + baseNotes.slice(start, end).replace(/account_detail_pending:\s*true/gi, 'account_detail_pending: false') + baseNotes.slice(end);
+    }
+    if (!baseNotes.includes(`CoreBridge status: ${account.account_status}; created ${account.date_created}`)) {
+      patch.notes = [baseNotes, row.notes].filter(Boolean).join('\n');
+    } else if (baseNotes !== oldNotes) patch.notes = baseNotes;
+    if (Object.keys(patch).length) customer = await app.cas('Customer', customer, patch);
+  }
+  const customerLedger = apply ? await journal.goodLedger('customers', id) : ledger;
+  const childRows = [
+    ['CustomerContact', 'contacts', accountContactRows(account, contacts), report.contacts],
+    ['CustomerLocation', 'addresses', accountAddressRows(account), report.addresses],
+  ];
+  for (const [entity, sourceEntity, rows, output] of childRows) {
+    const existing = customer.id.startsWith('dry-customer:') ? [] : await app.list(entity, { customer_id: customer.id });
+    for (const child of rows) {
+      const result = await accountChild(entity, sourceEntity, child, customer, customerLedger, context, existing);
+      output.push({ account_id: id, source_id: child.__source_id__, ...result });
+    }
+  }
+  if (account.shipping_address_list.length > 1) report.warnings.push(`Account ${id} has additional shipping addresses whose detail is not on the page.`);
+  if (apply && !(await app.map('__sync_account_detail__', id)).length) {
+    await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_account_detail__', source_id: id,
+      target_entity: 'Customer', target_id: customer.id, notes: JSON.stringify({ status: 'complete', at: new Date().toISOString() }) });
+  }
+  context.accountCustomers.set(id, customer);
+  cursor.held_accounts = cursor.held_accounts.filter((item) => item.account_id !== id);
+  blockedAccounts.delete(id);
+  report.clients.push({ account_id: id, id: customer.id, name, action, account_detail_pending: false });
 }
 
 function historyLog(history) {
@@ -444,11 +591,11 @@ async function syncInvoiceWorkOrderLinks(context) {
   }
 }
 
-export async function runSync({ app, capture, captureAccount = null, references = { contacts: new Map(), categories: new Map() }, apply = false, maxOrders = 500, maxAccounts = 200, now = () => Date.now(), runId = randomUUID(), captureFixture = null }) {
+export async function runSync({ app, capture, fetchAccount = null, references = { contacts: new Map(), categories: new Map() }, apply = false, maxOrders = 500, maxAccounts = 200, now = () => Date.now(), runId = randomUUID(), captureFixture = null }) {
   if (!Number.isSafeInteger(maxOrders) || maxOrders < 1 || !Number.isSafeInteger(maxAccounts) || maxAccounts < 1) throw new Error('Safety caps must be positive integers.');
   const report = {
-    mode: apply ? 'apply' : 'dry-run', run_id: runId, clients: [], estimates: [], invoices: [], transactions: [], watched_changes: [],
-    pipeline_links: [], skipped: [], errors: [], warnings: ['account scan disabled: parser pending'], cursor_before: null, cursor_after: null,
+    mode: apply ? 'apply' : 'dry-run', run_id: runId, clients: [], contacts: [], addresses: [], estimates: [], invoices: [], transactions: [], watched_changes: [],
+    pipeline_links: [], skipped: [], errors: [], warnings: fetchAccount ? [] : ['account scan disabled: no account source'], cursor_before: null, cursor_after: null,
     capture_fixture: captureFixture,
   };
   let locked = false, heartbeatAt = now() + 10 * 60000;
@@ -482,25 +629,50 @@ export async function runSync({ app, capture, captureAccount = null, references 
       }
     }
     const customers = (await app.list('Customer')).filter((row) => row.id && row.deleted !== true && !row.merged_into_customer_id);
-    const context = { app, journal, apply, customers, report, references, estimates: [] };
+    const context = { app, journal, apply, customers, report, references, estimates: [], accountCustomers: new Map(),
+      cursor, now, blockedAccounts: new Map(cursor.held_accounts.map((item) => [item.account_id, item.name])) };
     let fixtureAttempted = false;
+    if (fetchAccount) {
+      const probeAccount = async (id) => {
+        await heartbeat();
+        const account = await fetchAccount(id, { captureDirectory: captureFixture && !fixtureAttempted ? captureFixture : '' });
+        if (account && captureFixture && !fixtureAttempted) {
+          fixtureAttempted = true;
+          report.warnings.push(`Raw account fixture saved in ${captureFixture}; contains private data and must be sanitized before committing.`);
+        }
+        return account;
+      };
+      for (const held of [...cursor.held_accounts]) {
+        const account = await probeAccount(Number(held.account_id));
+        if (!account) {
+          report.skipped.push({ account_id: held.account_id, name: held.name, reason: 'held account no longer found in CoreBridge' });
+          continue;
+        }
+        await processAccount(account, context);
+      }
+      try {
+        const accountScan = await scanAbove({
+          high: cursor.last_account_id, missLimit: 25, maxRecords: maxAccounts,
+          probe: probeAccount, processRecord: (account) => processAccount(account, context),
+        });
+        cursor.last_account_id = accountScan.lastProcessed;
+        if (accountScan.capReached) report.warnings.push(`Account cap ${maxAccounts} reached.`);
+      } catch (error) {
+        if (!(error instanceof HeldAccountLimitError)) throw error;
+        cursor.last_account_id = error.lastProcessed;
+        report.warnings.push(`${error.message} Account scanning paused without dropping held accounts; orders continue.`);
+      }
+    }
     async function processOrder(order, fromWatch = false) {
       await heartbeat();
-      if (captureFixture && captureAccount && !fixtureAttempted) {
-        fixtureAttempted = true;
-        try {
-          const path = await captureAccount(order.account_list_href, cursor.last_account_id + 1, captureFixture);
-          report.warnings.push(`Raw account fixture saved to ${path}; contains private data and must be sanitized before committing.`);
-        } catch (error) {
-          report.warnings.push(`Account fixture not captured: ${clean(error.message)}.`);
-        }
-      }
-      const customer = await customerFor(order, context);
+      const heldAccount = context.blockedAccounts.has(accountId(order.header));
+      const customer = heldAccount ? null : await customerFor(order, context);
       if (!customer) {
-        const candidate = { order_id: order.order_id, account_id: accountId(order.header), account_name: accountName(order.header) };
+        const candidate = { order_id: order.order_id, account_id: accountId(order.header),
+          account_name: accountName(order.header) || context.blockedAccounts.get(accountId(order.header)) || '' };
         if (!candidate.account_id || !candidate.account_name) throw new Error(`Order ${order.order_id} is missing its account identity.`);
         cursor.pending_account_orders = [...cursor.pending_account_orders.filter((item) => item.order_id !== order.order_id), candidate];
-        report.skipped.push({ ...candidate, reason: 'account unavailable or ambiguous' });
+        report.skipped.push({ ...candidate, reason: heldAccount ? 'account is held for ambiguous customer matches' : 'account unavailable or ambiguous' });
         return;
       }
       const estimate = await estimateFor(order, customer, context, fromWatch);
@@ -527,7 +699,7 @@ export async function runSync({ app, capture, captureAccount = null, references 
     await syncInvoiceWorkOrderLinks(context);
     report.cursor_after = structuredClone(cursor);
     if (apply) {
-      const note = JSON.stringify({ cursor, summary: { clients: report.clients, estimates: report.estimates, invoices: report.invoices,
+      const note = JSON.stringify({ cursor, summary: { clients: report.clients, contacts: report.contacts, addresses: report.addresses, estimates: report.estimates, invoices: report.invoices,
         transactions: report.transactions, watched_changes: report.watched_changes, pipeline_links: report.pipeline_links, skipped: report.skipped, warnings: report.warnings } });
       await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: runId,
         target_entity: '__sync_cursor__', target_id: runId, notes: note });

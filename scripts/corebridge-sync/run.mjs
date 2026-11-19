@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadCredentials, loginCoreBridge } from './auth.mjs';
 import { AppClient } from './lib/app-client.mjs';
-import { captureAccountFixture } from './lib/accountSource.mjs';
+import { fetchAccount } from './lib/accountSource.mjs';
 import { captureOrder, loadOrderReferences } from './lib/order-capture.mjs';
 import { runSync } from './lib/sync-engine.mjs';
 
@@ -29,12 +29,13 @@ function markdown(report) {
   const clients = report.clients.map((item) => `- ${item.name} (${item.id}): ${item.action}`).join('\n') || '- None';
   const estimates = report.estimates.map((item) => `- ${item.number || `Order ${item.order_id}`}: ${item.action}`).join('\n') || '- None';
   const invoices = report.invoices.map((item) => `- ${item.number}: ${item.action}`).join('\n') || '- None';
-  const skipped = report.skipped.map((item) => `- ${item.reason}: ${item.order_id || item.workorder_id || item.key || ''}`).join('\n') || '- None';
+  const skipped = report.skipped.map((item) => `- ${item.reason}: ${item.order_id || item.account_id || item.workorder_id || item.key || ''}` +
+    `${item.name ? ` (${item.name})` : ''}${item.candidate_customer_ids?.length ? `; candidates: ${item.candidate_customer_ids.join(', ')}` : ''}`).join('\n') || '- None';
   const warnings = report.warnings.map((item) => `- ${item}`).join('\n') || '- None';
   const errors = report.errors.map((item) => `- ${item}`).join('\n') || '- None';
   return `# CoreBridge weekly sync (${report.mode})\n\n` +
     `- Cursor before: ${JSON.stringify(report.cursor_before)}\n- Cursor after: ${JSON.stringify(report.cursor_after)}\n` +
-    `- Clients: ${report.clients.length}; estimates: ${report.estimates.length}; invoices: ${report.invoices.length}; transactions: ${report.transactions.length}; ` +
+    `- Clients: ${report.clients.length}; contacts: ${report.contacts.length}; addresses: ${report.addresses.length}; estimates: ${report.estimates.length}; invoices: ${report.invoices.length}; transactions: ${report.transactions.length}; ` +
     `watched changes: ${report.watched_changes.length}; pipeline links: ${report.pipeline_links.length}\n\n` +
     `## Clients\n${clients}\n\n## Estimates\n${estimates}\n\n## Invoices\n${invoices}\n\n` +
     `## Skipped / ambiguous\n${skipped}\n\n## Warnings\n${warnings}\n\n## Errors\n${errors}\n`;
@@ -50,14 +51,17 @@ try {
     }
     const credentials = loadCredentials();
     if (!credentials.corebridge || !credentials.app) throw new Error('CoreBridge and CCS staff credentials are required.');
-    const session = await loginCoreBridge({ username: credentials.corebridge.user, password: credentials.corebridge.pass });
-    const references = await loadOrderReferences(session);
+    let session, references;
+    try { session = await loginCoreBridge({ username: credentials.corebridge.user, password: credentials.corebridge.pass }); }
+    catch (error) { throw new Error(`CoreBridge login: ${error.message}`, { cause: error }); }
+    try { references = await loadOrderReferences(session); }
+    catch (error) { throw new Error(`CoreBridge reference loading: ${error.message}`, { cause: error }); }
     const app = new AppClient();
     await app.login(credentials.app);
     const report = await runSync({
       app, capture: (id) => captureOrder(session, id), references, apply: options.apply,
       maxAccounts: options.maxAccounts, maxOrders: options.maxOrders, captureFixture: options.captureFixture || null,
-      captureAccount: (href, id, directory) => captureAccountFixture(session, href, id, directory),
+      fetchAccount: (id, options) => fetchAccount(session, id, options),
     });
     const md = markdown(report);
     console.log(md);

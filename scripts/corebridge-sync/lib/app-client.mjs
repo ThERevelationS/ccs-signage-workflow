@@ -36,7 +36,7 @@ export class RateLimiter {
 }
 
 export function requestCost(fn, payload) {
-  if (fn === 'manageMigration' && payload?.action === 'import_rows') return payload.entity === 'estimates' ? 60 : 35;
+  if (fn === 'manageMigration' && payload?.action === 'import_rows') return ['estimates', 'contacts', 'addresses'].includes(payload.entity) ? 60 : 35;
   if (fn === 'corebridgeHistoryImport') {
     if (payload?.action === 'lookup_links') return 2;
     if (payload?.action === 'write_rows') return 2 + 2 * (payload.rows?.length || 1);

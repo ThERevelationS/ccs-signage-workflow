@@ -1,9 +1,8 @@
 # CoreBridge incremental sync
 
-**Not ready to schedule or run live.** `corebridgeSyncLock` must be reviewed
-and deployed by the lead first. The account detail parser and account-only
-scan are not implemented; the lock's create-if-missing election depends on
-the SDK's read consistency and has only been tested offline.
+**Not ready to schedule.** `corebridgeSyncLock` must be reviewed and deployed
+by the lead first; its create-if-missing election depends on the SDK's read
+consistency and has only been tested offline.
 
 Run from a fresh GitHub checkout with Node 20 or newer. Set `CB_USERNAME` and
 `CB_PASSWORD` to the CoreBridge credentials, and `CCS_APP_USER` and
@@ -23,18 +22,27 @@ node scripts/test-corebridge-sync-lock.mjs
 
 The default is dry-run: it reads CoreBridge and CCS, performs no app
 writes, and does not claim the lock. `--report` saves JSON at the named path and Markdown at `<path>.md`;
-Markdown is also written to stdout. `--capture-fixture` attempts to discover
-the `hlAccounts` link from the first loaded order and save the next account
-ID's raw detail page to the requested directory. The captured file contains private
+Markdown is also written to stdout. `--capture-fixture` saves the first loaded
+account detail page to the requested directory. The captured file contains private
 data and may contain sensitive fields; sanitize it before sharing or adding it
-to `fixtures/`. The account parser remains deliberately disabled.
+to `fixtures/`.
 
 `LegacyMigrationMap` is the append-only cursor and per-create journal.
 The first cursor starts at account 3834 and order 11286, with order 11286
 queued for the previously unlinked account 3835. Missing account links are
 derived from order data where the customer match is unique; ambiguous orders
-remain pending for later runs. Account-only scanning is disabled, so
-`last_account_id` does not advance. Watches are capped at 200.
+remain pending for later runs. Account detail scans advance `last_account_id`
+only after each account and its available contacts/addresses are processed.
+Accounts with multiple customer matches are held and retried before new account
+scans; their orders remain pending while unrelated orders continue. Held accounts
+are capped at 200. At capacity, account scanning pauses before another ambiguous
+account rather than dropping a hold; orders continue and the report warns.
+Only the displayed default shipping address is available on the account page;
+additional shipping addresses are reported for review. Watches are capped at 200.
+Historical contacts came from a separate CSV, which is not available at runtime.
+Contact reference data does not always identify phone types or describe job
+authority, fax, and location; untyped secondary numbers and those CSV-only
+fields cannot be reproduced from the account page.
 
 Apply uses the `corebridgeSyncLock` 6-hour lease with 10-minute heartbeats,
 creation-key checks, and append-only pending/complete markers. Unresolved
@@ -47,9 +55,10 @@ behavior has not been verified live.
 
 `fixtures/orders-sanitized.json` contains numeric, status and date slices from
 three historical orders. The tests compare all mapped estimate and line
-fields, with textual fields removed or replaced for privacy. No account-detail
-HTML fixture is available. Parts inventory is never imported.
-No live CoreBridge dry-run or production writes have been performed.
+fields, with textual fields removed or replaced for privacy. An account-detail
+HTML fixture has been sanitized as `fixtures/account-synthetic.html`. The optional
+`parity-local.mjs` compares private account pages with the archive when those
+local paths exist. Parts inventory is never imported.
 
 ## Automation prompt
 

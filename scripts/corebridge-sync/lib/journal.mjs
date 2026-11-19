@@ -42,8 +42,8 @@ export class Journal {
       const ledger = await this.goodLedger(item.source_entity, item.source_id);
       if (!ledger) { unresolved.push(item); continue; }
       if (item.entity !== ledger.target_entity) throw new Error(`Unexpected ledger target for ${key}.`);
-      const matches = item.linked_customer
-        ? [await this.app.get('Customer', ledger.target_id)]
+      const matches = item.linked_customer || item.linked_existing
+        ? [await this.app.get(item.entity, ledger.target_id)]
         : await this.app.byKey(item.entity, key);
       if (matches.length !== 1 || clean(matches[0].id) !== clean(ledger.target_id)) {
         unresolved.push(item); continue;
@@ -112,9 +112,41 @@ export class Journal {
     } catch (error) {
       if (!(error instanceof AppCallError) || !error.ambiguous) throw error;
     }
-    const found = await this.goodLedger('customers', source);
+    let found;
+    for (let attempt = 0; ; attempt++) {
+      found = await this.goodLedger('customers', source);
+      if (found || attempt >= (this.confirmAttempts ?? 8)) break;
+      await (this.sleep || ((ms) => new Promise((r) => setTimeout(r, ms))))(this.confirmDelayMs ?? 15000);
+    }
     if (!found || found.target_id !== customerId) throw new Error(`Unresolved customer ledger ${source}.`);
     await this.append(key, 'complete', { ...details, target_id: customerId });
+    return found;
+  }
+
+  async linkExisting(entity, sourceEntity, sourceId, targetId) {
+    const key = `cb:${sourceEntity}:${sourceId}`;
+    const existing = await this.goodLedger(sourceEntity, sourceId);
+    if (existing) {
+      if (existing.target_entity !== entity || existing.target_id !== targetId) throw new Error(`Ledger ${key} conflicts.`);
+      return existing;
+    }
+    const details = { entity, source_entity: sourceEntity, source_id: String(sourceId), order_id: null, linked_existing: true };
+    await this.append(key, 'pending', details);
+    try {
+      await this.app.appendMap({ source_app_id: 'corebridge', source_entity: sourceEntity, source_id: String(sourceId),
+        target_entity: entity, target_id: targetId, migration_batch: 'cb-customers-2026-11-17',
+        notes: JSON.stringify({ status: 'linked', matched_existing: true, at: new Date().toISOString() }) });
+    } catch (error) {
+      if (!(error instanceof AppCallError) || !error.ambiguous) throw error;
+    }
+    let found;
+    for (let attempt = 0; ; attempt++) {
+      found = await this.goodLedger(sourceEntity, sourceId);
+      if (found || attempt >= (this.confirmAttempts ?? 8)) break;
+      await (this.sleep || ((ms) => new Promise((r) => setTimeout(r, ms))))(this.confirmDelayMs ?? 15000);
+    }
+    if (!found || found.target_id !== targetId || found.target_entity !== entity) throw new Error(`Unresolved ledger ${key}.`);
+    await this.append(key, 'complete', { ...details, target_id: targetId });
     return found;
   }
 }

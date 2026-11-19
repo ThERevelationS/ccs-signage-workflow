@@ -6,7 +6,9 @@ import { captureOrder, extractJsonAfter, historyRows, scrub } from './lib/order-
 import { estimateRecord, invoiceLines, invoiceRecord, paymentRecord, sourceLine } from './lib/order-model.mjs';
 import { matchAccount, matchLead } from './lib/matching.mjs';
 import { RateLimiter, requestCost } from './lib/app-client.mjs';
-import { fetchAccount, AccountParserUnavailable } from './lib/accountSource.mjs';
+import { fetchAccount } from './lib/accountSource.mjs';
+import { parseAccount } from './lib/accountParser.mjs';
+import { accountContactRows } from './lib/account-model.mjs';
 
 const html = `<form name="form1" id="form1" action="/Login.aspx"><input name="__VIEWSTATE" value="a&amp;b">
 <input value='generator' name='__VIEWSTATEGENERATOR'><input name="__EVENTVALIDATION" value="valid">
@@ -42,10 +44,20 @@ await assert.rejects(() => loginCoreBridge({
 assert.equal(failedRequests, 2);
 assert.deepEqual(parseCursor(null), { last_account_id: 3834, last_order_id: 11286, watch_orders: [], pending_account_orders: [
   { order_id: 11286, account_id: '3835', account_name: 'Cincinnati Vietnamese Baptist Church' },
-] });
-assert.deepEqual(parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288] } }) }), { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288], pending_account_orders: [] });
+], held_accounts: [] });
+assert.deepEqual(parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288] } }) }), { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288], pending_account_orders: [], held_accounts: [] });
 assert.throws(() => parseCursor({ notes: '{}' }), /invalid/);
 assert.throws(() => parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [12, 12] } }) }), /invalid watched/);
+const held = { account_id: '3835', name: 'Synthetic Client', reason: 'multiple matches', first_seen: '2026-11-18T12:00:00.000Z' };
+const cursorWithHeld = (items) => ({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, held_accounts: items } }) });
+assert.deepEqual(parseCursor(cursorWithHeld([held])).held_accounts, [held]);
+assert.deepEqual(parseCursor(cursorWithHeld([{ ...held, account_id: 3835 }])).held_accounts, [held]);
+for (const item of [
+  { ...held, account_id: '0' }, { ...held, account_id: '1.5' }, { ...held, name: '' },
+  { ...held, reason: '' }, { ...held, first_seen: 'bad' }, null,
+]) assert.throws(() => parseCursor(cursorWithHeld([item])), /invalid held accounts/);
+assert.throws(() => parseCursor(cursorWithHeld([held, { ...held, account_id: 3835 }])), /invalid held accounts/);
+assert.throws(() => parseCursor(cursorWithHeld(Array.from({ length: 201 }, (_, i) => ({ ...held, account_id: String(i + 1) })))), /invalid held accounts/);
 assert.deepEqual(updateWatchOrders([1, 2], 1, true), { watch_orders: [1, 2], dropped: [] });
 assert.deepEqual(updateWatchOrders([1, 2], 1, false), { watch_orders: [2], dropped: [] });
 const watch = updateWatchOrders(Array.from({ length: 200 }, (_, i) => i + 1), 201, true);
@@ -78,8 +90,19 @@ await limiter.wait(3);
 await limiter.wait();
 assert.deepEqual(waits, [1100, 550]);
 assert.equal(requestCost('manageMigration', { action: 'import_rows', entity: 'estimates' }), 60);
-await assert.rejects(() => fetchAccount(null, 3835), AccountParserUnavailable);
-console.log('PASS weighted entity rate limiter and disabled account parser');
+const accountHtml = readFileSync(new URL('./fixtures/account-synthetic.html', import.meta.url), 'utf8');
+const accountExpected = JSON.parse(readFileSync(new URL('./fixtures/account-synthetic.json', import.meta.url), 'utf8'));
+assert.deepEqual(parseAccount(accountHtml, 99999), accountExpected);
+assert.deepEqual(parseAccount(accountHtml, 99999).contact_ids, ['123']);
+assert.deepEqual(accountContactRows(accountExpected, [{ Id: 123, FirstName: 'Synthetic', PrimaryPhoneNumber: '5550101000',
+  PrimaryPhoneNumberTypeText: 'Mobile', SecondaryPhoneNumber: '5550102000', SecondaryPhoneNumberTypeText: 'Work' }])
+  .map(({ phone, mobile_phone }) => ({ phone, mobile_phone })), [{ phone: '5550102000', mobile_phone: '5550101000' }]);
+assert.equal(accountContactRows(accountExpected, [{ Id: 123, FirstName: 'Synthetic', SecondaryPhoneNumber: '5550102000' }])[0].mobile_phone, undefined);
+assert.equal(await fetchAccount({ request: async () => new Response('', { status: 500 }) }, 99999), null);
+assert.equal(await fetchAccount({ request: async () => new Response('', { status: 404 }) }, 99999), null);
+await assert.rejects(() => fetchAccount({ request: async () => new Response(null, { status: 302, headers: { location: '/Login.aspx' } }) }, 99999), /session expired/);
+assert.throws(() => parseAccount(accountHtml, 99998), /invalid detail page/);
+console.log('PASS weighted entity rate limiter and sanitized account parser');
 
 const archived = JSON.parse(readFileSync(new URL('./fixtures/orders-sanitized.json', import.meta.url), 'utf8'));
 const expectedNotes = {

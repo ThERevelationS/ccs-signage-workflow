@@ -50,7 +50,7 @@ export function loadCredentials(env = process.env, read = readFileSync) {
   };
 }
 
-export async function loginCoreBridge({ username, password, baseUrl = 'https://cincinnaticustom.corebridge.net', fetchImpl = fetch }) {
+export async function loginCoreBridge({ username, password, baseUrl = 'https://cincinnaticustom.corebridge.net', fetchImpl = fetch, retryDelayMs = 5000 }) {
   if (!username || !password) throw new Error('CoreBridge credentials are required.');
   const origin = new URL(baseUrl).origin;
   const cookies = new Map();
@@ -59,7 +59,21 @@ export async function loginCoreBridge({ username, password, baseUrl = 'https://c
     if (url.origin !== origin) throw new Error('CoreBridge redirected to an unexpected origin.');
     const headers = new Headers(init.headers || {});
     if (cookies.size) headers.set('cookie', [...cookies].map(([name, value]) => `${name}=${value}`).join('; '));
-    const response = await fetchImpl(url, { ...init, headers, redirect: 'manual', signal: AbortSignal.timeout(30000) });
+    // The sync only reads from CoreBridge, so transient network failures,
+    // timeouts and gateway errors are retried with backoff.
+    let response;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const fetched = await fetchImpl(url, { ...init, headers, redirect: 'manual', signal: AbortSignal.timeout(120000) });
+        // Buffer the body inside the retry so a connection dropped mid-download is retried too.
+        const body = [101, 204, 205, 304].includes(fetched.status) ? null : await fetched.arrayBuffer();
+        response = new Response(body, { status: fetched.status, statusText: fetched.statusText, headers: fetched.headers });
+        if (![502, 503, 504].includes(response.status) || attempt >= 3) break;
+      } catch (error) {
+        if (attempt >= 3) throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 3 ** attempt));
+    }
     const setCookies = response.headers.getSetCookie?.() || [];
     for (const header of setCookies) {
       const first = header.split(';', 1)[0];

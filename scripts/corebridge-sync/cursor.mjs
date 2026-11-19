@@ -2,7 +2,7 @@ export const SEED_CURSOR = Object.freeze({ last_account_id: 3834, last_order_id:
 export const SEED_PENDING = Object.freeze({ order_id: 11286, account_id: '3835', account_name: 'Cincinnati Vietnamese Baptist Church' });
 
 export function parseCursor(row) {
-  if (!row) return { ...SEED_CURSOR, watch_orders: [], pending_account_orders: [{ ...SEED_PENDING }] };
+  if (!row) return { ...SEED_CURSOR, watch_orders: [], pending_account_orders: [{ ...SEED_PENDING }], held_accounts: [] };
   let note;
   try { note = typeof row.notes === 'string' ? JSON.parse(row.notes) : row.notes; }
   catch { throw new Error('Latest sync cursor has invalid notes.'); }
@@ -24,7 +24,18 @@ export function parseCursor(row) {
       new Set(pending.map((item) => item.order_id)).size !== pending.length) {
     throw new Error('Latest sync cursor has invalid pending account orders.');
   }
-  return { last_account_id: accounts, last_order_id: orders, watch_orders: [...watch], pending_account_orders: pending.map((item) => ({ ...item })) };
+  const held = cursor?.held_accounts ?? note?.held_accounts ?? [];
+  if (!Array.isArray(held) || held.length > 200 || held.some((item) => {
+    const id = String(item?.account_id ?? '');
+    return !/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) ||
+      typeof item.name !== 'string' || !item.name.trim() || typeof item.reason !== 'string' || !item.reason.trim() ||
+      typeof item.first_seen !== 'string' || !Number.isFinite(Date.parse(item.first_seen));
+  }) || new Set(held.map((item) => String(item.account_id))).size !== held.length) {
+    throw new Error('Latest sync cursor has invalid held accounts.');
+  }
+  return { last_account_id: accounts, last_order_id: orders, watch_orders: [...watch],
+    pending_account_orders: pending.map((item) => ({ ...item })),
+    held_accounts: held.map((item) => ({ ...item, account_id: String(item.account_id) })) };
 }
 
 export function updateWatchOrders(watch, orderId, shouldWatch) {

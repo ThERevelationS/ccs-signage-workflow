@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { loginCoreBridge } from './auth.mjs';
 import { AppCallError } from './lib/app-client.mjs';
 import { captureAccountFixture } from './lib/accountSource.mjs';
+import { fetchAccount } from './lib/accountSource.mjs';
 import { captureOrder, loadOrderReferences } from './lib/order-capture.mjs';
 import { runSync } from './lib/sync-engine.mjs';
 
@@ -21,6 +22,7 @@ class FakeApp {
         source_entity: 'estimates', source_id: '11286', target_entity: 'AllInOneEstimate', target_id: 'est-seed',
       }],
       Customer: [],
+      CustomerContact: [], CustomerLocation: [],
       AllInOneEstimate: [{ id: 'est-seed', creation_request_key: 'cb:estimates:11286', status: 'sent', customer_id: '', estimate_number: 'EST-14767', updated_date: 'v1', line_items: [] }],
       WorkOrder: [
         { id: 'wo-seed', estimate_id: 'est-seed', customer_id: '', updated_date: 'v1' },
@@ -72,10 +74,11 @@ class FakeApp {
     return copy(row);
   }
   async importMapped(entity, data) {
-    const target = entity === 'customers' ? 'Customer' : 'AllInOneEstimate';
+    const target = { customers: 'Customer', estimates: 'AllInOneEstimate', contacts: 'CustomerContact', addresses: 'CustomerLocation' }[entity];
+    if (!target) throw new Error(`Unexpected mapper ${entity}`);
     const source = data.__source_id__, id = `${target}-${++this.serial}`;
     const row = { ...copy(data), id, creation_request_key: `cb:${entity}:${source}`, updated_date: `v${this.serial}` };
-    if (entity === 'estimates') {
+    if (entity !== 'customers') {
       const map = (await this.map('customers', data.customer_id))[0];
       row.customer_id = map?.target_id || '';
     }
@@ -113,7 +116,8 @@ class FakeApp {
 const html = `<form id="form1" action="/Login.aspx">
 <input name="__VIEWSTATE" value="v"><input name="__VIEWSTATEGENERATOR" value="g">
 <input name="__EVENTVALIDATION" value="e"><input name="txtUsername"><input name="txtPassword"></form>`;
-let status = 'ESTIMATE', hasRefund = false, paymentAmount = 50;
+let status = 'ESTIMATE', hasRefund = false, paymentAmount = 50, secondOrderOtherAccount = false, seedOrderNameMissing = false;
+const accountHtml = await readFile(new URL('./fixtures/account-synthetic.html', import.meta.url), 'utf8');
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/Login.aspx') {
@@ -121,8 +125,14 @@ const server = createServer(async (req, res) => {
     res.writeHead(302, { location: '/Home.aspx', 'set-cookie': 'auth=test' }); return res.end();
   }
   if (!String(req.headers.cookie).includes('auth=test')) { res.writeHead(302, { location: '/Login.aspx' }); return res.end(); }
-  if (url.pathname === '/accounts.aspx') return res.end('<a href="/account.aspx?AccountId=3835">Synthetic account</a>');
-  if (url.pathname === '/account.aspx') return res.end('<html>Sanitized synthetic account fixture</html>');
+  if (url.pathname === '/SalesModule/Accounts/Account.aspx') {
+    const id = Number(url.searchParams.get('AcctId'));
+    if (![3835, 3837].includes(id)) { res.writeHead(404); return res.end(); }
+    let page = accountHtml.replace('99999', String(id));
+    if (id === 3837) page = page.replaceAll('Synthetic Client &amp; Co', 'Second Synthetic Client')
+      .replaceAll('value="123"', 'value="124"').replace('(555) 010-1234', '(555) 010-9876');
+    return res.end(`<!-- Sanitized synthetic account fixture -->${page}`);
+  }
   const body = [];
   for await (const chunk of req) body.push(chunk);
   const payload = body.length ? JSON.parse(Buffer.concat(body).toString()) : {};
@@ -133,10 +143,12 @@ const server = createServer(async (req, res) => {
     if (![11286, 11287].includes(orderId)) { res.writeHead(404); return res.end(); }
     const header = orderId === 11286
       ? { Id: 11286, AccountId: 3835, CompanyName: 'Synthetic Client', OrderStatus: status, EstimateNumber: 'EST-14767', TotalPrice: 100, BalanceDue: 100, SubTotalPrice: 100, TaxableAmount: 100 }
-      : { Id: 11287, AccountId: 3835, CompanyName: 'Synthetic Client', OrderStatus: 'INVOICED', InvoiceNumber: 'INV-200', TotalPrice: 100, BalanceDue: hasRefund ? 70 : 50, SubTotalPrice: 100, TaxableAmount: 100 };
+      : { Id: 11287, AccountId: secondOrderOtherAccount ? 3837 : 3835, CompanyName: secondOrderOtherAccount ? 'Second Synthetic Client' : 'Synthetic Client',
+        OrderStatus: 'INVOICED', InvoiceNumber: 'INV-200', TotalPrice: 100, BalanceDue: hasRefund ? 70 : 50, SubTotalPrice: 100, TaxableAmount: 100 };
     if (orderId === 11286 && status === 'INVOICED') header.InvoiceNumber = 'INV-201';
+    if (orderId === 11286 && seedOrderNameMissing) header.CompanyName = '';
     header.OrderContactId = 99;
-    header.Account = { Id: 3835, CompanyName: 'Synthetic Client', CompanyPhone: '555-000-1111' };
+    header.Account = { Id: header.AccountId, CompanyName: header.CompanyName, CompanyPhone: '555-000-1111' };
     return res.end(`<title>Order</title><script>var orderObj = ${JSON.stringify(header)};</script>`);
   }
   if (url.pathname.endsWith('GetOrderProductsView')) return res.end(JSON.stringify({ OrderProducts: [{ Id: 9, ProductCategoryId: 4, Description: 'Synthetic product', Qty: 1, TotalPrice: 100, TaxableAmount: 100 }] }));
@@ -295,6 +307,149 @@ try {
   }
   {
     const app = new FakeApp();
+    app.rows.Customer.push({ id: 'order-customer', company_name: 'Synthetic Client & Co',
+      notes: 'CoreBridge ID: 3835\nprevious import\nCoreBridge ID: 3835\naccount_detail_pending: true', updated_date: 'v1' });
+    app.rows.LegacyMigrationMap.push({ id: 'customer-ledger', source_app_id: 'corebridge', source_entity: 'customers',
+      source_id: '3835', target_entity: 'Customer', target_id: 'order-customer',
+      notes: JSON.stringify({ matched_existing: true, account_detail_pending: true }) });
+    const accountReferences = { ...references, contacts: new Map([...references.contacts,
+      [123, { Id: 123, AccountId: 3835, FirstName: 'Synthetic', LastName: 'Contact', Email: 'one@example.test', PrimaryPhoneNumber: '5550101234', IsActive: true }],
+      [124, { Id: 124, AccountId: 3837, FirstName: 'Other', LastName: 'Contact', Email: 'two@example.test', PrimaryPhoneNumber: '5550109876', IsActive: true }],
+    ]) };
+    const options = { app, capture, references: accountReferences, fetchAccount: (id, options) => fetchAccount(session, id, options) };
+    const dry = await runSync({ ...options, runId: 'accounts-dry' });
+    assert.deepEqual(dry.errors, []);
+    assert.deepEqual(dry.clients.map((item) => [item.account_id, item.action]), [['3835', 'enriched'], ['3837', 'created']]);
+    assert.equal(dry.cursor_after.last_account_id, 3837);
+    assert.equal(app.rows.Customer.length, 1);
+    assert.equal(app.rows.CustomerContact.length, 0);
+    assert.equal(app.rows.CustomerLocation.length, 0);
+    const applied = await runSync({ ...options, apply: true, runId: 'accounts-apply' });
+    assert.deepEqual(applied.errors, []);
+    assert.equal(applied.cursor_after.last_account_id, 3837);
+    assert.equal(app.rows.Customer.length, 2);
+    assert.equal(app.rows.CustomerContact.length, 2);
+    assert.equal(app.rows.CustomerLocation.length, 4);
+    assert.match(app.rows.Customer.find((item) => item.id === 'order-customer').notes, /account_detail_pending: false/);
+    assert.equal(app.rows.Customer.find((item) => item.id === 'order-customer').pricing_tier, 2);
+    const created = copy(app.created);
+    const again = await runSync({ ...options, apply: true, runId: 'accounts-rerun' });
+    assert.deepEqual(again.errors, []);
+    assert.deepEqual(app.created, created);
+    assert.equal(app.rows.Customer.find((item) => item.id === 'order-customer').notes.includes('account_detail_pending: true'), false);
+  }
+  {
+    secondOrderOtherAccount = true;
+    seedOrderNameMissing = true;
+    const app = new FakeApp();
+    app.rows.Customer.push(
+      { id: 'match-one', company_name: 'Synthetic Client & Co', updated_date: 'v1' },
+      { id: 'match-two', company_name: 'Synthetic Client & Co', updated_date: 'v2' },
+    );
+    const accountReferences = { ...references, contacts: new Map([...references.contacts,
+      [124, { Id: 124, AccountId: 3837, FirstName: 'Other', LastName: 'Contact', Email: 'two@example.test', IsActive: true }],
+    ]) };
+    const firstSeen = '2026-11-18T12:00:00.000Z';
+    const options = { app, capture, references: accountReferences, fetchAccount: (id, options) => fetchAccount(session, id, options),
+      now: () => Date.parse(firstSeen) };
+    const before = copy(app.rows);
+    const dry = await runSync({ ...options, runId: 'held-dry' });
+    assert.deepEqual(dry.errors, []);
+    assert.deepEqual(app.rows, before);
+    assert.equal(dry.cursor_after.last_account_id, 3837);
+    assert.deepEqual(dry.cursor_after.held_accounts, [{ account_id: '3835', name: 'Synthetic Client & Co',
+      reason: 'multiple customer name/phone matches', first_seen: firstSeen }]);
+    assert.deepEqual(dry.cursor_after.pending_account_orders.map((item) => item.order_id), [11286]);
+    assert.equal(dry.cursor_after.pending_account_orders[0].account_name, 'Synthetic Client & Co');
+    const first = await runSync({ ...options, apply: true, runId: 'held-first' });
+    assert.deepEqual(first.errors, []);
+    assert.equal(first.cursor_after.last_account_id, 3837);
+    assert.equal(first.cursor_after.last_order_id, 11287);
+    assert.deepEqual(first.cursor_after.held_accounts, dry.cursor_after.held_accounts);
+    assert.deepEqual(first.cursor_after.pending_account_orders.map((item) => item.order_id), [11286]);
+    const skipped = first.skipped.find((item) => item.account_id === '3835' && item.candidate_customer_ids);
+    assert.equal(skipped.name, 'Synthetic Client & Co');
+    assert.deepEqual(skipped.candidate_customer_ids, ['match-one', 'match-two']);
+    assert.equal(app.rows.AllInOneEstimate.find((item) => item.id === 'est-seed').customer_id, '');
+    assert.equal(app.rows.Invoice.length, 1);
+    assert.equal(app.rows.Invoice[0].invoice_number, 'INV-200');
+    assert.equal(app.rows.Customer.filter((item) => item.company_name === 'Synthetic Client & Co').length, 2);
+    const stillHeld = await runSync({ ...options, now: () => Date.parse('2026-11-19T12:00:00.000Z'), apply: true, runId: 'held-again' });
+    assert.deepEqual(stillHeld.errors, []);
+    assert.deepEqual(stillHeld.cursor_after.held_accounts, first.cursor_after.held_accounts);
+    assert.deepEqual(stillHeld.cursor_after.pending_account_orders.map((item) => item.order_id), [11286]);
+    assert.equal(app.rows.Invoice.length, 1);
+    app.rows.Customer.find((item) => item.id === 'match-two').merged_into_customer_id = 'match-one';
+    app.rows.Customer.find((item) => item.id === 'match-two').deleted = true;
+    accountReferences.contacts.set(123, { Id: 123, AccountId: 3835, FirstName: 'Synthetic', LastName: 'Contact', Email: 'one@example.test', IsActive: true });
+    const second = await runSync({ ...options, apply: true, runId: 'held-resolved' });
+    assert.deepEqual(second.errors, []);
+    assert.deepEqual(second.cursor_after.held_accounts, []);
+    assert.deepEqual(second.cursor_after.pending_account_orders, []);
+    assert.equal(second.cursor_after.last_account_id, 3837);
+    assert.equal(app.rows.AllInOneEstimate.find((item) => item.id === 'est-seed').customer_id, 'match-one');
+    assert.equal(app.rows.Invoice.length, 1);
+    assert.equal(app.rows.Customer.filter((item) => item.company_name === 'Synthetic Client & Co').length, 2);
+    secondOrderOtherAccount = false;
+    seedOrderNameMissing = false;
+  }
+  {
+    const app = new FakeApp();
+    app.rows.Customer.push({ id: 'unique', company_name: 'Synthetic Client', updated_date: 'v1' });
+    const hold = { account_id: '3835', name: 'Synthetic Client', reason: 'multiple matches', first_seen: '2026-11-18T12:00:00.000Z' };
+    await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: 'old',
+      notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11286, watch_orders: [], held_accounts: [hold],
+        pending_account_orders: [{ order_id: 11286, account_id: '3835', account_name: 'Synthetic Client' }] } }) });
+    const missing = await runSync({ app, capture, references, apply: true, runId: 'held-missing', fetchAccount: async () => null });
+    assert.deepEqual(missing.errors, []);
+    assert.deepEqual(missing.cursor_after.held_accounts, [hold]);
+    assert.deepEqual(missing.cursor_after.pending_account_orders.map((item) => item.order_id), [11286, 11287]);
+    assert.ok(missing.skipped.some((item) => item.account_id === '3835' && /no longer found/.test(item.reason)));
+    assert.equal((await app.map('customers', '3835')).length, 0);
+    assert.equal(app.rows.Invoice.length, 0);
+  }
+  {
+    const app = new FakeApp();
+    const hold = { account_id: '3835', name: 'Synthetic Client & Co', reason: 'multiple matches', first_seen: '2026-11-18T12:00:00.000Z' };
+    await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: 'old',
+      notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11286, watch_orders: [], held_accounts: [hold],
+        pending_account_orders: [{ order_id: 11286, account_id: '3835', account_name: 'Synthetic Client' }] } }) });
+    const accountReferences = { ...references, contacts: new Map([...references.contacts,
+      [123, { Id: 123, AccountId: 3835, FirstName: 'Synthetic', LastName: 'Contact', Email: 'one@example.test', IsActive: true }],
+    ]) };
+    const resolved = await runSync({ app, capture, references: accountReferences, apply: true, runId: 'held-no-match',
+      fetchAccount: (id, options) => id === 3835 ? fetchAccount(session, id, options) : Promise.resolve(null) });
+    assert.deepEqual(resolved.errors, []);
+    assert.deepEqual(resolved.cursor_after.held_accounts, []);
+    assert.deepEqual(resolved.cursor_after.pending_account_orders, []);
+    assert.equal(app.created.Customer, 1);
+    assert.equal(app.rows.AllInOneEstimate.find((item) => item.id === 'est-seed').customer_id, app.rows.Customer[0].id);
+  }
+  {
+    const app = new FakeApp();
+    app.rows.Customer.push(
+      { id: 'match-one', company_name: 'Synthetic Client & Co', updated_date: 'v1' },
+      { id: 'match-two', company_name: 'Synthetic Client & Co', updated_date: 'v2' },
+    );
+    const heldAccounts = Array.from({ length: 200 }, (_, i) => ({
+      account_id: String(1000 + i), name: `Held ${i}`, reason: 'multiple matches', first_seen: '2026-11-18T12:00:00.000Z',
+    }));
+    await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: 'old',
+      notes: JSON.stringify({ cursor: { last_account_id: 3834, last_order_id: 11286, watch_orders: [],
+        pending_account_orders: [{ order_id: 11286, account_id: '3835', account_name: 'Synthetic Client' }], held_accounts: heldAccounts } }) });
+    const result = await runSync({ app, capture, references, apply: true, runId: 'held-capacity',
+      fetchAccount: (id, options) => id < 3835 ? Promise.resolve(null) : fetchAccount(session, id, options) });
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.cursor_after.last_account_id, 3834);
+    assert.equal(result.cursor_after.last_order_id, 11287);
+    assert.deepEqual(result.cursor_after.held_accounts, heldAccounts);
+    assert.deepEqual(result.cursor_after.pending_account_orders.map((item) => item.order_id), [11286, 11287]);
+    assert.ok(result.warnings.some((message) => /Held account limit reached/.test(message)));
+    assert.equal(app.rows.Invoice.length, 0);
+    assert.equal(app.created.Customer, undefined);
+  }
+  {
+    const app = new FakeApp();
     mergedCustomer(app);
     const loser = copy(app.rows.Customer.find((row) => row.id === 'merged-0'));
     app.rows.AllInOneEstimate[0].customer_id = 'merged-0';
@@ -360,7 +515,7 @@ try {
     assert.equal(blocked.cursor_after.last_order_id, 11286);
     assert.equal(app.rows.Invoice.length, 0);
   }
-  console.log('PASS fake HTTP CoreBridge and app: dry run, apply, idempotence, seed recovery, watches, refunds, pipeline, timeout recovery, lease collision, deferred accounts and merged-customer chains');
+  console.log('PASS fake HTTP CoreBridge and app: held accounts and orders, retry after merge, overflow, account scans, enrichment, idempotence, watches, pipeline and recovery');
 } finally {
   server.close();
   await once(server, 'close');
