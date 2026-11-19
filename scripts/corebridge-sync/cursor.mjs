@@ -2,7 +2,7 @@ export const SEED_CURSOR = Object.freeze({ last_account_id: 3834, last_order_id:
 export const SEED_PENDING = Object.freeze({ order_id: 11286, account_id: '3835', account_name: 'Cincinnati Vietnamese Baptist Church' });
 
 export function parseCursor(row) {
-  if (!row) return { ...SEED_CURSOR, watch_orders: [], pending_account_orders: [{ ...SEED_PENDING }], held_accounts: [] };
+  if (!row) return { ...SEED_CURSOR, watch_orders: [], pending_account_orders: [{ ...SEED_PENDING }], held_accounts: [], watch_transactions: {} };
   let note;
   try { note = typeof row.notes === 'string' ? JSON.parse(row.notes) : row.notes; }
   catch { throw new Error('Latest sync cursor has invalid notes.'); }
@@ -33,9 +33,19 @@ export function parseCursor(row) {
   }) || new Set(held.map((item) => String(item.account_id))).size !== held.length) {
     throw new Error('Latest sync cursor has invalid held accounts.');
   }
+  const transactions = Object.hasOwn(cursor, 'watch_transactions') ? cursor.watch_transactions
+    : Object.hasOwn(note, 'watch_transactions') ? note.watch_transactions : {};
+  const plainObject = transactions !== null && typeof transactions === 'object' &&
+    (Object.getPrototypeOf(transactions) === Object.prototype || Object.getPrototypeOf(transactions) === null);
+  if (!plainObject || Object.keys(transactions).length > 200 || Object.entries(transactions).some(([id, items]) =>
+    !/^[1-9]\d*$/.test(id) || !Array.isArray(items) || items.length > 500 ||
+    items.some((item) => typeof item !== 'string' || !item.trim()) || new Set(items).size !== items.length)) {
+    throw new Error('Latest sync cursor has invalid watched transactions.');
+  }
   return { last_account_id: accounts, last_order_id: orders, watch_orders: [...watch],
     pending_account_orders: pending.map((item) => ({ ...item })),
-    held_accounts: held.map((item) => ({ ...item, account_id: String(item.account_id) })) };
+    held_accounts: held.map((item) => ({ ...item, account_id: String(item.account_id) })),
+    watch_transactions: Object.fromEntries(Object.entries(transactions).map(([id, items]) => [id, [...items]])) };
 }
 
 export function updateWatchOrders(watch, orderId, shouldWatch) {

@@ -31,14 +31,16 @@ function markdown(report) {
   const invoices = report.invoices.map((item) => `- ${item.number}: ${item.action}`).join('\n') || '- None';
   const skipped = report.skipped.map((item) => `- ${item.reason}: ${item.order_id || item.account_id || item.workorder_id || item.key || ''}` +
     `${item.name ? ` (${item.name})` : ''}${item.candidate_customer_ids?.length ? `; candidates: ${item.candidate_customer_ids.join(', ')}` : ''}`).join('\n') || '- None';
+  const needsReview = report.needs_review.map((item) =>
+    `- Order ${item.order_id}, ${item.invoice_number}: ${item.issues.map((issue) => issue.kind).join(', ')}`).join('\n') || '- None';
   const warnings = report.warnings.map((item) => `- ${item}`).join('\n') || '- None';
   const errors = report.errors.map((item) => `- ${item}`).join('\n') || '- None';
   return `# CoreBridge weekly sync (${report.mode})\n\n` +
     `- Cursor before: ${JSON.stringify(report.cursor_before)}\n- Cursor after: ${JSON.stringify(report.cursor_after)}\n` +
     `- Clients: ${report.clients.length}; contacts: ${report.contacts.length}; addresses: ${report.addresses.length}; estimates: ${report.estimates.length}; invoices: ${report.invoices.length}; transactions: ${report.transactions.length}; ` +
-    `watched changes: ${report.watched_changes.length}; pipeline links: ${report.pipeline_links.length}\n\n` +
+    `watched changes: ${report.watched_changes.length}; pipeline links: ${report.pipeline_links.length}; needs review: ${report.needs_review.length}\n\n` +
     `## Clients\n${clients}\n\n## Estimates\n${estimates}\n\n## Invoices\n${invoices}\n\n` +
-    `## Skipped / ambiguous\n${skipped}\n\n## Warnings\n${warnings}\n\n## Errors\n${errors}\n`;
+    `## Skipped / ambiguous\n${skipped}\n\n## Needs review\n${needsReview}\n\n## Warnings\n${warnings}\n\n## Errors\n${errors}\n`;
 }
 
 try {

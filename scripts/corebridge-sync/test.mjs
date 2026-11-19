@@ -44,8 +44,8 @@ await assert.rejects(() => loginCoreBridge({
 assert.equal(failedRequests, 2);
 assert.deepEqual(parseCursor(null), { last_account_id: 3834, last_order_id: 11286, watch_orders: [], pending_account_orders: [
   { order_id: 11286, account_id: '3835', account_name: 'Cincinnati Vietnamese Baptist Church' },
-], held_accounts: [] });
-assert.deepEqual(parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288] } }) }), { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288], pending_account_orders: [], held_accounts: [] });
+], held_accounts: [], watch_transactions: {} });
+assert.deepEqual(parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288] } }) }), { last_account_id: 3835, last_order_id: 11290, watch_orders: [11287, 11288], pending_account_orders: [], held_accounts: [], watch_transactions: {} });
 assert.throws(() => parseCursor({ notes: '{}' }), /invalid/);
 assert.throws(() => parseCursor({ notes: JSON.stringify({ cursor: { last_account_id: 3835, last_order_id: 11290, watch_orders: [12, 12] } }) }), /invalid watched/);
 const held = { account_id: '3835', name: 'Synthetic Client', reason: 'multiple matches', first_seen: '2026-11-18T12:00:00.000Z' };
@@ -58,6 +58,17 @@ for (const item of [
 ]) assert.throws(() => parseCursor(cursorWithHeld([item])), /invalid held accounts/);
 assert.throws(() => parseCursor(cursorWithHeld([held, { ...held, account_id: 3835 }])), /invalid held accounts/);
 assert.throws(() => parseCursor(cursorWithHeld(Array.from({ length: 201 }, (_, i) => ({ ...held, account_id: String(i + 1) })))), /invalid held accounts/);
+const cursorWithTransactions = (watch_transactions) => ({ notes: { cursor: {
+  last_account_id: 3835, last_order_id: 11290, watch_transactions,
+} } });
+const transactionSnapshot = { 11287: ['77', '78'], 11288: [] };
+assert.deepEqual(parseCursor(cursorWithTransactions(transactionSnapshot)).watch_transactions, transactionSnapshot);
+for (const invalid of [
+  null, [], 'invalid', new Date(), new Map(), { 0: [] }, { '01': [] }, { '-1': [] },
+  { 11287: null }, { 11287: ['77', '77'] }, { 11287: [''] }, { 11287: ['  '] }, { 11287: [77] },
+  { 11287: Array.from({ length: 501 }, (_, i) => String(i + 1)) },
+  Object.fromEntries(Array.from({ length: 201 }, (_, i) => [String(i + 1), []])),
+]) assert.throws(() => parseCursor(cursorWithTransactions(invalid)), /Latest sync cursor has invalid watched transactions/);
 assert.deepEqual(updateWatchOrders([1, 2], 1, true), { watch_orders: [1, 2], dropped: [] });
 assert.deepEqual(updateWatchOrders([1, 2], 1, false), { watch_orders: [2], dropped: [] });
 const watch = updateWatchOrders(Array.from({ length: 200 }, (_, i) => i + 1), 201, true);

@@ -11,6 +11,27 @@ const valuesEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const empty = (value) => value === undefined || value === null || value === '';
 const accountId = (header) => clean(header.AccountId || header.hfOrdAccountId || header.Account?.Id);
 const accountName = (header) => clean(header.CompanyName || header.Account?.CompanyName);
+const estimateRefreshFields = ['project_name', 'client_name', 'contact_name', 'contact_email', 'contact_phone', 'salesperson',
+  'sales_center', 'po_number', 'tax_percent', 'quote_total', 'total_cost', 'shipping_fee', 'discount_percent',
+  'quote_issue_date', 'target_install_date', 'accepted_at', 'site_address'];
+const estimateLineFields = ['line_id', 'builder_name', 'client_product_name', 'product_category', 'customer_description',
+  'customer_quantity', 'total_snapshot', 'live_total_snapshot', 'include_in_customer', 'section_status', 'product_notes'];
+const detailMarker = '\n\nCoreBridge order detail';
+
+function refreshedLines(lines, existing, hasDetail) {
+  const oldById = new Map(existing.map((line) => [line.line_id, line]));
+  return lines.map((line) => {
+    const oldNotes = String(oldById.get(line.line_id)?.product_notes || '');
+    const start = oldNotes.indexOf(detailMarker);
+    return !hasDetail && start >= 0
+      ? { ...line, product_notes: `${line.product_notes || ''}${oldNotes.slice(start)}` }
+      : line;
+  });
+}
+
+const trimmed = (value) => typeof value === 'string' ? value.trim() : value;
+const comparableLines = (lines) => lines.map((line) =>
+  Object.fromEntries(estimateLineFields.map((field) => [field, trimmed(line[field])])));
 
 class HeldAccountLimitError extends Error {}
 
@@ -284,6 +305,7 @@ async function estimateFor(order, customer, context, fromWatch = false) {
   const mapped = estimateRecord(order, { contact: references.contacts.get(order.header.OrderContactId), categories: references.categories });
   const matches = await app.byKey('AllInOneEstimate', `cb:estimates:${id}`);
   if (matches.length > 1) throw new Error(`Duplicate estimate for order ${id}.`);
+  const watchedExisting = fromWatch && matches.length === 1;
   let estimate = matches[0];
   let status = 'existing';
   if (!estimate) {
@@ -305,6 +327,7 @@ async function estimateFor(order, customer, context, fromWatch = false) {
   if (estimate.customer_id && estimate.customer_id !== customer.id &&
       await customerIdForLink(app, estimate.customer_id, apply) !== customer.id) throw new Error(`Estimate ${id} has another customer.`);
   const patch = {};
+  const owned = String(estimate.tags || '').includes('corebridge_import');
   if (estimate.customer_id !== customer.id) patch.customer_id = customer.id;
   if (mapped.row.estimate_number && estimate.estimate_number !== mapped.row.estimate_number) {
     patch.estimate_number = mapped.row.estimate_number;
@@ -313,14 +336,35 @@ async function estimateFor(order, customer, context, fromWatch = false) {
     patch.status = mapped.row.status;
     if (fromWatch) report.watched_changes.push({ order_id: order.order_id, entity: 'AllInOneEstimate', before: estimate.status, after: mapped.row.status });
   }
-  if (!(estimate.line_items || []).length && mapped.lines.length) patch.line_items = mapped.lines;
+  const refreshFields = [];
+  if (watchedExisting && !owned) {
+    report.warnings.push(`Estimate ${estimate.estimate_number || mapped.row.estimate_number || id} is watched but not CoreBridge-owned; refresh skipped`);
+  } else if (watchedExisting) {
+    for (const field of estimateRefreshFields) {
+      if (Object.hasOwn(mapped.row, field) && !valuesEqual(trimmed(estimate[field]), trimmed(mapped.row[field]))) {
+        patch[field] = trimmed(mapped.row[field]);
+        refreshFields.push(field);
+      }
+    }
+    const lines = refreshedLines(mapped.lines, estimate.line_items || [], Boolean(order.detail_text));
+    if (!valuesEqual(comparableLines(estimate.line_items || []), comparableLines(lines))) {
+      patch.line_items = lines;
+      refreshFields.push('line_items');
+    }
+  } else if (!(estimate.line_items || []).length && mapped.lines.length) patch.line_items = mapped.lines;
   const log = historyLog(order.history);
   const existingLog = estimate.notes_log || [];
   const additions = log.filter((entry) => !existingLog.some((old) => old.text === entry.text && old.at === entry.at && old.by === entry.by));
+  if (refreshFields.length) {
+    report.watched_changes.push({ order_id: order.order_id, entity: 'AllInOneEstimate', fields: refreshFields });
+    additions.push({ text: `[CoreBridge sync] Refreshed from CoreBridge: ${refreshFields.join(', ')}`,
+      by: 'corebridge-sync', at: new Date(context.now()).toISOString() });
+  }
   if (additions.length) patch.notes_log = [...existingLog, ...additions];
-  if (order.notes_text && !clean(estimate.notes).includes('Order notes')) patch.notes = `${estimate.notes || ''}\n\nOrder notes${order.notes_important ? ' (IMPORTANT)' : ''}:\n${order.notes_text}`.trim();
-  if ((estimate.line_items || []).length && order.detail_text && !clean(estimate.line_items[0].product_notes).includes('CoreBridge order detail')) {
-    patch.line_items = estimate.line_items.map((line, index) => index === 0
+  if ((!watchedExisting || owned) && order.notes_text && !clean(estimate.notes).includes('Order notes')) patch.notes = `${estimate.notes || ''}\n\nOrder notes${order.notes_important ? ' (IMPORTANT)' : ''}:\n${order.notes_text}`.trim();
+  const lines = patch.line_items ?? estimate.line_items ?? [];
+  if ((!watchedExisting || owned) && lines.length && order.detail_text && !clean(lines[0].product_notes).includes('CoreBridge order detail')) {
+    patch.line_items = lines.map((line, index) => index === 0
       ? { ...line, product_notes: `${line.product_notes || ''}\n\nCoreBridge order detail (parts · price · cost · margin):\n${order.detail_text.slice(0, 20000)}` } : line);
   }
   if (apply && Object.keys(patch).length) estimate = await app.cas('AllInOneEstimate', estimate, patch);
@@ -336,10 +380,39 @@ async function batchFor(context) {
 }
 
 async function syncInvoice(order, customer, estimate, context, fromWatch = false) {
-  const { app, journal, apply, report } = context;
+  const { app, journal, apply, report, cursor } = context;
   const source = String(order.order_id);
   const found = await app.byKey('Invoice', `cb:invoice:${source}`);
   if (found.length > 1) throw new Error(`Duplicate invoice for order ${source}.`);
+  const transactions = [
+    ...(order.payments || []).map((item) => ({ item, refund: false })),
+    ...(order.refunds || []).map((item) => ({ item, refund: true })),
+  ];
+  const transactionIds = [...new Set(transactions.map(({ item }) => {
+    const id = clean(item.Id);
+    if (!id) throw new Error(`Order ${source} has a transaction with no ID.`);
+    return id;
+  }))].sort();
+  if (transactionIds.length > 500) throw new Error(`Order ${source} exceeds the watched transaction limit.`);
+  if (found.length) {
+    const issues = [];
+    for (const { item, refund } of transactions) {
+      const id = clean(item.Id);
+      const matches = await app.byKey('Payment', `cb:${refund ? 'refund' : 'payment'}:${id}`);
+      if (matches.length > 1) throw new Error(`Duplicate payment for transaction ${id}.`);
+      if (matches.length && cents(matches[0].amount) !== cents(item.Amount)) {
+        issues.push({ source_id: id, kind: 'amount_changed', app_amount: Number(matches[0].amount || 0), corebridge_amount: Number(item.Amount || 0) });
+      }
+    }
+    const currentIds = new Set(transactionIds);
+    for (const id of cursor.watch_transactions[source] || []) {
+      if (!currentIds.has(id)) issues.push({ source_id: id, kind: 'removed_in_corebridge' });
+    }
+    if (issues.length) {
+      report.needs_review.push({ order_id: order.order_id, invoice_number: clean(order.header.InvoiceNumber), issues });
+      return { needsReview: true, transactionIds };
+    }
+  }
   const links = apply ? await app.links(estimate.id) : { estimate_id: estimate.id, customer_id: customer.id, work_order_ids: [] };
   if (apply && links.customer_id !== customer.id) {
     if (await customerIdForLink(app, links.customer_id, apply) !== customer.id) throw new Error(`Invoice customer link changed for ${source}.`);
@@ -376,7 +449,7 @@ async function syncInvoice(order, customer, estimate, context, fromWatch = false
     for (const item of [...(order.payments || []), ...(order.refunds || [])]) {
       report.transactions.push({ order_id: order.order_id, source_id: clean(item.Id), amount: Number(item.Amount || 0) });
     }
-    return;
+    return { needsReview: false, transactionIds };
   }
   const bySource = new Map((order.payments || []).map((item) => [clean(item.Id), item]));
   const refunded = new Map();
@@ -406,7 +479,7 @@ async function syncInvoice(order, customer, estimate, context, fromWatch = false
       });
       if (!refund) payments.set(id, result.target_id);
       const old = await app.historyGet('Payment', result.target_id);
-      if (cents(old.amount) !== cents(data.amount)) throw new Error(`Payment ${id} amount changed; batch reconciliation is required.`);
+      if (cents(old.amount) !== cents(data.amount)) throw new Error(`Payment ${id} amount changed after precheck; batch reconciliation is required.`);
       const patch = {};
       for (const field of ['customer_id', 'estimate_id', 'work_order_id', 'invoice_id', 'reconciliation_batch_id', 'refund_of_payment_id']) {
         if (!data[field]) continue;
@@ -418,7 +491,11 @@ async function syncInvoice(order, customer, estimate, context, fromWatch = false
         if (old[field] !== data[field]) patch[field] = data[field];
       }
       if (!refund) for (const key of ['refunded_amount', 'status']) if (!valuesEqual(old[key], data[key])) patch[key] = data[key];
+      for (const key of ['method', 'reference_number', 'paid_date']) if (!valuesEqual(old[key], data[key])) patch[key] = data[key];
       if (Object.keys(patch).length) await app.historyUpdate('Payment', result.target_id, patch);
+      if (fromWatch && Object.keys(patch).length) report.watched_changes.push({
+        order_id: order.order_id, entity: 'Payment', source_id: id, fields: Object.keys(patch),
+      });
       added.push({ id: result.target_id, amount: data.amount });
       report.transactions.push({ order_id: order.order_id, source_id: id, id: result.target_id, amount: data.amount, action: result.status });
     }
@@ -439,6 +516,7 @@ async function syncInvoice(order, customer, estimate, context, fromWatch = false
       adjustments_amount: 0, cash_adjustment: 0, variance: 0, variance_amount: 0,
     });
   }
+  return { needsReview: false, transactionIds };
 }
 
 function shouldWatch(order, estimate) {
@@ -595,7 +673,7 @@ export async function runSync({ app, capture, fetchAccount = null, references = 
   if (!Number.isSafeInteger(maxOrders) || maxOrders < 1 || !Number.isSafeInteger(maxAccounts) || maxAccounts < 1) throw new Error('Safety caps must be positive integers.');
   const report = {
     mode: apply ? 'apply' : 'dry-run', run_id: runId, clients: [], contacts: [], addresses: [], estimates: [], invoices: [], transactions: [], watched_changes: [],
-    pipeline_links: [], skipped: [], errors: [], warnings: fetchAccount ? [] : ['account scan disabled: no account source'], cursor_before: null, cursor_after: null,
+    pipeline_links: [], skipped: [], needs_review: [], errors: [], warnings: fetchAccount ? [] : ['account scan disabled: no account source'], cursor_before: null, cursor_after: null,
     capture_fixture: captureFixture,
   };
   let locked = false, heartbeatAt = now() + 10 * 60000;
@@ -677,10 +755,11 @@ export async function runSync({ app, capture, fetchAccount = null, references = 
       }
       const estimate = await estimateFor(order, customer, context, fromWatch);
       context.estimates.push(estimate);
-      if (order.header.InvoiceNumber) await syncInvoice(order, customer, estimate, context, fromWatch);
+      const invoiceResult = order.header.InvoiceNumber ? await syncInvoice(order, customer, estimate, context, fromWatch) : null;
       cursor.pending_account_orders = cursor.pending_account_orders.filter((item) => item.order_id !== order.order_id);
-      const watched = updateWatchOrders(cursor.watch_orders, order.order_id, shouldWatch(order, estimate));
+      const watched = updateWatchOrders(cursor.watch_orders, order.order_id, invoiceResult?.needsReview || shouldWatch(order, estimate));
       cursor.watch_orders = watched.watch_orders;
+      if (invoiceResult && !invoiceResult.needsReview) cursor.watch_transactions[String(order.order_id)] = invoiceResult.transactionIds;
       if (watched.dropped.length) report.warnings.push(`Dropped oldest watched orders: ${watched.dropped.join(', ')}`);
     }
     const revisits = [...new Set([...cursor.pending_account_orders.map((item) => item.order_id), ...cursor.watch_orders])];
@@ -697,10 +776,13 @@ export async function runSync({ app, capture, fetchAccount = null, references = 
     if (scan.capReached) report.warnings.push(`Order cap ${maxOrders} reached.`);
     await pipeline(context);
     await syncInvoiceWorkOrderLinks(context);
+    const watchedIds = new Set(cursor.watch_orders.map(String));
+    cursor.watch_transactions = Object.fromEntries(Object.entries(cursor.watch_transactions).filter(([id]) => watchedIds.has(id)));
     report.cursor_after = structuredClone(cursor);
     if (apply) {
       const note = JSON.stringify({ cursor, summary: { clients: report.clients, contacts: report.contacts, addresses: report.addresses, estimates: report.estimates, invoices: report.invoices,
-        transactions: report.transactions, watched_changes: report.watched_changes, pipeline_links: report.pipeline_links, skipped: report.skipped, warnings: report.warnings } });
+        transactions: report.transactions, watched_changes: report.watched_changes, pipeline_links: report.pipeline_links, skipped: report.skipped,
+        needs_review: report.needs_review, warnings: report.warnings } });
       await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: runId,
         target_entity: '__sync_cursor__', target_id: runId, notes: note });
     }

@@ -9,6 +9,7 @@ import { AppCallError } from './lib/app-client.mjs';
 import { captureAccountFixture } from './lib/accountSource.mjs';
 import { fetchAccount } from './lib/accountSource.mjs';
 import { captureOrder, loadOrderReferences } from './lib/order-capture.mjs';
+import { estimateRecord } from './lib/order-model.mjs';
 import { runSync } from './lib/sync-engine.mjs';
 
 const copy = (value) => structuredClone(value);
@@ -16,6 +17,7 @@ class FakeApp {
   constructor() {
     this.serial = 0;
     this.created = {};
+    this.changes = [];
     this.rows = {
       LegacyMigrationMap: [{
         id: 'map-seed', created_date: '2026-01-01T00:00:00Z', source_app_id: 'corebridge',
@@ -70,6 +72,7 @@ class FakeApp {
     if (entity === this.failCasOnce) { this.failCasOnce = ''; throw new Error('Injected CAS interruption'); }
     const row = this.rows[entity].find((item) => item.id === current.id);
     if (!row || row.updated_date !== current.updated_date) throw new Error('CAS conflict');
+    this.changes.push({ entity, id: current.id, patch: copy(patch) });
     Object.assign(row, copy(patch), { updated_date: `v${++this.serial}` });
     return copy(row);
   }
@@ -103,6 +106,7 @@ class FakeApp {
   async historyGet(entity, id) { return this.get(entity, id); }
   async historyUpdate(entity, id, set) {
     const row = this.rows[entity].find((item) => item.id === id);
+    this.changes.push({ entity, id, patch: copy(set) });
     Object.assign(row, copy(set));
     return copy(row);
   }
@@ -117,6 +121,9 @@ const html = `<form id="form1" action="/Login.aspx">
 <input name="__VIEWSTATE" value="v"><input name="__VIEWSTATEGENERATOR" value="g">
 <input name="__EVENTVALIDATION" value="e"><input name="txtUsername"><input name="txtPassword"></form>`;
 let status = 'ESTIMATE', hasRefund = false, paymentAmount = 50, secondOrderOtherAccount = false, seedOrderNameMissing = false;
+let estimatePrice = 100, estimateTotal = 100, addEstimateLine = false, seedDetail = 'Parts', includeLaterOrder = false;
+let removePayment = false, paymentType = 'Cash', paymentReference = '', paymentDate = '';
+let refundType = 'Cash', refundReference = '', refundDate = '', forceInvoicePaid = false, estimateHistory = false;
 const accountHtml = await readFile(new URL('./fixtures/account-synthetic.html', import.meta.url), 'utf8');
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
@@ -140,24 +147,36 @@ const server = createServer(async (req, res) => {
   if (url.pathname.endsWith('GetProductCategories')) return res.end(JSON.stringify({ d: JSON.stringify({ productCategories: [{ id: 4, name: 'Synthetic category' }] }) }));
   if (url.pathname.endsWith('GetAllContacts')) return res.end(JSON.stringify({ d: JSON.stringify({ aaData: [{ Id: 99, FirstName: 'Synthetic', LastName: 'Contact' }], iTotalRecords: 1 }) }));
   if (url.pathname.endsWith('/Order.aspx')) {
-    if (![11286, 11287].includes(orderId)) { res.writeHead(404); return res.end(); }
+    if (![11286, 11287].includes(orderId) && !(orderId === 11288 && includeLaterOrder)) { res.writeHead(404); return res.end(); }
     const header = orderId === 11286
-      ? { Id: 11286, AccountId: 3835, CompanyName: 'Synthetic Client', OrderStatus: status, EstimateNumber: 'EST-14767', TotalPrice: 100, BalanceDue: 100, SubTotalPrice: 100, TaxableAmount: 100 }
-      : { Id: 11287, AccountId: secondOrderOtherAccount ? 3837 : 3835, CompanyName: secondOrderOtherAccount ? 'Second Synthetic Client' : 'Synthetic Client',
-        OrderStatus: 'INVOICED', InvoiceNumber: 'INV-200', TotalPrice: 100, BalanceDue: hasRefund ? 70 : 50, SubTotalPrice: 100, TaxableAmount: 100 };
+      ? { Id: 11286, AccountId: 3835, CompanyName: 'Synthetic Client', OrderStatus: status, EstimateNumber: 'EST-14767',
+        TotalPrice: estimateTotal, BalanceDue: estimateTotal, SubTotalPrice: estimateTotal, TaxableAmount: estimateTotal }
+      : orderId === 11287
+        ? { Id: 11287, AccountId: secondOrderOtherAccount ? 3837 : 3835, CompanyName: secondOrderOtherAccount ? 'Second Synthetic Client' : 'Synthetic Client',
+          OrderStatus: 'INVOICED', InvoiceNumber: 'INV-200', TotalPrice: 100, BalanceDue: forceInvoicePaid ? 0 : hasRefund ? 70 : 50, SubTotalPrice: 100, TaxableAmount: 100 }
+        : { Id: 11288, AccountId: 3835, CompanyName: 'Synthetic Client', OrderStatus: 'ESTIMATE', EstimateNumber: 'EST-14768',
+          TotalPrice: 100, BalanceDue: 100, SubTotalPrice: 100, TaxableAmount: 100 };
     if (orderId === 11286 && status === 'INVOICED') header.InvoiceNumber = 'INV-201';
     if (orderId === 11286 && seedOrderNameMissing) header.CompanyName = '';
     header.OrderContactId = 99;
     header.Account = { Id: header.AccountId, CompanyName: header.CompanyName, CompanyPhone: '555-000-1111' };
     return res.end(`<title>Order</title><script>var orderObj = ${JSON.stringify(header)};</script>`);
   }
-  if (url.pathname.endsWith('GetOrderProductsView')) return res.end(JSON.stringify({ OrderProducts: [{ Id: 9, ProductCategoryId: 4, Description: 'Synthetic product', Qty: 1, TotalPrice: 100, TaxableAmount: 100 }] }));
-  if (url.pathname.endsWith('GetOrderPayments2')) return res.end(JSON.stringify({ d: JSON.stringify({ ReportResults: orderId === 11287 ? [{ Id: 77, Amount: paymentAmount, Type: 'Cash' }] : [] }) }));
+  if (url.pathname.endsWith('GetOrderProductsView')) {
+    const price = orderId === 11286 ? estimatePrice : 100;
+    const products = [{ Id: 9, ProductCategoryId: 4, Description: 'Synthetic product', Qty: 1, TotalPrice: price, TaxableAmount: price }];
+    if (orderId === 11286 && addEstimateLine) products.push({ Id: 10, ProductCategoryId: 4, Description: 'Second synthetic product', Qty: 1, TotalPrice: 40, TaxableAmount: 40 });
+    return res.end(JSON.stringify({ OrderProducts: products }));
+  }
+  if (url.pathname.endsWith('GetOrderPayments2')) return res.end(JSON.stringify({ d: JSON.stringify({ ReportResults: orderId === 11287 && !removePayment
+    ? [{ Id: 77, Amount: paymentAmount, Type: paymentType, CheckNumber: paymentReference, CreatedDate: paymentDate }] : [] }) }));
   if (url.pathname.endsWith('GetOrderRefunds')) return res.end(JSON.stringify({ d: JSON.stringify({ ReportResults: hasRefund && orderId === 11287
-    ? [{ Id: 78, Amount: -20, Type: 'Cash', OrderPaymentRefundInfos: [{ TransactionToRefundId: 77 }] }] : [] }) }));
+    ? [{ Id: 78, Amount: -20, Type: refundType, CheckNumber: refundReference, CreatedDate: refundDate,
+      OrderPaymentRefundInfos: [{ TransactionToRefundId: 77 }] }] : [] }) }));
   if (url.pathname.endsWith('OrderNotes.aspx')) return res.end('<input id="hdnOrderNotes" value="">');
-  if (url.pathname.endsWith('OrderHistory.aspx')) return res.end('<table></table>');
-  if (url.pathname.endsWith('DetailedOrderView.aspx')) return res.end('<div>Parts</div>');
+  if (url.pathname.endsWith('OrderHistory.aspx')) return res.end(orderId === 11286 && estimateHistory
+    ? '<table><tr><td>Synthetic history</td><td>11/18/2026 10:00 AM</td><td>Synthetic staff</td></tr></table>' : '<table></table>');
+  if (url.pathname.endsWith('DetailedOrderView.aspx')) return res.end(`<div>${orderId === 11286 ? seedDetail : 'Parts'}</div>`);
   res.writeHead(404); res.end();
 });
 server.listen(0, '127.0.0.1');
@@ -177,6 +196,14 @@ try {
   }
   const capture = (id) => captureOrder(session, id);
   const run = (options) => runSync({ capture, references, ...options });
+  async function seedMappedEstimate(app, tags = 'corebridge_import') {
+    const order = await capture(11286);
+    const mapped = estimateRecord(order, { contact: references.contacts.get(99), categories: references.categories });
+    Object.assign(app.rows.AllInOneEstimate[0], mapped.row, {
+      id: 'est-seed', creation_request_key: 'cb:estimates:11286', customer_id: '', updated_date: 'v1',
+      line_items: mapped.lines, tags, notes_log: [],
+    });
+  }
   function mergedCustomer(app, hops = 2) {
     for (let i = 0; i < hops; i++) {
       app.rows.Customer.push({ id: `merged-${i}`, company_name: 'Old Synthetic Client',
@@ -225,7 +252,9 @@ try {
     assert.ok(!changed.cursor_after.watch_orders.includes(11286));
     paymentAmount = 55;
     const amountChanged = await run({ app, apply: true, runId: 'changed-payment' });
-    assert.match(amountChanged.errors[0], /amount changed; batch reconciliation is required/);
+    assert.deepEqual(amountChanged.errors, []);
+    assert.deepEqual(amountChanged.needs_review, [{ order_id: 11287, invoice_number: 'INV-200',
+      issues: [{ source_id: '77', kind: 'amount_changed', app_amount: 50, corebridge_amount: 55 }] }]);
     assert.equal(app.rows.ReconciliationBatch[0].expected_total, 50);
     paymentAmount = 50;
     hasRefund = true;
@@ -239,6 +268,168 @@ try {
     assert.equal(app.rows.ReconciliationBatch[0].expected_total, 30);
     hasRefund = false;
     status = 'ESTIMATE';
+  }
+  {
+    const app = new FakeApp();
+    await seedMappedEstimate(app);
+    const first = await run({ app, apply: true, runId: 'refresh-seed' });
+    assert.deepEqual(first.errors, []);
+    const originalNotes = app.rows.AllInOneEstimate[0].notes;
+    const auditCount = app.rows.AllInOneEstimate[0].notes_log.length;
+    estimatePrice = 120; estimateTotal = 160; addEstimateLine = true; estimateHistory = true;
+    const changed = await run({ app, apply: true, runId: 'refresh-changed', now: () => Date.parse('2026-11-19T12:00:00.000Z') });
+    assert.deepEqual(changed.errors, []);
+    const estimate = app.rows.AllInOneEstimate[0];
+    assert.equal(estimate.quote_total, 160);
+    assert.equal(estimate.line_items.length, 2);
+    assert.equal(estimate.line_items[0].total_snapshot, 120);
+    assert.equal(estimate.line_items[1].line_id, 'cb-10');
+    assert.equal(estimate.notes, originalNotes);
+    assert.equal(estimate.tags, 'corebridge_import');
+    const change = changed.watched_changes.find((item) => item.order_id === 11286 && item.fields?.includes('line_items'));
+    assert.ok(change.fields.includes('quote_total'));
+    const audits = estimate.notes_log.filter((entry) => entry.by === 'corebridge-sync');
+    assert.equal(audits.length, 1);
+    assert.equal(audits[0].at, '2026-11-19T12:00:00.000Z');
+    assert.match(audits[0].text, /Refreshed from CoreBridge:.*quote_total.*line_items/);
+    assert.equal(estimate.notes_log.length, auditCount + 2);
+    assert.ok(estimate.notes_log.some((entry) => entry.text === '[CoreBridge] Synthetic history'));
+    const version = estimate.updated_date, log = copy(estimate.notes_log), changes = app.changes.length;
+    const again = await run({ app, apply: true, runId: 'refresh-unchanged' });
+    assert.deepEqual(again.errors, []);
+    assert.equal(app.rows.AllInOneEstimate[0].updated_date, version);
+    assert.deepEqual(app.rows.AllInOneEstimate[0].notes_log, log);
+    assert.equal(app.changes.slice(changes).filter((item) => item.entity === 'AllInOneEstimate' && item.id === 'est-seed').length, 0);
+    estimatePrice = 100; estimateTotal = 100; addEstimateLine = false; estimateHistory = false;
+  }
+  {
+    const app = new FakeApp();
+    await seedMappedEstimate(app, 'manual');
+    assert.deepEqual((await run({ app, apply: true, runId: 'unowned-seed' })).errors, []);
+    const before = copy(app.rows.AllInOneEstimate[0]);
+    estimatePrice = 150; estimateTotal = 150; status = 'CANCELLED'; estimateHistory = true;
+    const watched = await run({ app, apply: true, runId: 'unowned-watch' });
+    assert.deepEqual(watched.errors, []);
+    assert.ok(watched.warnings.includes('Estimate EST-14767 is watched but not CoreBridge-owned; refresh skipped'));
+    assert.equal(app.rows.AllInOneEstimate[0].quote_total, before.quote_total);
+    assert.deepEqual(app.rows.AllInOneEstimate[0].line_items, before.line_items);
+    assert.equal(app.rows.AllInOneEstimate[0].notes, before.notes);
+    assert.equal(app.rows.AllInOneEstimate[0].status, 'cancelled');
+    assert.ok(app.rows.AllInOneEstimate[0].notes_log.some((entry) => entry.text === '[CoreBridge] Synthetic history'));
+    assert.ok(!app.rows.AllInOneEstimate[0].notes_log.some((entry) => entry.by === 'corebridge-sync'));
+    estimatePrice = 100; estimateTotal = 100; status = 'ESTIMATE'; estimateHistory = false;
+  }
+  {
+    const app = new FakeApp();
+    await seedMappedEstimate(app);
+    assert.deepEqual((await run({ app, apply: true, runId: 'detail-seed' })).errors, []);
+    const oldNotes = app.rows.AllInOneEstimate[0].line_items[0].product_notes;
+    const marker = '\n\nCoreBridge order detail';
+    assert.ok(oldNotes.includes(marker));
+    seedDetail = ''; estimatePrice = 120; estimateTotal = 120;
+    const updated = await run({ app, apply: true, runId: 'detail-missing' });
+    assert.deepEqual(updated.errors, []);
+    assert.ok(updated.watched_changes.some((entry) => entry.order_id === 11286 && entry.fields?.includes('line_items')));
+    const lineNotes = app.rows.AllInOneEstimate[0].line_items[0].product_notes;
+    assert.equal(lineNotes.slice(lineNotes.indexOf(marker)), oldNotes.slice(oldNotes.indexOf(marker)));
+    const version = app.rows.AllInOneEstimate[0].updated_date, log = copy(app.rows.AllInOneEstimate[0].notes_log);
+    const unchanged = await run({ app, apply: true, runId: 'detail-unchanged' });
+    assert.deepEqual(unchanged.errors, []);
+    assert.equal(app.rows.AllInOneEstimate[0].updated_date, version);
+    assert.deepEqual(app.rows.AllInOneEstimate[0].notes_log, log);
+    seedDetail = 'Parts'; estimatePrice = 100; estimateTotal = 100;
+  }
+  {
+    const app = new FakeApp();
+    hasRefund = true;
+    const first = await run({ app, apply: true, runId: 'metadata-seed' });
+    assert.deepEqual(first.errors, []);
+    assert.deepEqual(first.cursor_after.watch_transactions['11287'], ['77', '78']);
+    paymentType = 'Check'; paymentReference = 'SYN-77'; paymentDate = '2026-11-18T10:00:00Z';
+    refundType = 'Visa'; refundReference = 'SYN-78'; refundDate = '2026-11-19T10:00:00Z';
+    const changed = await run({ app, apply: true, runId: 'metadata-changed' });
+    assert.deepEqual(changed.errors, []);
+    const payment = app.rows.Payment.find((item) => item.creation_request_key === 'cb:payment:77');
+    const refund = app.rows.Payment.find((item) => item.creation_request_key === 'cb:refund:78');
+    assert.deepEqual([payment.method, payment.reference_number, payment.paid_date], ['check', 'SYN-77', '2026-11-18']);
+    assert.deepEqual([refund.method, refund.reference_number, refund.paid_date], ['card', 'SYN-78', '2026-11-19']);
+    for (const id of ['77', '78']) {
+      const change = changed.watched_changes.find((item) => item.entity === 'Payment' && item.source_id === id);
+      for (const field of ['method', 'reference_number', 'paid_date']) assert.ok(change.fields.includes(field));
+    }
+    forceInvoicePaid = true;
+    const terminal = await run({ app, apply: true, runId: 'metadata-terminal' });
+    assert.deepEqual(terminal.errors, []);
+    assert.ok(!terminal.cursor_after.watch_orders.includes(11287));
+    assert.equal(Object.hasOwn(terminal.cursor_after.watch_transactions, '11287'), false);
+    hasRefund = false; forceInvoicePaid = false;
+    paymentType = 'Cash'; paymentReference = ''; paymentDate = '';
+    refundType = 'Cash'; refundReference = ''; refundDate = '';
+  }
+  {
+    const app = new FakeApp();
+    const first = await run({ app, apply: true, runId: 'amount-seed' });
+    assert.deepEqual(first.errors, []);
+    assert.deepEqual(first.cursor_after.watch_transactions['11287'], ['77']);
+    const invoice = copy(app.rows.Invoice[0]), payment = copy(app.rows.Payment[0]), batch = copy(app.rows.ReconciliationBatch[0]);
+    paymentAmount = 55; includeLaterOrder = true; forceInvoicePaid = true;
+    const beforeDry = copy(app.rows);
+    const dry = await run({ app, runId: 'amount-review-dry' });
+    assert.deepEqual(dry.errors, []);
+    assert.equal(dry.needs_review[0].issues[0].kind, 'amount_changed');
+    assert.deepEqual(app.rows, beforeDry);
+    const reviewed = await run({ app, apply: true, runId: 'amount-review' });
+    assert.deepEqual(reviewed.errors, []);
+    assert.deepEqual(reviewed.needs_review, [{ order_id: 11287, invoice_number: 'INV-200',
+      issues: [{ source_id: '77', kind: 'amount_changed', app_amount: 50, corebridge_amount: 55 }] }]);
+    assert.deepEqual(app.rows.Invoice[0], invoice);
+    assert.deepEqual(app.rows.Payment[0], payment);
+    assert.deepEqual(app.rows.ReconciliationBatch[0], batch);
+    assert.ok(reviewed.cursor_after.watch_orders.includes(11287));
+    assert.deepEqual(reviewed.cursor_after.watch_transactions['11287'], ['77']);
+    assert.equal(reviewed.cursor_after.last_order_id, 11288);
+    assert.ok(app.rows.AllInOneEstimate.some((item) => item.creation_request_key === 'cb:estimates:11288'));
+    const cursorRows = app.rows.LegacyMigrationMap.filter((item) => item.source_entity === '__sync_cursor__');
+    assert.deepEqual(JSON.parse(cursorRows.at(-1).notes).summary.needs_review, reviewed.needs_review);
+    paymentAmount = 50; includeLaterOrder = false; forceInvoicePaid = false;
+  }
+  for (const removed of ['payment', 'refund']) {
+    const app = new FakeApp();
+    hasRefund = removed === 'refund';
+    const first = await run({ app, apply: true, runId: `removed-${removed}-seed` });
+    assert.deepEqual(first.errors, []);
+    const snapshot = copy(first.cursor_after.watch_transactions['11287']);
+    const invoice = copy(app.rows.Invoice[0]), payments = copy(app.rows.Payment), batch = copy(app.rows.ReconciliationBatch[0]);
+    if (removed === 'payment') removePayment = true;
+    else hasRefund = false;
+    const reviewed = await run({ app, apply: true, runId: `removed-${removed}` });
+    assert.deepEqual(reviewed.errors, []);
+    assert.deepEqual(reviewed.needs_review[0].issues, [{ source_id: removed === 'payment' ? '77' : '78', kind: 'removed_in_corebridge' }]);
+    assert.deepEqual(app.rows.Invoice[0], invoice);
+    assert.deepEqual(app.rows.Payment, payments);
+    assert.deepEqual(app.rows.ReconciliationBatch[0], batch);
+    assert.ok(reviewed.cursor_after.watch_orders.includes(11287));
+    assert.deepEqual(reviewed.cursor_after.watch_transactions['11287'], snapshot);
+    removePayment = false; hasRefund = false;
+  }
+  {
+    const app = new FakeApp();
+    const first = await run({ app, apply: true, runId: 'nonwatch-review-seed' });
+    assert.deepEqual(first.errors, []);
+    const cursor = copy(first.cursor_after);
+    cursor.watch_orders = cursor.watch_orders.filter((id) => id !== 11287);
+    cursor.pending_account_orders.push({ order_id: 11287, account_id: '3835', account_name: 'Synthetic Client' });
+    await app.appendMap({ source_app_id: 'corebridge', source_entity: '__sync_cursor__', source_id: 'nonwatch',
+      notes: JSON.stringify({ cursor }) });
+    const invoice = copy(app.rows.Invoice[0]), payment = copy(app.rows.Payment[0]);
+    paymentAmount = 55;
+    const reviewed = await run({ app, apply: true, runId: 'nonwatch-review' });
+    assert.deepEqual(reviewed.errors, []);
+    assert.equal(reviewed.needs_review[0].issues[0].kind, 'amount_changed');
+    assert.ok(reviewed.cursor_after.watch_orders.includes(11287));
+    assert.deepEqual(app.rows.Invoice[0], invoice);
+    assert.deepEqual(app.rows.Payment[0], payment);
+    paymentAmount = 50;
   }
   {
     const app = new FakeApp();

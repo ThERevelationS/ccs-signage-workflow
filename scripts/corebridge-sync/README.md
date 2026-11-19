@@ -39,6 +39,10 @@ are capped at 200. At capacity, account scanning pauses before another ambiguous
 account rather than dropping a hold; orders continue and the report warns.
 Only the displayed default shipping address is available on the account page;
 additional shipping addresses are reported for review. Watches are capped at 200.
+Watched CoreBridge-owned estimates refresh their mapped fields and lines. Changed
+or removed watched payments/refunds are reported for review without updating
+the invoice or transactions; transaction history is seeded on first sight, so
+removals before that first snapshot cannot be detected.
 Historical contacts came from a separate CSV, which is not available at runtime.
 Contact reference data does not always identify phone types or describe job
 authority, fax, and location; untyped secondary numbers and those CSV-only
