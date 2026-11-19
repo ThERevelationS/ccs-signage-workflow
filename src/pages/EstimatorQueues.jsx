@@ -11,7 +11,7 @@ import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStat
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchEstimateQueueBundle, loadFullEstimateRow } from "@/components/queues/queueFeedClient";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
-import { useAuth } from "@/components/auth/EmailGate";
+import { getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -160,7 +160,7 @@ export default function EstimatorQueues() {
     } catch (e) { window.alert(e?.message || "Import failed."); }
     finally { if (importEstRef.current) importEstRef.current.value = ""; }
   };
-  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+  useEffect(() => { Promise.resolve(getSessionUser()).then(setMe).catch(() => {}); }, []);
   // Company timezone (#488): QuoteDefaults.display_timezone drives the date
   // displays; blank falls back to the browser's zone. The row rides the
   // composed queueFeed bundle (M-03) — this helper is the single point the

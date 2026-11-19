@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
@@ -1018,11 +1018,11 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
 
   const [liveQuickProduct, me] = await Promise.all([
     staffEntities.QuickProduct.get(quickProduct.id),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
-  const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || (!!me?.id && liveQuickProduct.created_by_id === me.id);
+  const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || String(liveQuickProduct.created_by_id).startsWith("service_") || (!!me?.id && liveQuickProduct.created_by_id === me.id);
   if (!accessible) throw new Error("This Quick Product is no longer available to your account.");
   if (quickProduct.updated_date && liveQuickProduct.updated_date && quickProduct.updated_date !== liveQuickProduct.updated_date) {
     throw new Error("This Quick Product changed after the Add Product window loaded. Reopen Add Product and review the latest reusable Product before adding it.");
@@ -1076,7 +1076,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
 export async function listQuickProducts() {
   const [rows, me] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.QuickProduct, sort: "product_name", label: "Quick Product library" }),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   return (rows || [])
     .filter((row) => {
@@ -1084,7 +1084,7 @@ export async function listQuickProducts() {
       if (row.product_group === "global") return true;
       // Built-in created_by_id is the ownership boundary for "My Quick Products".
       // Keep unowned rows visible for compatibility with any future imported legacy data.
-      return !row.created_by_id || (!!me?.id && row.created_by_id === me.id);
+      return !row.created_by_id || String(row.created_by_id).startsWith("service_") || (!!me?.id && row.created_by_id === me.id);
     })
     .sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
 }

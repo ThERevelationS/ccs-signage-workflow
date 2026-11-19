@@ -481,7 +481,7 @@ function fixture() {
     },
   };
   const imports = {
-    '@/api/base44Client': { base44: {} },
+    '@/components/auth/EmailGate': { getSessionUser: () => null },
     '@/components/estimator/products/snapshotUtils': { cloneSnapshot: copy },
     '@/components/estimator/parts/partPackageService': { addPartPackageToProduct: () => {} },
     '@/components/estimator/builder/builderMutationRecovery': { builderMutationHash: () => 'hash' },

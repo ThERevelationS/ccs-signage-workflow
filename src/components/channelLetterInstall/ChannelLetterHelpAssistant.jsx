@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Bot, X, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { User } from '@/entities/all';
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 /**
  * Detailed walkthrough for the Channel & Dimensional Letters | Lobby Signs estimator.
@@ -67,7 +68,7 @@ export default function ChannelLetterHelpAssistant({ activeTab, manualTrigger, o
 
   // Load seen tutorials from user record
   useEffect(() => {
-    User.me()
+    Promise.resolve(getSessionUser())
       .then(user => {
         setTutorialsSeen(user?.tutorials_seen || {});
         setTutorialsDisabled(!!user?.tutorials_disabled);

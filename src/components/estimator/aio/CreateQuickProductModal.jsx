@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PackagePlus, Save } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
@@ -28,9 +28,9 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setError("");
     Promise.all([
       loadAllEntityRows({ entity: staffEntities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
-      base44.auth.me().catch(() => null),
+      Promise.resolve(getSessionUser()),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
-      .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
+      .filter((row) => row.product_group === "global" || !row.created_by_id || String(row.created_by_id).startsWith("service_") || (!!me?.id && row.created_by_id === me.id))
       .sort((a, b) => String(a.category_name || "").localeCompare(String(b.category_name || "")))))
       .catch(() => setAvailableCategories([]));
   }, [open, line?.line_id, line?.builder_product_id]);

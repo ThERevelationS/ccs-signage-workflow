@@ -10,7 +10,8 @@
 //   - Save in dialog persists the full draft through guarded VinylInventory persistence.
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { VinylInventory, User } from "@/api/gatedEntities";
+import { VinylInventory } from "@/api/gatedEntities";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ export default function VinylInventoryTab({ scope = "master" }) {
   };
 
   useEffect(() => {
-    User.me().then(setUser).catch(() => setUser(null));
+    Promise.resolve(getSessionUser()).then(setUser).catch(() => setUser(null));
     load();
   }, []);
 

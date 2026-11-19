@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
 import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
@@ -3962,7 +3962,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     detail_overrides: part.detail_overrides || {},
     source_path: part.source_path,
   };
-  const me = await base44.auth.me().catch(() => null);
+  const me = getSessionUser();
   const detachedBy = String(options.detachedBy || me?.full_name || me?.email || "").trim();
   const partPatch = {
     builder_sync_state: "detached_override",

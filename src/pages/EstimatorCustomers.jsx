@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { useAuth } from "@/components/auth/EmailGate";
+import { getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, MessageSquare, Printer } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
@@ -344,7 +344,7 @@ export default function EstimatorCustomers() {
         const [res, tierRows, user] = await Promise.all([
           loadAllCustomers().catch((e) => { setLoadError(e?.message || "Customer list could not be loaded. Try again."); return []; }),
           loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => { setTiersFailed(true); return []; }),
-          base44.auth.me().catch(() => null),
+          Promise.resolve(getSessionUser()),
         ]);
         setCustomers(res || []);
         setTiers(tierRows || []);

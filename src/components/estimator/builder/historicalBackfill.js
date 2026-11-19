@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { ensureEstimateBuilderProducts } from "@/components/estimator/builder/builderService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -104,7 +104,7 @@ async function markBatchComplete(estimates, processedCount) {
 }
 
 export async function runHistoricalBuilderBackfill({ seedEstimates = [] } = {}) {
-  const me = await base44.auth.me().catch(() => null);
+  const me = getSessionUser();
   if (me?.role !== "admin") return { ran: false, reason: "admin_only", estimates: seedEstimates };
   if (!acquireLocalLock()) return { ran: false, reason: "already_running", estimates: seedEstimates };
 

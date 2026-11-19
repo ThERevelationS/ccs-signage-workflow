@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AlertTriangle, Boxes, Download, Edit3, Layers3, Package, Search, ShieldCheck, UserRound } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { listPartTemplates, instantiatePartTemplate } from "@/components/estimator/parts/partTemplateService";
 import { ImportPartsLibraryButton } from "@/components/importer/ImportExportButtons";
 import { money } from "@/components/estimator/aioPricing";
@@ -34,7 +34,7 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const saveRef = useRef(false);
-  const canEdit = !!template && (user?.role === "admin" || !template.created_by_id || template.created_by_id === user?.id);
+  const canEdit = !!template && (user?.role === "admin" || !template.created_by_id || String(template.created_by_id).startsWith("service_") || template.created_by_id === user?.id);
 
   useEffect(() => {
     if (!open || !template) return;
@@ -63,7 +63,7 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
     try {
       const live = await staffEntities.PartTemplate.get(template.id);
       if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library before editing it again.");
-      const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
+      const liveCanEdit = user?.role === "admin" || !live.created_by_id || String(live.created_by_id).startsWith("service_") || live.created_by_id === user?.id;
       if (!liveCanEdit) throw new Error("You no longer have permission to edit this Saved Part.");
       if (template.updated_date && live.updated_date && template.updated_date !== live.updated_date) {
         onSaved?.(live);
@@ -159,7 +159,7 @@ export default function EstimatorParts() {
     let active = true;
     setLoading(true);
     setLibraryError("");
-    Promise.all([listPartTemplates({ includeInactive: true }), base44.auth.me().catch(() => null)])
+    Promise.all([listPartTemplates({ includeInactive: true }), Promise.resolve(getSessionUser())])
       .then(([rows, me]) => { if (!active) return; setTemplates(rows || []); setUser(me); })
       .catch((err) => { if (!active) return; setTemplates([]); setLibraryError(err?.message || "Part Library could not be verified."); })
       .finally(() => active && setLoading(false));
@@ -224,7 +224,7 @@ export default function EstimatorParts() {
   };
 
   const toggleActive = async (template) => {
-    const canEdit = user?.role === "admin" || !template.created_by_id || template.created_by_id === user?.id;
+    const canEdit = user?.role === "admin" || !template.created_by_id || String(template.created_by_id).startsWith("service_") || template.created_by_id === user?.id;
     if (!canEdit) return setEditing(template);
     if (!template?.id || libraryError || toggleRef.current.has(template.id)) return;
     toggleRef.current.add(template.id);
@@ -232,7 +232,7 @@ export default function EstimatorParts() {
     try {
       const live = await staffEntities.PartTemplate.get(template.id);
       if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library.");
-      const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
+      const liveCanEdit = user?.role === "admin" || !live.created_by_id || String(live.created_by_id).startsWith("service_") || live.created_by_id === user?.id;
       if (!liveCanEdit) { updateLocal(live); throw new Error("You no longer have permission to change this Saved Part."); }
       if ((live.is_active !== false) !== (template.is_active !== false)) {
         updateLocal(live);

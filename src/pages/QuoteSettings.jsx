@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Save, ShieldCheck, Trash2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { allEstimateStatuses, statusTransitionMap } from "@/components/estimator/estimateStatusTransitions";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
@@ -46,7 +46,7 @@ export default function QuoteSettings() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([loadQuoteDefaults(), base44.auth.me().catch(() => null)])
+    Promise.all([loadQuoteDefaults(), Promise.resolve(getSessionUser())])
       .then(([defaults, user]) => {
         if (!active) return;
         setRecord(defaults);

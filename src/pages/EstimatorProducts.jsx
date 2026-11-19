@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
@@ -56,7 +56,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const saveRef = useRef(false);
-  const canEdit = !!product && (user?.role === "admin" || !product.created_by_id || product.created_by_id === user?.id);
+  const canEdit = !!product && (user?.role === "admin" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id);
 
   const draftFromProduct = (row) => ({
     product_name: row?.product_name || "",
@@ -180,7 +180,7 @@ export default function EstimatorProducts() {
         sort: "created_date",
         label: "Quick Product Library",
       }),
-      base44.auth.me().catch(() => null),
+      Promise.resolve(getSessionUser()),
       loadProductionProductTypes(),
     ]).then(([rows, me, productionTypes]) => {
       if (!active) return;
@@ -205,7 +205,7 @@ export default function EstimatorProducts() {
       const group = product.product_group === "global" ? "global" : "my";
       // "My" templates are personal by definition. Built-in created_by_id is the
       // ownership boundary; unowned rows remain visible for imported legacy compatibility.
-      if (group === "my" && product.created_by_id && product.created_by_id !== user?.id && user?.role !== "admin") return false;
+      if (group === "my" && product.created_by_id && !String(product.created_by_id).startsWith("service_") && product.created_by_id !== user?.id && user?.role !== "admin") return false;
       if (scope !== "all" && group !== scope) return false;
       if (status === "active" && product.is_active === false) return false;
       if (status === "inactive" && product.is_active !== false) return false;
@@ -217,7 +217,7 @@ export default function EstimatorProducts() {
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
   }, [quickProducts, query, scope, categoryFilter, status, moduleFilter, user?.id, user?.role]);
 
-  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || product.product_group === "global" || !product.created_by_id || product.created_by_id === user?.id);
+  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || product.product_group === "global" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id);
   const activeCount = accessibleQuickProducts.filter((product) => product.is_active !== false).length;
   const globalCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
   const myCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group !== "global").length;
@@ -254,7 +254,7 @@ export default function EstimatorProducts() {
   };
 
   const toggleActive = async (product) => {
-    const canEdit = user?.role === "admin" || !product?.created_by_id || product.created_by_id === user?.id;
+    const canEdit = user?.role === "admin" || !product?.created_by_id || String(product?.created_by_id).startsWith("service_") || product.created_by_id === user?.id;
     if (!canEdit) return setEditing(product);
     if (!product?.id || libraryError || toggleRef.current.has(product.id)) return;
     toggleRef.current.add(product.id);
@@ -353,7 +353,7 @@ export default function EstimatorProducts() {
                       const price = productPrice(product);
                       const partCount = product.parts_snapshot?.length ?? product.parts?.length ?? 0;
                       const global = product.product_group === "global";
-                      const canEditProduct = user?.role === "admin" || !product.created_by_id || product.created_by_id === user?.id;
+                      const canEditProduct = user?.role === "admin" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id;
                       return <tr key={product.id} className="hover:bg-gray-50/70">
                         <td className="px-4 py-2.5 min-w-[230px]"><div className="text-[11px] font-bold text-gray-900">{product.product_name || "Quick Product"}</div><div className="mt-0.5 text-[9px] text-gray-400 truncate max-w-[320px]">{product.product_category || (product.categories || []).join(" · ") || "Uncategorized"}</div>{product.production_product_type && <div className="mt-0.5 text-[8px] text-cyan-700 truncate max-w-[320px]">Production: {product.production_product_type}</div>}</td>
                         <td className="px-3 py-2.5 text-[10px] text-gray-600 whitespace-nowrap">{moduleLabel(product.source_module_key || (product.source_product_class === "custom" ? "custom" : ""))}<div className="text-[8px] text-gray-400">Template v{num(product.template_version, 1)}</div></td>

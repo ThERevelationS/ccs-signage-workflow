@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
@@ -167,13 +167,13 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 export async function listPartTemplates({ includeInactive = false } = {}) {
   const [rows, me] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.PartTemplate, sort: "template_name", label: "Part Library" }),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   return (rows || [])
     .filter((row) => {
       if (!includeInactive && row.is_active === false) return false;
       if (row.product_group === "global") return true;
-      return !row.created_by_id || (!!me?.id && row.created_by_id === me.id);
+      return !row.created_by_id || String(row.created_by_id).startsWith("service_") || (!!me?.id && row.created_by_id === me.id);
     })
     .sort((a, b) => String(a.template_name || "").localeCompare(String(b.template_name || "")));
 }
@@ -182,11 +182,11 @@ export async function instantiatePartTemplate({ estimateId, targetBuilderProduct
   if (!template?.id) throw new Error("Saved Part is required.");
   const [liveTemplate, me] = await Promise.all([
     staffEntities.PartTemplate.get(template.id),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   if (!liveTemplate) throw new Error("This Saved Part no longer exists. Reopen the Part Library to refresh it.");
   if (liveTemplate.is_active === false) throw new Error("This Saved Part is now inactive and cannot be added. Reopen the Part Library to refresh it.");
-  const accessible = liveTemplate.product_group === "global" || !liveTemplate.created_by_id || (!!me?.id && liveTemplate.created_by_id === me.id);
+  const accessible = liveTemplate.product_group === "global" || !liveTemplate.created_by_id || String(liveTemplate.created_by_id).startsWith("service_") || (!!me?.id && liveTemplate.created_by_id === me.id);
   if (!accessible) throw new Error("This Saved Part is no longer available to your account.");
   if (template.updated_date && liveTemplate.updated_date && template.updated_date !== liveTemplate.updated_date) {
     throw new Error("This Saved Part changed after the Part Library opened. Reopen the library and review the latest reusable snapshot before adding it.");

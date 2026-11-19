@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { VinylMachine, User } from "@/api/gatedEntities";
+import { VinylMachine } from "@/api/gatedEntities";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { ArrowLeft, Layers, Lock, Plus, Printer, Save, Scissors, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +88,7 @@ export default function VinylSettings() {
     try {
       const [rows, me] = await Promise.all([
         loadAllEntityRows({ entity: VinylMachine, sort: "sort_order", label: "Vinyl machines" }),
-        User.me().catch(() => null),
+        Promise.resolve(getSessionUser()).catch(() => null),
       ]);
       setMachines(rows || []);
       setOriginal(snapshot(rows || []));

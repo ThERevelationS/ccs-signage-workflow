@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { ensureIdempotentEntityCreate } from "@/components/estimator/idempotentEntityCreate";
-import { User } from "@/api/entities";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,7 +63,7 @@ export default function MaterialsInventoryTab() {
     setLoading(true);
     const [data, user, projects] = await Promise.all([
       loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
-      User.me().catch(() => null),
+      Promise.resolve(getSessionUser()),
       loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => { setProjectsFailed(true); return []; }),
     ]);
     setItems(data);

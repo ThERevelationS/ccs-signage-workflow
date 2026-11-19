@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings as SettingsEntity, User } from "@/api/gatedEntities";
+import { Settings as SettingsEntity } from "@/api/gatedEntities";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { ArrowLeft, Building2, DollarSign, Layers, Lock, Ruler, Save, TriangleAlert, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +96,7 @@ export default function InstallationSettings() {
       try {
         const [all, me] = await Promise.all([
           loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Installation Settings catalog" }),
-          User.me().catch(() => null),
+          Promise.resolve(getSessionUser()).catch(() => null),
         ]);
         const relevant = (all || []).filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
         const effective = buildEffective(relevant);
