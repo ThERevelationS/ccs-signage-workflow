@@ -39,7 +39,7 @@ export async function createMaintenanceMaterialRuleIfAbsent({
   }
 
   const readMatches = async () => {
-    const rows = await entity.filter({ inventory_item_id: itemId });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { inventory_item_id: itemId });
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     return rows.filter((row) => sameRuleIdentity(row, data));
   };

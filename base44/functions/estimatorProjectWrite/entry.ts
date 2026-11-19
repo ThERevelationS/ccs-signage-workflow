@@ -13,7 +13,23 @@ const WRITE_OPS: Record<string, Set<string>> = Object.fromEntries([
     'PartTemplate', 'QuickProduct', 'ProjectTemplate',
   ].map((name) => [name, new Set(['create', 'updateMany', 'deleteMany', 'filter'])]),
   ['BuilderPriceRevision', new Set(['deleteMany', 'filter'])],
+  ...[
+    'Settings', 'MaintenanceActionRate', 'DimensionalLetterMaterial', 'VinylInventory', 'LaborServiceInventory',
+  ].map((name) => [name, new Set(['create', 'updateMany', 'deleteMany', 'filter'])]),
+  ...[
+    'ChannelLetterInstallInventory', 'MaintenanceInventory', 'ChannelLetterInstallEquipment',
+  ].map((name) => [name, new Set(['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'])]),
+  ['VinylMachine', new Set(['create', 'updateMany', 'filter'])],
+  ['BrickStoneInventory', new Set(['filter'])],
 ]);
+
+const ADMIN_ONLY_ENTITIES = new Set([
+  'Settings', 'MaintenanceActionRate', 'ChannelLetterInstallInventory', 'DimensionalLetterMaterial',
+  'MaintenanceInventory', 'VinylInventory', 'VinylMachine', 'BrickStoneInventory', 'LaborServiceInventory',
+]);
+
+const hasBuilderProduct = (row: any) =>
+  typeof row?.builder_product_id === 'string' && !!row.builder_product_id.trim();
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
   if (!value || typeof value !== 'object') return;
@@ -51,11 +67,17 @@ Deno.serve(async (req) => {
     if (!allowed || !allowed.has(op)) {
       return Response.json({ error: 'This record type cannot be written here.' }, { status: 403 });
     }
+    if (ADMIN_ONLY_ENTITIES.has(entityName) && user.role !== 'admin') {
+      return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+    }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
     if (JSON.stringify(data).length > 200000) throw bad('Record payload is too large.');
     rejectOperatorKeys(data);
     for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
+    if (entityName === 'BuilderPartGroup' && op === 'create' && user.role !== 'admin' && !hasBuilderProduct(data)) {
+      return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+    }
 
     const entity = (base44.asServiceRole.entities as any)[entityName];
     if (!entity) throw bad('Unknown record type.');
@@ -94,6 +116,16 @@ Deno.serve(async (req) => {
         throw bad('deleteMany requires an id and updated_date anchored query.');
       }
       validateScalarQuery(delQuery);
+      if (entityName === 'BuilderPartGroup' && user.role !== 'admin') {
+        const current = await entity.get(String(delQuery.id).trim()).catch((error: any) => {
+          if (Number(error?.status ?? error?.response?.status) === 404) return null;
+          throw error;
+        });
+        if (!current?.id) return Response.json({ error: 'Record not found.' }, { status: 404 });
+        if (!hasBuilderProduct(current)) {
+          return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+        }
+      }
       const result = await entity.deleteMany(delQuery);
       return Response.json({ success: true, result });
     }
@@ -133,6 +165,14 @@ Deno.serve(async (req) => {
       if (JSON.stringify(patch).length > 200000) throw bad('Record payload is too large.');
       rejectOperatorKeys(patch);
       for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      if (entityName === 'BuilderPartGroup' && user.role !== 'admin') {
+        if (!hasBuilderProduct(current)) {
+          return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+        }
+        if (Object.prototype.hasOwnProperty.call(patch, 'builder_product_id') && patch.builder_product_id !== current.builder_product_id) {
+          return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+        }
+      }
       coerceToDeclaredScalars(entityName, patch);
       const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
       return Response.json({ success: true, result });

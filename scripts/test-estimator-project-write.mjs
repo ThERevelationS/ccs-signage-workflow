@@ -11,7 +11,22 @@ const builderEntities = [
   'BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'EstimateClipboardItem',
   'PartTemplate', 'QuickProduct', 'ProjectTemplate',
 ];
-const estimatorEntities = [...projectEntities, ...builderEntities, 'BuilderPriceRevision'];
+const adminEntityOps = {
+  Settings: ['create', 'updateMany', 'deleteMany', 'filter'],
+  MaintenanceActionRate: ['create', 'updateMany', 'deleteMany', 'filter'],
+  ChannelLetterInstallInventory: ['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'],
+  DimensionalLetterMaterial: ['create', 'updateMany', 'deleteMany', 'filter'],
+  MaintenanceInventory: ['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'],
+  VinylInventory: ['create', 'updateMany', 'deleteMany', 'filter'],
+  VinylMachine: ['create', 'updateMany', 'filter'],
+  BrickStoneInventory: ['filter'],
+  LaborServiceInventory: ['create', 'updateMany', 'deleteMany', 'filter'],
+};
+const equipmentOps = ['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'];
+const estimatorEntities = [
+  ...projectEntities, ...builderEntities, 'BuilderPriceRevision', ...Object.keys(adminEntityOps),
+  'ChannelLetterInstallEquipment',
+];
 const copy = (value) => structuredClone(value);
 const guardSource = buildSync({
   entryPoints: ['base44/shared/entityWriteTypeGuard.ts'], bundle: true, platform: 'node', format: 'cjs',
@@ -76,7 +91,7 @@ function fixture() {
     '../../shared/entityRateLimitRetry.ts': { withEntityRateLimitRetry: (value) => value },
     '../../shared/signShopSession.ts': { authenticateSignShopSession: async (_sdk, token) => {
       if (!token) throw Object.assign(new Error('Authentication required'), { status: 401 });
-      return { email: 'staff@example.test', role: 'staff' };
+      return { email: 'staff@example.test', role: token === 'admin' ? 'admin' : 'staff' };
     } },
     '../../shared/entityWriteTypeGuard.ts': guardModule.exports,
   };
@@ -94,6 +109,87 @@ function fixture() {
       return { status: response.status, body: await response.json() };
     },
   };
+}
+
+{
+  const operations = ['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'];
+  for (const [entity, allowedOps] of Object.entries(adminEntityOps)) {
+    for (const op of operations) {
+      const app = fixture();
+      app.stores[entity].push({ id: 'catalog', updated_date: 'v1' });
+      const request = {
+        entity, op, id: 'catalog', query: op === 'filter' ? {} : { id: 'catalog', updated_date: 'v1' },
+        data: { notes: 'synthetic' }, update: { $set: { notes: 'updated' } },
+      };
+      const staff = await app.invoke(request);
+      assert.equal(staff.status, 403, `${entity} ${op} staff`);
+      if (allowedOps.includes(op)) {
+        assert.equal(staff.body.error, 'This record type requires a CCS admin.', `${entity} ${op} staff error`);
+      }
+      assert.equal(app.calls.length, 0, `${entity} ${op} staff must not access the entity`);
+      const admin = await app.invoke(request, 'admin');
+      assert.equal(admin.status, allowedOps.includes(op) ? 200 : 403, `${entity} ${op} admin`);
+    }
+  }
+  for (const role of ['staff', 'admin']) {
+    for (const op of operations) {
+      const app = fixture();
+      app.stores.ChannelLetterInstallEquipment.push({ id: 'equipment', updated_date: 'v1' });
+      const request = {
+        entity: 'ChannelLetterInstallEquipment', op, id: 'equipment',
+        query: op === 'filter' ? {} : { id: 'equipment', updated_date: 'v1' },
+        data: { notes: 'synthetic' }, update: { $set: { notes: 'updated' } },
+      };
+      assert.equal((await app.invoke(request, role)).status, equipmentOps.includes(op) ? 200 : 403, `equipment ${op} ${role}`);
+    }
+  }
+}
+
+{
+  const app = fixture();
+  const entity = 'BuilderPartGroup';
+  for (const builder_product_id of [undefined, '', '   ', null, 0, {}, []]) {
+    const denied = await app.invoke({ entity, op: 'create', data: { builder_product_id } });
+    assert.equal(denied.status, 403, `group create parent ${JSON.stringify(builder_product_id)}`);
+    assert.equal(denied.body.error, 'This record type requires a CCS admin.');
+  }
+  assert.equal(app.calls.length, 0);
+  const created = await app.invoke({ entity, op: 'create', data: { builder_product_id: 'builder-1' } });
+  assert.equal(created.status, 200);
+  const id = created.body.record.id;
+  const patch = (updated_date, fields) => app.invoke({
+    entity, op: 'updateMany', id, query: { id, updated_date }, update: { $set: fields },
+  });
+  let version = app.stores[entity].find((row) => row.id === id).updated_date;
+  assert.equal((await patch(version, { group_name: 'group' })).status, 200);
+  version = app.stores[entity].find((row) => row.id === id).updated_date;
+  assert.equal((await patch(version, { builder_product_id: 'builder-1' })).status, 200);
+  version = app.stores[entity].find((row) => row.id === id).updated_date;
+  for (const builder_product_id of ['builder-2', '', null, 1]) {
+    assert.equal((await patch(version, { builder_product_id })).status, 403);
+    assert.equal(app.stores[entity].find((row) => row.id === id).builder_product_id, 'builder-1');
+  }
+  assert.equal((await app.invoke({ entity, op: 'deleteMany', query: { id, updated_date: version } })).status, 200);
+
+  const adminCatalog = await app.invoke({ entity, op: 'create', data: { group_name: 'catalog' } }, 'admin');
+  assert.equal(adminCatalog.status, 200);
+  const catalogId = adminCatalog.body.record.id;
+  const catalogVersion = adminCatalog.body.record.updated_date;
+  const catalogPatch = { entity, op: 'updateMany', id: catalogId, query: { id: catalogId, updated_date: catalogVersion }, update: { $set: { group_name: 'new' } } };
+  assert.equal((await app.invoke(catalogPatch)).status, 403);
+  assert.equal((await app.invoke({ entity, op: 'deleteMany', query: { id: catalogId, updated_date: catalogVersion } })).status, 403);
+  assert.equal((await app.invoke(catalogPatch, 'admin')).status, 200);
+  let newVersion = app.stores[entity].find((row) => row.id === catalogId).updated_date;
+  assert.equal((await app.invoke({
+    entity, op: 'updateMany', id: catalogId, query: { id: catalogId, updated_date: newVersion },
+    update: { $set: { builder_product_id: 'builder-2' } },
+  }, 'admin')).status, 200);
+  newVersion = app.stores[entity].find((row) => row.id === catalogId).updated_date;
+  assert.equal((await app.invoke({ entity, op: 'deleteMany', query: { id: catalogId, updated_date: newVersion } }, 'admin')).status, 200);
+  const missing = { id: 'missing', updated_date: 'v1' };
+  assert.equal((await app.invoke({ entity, op: 'updateMany', id: missing.id, query: missing, update: { $set: {} } })).status, 404);
+  assert.equal((await app.invoke({ entity, op: 'deleteMany', query: missing })).status, 404);
+  assert.equal((await app.invoke({ entity, op: 'delete', id: missing.id }, 'admin')).status, 403);
 }
 
 {
@@ -262,6 +358,22 @@ function fixture() {
   assert.deepEqual(calls.at(-1).payload, { entity: 'CNCProject', op: 'deleteMany', query: { id: 'p', updated_date: 'v' } });
   await staffEntities.GeneralTask.deleteMany({ id: 'p', updated_date: 'v' });
   assert.equal(calls.at(-1).name, 'staffEntityWrite');
+  await staffEntities.FoundationInventory.create({});
+  assert.equal(calls.at(-1).name, 'staffEntityWrite');
+  for (const entity of [...Object.keys(adminEntityOps), 'ChannelLetterInstallEquipment']) {
+    await staffEntities[entity].create({});
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} create routing`);
+    await staffEntities[entity].update('p', {});
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} update routing`);
+    await staffEntities[entity].updateMany({ id: 'p', updated_date: 'v' }, { $set: {} });
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} updateMany routing`);
+    await staffEntities[entity].delete('p');
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} delete routing`);
+    await staffEntities[entity].deleteMany({ id: 'p', updated_date: 'v' });
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} deleteMany routing`);
+    assert.equal((await staffEntities[entity].filterFresh({ id: 'p' }))[0].id, 'fresh');
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} fresh filter routing`);
+  }
   for (const entity of [...builderEntities, 'BuilderPriceRevision']) {
     const proxy = staffEntities[entity];
     await proxy.create({});

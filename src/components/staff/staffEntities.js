@@ -22,6 +22,9 @@ const ESTIMATOR_WRITE_ENTITIES = new Set([
   "MetalProject", "BrickStoneProject", "MaintenanceProject", "Project", "CustomItemsProject",
   "BuilderProduct", "BuilderPart", "BuilderPartGroup", "BuilderPriceRevision", "EstimateClipboardItem",
   "PartTemplate", "QuickProduct", "ProjectTemplate",
+  "Settings", "MaintenanceActionRate", "ChannelLetterInstallInventory", "DimensionalLetterMaterial",
+  "MaintenanceInventory", "VinylInventory", "VinylMachine", "BrickStoneInventory", "LaborServiceInventory",
+  "ChannelLetterInstallEquipment",
 ]);
 const writeFunction = (entity) => ESTIMATOR_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
 

@@ -35,7 +35,7 @@ export async function createSettingRowIfAbsent({
   }
 
   const readMatches = async () => {
-    const rows = await SettingsEntity.filter({ setting_name: name });
+    const rows = await (typeof SettingsEntity.filterFresh === "function" ? SettingsEntity.filterFresh : SettingsEntity.filter).call(SettingsEntity, { setting_name: name });
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     return rows.filter((row) => text(row?.setting_name).trim() === name);
   };

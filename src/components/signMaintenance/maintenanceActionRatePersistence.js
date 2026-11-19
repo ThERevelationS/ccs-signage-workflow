@@ -41,7 +41,7 @@ export async function createMaintenanceActionRateIfAbsent({
   }
 
   const readMatches = async () => {
-    const rows = await entity.filter({ sign_type: signType, action });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { sign_type: signType, action });
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     return rows.filter((row) => row?.sign_type === signType && row?.action === action);
   };
