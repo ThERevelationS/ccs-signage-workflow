@@ -57,6 +57,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
   const [selected, setSelected] = useState(null);
   const [clockIn, setClockIn] = useState("");
   const [clockOut, setClockOut] = useState("");
@@ -76,7 +77,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
     if (!sessionToken) { setRequests([]); return; }
     const seq = ++loadSeqRef.current;
     setLoading(true);
-    setError("");
+    setListError("");
     try {
       const response = await base44.functions.invoke("timeClockActionV2", {
         action: "list_correction_requests",
@@ -103,7 +104,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
       }
     } catch (err) {
       if (seq !== loadSeqRef.current) return;
-      setError(err?.response?.data?.error || err?.message || "Correction requests could not be loaded.");
+      setListError(err?.response?.data?.error || err?.message || "Correction requests could not be loaded.");
     } finally {
       if (seq === loadSeqRef.current) setLoading(false);
     }
@@ -336,10 +337,13 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
             </Button>
           </div>
         )}
+        {error && !selected && !loading && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
+        )}
         {loading ? (
           <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
-        ) : error && !selected ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
+        ) : listError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{listError}</div>
         ) : requests.length === 0 ? (
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No pending correction requests.</div>
         ) : (

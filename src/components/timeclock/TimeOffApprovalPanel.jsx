@@ -33,6 +33,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
   const [selected, setSelected] = useState(null);
   const [ptoBalances, setPtoBalances] = useState([]);
   const [adminNotes, setAdminNotes] = useState("");
@@ -44,7 +45,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
     if (!sessionToken) { setRequests([]); return; }
     const seq = ++loadSeqRef.current;
     setLoading(true);
-    setError("");
+    setListError("");
     try {
       const response = await base44.functions.invoke("timeClockActionV2", {
         action: "list_time_off_requests",
@@ -58,7 +59,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
       setRequests(Array.isArray(data.requests) ? data.requests : []);
     } catch (err) {
       if (seq !== loadSeqRef.current) return;
-      setError(err?.response?.data?.error || err?.message || "Time-off requests could not be loaded.");
+      setListError(err?.response?.data?.error || err?.message || "Time-off requests could not be loaded.");
     } finally {
       if (seq === loadSeqRef.current) setLoading(false);
     }
@@ -181,10 +182,13 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
           </div>
           <Badge className={pendingCount ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{pendingCount} awaiting review</Badge>
         </div>
+        {error && !selected && !loading && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
+        )}
         {loading ? (
           <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
-        ) : error && !selected ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
+        ) : listError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{listError}</div>
         ) : requests.length === 0 ? (
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No pending or approved time-off requests.</div>
         ) : (

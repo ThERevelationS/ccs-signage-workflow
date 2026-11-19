@@ -220,8 +220,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       const responseStatus = Number(err?.response?.status || 0);
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
       if (!retrySame) clearRequestId(action, email, requestId);
-      setError(err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`);
+      const message = err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`;
+      setError(message);
       await loadStatus({ force: true });
+      if (isCurrentAction()) setError(message);
     } finally {
       setBusy(false);
     }
