@@ -41,7 +41,7 @@ export async function startEstimateRevision({ estimate, reason, sessionToken = "
   const existing = await getOpenEstimateRevision(estimate.id);
   if (existing) return existing;
 
-  const response = await base44.functions.invoke("ensureOpenEstimateRevision", {
+  const response = await base44.functions.invoke("ensureOpenEstimateRevisionV2", {
     estimate_id: estimate.id,
     expected_estimate_updated_date: estimate.updated_date || "",
     reason: cleanReason,
@@ -116,7 +116,7 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
     idempotency_key: cleanKey,
   };
 
-  const response = await base44.functions.invoke("ensureEstimateLifecycleRevision", {
+  const response = await base44.functions.invoke("ensureEstimateLifecycleRevisionV2", {
     idempotency_key: cleanKey,
     revision: revisionPayload,
     session_token: sessionToken,

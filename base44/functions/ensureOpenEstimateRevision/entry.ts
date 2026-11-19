@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Estimate and revision reason are required.' }, { status: 400 });
     }
 
-    const EstimateUser = base44.entities.AllInOneEstimate;
+    const EstimateUser = base44.asServiceRole.entities.AllInOneEstimate;
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
 
     const estimate = await EstimateUser.get(estimateId).catch(() => null);

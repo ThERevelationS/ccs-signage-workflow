@@ -436,7 +436,7 @@ export default function EstimatorCustomers() {
       let created = 0, skipped = preview.skip, failed = 0;
       for (const { companyName, fields } of preview.rows) {
         try {
-          const res = await base44.functions.invoke("ensureEstimateCustomer", { company_name: companyName, fields, session_token: sessionToken });
+          const res = await base44.functions.invoke("ensureEstimateCustomerV2", { company_name: companyName, fields, session_token: sessionToken });
           const data = res?.data || res;
           if (data?.error) throw new Error(data.error);
           created++;

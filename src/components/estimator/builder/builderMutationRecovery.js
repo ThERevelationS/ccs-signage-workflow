@@ -130,7 +130,7 @@ export async function ensureBuilderPriceRevision(idempotencyKey, revision) {
   if (!sessionToken) {
     throw new Error("Your signed sign-shop session is no longer available. Sign in again before changing Builder pricing.");
   }
-  const response = await base44.functions.invoke("ensureBuilderPriceRevision", {
+  const response = await base44.functions.invoke("ensureBuilderPriceRevisionV2", {
     idempotency_key: idempotencyKey,
     revision,
     session_token: sessionToken,

@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
     // A new immutable lifecycle row must belong to a real current Estimate.
     // Idempotent retries above can still recover historical rows later.
-    const estimate = await base44.entities.AllInOneEstimate.get(estimateId).catch(() => null);
+    const estimate = await base44.asServiceRole.entities.AllInOneEstimate.get(estimateId).catch(() => null);
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified before recording lifecycle history.' }, { status: 404 });
     }
