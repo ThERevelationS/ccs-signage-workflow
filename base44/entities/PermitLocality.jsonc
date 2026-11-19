@@ -10,6 +10,15 @@
       "type": "string",
       "description": "State abbreviation"
     },
+    "county_name": {
+      "type": "string",
+      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field — same-name localities in different counties are different jurisdictions and must never merge."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "enum": ["county", "city", "village", "township", "municipality", "unincorporated_community"],
+      "description": "Kind of jurisdiction, from the linked JurisdictionProfile.type. Township vs city/village never merge."
+    },
     "zip": {
       "type": "string",
       "description": "ZIP / postal code"
@@ -17,6 +26,33 @@
     "jurisdiction_profile_id": {
       "type": "string",
       "description": "Optional canonical JurisdictionProfile ID this tracker locality was explicitly created from. Existing legacy localities may remain unlinked until staff verifies the relationship."
+    },
+    "office_change_log": {
+      "type": "array",
+      "description": "Append-only (cap 20) log of detected changes to this locality's offices[] — entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the 'offices updated' alerts.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": { "type": "string" },
+          "summary": { "type": "string" },
+          "office_count": { "type": "number" },
+          "verified_count": { "type": "number" }
+        }
+      }
+    },
+    "observed_outcomes": {
+      "type": "object",
+      "description": "MP-11.4 — observed-vs-claimed aggregation from real filed permits: {permits_observed, avg_decision_days, fee_min, fee_max, fee_avg, denial_count, computed_at, sample_window}. Stamped by the office-diff worker from the PermitLineItem mirror.",
+      "properties": {
+        "permits_observed": { "type": "number" },
+        "avg_decision_days": { "type": "number" },
+        "fee_min": { "type": "number" },
+        "fee_max": { "type": "number" },
+        "fee_avg": { "type": "number" },
+        "denial_count": { "type": "number" },
+        "computed_at": { "type": "string" },
+        "sample_window": { "type": "string" }
+      }
     },
     "governing_body": {
       "type": "string",
@@ -49,6 +85,32 @@
     "contact_notes": {
       "type": "string",
       "description": "LEGACY"
+    },
+    "zoning_authority": {
+      "type": "string",
+      "enum": [
+        "township_own",
+        "county",
+        "municipal",
+        "joint_commission",
+        "regional"
+      ],
+      "description": "How this locality is zoned: township_own = township adopted its own zoning resolution (ORC 519); county = defers to county zoning; joint_commission/regional = shared authority. Records the MODEL, not just which office — distinguishes 'not found yet' from 'correctly county'."
+    },
+    "sign_code_url": {
+      "type": "string",
+      "description": "URL of this locality's sign ordinance/code section (code library or local code page)."
+    },
+    "permit_required_summary": {
+      "type": "string",
+      "description": "Whether/when a sign permit is required here, from ordinance or official pages (e.g. 'required for signs >6 sqft; exempt: temporary <32 sqft')."
+    },
+    "overlay_flags": {
+      "type": "array",
+      "description": "Special-district overlays that change permitting: historic_district, state_route_row, airport, floodway, scenic_byway.",
+      "items": {
+        "type": "string"
+      }
     },
     "offices": {
       "type": "array",
@@ -108,6 +170,16 @@
             "type": "string",
             "description": "Optional staff notes or source context supporting this locality-to-office authority relationship."
           },
+          "corroboration_tier": {
+            "type": "string",
+            "enum": ["verified", "single_source"],
+            "description": "MP-5.2 — 'verified' only when every proven role is backed by ≥2 distinct official evidence hosts; otherwise 'single_source'."
+          },
+          "corroboration_tiers": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Per-role corroboration tier map: {role: 'verified'|'single_source'}."
+          },
           "name": {
             "type": "string",
             "description": "Display name for this office (e.g. 'Hamilton County Zoning')"
@@ -135,8 +207,112 @@
           "contact_address": {
             "type": "string"
           },
+          "hours": {
+            "type": "string",
+            "description": "Office hours in plain text ('Mon-Fri 8a-4:30p') \u2014 'open now?' is a display concern."
+          },
           "contact_notes": {
             "type": "string"
+          },
+          "application_form_url": {
+            "type": "string",
+            "description": "Direct URL to this office's permit application form (usually a PDF on the official site)."
+          },
+          "application_form_name": {
+            "type": "string",
+            "description": "Human-readable form name as published (e.g. 'Sign Permit Application')."
+          },
+          "fee_schedule_text": {
+            "type": "string",
+            "description": "Fee/cost language found on the official permit page or PDF (verbatim excerpt)."
+          },
+          "fee_schedule_url": {
+            "type": "string",
+            "description": "URL of the published fee schedule page or document."
+          },
+          "fee_structured": {
+            "type": "object",
+            "description": "Machine-readable fee model when extractable: {flat, per_sqft, base, per, notes}."
+          },
+          "submission_methods": {
+            "type": "array",
+            "description": "How applications are accepted: mail/drop_off/online_portal/email/fax/in_person.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "typical_review_time": {
+            "type": "string",
+            "description": "Published review/turnaround language (e.g. 'permits issued within 10 business days')."
+          },
+          "contact_person": {
+            "type": "string",
+            "description": "Named staff contact for this office when published (e.g. 'Jane Smith, Zoning Inspector')."
+          },
+          "canonical_provider_id": {
+            "type": "string",
+            "description": "Links this locality-specific office to the shared canonical provider record (e.g. a county dept serving many jurisdictions). Identity link, not a merge."
+          },
+          "provider_type": {
+            "type": "string",
+            "enum": [
+              "government",
+              "county",
+              "regional",
+              "joint_commission",
+              "state_certified_private",
+              "utility"
+            ],
+            "description": "What kind of provider this office is — determines where research should look (e.g. state_certified_private = a certified private inspection agency, not a government)."
+          },
+          "field_confidence": {
+            "type": "object",
+            "description": "Per-field reliability map: {contact_phone:'high|low', contact_email:...} based on where the data was found (dept page=high, footer=low, PDF letterhead=high)."
+          },
+          "data_as_of": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this office's contact data was last confirmed against its source."
+          },
+          "service_area": {
+            "type": "string",
+            "description": "Service-area note when the provider serves beyond this locality (e.g. 'county-administered for X')."
+          },
+          "ordinance_url": {
+            "type": "string",
+            "description": "URL of the controlling sign/zoning ordinance section (code library or local code page)."
+          },
+          "required_documents": {
+            "type": "array",
+            "description": "Items the application requires (site plan, drawings, insurance cert, contractor license...).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "meeting_schedule_text": {
+            "type": "string",
+            "description": "Board/commission meeting and submission-deadline language for variance paths."
+          },
+          "installer_registration_required": {
+            "type": "boolean",
+            "description": "Sign contractor/installer must register or be licensed with this jurisdiction before erecting."
+          },
+          "overlay_flags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Derived overlay contexts on this office: historic_district, row_permit_possible, etc."
+          },
+          "inspection_contact": {
+            "type": "string",
+            "description": "How to schedule the inspection (phone/portal/text) when published."
+          },
+          "permit_expiry_text": {
+            "type": "string",
+            "description": "Permit validity/expiry language from official text (\"valid for 180 days\", \"expires\")."
+          },
+          "preferred_contact_method": {
+            "type": "string",
+            "description": "The contact channel the office itself prefers when stated."
           },
           "workflow_steps": {
             "type": "array",
@@ -223,9 +399,49 @@
     "order": {
       "type": "number",
       "default": 0
+    },
+    "change_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "changed_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Audit trail of edits to this jurisdiction \u2014 server-appended on each gateway update: {at, by, changed_fields}."
+    },
+    "pending_applies": {
+      "type": "array",
+      "description": "Deferred office applies \u2014 Apply-when-verified queues {work_order_id, requested_by, requested_at, exclude_electrical} here; the verification worker creates the permit lines the moment sign+zoning verify, then removes the entry.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "work_order_id": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "requested_at": { "type": "string" },
+          "exclude_electrical": { "type": "boolean" }
+        }
+      }
     }
   },
   "required": [
     "name"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__permitlocality_backend_only__" } },
+    "read": { "user_condition": { "role": "__permitlocality_backend_only__" } },
+    "update": { "user_condition": { "role": "__permitlocality_backend_only__" } },
+    "delete": { "user_condition": { "role": "__permitlocality_backend_only__" } }
+  }
 }

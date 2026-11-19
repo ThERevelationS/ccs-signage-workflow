@@ -1,0 +1,55 @@
+{
+  "name": "PermitArchiveBlob",
+  "type": "object",
+  "description": "Inline byte storage for archived jurisdiction documents — replaces UploadFile blob storage so archive transport is not metered. Bytes live as base64 in data_b64; consumers resolve by row id.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "bytes": {
+      "type": "number"
+    },
+    "sha256": {
+      "type": "string"
+    },
+    "data_b64": {
+      "type": "string",
+      "description": "Document bytes, base64-encoded."
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "created_ms": {
+      "type": "number"
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__filebridge_backend_only__"
+      }
+    }
+  }
+}

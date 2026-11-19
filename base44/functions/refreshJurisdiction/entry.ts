@@ -5,6 +5,7 @@ import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
@@ -21,7 +22,7 @@ import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchive
 Deno.serve(async (req) => {
   let reporter:any=silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
 
     let body: any = {};
     try { body = await req.json(); } catch {}
@@ -116,7 +117,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
-    const safeStatus = [400,401,403,404,409,503].includes(status) ? status : 500;
+    const safeStatus = [400,401,403,404,409, 429, 503].includes(status) ? status : 500;
     console.error('refreshJurisdiction error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Jurisdiction refresh could not be completed safely' : error.message,
@@ -155,7 +156,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       researchData = { permitting_url: jurisdiction.permitting_url, documents: [] };
     } else {
       await reporter.emit({kind:'search',detail:`Researching ${jurisdiction.name}, ${jurisdiction.state}: official permitting/zoning pages, sign rules, applications, fees, portals and contacts. Internal AI web queries are not exposed.`},{stage:'AI research',indeterminate:true});
-      const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+      const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
         jurisdictionName: jurisdiction.name,
         jurisdictionState: jurisdiction.state,
         jurisdictionType: jurisdiction.type,
@@ -289,6 +290,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
           fetchSource: safeExternalFetch,
           uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+          blobEntity: base44.asServiceRole.entities.PermitArchiveBlob,
           manual: Boolean(reporter.id),onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
         });
         const { jurisdiction: archivedProfile, ...summary } = result;

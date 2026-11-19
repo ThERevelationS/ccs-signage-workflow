@@ -1,4 +1,5 @@
 import {claimPermittingCollectionCycle,finishPermittingCollectionCycle} from '../../shared/permittingCollectionCycle.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import {continueDiscoveryBacklog} from '../../shared/permittingDiscoveryContinuation.mjs';
 import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
@@ -71,7 +72,9 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
   const state = String(row?.state || "").trim().toLowerCase();
   return profiles.filter((profile) =>
     String(profile?.name || "").trim().toLowerCase() === name &&
-    String(profile?.state || "").trim().toLowerCase() === state
+    String(profile?.state || "").trim().toLowerCase() === state &&
+    !String(profile?.duplicate_of || "").trim() &&
+    String(profile?.verification_status || "").toLowerCase() !== "historical"
   );
 }
 
@@ -124,7 +127,7 @@ async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Admin access required" }, { status: 403 });
@@ -140,6 +143,15 @@ Deno.serve(async (req) => {
       loadSingleton(Settings, PERMITTING_RESEARCH_CONFIG_KEY),
       loadSingleton(Settings, PERMITTING_RESEARCH_STATE_KEY),
     ]);
+
+    // Local-pipeline mode: the local fleet owns document archive + text
+    // extraction. Automatic cycles no-op here (manual admin invocations still
+    // run the full path — staff intent is explicit).
+    const modeRecord = await loadSingleton(Settings, 'permittingPipelineMode').catch(() => null);
+    const pipelineMode = String(modeRecord?.setting_value?.mode || modeRecord?.setting_value || '').toLowerCase();
+    if (!manual && pipelineMode === 'local') {
+      return Response.json({ success: true, skipped: 'local_pipeline_mode', mode: 'local' });
+    }
 
     let stateRecord=loadedStateRecord;
     const preferAddressArchives=loadedStateRecord?.setting_value?.collection_cycle?.stages?.archive?.archive_queue!=='address';
@@ -181,11 +193,12 @@ Deno.serve(async (req) => {
         fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+        blobEntity: base44.asServiceRole.entities.PermitArchiveBlob,
       });
       } catch(error) { archiveContinuation={success:false,status:'archive_continuation_failed',error:String(error?.message || error)}; }
       // Isolate parser loading/failure from the research dispatcher. No LLM call.
       try {
-        const { readAndExtractSourcePdf } = await import('../../shared/jurisdictionSourceTextRuntime.ts');
+        const { readAndExtractSourcePdf } = await import('./jurisdictionSourceTextRuntime.ts');
         textContinuation = await continueSourceTextBacklog({
           entity: base44.asServiceRole.entities.PermittingSourceDocument,
           segmentEntity: base44.asServiceRole.entities.PermittingSourceTextSegment,
