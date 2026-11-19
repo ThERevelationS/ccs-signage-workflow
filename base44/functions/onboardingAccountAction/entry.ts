@@ -3,6 +3,7 @@ import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { FACE_MATCH, cleanDescriptorBatch, mergeFaceTemplates } from '../../shared/faceMatch.ts';
 
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 
@@ -36,7 +37,7 @@ function sanitizedUser(user: any) {
     sales_roles: Array.isArray(user.sales_roles) ? user.sales_roles : [],
     can_import_export: user.can_import_export === true,
     can_view_resources: user.can_view_resources === true,
-    face_descriptors: Array.isArray(user.face_descriptors) ? user.face_descriptors : [],
+    face_count: Array.isArray(user.face_descriptors) ? user.face_descriptors.length : 0,
     hr_data: user.hr_data && typeof user.hr_data === 'object' && !Array.isArray(user.hr_data) ? user.hr_data : {},
     onboarding_complete: user.onboarding_complete === true,
     updated_date: user.updated_date || '',
@@ -172,7 +173,16 @@ Deno.serve(async (req) => {
         failed_login_count: 0,
         login_locked_until: null,
       };
-      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
+      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) {
+        // Descriptors are validated and merged server-side — the raw client
+        // batch is never trusted verbatim, and a non-empty batch with zero
+        // valid descriptors fails instead of silently dropping the face.
+        const faceBatch = cleanDescriptorBatch(body.face_descriptors, FACE_MATCH.batchMax);
+        if (!faceBatch.length) {
+          return Response.json({ success: false, error: 'Face descriptors are invalid' }, { status: 400 });
+        }
+        nextFields.face_descriptors = mergeFaceTemplates(user.face_descriptors, faceBatch).merged;
+      }
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user,

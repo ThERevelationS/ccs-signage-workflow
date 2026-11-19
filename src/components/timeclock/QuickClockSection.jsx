@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,6 @@ import WorkDayGroupDialog from "@/components/timeclock/WorkDayGroupDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import CrystalShiftButton from "@/components/timeclock/CrystalShiftButton";
 import {
-  createFaceMatcher,
   createFaceScanSession,
   loadFaceModelsOnce,
   supportsInlineQrDetection,
@@ -238,9 +237,10 @@ export default function QuickClockSection({
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
-  const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
-  const matchFaceRef = useRef(matchFace);
-  matchFaceRef.current = matchFace;
+  // null = probe unanswered yet (optimistic); a count comes back from the
+  // server-side identify_face probe since templates never reach the client.
+  const [faceEnrolledCount, setFaceEnrolledCount] = useState(null);
+  const faceProbeSeqRef = useRef(0);
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const lastPunchRef = useRef({ email: "", at: 0 });
@@ -319,9 +319,9 @@ export default function QuickClockSection({
   const actionCountForScope = (scope = currentActionScope()) =>
     activeActionCountRef.current.get(scope) || 0;
 
-  const canUseFace = Boolean(authoritativeSessionToken) && (allUsers || []).some(
-    (user) => Array.isArray(user.face_descriptors) && user.face_descriptors.length > 0,
-  );
+  const canUseFace = Boolean(authoritativeSessionToken) && faceEnrolledCount !== 0;
+  const canUseFaceRef = useRef(canUseFace);
+  canUseFaceRef.current = canUseFace;
   const authoritativeSessionGuardsSelected = Boolean(
     authoritativeSessionToken &&
     authoritativeSessionUser?.email &&
@@ -379,6 +379,13 @@ export default function QuickClockSection({
   const [voiceOn] = useState(() => { try { return localStorage.getItem("ccs_kiosk_voice") === "1"; } catch { return false; } });
   useEffect(() => { if (voiceOn && recognitionStatus && "speechSynthesis" in window) { try { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(recognitionStatus)); } catch {} } }, [recognitionStatus, voiceOn]);
   const [faceFails, setFaceFails] = useState(() => { try { return Number(localStorage.getItem("ccs_face_fails") || 0); } catch { return 0; } });
+  const bumpFaceFails = (updater) => {
+    setFaceFails((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      try { localStorage.setItem("ccs_face_fails", String(next)); } catch {}
+      return next;
+    });
+  };
   const [holiday] = useState(() => { const d = new Date(); const key = d.toISOString().slice(0, 10); const map = { "2026-01-01": "New Year's Day", "2026-07-04": "Independence Day", "2026-11-26": "Thanksgiving", "2026-12-25": "Christmas" }; return map[key] || null; });
   const quietNow = () => { try { const w = localStorage.getItem("ccs_kiosk_quiet"); if (!w) return false; const [a, b] = w.split("-").map(Number); const h = new Date().getHours(); return a <= b ? h >= a && h < b : h >= a || h < b; } catch { return false; } };
   const [gloveMode] = useState(() => { try { return localStorage.getItem("ccs_kiosk_glove") === "1"; } catch { return false; } });
@@ -397,6 +404,27 @@ export default function QuickClockSection({
       });
     } catch {}
   }, []);
+
+  // Face enrollment probe - templates never leave the backend, so the only
+  // way to know whether anyone can use the face camera is to ask. The answer
+  // gates canUseFace; an error leaves the count unknown (optimistic) and the
+  // camera stays QR-only until a token change re-probes.
+  useEffect(() => {
+    const seq = ++faceProbeSeqRef.current;
+    setFaceEnrolledCount(null);
+    if (!authoritativeSessionToken) return;
+    base44.functions.invoke("timeClockActionV2", {
+      action: "identify_face",
+      probe: true,
+      session_token: authoritativeSessionToken,
+      request_id: `faceprobe-${newRequestId()}`,
+    }).then((res) => {
+      if (seq !== faceProbeSeqRef.current) return;
+      const data = res?.data || res;
+      if (data?.success) setFaceEnrolledCount(Number(data.enrolled_count || 0));
+    }).catch(() => {});
+  }, [authoritativeSessionToken]);
+
   const geoStamp = () => (geoCacheRef.current.data && Date.now() - geoCacheRef.current.at < 600000 ? geoCacheRef.current.data : null);
 
   const invokeTimeClock = async (payload) => {
@@ -510,8 +538,6 @@ export default function QuickClockSection({
       return false;
     }
   };
-
-  const findMatchingUser = (descriptor) => matchFaceRef.current(descriptor);
 
   const credentialPayload = (credential, userEmail) => {
     if (credential?.badgeCode) return { badge_code: credential.badgeCode };
@@ -984,6 +1010,64 @@ export default function QuickClockSection({
     }
   };
 
+  // Server-side face identification: the scan session only captures probe
+  // frames (liveness-gated); identify_face matches them against the backend
+  // templates. A no-match or an invoke error restarts a fresh session after
+  // a short pause so the kiosk keeps trying without a re-tap.
+  const startFaceScanSession = (faceRun) => {
+    const session = createFaceScanSession({
+      getVideo: () => videoRef.current,
+      isActive: () => !recognitionLockedRef.current,
+      onFrame: ({ status, descriptors, votes }) => {
+        if (faceRun !== faceRunRef.current) {
+          session.stop();
+          return;
+        }
+        if (status === "captured" && Array.isArray(descriptors) && descriptors.length) {
+          void identifyCapturedFace(descriptors, faceRun);
+          return;
+        }
+        setRecognitionStatus(status === "verifying" && votes?.required
+          ? `Hold still - capturing your face... ${votes.count}/${votes.required}`
+          : FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
+      },
+    });
+    faceScanSessionRef.current = session;
+    session.start();
+  };
+
+  const identifyCapturedFace = async (descriptors, faceRun) => {
+    const stillCurrent = () => faceRun === faceRunRef.current && !recognitionLockedRef.current;
+    const retryLater = (message) => {
+      setRecognitionStatus(message);
+      setTimeout(() => {
+        if (stillCurrent() && canUseFaceRef.current && !faceScanSessionRef.current?.isRunning?.()) startFaceScanSession(faceRun);
+      }, 1200);
+    };
+    setRecognitionStatus("Verifying your face...");
+    try {
+      const response = await base44.functions.invoke("timeClockActionV2", {
+        action: "identify_face",
+        session_token: authoritativeSessionToken,
+        face_descriptors: descriptors,
+        request_id: newRequestId(),
+      });
+      const data = response?.data || response;
+      if (!stillCurrent()) return;
+      if (data?.success && data?.matched && data?.user?.email) {
+        bumpFaceFails(0);
+        await handleFaceRecognized(data.user);
+        return;
+      }
+      if (!data?.success) throw new Error(data?.error || "Face identification could not be verified.");
+      bumpFaceFails((n) => n + 1);
+      retryLater("Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+    } catch {
+      if (!stillCurrent()) return;
+      retryLater("Face check is having trouble right now - hold still and keep looking at the camera.");
+    }
+  };
+
   const startCameraMode = async () => {
     await stopAllMedia();
     identifyFlowSeqRef.current += 1;
@@ -1074,29 +1158,10 @@ export default function QuickClockSection({
       setRecognitionStatus(IDENTIFY_CAMERA_BLURB);
 
       // Same shared scan session as the reusable FaceRecognition component -
-      // one cadence, quality gate, brightness check, and voter for every
-      // face-recognition surface in the app.
-      const session = createFaceScanSession({
-        getVideo: () => videoRef.current,
-        matchFace: (descriptor) => findMatchingUser(descriptor),
-        isActive: () => !recognitionLockedRef.current,
-        onFrame: ({ status, winner, votes }) => {
-          if (faceRun !== faceRunRef.current) {
-            session.stop();
-            return;
-          }
-          if (status === "recognized" && winner) {
-            session.stop();
-            void handleFaceRecognized(winner);
-            return;
-          }
-          setRecognitionStatus(status === "verifying" && votes?.required
-            ? `Hold still - verifying your identity... ${votes.count}/${votes.required}`
-            : FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
-        },
-      });
-      faceScanSessionRef.current = session;
-      session.start();
+      // one cadence, quality gate, and brightness check. It runs in capture
+      // mode (no client matcher): probe frames go to identify_face and the
+      // server returns the identity.
+      startFaceScanSession(faceRun);
     } catch (err) {
       console.error("Camera error:", err);
       stopFaceCamera();
@@ -1104,12 +1169,19 @@ export default function QuickClockSection({
     }
   };
 
-  // The face roster loads async and can arrive after the camera is already
-  // open in QR-only mode (e.g. a transient entity-budget 429 delayed it). When
-  // it lands mid-session, start the face pass without making the user re-tap.
+  // The face enrollment probe answers async and can land after the camera is
+  // already open in QR-only mode (e.g. a transient entity-budget 429 delayed
+  // it). When it reports enrolled faces mid-session, start the face pass
+  // without making the user re-tap; when it reports none, stop a running face
+  // pass so identify retries don't keep firing against an empty roster.
   useEffect(() => {
     if (canUseFace && isRecognizing && recognitionMethod === "camera" && !faceScanSessionRef.current?.isRunning?.()) {
       void startCameraMode();
+    } else if (!canUseFace && faceScanSessionRef.current?.isRunning?.()) {
+      faceScanSessionRef.current.stop();
+      if (recognitionMethod === "camera") {
+        setRecognitionStatus(supportsInlineQrDetection() ? IDENTIFY_QR_ONLY_BLURB : IDENTIFY_QR_BUTTON_PROMPT);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canUseFace, isRecognizing, recognitionMethod]);

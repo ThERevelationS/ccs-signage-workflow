@@ -106,7 +106,9 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
       return;
     }
     const batchGrade = gradeFor(batch);
-    if (batchGrade.grade === "F" || batchGrade.grade === "D") {
+    // Only F blocks - a D grade (natural small head turns) still saves; the
+    // amber hint under the camera nudges better coverage instead.
+    if (batchGrade.grade === "F") {
       setSaveError(`Enrollment quality ${batchGrade.grade}: ${batchGrade.tip}. Recapture with more pose/distance variation.`);
       return;
     }
@@ -153,6 +155,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     completionTimerRef.current = null;
     capturedForRef.current = "";
     setFaceDescriptors([]);
+    setEnrollGrade(null);
     setMergeInfo(null);
     setSaved(false);
     onClose();
@@ -195,10 +198,15 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
             )}
             <FaceRecognition 
               key={cameraKey}
-              allUsers={[]} 
               isEnrollment={true}
               onEnrollCapture={handleCapture}
             />
+
+            {enrollGrade?.grade === "D" && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                Enrollment quality D: {enrollGrade.tip}. You can still save - more angles improve recognition.
+              </div>
+            )}
 
             {(() => {
               const { added: previewAdded, stored: previewStored } = mergeFaceDescriptors(user?.face_descriptors, faceDescriptors);

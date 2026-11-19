@@ -44,42 +44,14 @@ export function loadFaceModelsOnce() {
   return modelPromise;
 }
 
-export function createFaceMatcher(users = []) {
-  const templates = users.map(user => ({ user, descriptors: (user.face_descriptors || [])
-    .filter(value => (Array.isArray(value) || ArrayBuffer.isView(value)) && value.length === 128 && Array.from(value).every(Number.isFinite))
-    .map(value => new Float32Array(value)) })).filter(item => item.descriptors.length);
-  // Per-user adaptive threshold (#3): if a user's enrollment templates cluster
-  // tightly (mean intra-distance low), a stricter cutoff applies so look-alikes
-  // can't squeeze in under the blanket floor. Caps at a 0.45 ceiling and never
-  // loosens below a 0.28 hard floor for safety.
-  const userFloors = new Map(templates.map(item => {
-    const ds = item.descriptors;
-    if (ds.length < 2) return [item.user, 0.44];
-    let sum = 0, n = 0;
-    for (let i = 0; i < ds.length; i += 1) for (let j = i + 1; j < ds.length; j += 1) { sum += euclideanDistance(ds[i], ds[j]); n += 1; }
-    const mean = n ? sum / n : 0;
-    return [item.user, Math.max(0.28, Math.min(0.45, mean + 0.14))];
-  }));
-  return descriptor => {
-    if (!descriptor || descriptor.length !== 128 || !Array.from(descriptor).every(Number.isFinite)) return null;
-    let best = null, bestDistance = Infinity, secondDistance = Infinity;
-    for (const item of templates) {
-      let distance = Infinity;
-      for (const stored of item.descriptors) distance = Math.min(distance, euclideanDistance(descriptor, stored));
-      if (distance < bestDistance) { secondDistance = bestDistance; bestDistance = distance; best = item.user; }
-      else secondDistance = Math.min(secondDistance, distance);
-    }
-    const floor = userFloors.get(best) ?? 0.44;
-    return bestDistance <= floor && secondDistance > bestDistance && secondDistance >= bestDistance * 1.5 ? best : null;
-  };
-}
-
 export const FACE_QUALITY = { minScore: 0.5, minBoxWidth: 32, minBrightness: 45 };
 
 // Shared scan cadence. The loop self-schedules: the next frame is captured this
 // many ms after the previous detection finishes, so fast devices scan faster
 // and slow devices never pile up overlapping inferences.
-export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 6 };
+// captureFrames: in capture mode (no matchFace - server-side matching) this
+// many good post-liveness frames are collected before "captured" emits.
+export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 6, captureFrames: 3 };
 
 // Liveness probe (#1): a blink (eye-aspect-ratio dip) or natural head movement
 // (nose drift vs face width) must be observed before votes can accumulate.
@@ -214,13 +186,22 @@ export function detectDetailedFace(video, withDescriptor = true) {
 
 // One shared scan loop for every recognition surface (admin login, kiosk quick
 // clock, enrollment preview). It owns the busy flag, the cadence, the quality
-// gate, the brightness check, and the temporal voter, so callers can never
-// drift apart on matching behaviour - they only map results to their own UI.
+// gate, and the brightness check, so callers can never drift apart on
+// behaviour - they only map results to their own UI.
 //
 // Cadence is self-scheduling: a new frame is sampled `intervalMs` after the
 // previous detection resolves. In-flight ticks are skipped rather than counted
 // as misses, so a slow inference cannot flush the vote window the way a fixed
 // setInterval did.
+//
+// Two modes:
+//  - matchFace provided (legacy): the temporal voter confirms a client-side
+//    identity.
+//  - matchFace omitted (capture mode): matching lives server-side, so after
+//    liveness proves the session collects FACE_SCAN.captureFrames good
+//    descriptors, emits { status: "captured", descriptors, detection }, and
+//    stops itself. The caller ships the frames to the backend and restarts a
+//    fresh session to retry.
 export function createFaceScanSession({
   getVideo,
   matchFace,
@@ -232,6 +213,8 @@ export function createFaceScanSession({
   let timer = null;
   let running = false;
   let generation = 0;
+  const captureMode = typeof matchFace !== "function";
+  const captured = [];
   const livenessState = { frames: 0, misses: 0, lastEar: null, firstNoseRel: null, streakStartMs: 0, lastFrameMs: 0, proved: false };
 
   const schedule = () => {
@@ -262,23 +245,44 @@ export function createFaceScanSession({
       // Liveness gate: a static photo cannot blink or drift - recognition is
       // held until the probe proves a live face, then normal matching runs.
       const live = dim ? false : livenessSample(detection, livenessState);
-      const matched = !live || dim ? null : matchFace?.(detection.descriptor) || null;
-      const winner = voter(matched);
-      // Ambiguous-match (#8): two distinct identities competing in the vote
-      // window without a runaway winner means the frame is telling us the
-      // distance margin is thin - surface it so the UI can offer a picker
-      // instead of silently locking onto the wrong person.
-      const ambiguous = !winner && voter.distinctCount >= 2 && voter.lastCount < (voter.required || 0);
-      result = {
-        status: dim ? "dim" : winner ? "recognized" : !live ? "liveness" : ambiguous ? "ambiguous" : matched ? "verifying" : "no-match",
-        detection,
-        dim,
-        matched,
-        winner,
-        ambiguous,
-        livenessProved: livenessState.proved,
-        votes: { count: voter.lastCount || 0, required: voter.required || 0 },
-      };
+      if (captureMode) {
+        if (live && !dim) {
+          // Good live frame - bank the descriptor (JSON-safe array) toward the
+          // probe batch the caller ships to the backend matcher.
+          captured.push(Array.from(detection.descriptor));
+          if (captured.length >= FACE_SCAN.captureFrames) {
+            running = false;
+            onFrame?.({ status: "captured", descriptors: captured.slice(), detection, livenessProved: true });
+            return;
+          }
+          result = {
+            status: "verifying",
+            detection,
+            livenessProved: true,
+            votes: { count: captured.length, required: FACE_SCAN.captureFrames },
+          };
+        } else {
+          result = { status: dim ? "dim" : "liveness", detection, dim, livenessProved: livenessState.proved };
+        }
+      } else {
+        const matched = !live || dim ? null : matchFace?.(detection.descriptor) || null;
+        const winner = voter(matched);
+        // Ambiguous-match (#8): two distinct identities competing in the vote
+        // window without a runaway winner means the frame is telling us the
+        // distance margin is thin - surface it so the UI can offer a picker
+        // instead of silently locking onto the wrong person.
+        const ambiguous = !winner && voter.distinctCount >= 2 && voter.lastCount < (voter.required || 0);
+        result = {
+          status: dim ? "dim" : winner ? "recognized" : !live ? "liveness" : ambiguous ? "ambiguous" : matched ? "verifying" : "no-match",
+          detection,
+          dim,
+          matched,
+          winner,
+          ambiguous,
+          livenessProved: livenessState.proved,
+          votes: { count: voter.lastCount || 0, required: voter.required || 0 },
+        };
+      }
     }
     onFrame?.(result);
     schedule();

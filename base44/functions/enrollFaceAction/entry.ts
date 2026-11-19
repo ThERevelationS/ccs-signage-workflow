@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { FACE_MATCH, cleanDescriptorBatch, mergeFaceTemplates, storedTemplates } from '../../shared/faceMatch.ts';
 
 // Face biometric descriptors never leave the backend (staffDataRead denylist),
 // so enrollment must merge server-side: load the real record, merge the
@@ -11,25 +12,8 @@ import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/
 // Time Clock settings), or an admin may enroll on anyone's behalf — anything
 // broader would let one session overwrite another employee's biometrics.
 
-const FACE_TEMPLATE_MERGE_DISTANCE = 0.10;
-const FACE_TEMPLATE_MAX = 40;
-
 function cleanEmail(value: unknown) {
   return String(value || '').trim().toLowerCase();
-}
-
-function cleanFaceDescriptors(value: any) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 64
-      || !value.every((d: any) => Array.isArray(d) && d.length === 128 && d.every((n: any) => Number.isFinite(n)))) {
-    throw Object.assign(new Error('Face descriptors are invalid.'), { status: 400 });
-  }
-  return value.map((d: any[]) => d.map(Number));
-}
-
-function faceDistance(a: number[], b: number[]) {
-  let sum = 0;
-  for (let i = 0; i < a.length; i += 1) { const d = a[i] - b[i]; sum += d * d; }
-  return Math.sqrt(sum);
 }
 
 Deno.serve(async (req) => {
@@ -56,20 +40,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Authorized user no longer matches the loaded record.' }, { status: 409 });
     }
 
-    const batch = cleanFaceDescriptors(body?.face_descriptors);
-    const stored = (Array.isArray(current?.face_descriptors) ? current.face_descriptors : [])
-      .filter((v: any) => Array.isArray(v) && v.length === 128 && v.every((n: any) => Number.isFinite(n)))
-      .map((v: any[]) => v.map(Number));
-    const merged = stored.slice();
-    let added = 0;
-    for (const d of batch) {
-      if (!merged.some((e) => faceDistance(e, d) < FACE_TEMPLATE_MERGE_DISTANCE)) {
-        merged.push(d);
-        added += 1;
-      }
+    const batch = cleanDescriptorBatch(body?.face_descriptors, FACE_MATCH.batchMax);
+    if (!batch.length) {
+      throw Object.assign(new Error('Face descriptors are invalid.'), { status: 400 });
     }
-    const dropped = Math.max(0, merged.length - FACE_TEMPLATE_MAX);
-    const finalDescriptors = dropped ? merged.slice(dropped) : merged;
+    const stored = storedTemplates(current);
+    const { merged: finalDescriptors, added, dropped } = mergeFaceTemplates(stored, batch);
     const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
       entity: AuthorizedEmail,
       user: { id, face_descriptors: stored },

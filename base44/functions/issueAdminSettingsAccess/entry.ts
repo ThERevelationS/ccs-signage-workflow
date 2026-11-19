@@ -2,48 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { issueAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
 import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
-
-const FACE_DIMENSIONS = 128;
-const CONFIDENCE_THRESHOLD = 0.38;
-const SEPARATION_RATIO = 1.5;
-
-function validDescriptor(value: unknown) {
-  if (!Array.isArray(value) || value.length !== FACE_DIMENSIONS) return null;
-  const numbers = value.map(Number);
-  if (numbers.some((number) => !Number.isFinite(number) || Math.abs(number) > 10)) return null;
-  return numbers;
-}
-
-function euclideanDistance(a: number[], b: number[]) {
-  if (a.length !== b.length) return Infinity;
-  let sum = 0;
-  for (let index = 0; index < a.length; index += 1) {
-    const delta = a[index] - b[index];
-    sum += delta * delta;
-  }
-  return Math.sqrt(sum);
-}
-
-function bestAdminFaceMatch(admins: any[], descriptor: number[]) {
-  const matches: Array<{ user: any; distance: number }> = [];
-  for (const user of admins || []) {
-    const storedDescriptors = Array.isArray(user?.face_descriptors) ? user.face_descriptors : [];
-    let bestDistance = Infinity;
-    for (const stored of storedDescriptors) {
-      const normalized = validDescriptor(stored);
-      if (!normalized) continue;
-      bestDistance = Math.min(bestDistance, euclideanDistance(descriptor, normalized));
-    }
-    if (Number.isFinite(bestDistance)) matches.push({ user, distance: bestDistance });
-  }
-  matches.sort((a, b) => a.distance - b.distance);
-  const best = matches[0] || null;
-  const second = matches[1] || null;
-  if (!best || best.distance > CONFIDENCE_THRESHOLD) return null;
-  const secondDistance = second?.distance ?? Infinity;
-  if (secondDistance / Math.max(best.distance, Number.EPSILON) < SEPARATION_RATIO) return null;
-  return best.user;
-}
+import { cleanDescriptorBatch, matchFaceFrames, storedTemplates } from '../../shared/faceMatch.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -89,10 +48,16 @@ Deno.serve(async (req) => {
       method = 'admin_session';
     }
 
-    const descriptor = validDescriptor(body?.face_descriptor);
-    if (descriptor) {
-      const matched = bestAdminFaceMatch([admin], descriptor);
-      if (!matched?.id || matched.id !== admin.id) {
+    const frames = cleanDescriptorBatch(body?.face_descriptors ?? body?.face_descriptor);
+    if (frames.length) {
+      // The session/badge user objects come from a full AuthorizedEmail read
+      // and normally carry face_descriptors; re-read when they don't so the
+      // check can never pass on a row that simply lacked the field.
+      const adminWithTemplates = storedTemplates(admin).length
+        ? admin
+        : await base44.asServiceRole.entities.AuthorizedEmail.get(admin.id).catch(() => admin);
+      const matched = matchFaceFrames([adminWithTemplates], frames);
+      if (!matched?.user?.id || String(matched.user.id) !== String(admin.id)) {
         return Response.json({ error: 'Face verification failed for this admin.' }, { status: 401 });
       }
       method = 'admin_session+face';

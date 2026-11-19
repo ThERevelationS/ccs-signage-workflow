@@ -7,6 +7,7 @@ import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { verifyBadgeCredential } from '../../shared/timeClockBadgeVerify.ts';
 import { assertSafeExternalUrl, safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { cleanDescriptorBatch, matchFaceFrames, storedTemplates } from '../../shared/faceMatch.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -3491,6 +3492,7 @@ Deno.serve(async (req) => {
       'labor_vs_estimate', 'pay_period_history_verify',
       'admin_correction_gate_diagnostics', 'list_pending_requests',
       'list_face_enrollment', 'list_timeclock_audit', 'list_devices',
+      'identify_face',
       'pto_liability_report', 'admin_period_compare',
     ]);
     if (!TIME_CLOCK_READS.has(action)) {
@@ -3589,6 +3591,56 @@ Deno.serve(async (req) => {
         correction_audit: correctionEvidence,
         ...(heldReview ? { review_audit: reviewEvidence } : {}),
         attention: 'A company correction claim is held. Inspect the request, audits, TimeEntry and employee state; never clear or time out the coordinator without authoritative reconciliation.',
+      });
+    }
+
+    // Face identification is read-only and must run before ensureState and
+    // every recovery hook: matching a face never mutates punch state.
+    // Templates never leave the backend (staffDataRead denylist) — the client
+    // ships captured probe frames here and gets back only an identity, so a
+    // signed session is mandatory: an admin session may identify any active
+    // employee, a non-admin session can only verify itself.
+    if (action === 'identify_face') {
+      if (String(actor.id).startsWith('badge:')) {
+        return Response.json({ success: false, error: 'A signed-in session is required for face identification.' }, { status: 403 });
+      }
+      const selfRow = await authorized.get(actor.id).catch(() => null);
+      let candidates: any[];
+      if (actor.role === 'admin') {
+        const rows = await memo('tcface', 'templates', 30000,
+          () => loadAllEntityRows({ entity: authorized, sort: null, pageSize: 200, maxRows: 5000, label: 'Face template roster' }),
+          { bypass: body?.bypass === true });
+        if (!Array.isArray(rows)) throw new Error('Face template roster could not be loaded.');
+        candidates = rows.filter((u: any) => u?.id
+          && u.is_deactivated !== true && u.is_active !== false
+          && u.archived_test_data !== true);
+      } else {
+        candidates = selfRow?.id ? [selfRow] : [];
+      }
+      const enrolled = candidates.filter((u: any) => storedTemplates(u).length > 0);
+      if (body?.probe === true) {
+        return Response.json({
+          success: true,
+          enrolled_count: enrolled.length,
+          self_template_count: selfRow?.id ? storedTemplates(selfRow).length : 0,
+        });
+      }
+      const frames = cleanDescriptorBatch(body?.face_descriptors ?? body?.face_descriptor);
+      if (!frames.length) {
+        return Response.json({ success: false, error: 'Valid face descriptors are required.' }, { status: 400 });
+      }
+      const match = matchFaceFrames(enrolled, frames);
+      if (!match) return Response.json({ success: true, matched: false });
+      return Response.json({
+        success: true,
+        matched: true,
+        user: {
+          id: match.user.id,
+          email: match.user.email,
+          full_name: match.user.full_name || match.user.email,
+          role: match.user.role,
+        },
+        distance: Math.round(match.distance * 1000) / 1000,
       });
     }
 
@@ -8432,9 +8484,10 @@ Deno.serve(async (req) => {
 
     if (action === 'list_face_enrollment') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const userEntity = base44.asServiceRole.entities.User;
+      // Templates live on AuthorizedEmail, not User — the User read always
+      // returned an empty roster.
       const users = await memo('tcadmin', 'face_roster', 30000,
-        () => userEntity.filter({}).then((r) => (Array.isArray(r) ? r : [])),
+        () => authorized.filter({}).then((r: any) => (Array.isArray(r) ? r : [])),
         { bypass: body?.bypass === true });
       if (!Array.isArray(users)) throw new Error('User list did not return records.');
       const roster = users

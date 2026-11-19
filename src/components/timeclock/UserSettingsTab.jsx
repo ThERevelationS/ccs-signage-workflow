@@ -57,7 +57,24 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
     if (stillCurrent()) setSendingReset(false);
   };
 
-  const hasFaceData = currentUser?.face_descriptors && currentUser.face_descriptors.length > 0;
+  // face_descriptors never reach the browser (staffDataRead denylist), so ask
+  // the backend whether this user has enrolled templates. Unknown = false.
+  const [hasFaceData, setHasFaceData] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    setHasFaceData(false);
+    if (!sessionToken || !currentUser?.email) return undefined;
+    base44.functions.invoke("timeClockActionV2", {
+      action: "identify_face",
+      probe: true,
+      session_token: sessionToken,
+      request_id: `faceprobe-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
+    }).then((res) => {
+      const data = res?.data || res;
+      if (alive) setHasFaceData(data?.success === true && Number(data.self_template_count || 0) > 0);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [sessionToken, currentUser?.email, showFaceEnroll]);
 
   const [settingsTab, setSettingsTab] = useState("workspace");
   const trackerSectionRef = useRef(null);

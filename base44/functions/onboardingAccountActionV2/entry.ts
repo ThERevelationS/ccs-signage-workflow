@@ -3,6 +3,7 @@ import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { FACE_MATCH, cleanDescriptorBatch, mergeFaceTemplates } from '../../shared/faceMatch.ts';
 
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 
@@ -187,7 +188,16 @@ Deno.serve(async (req) => {
         nextFields.failed_login_count = 0;
         nextFields.login_locked_until = null;
       }
-      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
+      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) {
+        // Descriptors are validated and merged server-side — the raw client
+        // batch is never trusted verbatim, and a non-empty batch with zero
+        // valid descriptors fails instead of silently dropping the face.
+        const faceBatch = cleanDescriptorBatch(body.face_descriptors, FACE_MATCH.batchMax);
+        if (!faceBatch.length) {
+          return Response.json({ success: false, error: 'Face descriptors are invalid' }, { status: 400 });
+        }
+        nextFields.face_descriptors = mergeFaceTemplates(user.face_descriptors, faceBatch).merged;
+      }
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user,

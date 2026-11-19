@@ -920,7 +920,6 @@ export default function AdminSettings() {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [allUsers, setAllUsers] = useState([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
@@ -1107,16 +1106,6 @@ export default function AdminSettings() {
     } finally { setTestEmailBusy(false); }
   };
 
-  const loadAllUsers = async () => {
-    const users = await loadAllEntityRows({
-      entity: staffEntities.AuthorizedEmail,
-      sort: null,
-      cacheTtlMs: 30000,
-      label: "Admin Settings authorized users",
-    });
-    setAllUsers(users);
-  };
-
   const handlePasswordSubmit = async () => {
     if (!usernameInput.trim() || !passwordInput.trim()) {
       setPasswordError("Please enter both username and password");
@@ -1191,7 +1180,6 @@ export default function AdminSettings() {
   }, [sessionToken, navigationKey, isUnlocked]);
   useEffect(() => {
     void loadEmailGroups();
-    void loadAllUsers();
   }, []);
 
   const copyRuleJson = async (rule) => {
@@ -2302,36 +2290,28 @@ export default function AdminSettings() {
     }
   };
 
-  const handleFaceRecognized = async (recognizedUser, descriptor) => {
-    const matched = allUsers.find(u => u.id === recognizedUser?.id || u.email === recognizedUser?.email);
-    if (matched?.role !== 'admin') {
-      setPasswordError("Face recognized but admin privileges required");
-      return;
-    }
-    if (!Array.isArray(descriptor) || descriptor.length !== 128) {
-      setPasswordError("Admin face verification could not be completed safely. Please use your password.");
-      return;
-    }
+  // Server-side face verify: the captured probe frames go to
+  // issueAdminSettingsAccess, which matches them against the signed-in
+  // admin's stored templates (descriptors never reach this browser).
+  const handleFaceVerify = async (descriptors) => {
     if (!sessionToken) {
-      setPasswordError("Face ID needs an active Time Clock sign-in on this device. Sign in with your username and password to start one.");
-      return;
-    }
-    if (currentUser?.email && String(matched.email || "").toLowerCase() !== String(currentUser.email).toLowerCase()) {
-      setPasswordError("This face belongs to a different admin than the signed-in session. Sign in again as that user.");
-      return;
+      return { error: "Face ID needs an active Time Clock sign-in on this device. Sign in with your username and password to start one." };
     }
 
     setIsVerifying(true);
     setPasswordError("");
     try {
-      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { session_token: sessionToken, face_descriptor: descriptor });
+      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { session_token: sessionToken, face_descriptors: descriptors });
       const accessData = accessRes?.data || accessRes;
-      if (!accessData?.success || !accessData?.capability || String(accessData?.user?.id || '') !== String(matched.id || '')) {
+      if (!accessData?.success || !accessData?.capability || !accessData?.user?.id) {
         throw new Error(accessData?.error || "Admin face could not be verified by the server.");
       }
       applyAdminAccess(accessData);
+      return { user: accessData.user };
     } catch (error) {
-      setPasswordError(error?.response?.data?.error || error?.message || "Admin face verification failed.");
+      const message = error?.response?.data?.error || error?.message || "Admin face verification failed.";
+      setPasswordError(message);
+      return { error: message };
     } finally {
       setIsVerifying(false);
     }
@@ -2377,8 +2357,7 @@ export default function AdminSettings() {
           <div className="space-y-4">
             {/* Face Recognition - always visible, starts automatically */}
             <FaceRecognition
-              allUsers={allUsers}
-              onRecognized={handleFaceRecognized}
+              onVerify={handleFaceVerify}
               onQrScan={handleBadgeScanned}
             />
 
